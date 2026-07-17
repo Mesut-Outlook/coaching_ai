@@ -17,7 +17,7 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 - [ ] Bilgi mimarisi: öğrenci verisi, deneme verisi, konu verisi arasındaki ilişkiler (ürün/veri modeli taslağı, kod değil)
 
 ## Sonnet — Yazılım
-- [ ] Proje iskeleti kurulumu (frontend + backend, henüz stack seçilmedi)
+- [x] Proje iskeleti kurulumu (Vite + React + TS ve Git entegrasyonu tamamlandı)
 - [ ] Veri modeli / şema implementasyonu (öğrenci, deneme, konu yeterlilik, görev atama)
 - [ ] Netlik tasarımının gerçek koda dönüştürülmesi (5 ekran)
 - [ ] Kimlik doğrulama (koç girişi)
