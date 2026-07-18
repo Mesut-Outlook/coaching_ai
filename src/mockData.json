@@ -1,0 +1,2819 @@
+{
+  "students": [
+    {
+      "id": "std-1",
+      "name": "Deniz Yılmaz",
+      "track": "SAY",
+      "grade": "12",
+      "target": "Boğaziçi Üniversitesi Bilgisayar Mühendisliği"
+    },
+    {
+      "id": "std-2",
+      "name": "Elif Demir",
+      "track": "EA",
+      "grade": "MEZUN",
+      "target": "Galatasaray Üniversitesi Hukuk Fakültesi"
+    },
+    {
+      "id": "std-3",
+      "name": "Can Kaya",
+      "track": "SAY",
+      "grade": "12",
+      "target": "Hacettepe Üniversitesi Tıp Fakültesi (Türkçe)"
+    },
+    {
+      "id": "std-4",
+      "name": "Zeynep Çelik",
+      "track": "EA",
+      "grade": "12",
+      "target": "Boğaziçi Üniversitesi İşletme"
+    },
+    {
+      "id": "std-5",
+      "name": "Mert Şahin",
+      "track": "SOZ",
+      "grade": "MEZUN",
+      "target": "Boğaziçi Üniversitesi Tarih"
+    }
+  ],
+  "exams": [
+    {
+      "id": "exam-tyt-std-1-1",
+      "studentId": "std-1",
+      "date": "2026-05-08",
+      "examName": "Kurumsal TYT Denemesi - 1",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 26,
+          "incorrect": 4,
+          "net": 25,
+          "blank": 10
+        },
+        "Matematik": {
+          "correct": 35,
+          "incorrect": 3,
+          "net": 34.25,
+          "blank": 2
+        },
+        "Sosyal": {
+          "correct": 9,
+          "incorrect": 0,
+          "net": 9,
+          "blank": 11
+        },
+        "Fen": {
+          "correct": 18,
+          "incorrect": 0,
+          "net": 18,
+          "blank": 2
+        }
+      },
+      "totalNet": 86.25
+    },
+    {
+      "id": "exam-ayt-std-1-1",
+      "studentId": "std-1",
+      "date": "2026-05-08",
+      "examName": "Kurumsal AYT Denemesi - 1",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 30,
+          "incorrect": 3,
+          "net": 29.25,
+          "blank": 7
+        },
+        "Fen": {
+          "correct": 24,
+          "incorrect": 1,
+          "net": 23.75,
+          "blank": 15
+        }
+      },
+      "totalNet": 53
+    },
+    {
+      "id": "exam-tyt-std-1-2",
+      "studentId": "std-1",
+      "date": "2026-05-23",
+      "examName": "Kurumsal TYT Denemesi - 2",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 28,
+          "incorrect": 4,
+          "net": 27,
+          "blank": 8
+        },
+        "Matematik": {
+          "correct": 36,
+          "incorrect": 4,
+          "net": 35,
+          "blank": 0
+        },
+        "Sosyal": {
+          "correct": 10,
+          "incorrect": 3,
+          "net": 9.25,
+          "blank": 7
+        },
+        "Fen": {
+          "correct": 18,
+          "incorrect": 3,
+          "net": 17.25,
+          "blank": -1
+        }
+      },
+      "totalNet": 88.5
+    },
+    {
+      "id": "exam-ayt-std-1-2",
+      "studentId": "std-1",
+      "date": "2026-05-23",
+      "examName": "Kurumsal AYT Denemesi - 2",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 33,
+          "incorrect": 3,
+          "net": 32.25,
+          "blank": 4
+        },
+        "Fen": {
+          "correct": 27,
+          "incorrect": 3,
+          "net": 26.25,
+          "blank": 10
+        }
+      },
+      "totalNet": 58.5
+    },
+    {
+      "id": "exam-tyt-std-1-3",
+      "studentId": "std-1",
+      "date": "2026-06-06",
+      "examName": "Kurumsal TYT Denemesi - 3",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 27,
+          "incorrect": 2,
+          "net": 26.5,
+          "blank": 11
+        },
+        "Matematik": {
+          "correct": 35,
+          "incorrect": 3,
+          "net": 34.25,
+          "blank": 2
+        },
+        "Sosyal": {
+          "correct": 10,
+          "incorrect": 3,
+          "net": 9.25,
+          "blank": 7
+        },
+        "Fen": {
+          "correct": 18,
+          "incorrect": 3,
+          "net": 17.25,
+          "blank": -1
+        }
+      },
+      "totalNet": 87.25
+    },
+    {
+      "id": "exam-ayt-std-1-3",
+      "studentId": "std-1",
+      "date": "2026-06-06",
+      "examName": "Kurumsal AYT Denemesi - 3",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 31,
+          "incorrect": 4,
+          "net": 30,
+          "blank": 5
+        },
+        "Fen": {
+          "correct": 26,
+          "incorrect": 4,
+          "net": 25,
+          "blank": 10
+        }
+      },
+      "totalNet": 55
+    },
+    {
+      "id": "exam-tyt-std-1-4",
+      "studentId": "std-1",
+      "date": "2026-06-18",
+      "examName": "Kurumsal TYT Denemesi - 4",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 29,
+          "incorrect": 0,
+          "net": 29,
+          "blank": 11
+        },
+        "Matematik": {
+          "correct": 36,
+          "incorrect": 0,
+          "net": 36,
+          "blank": 4
+        },
+        "Sosyal": {
+          "correct": 10,
+          "incorrect": 0,
+          "net": 10,
+          "blank": 10
+        },
+        "Fen": {
+          "correct": 18,
+          "incorrect": 0,
+          "net": 18,
+          "blank": 2
+        }
+      },
+      "totalNet": 93
+    },
+    {
+      "id": "exam-ayt-std-1-4",
+      "studentId": "std-1",
+      "date": "2026-06-18",
+      "examName": "Kurumsal AYT Denemesi - 4",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 39,
+          "incorrect": 0,
+          "net": 39,
+          "blank": 1
+        },
+        "Fen": {
+          "correct": 31,
+          "incorrect": 3,
+          "net": 30.25,
+          "blank": 6
+        }
+      },
+      "totalNet": 69.25
+    },
+    {
+      "id": "exam-tyt-std-1-5",
+      "studentId": "std-1",
+      "date": "2026-07-01",
+      "examName": "Kurumsal TYT Denemesi - 5",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 28,
+          "incorrect": 2,
+          "net": 27.5,
+          "blank": 10
+        },
+        "Matematik": {
+          "correct": 39,
+          "incorrect": 2,
+          "net": 38.5,
+          "blank": -1
+        },
+        "Sosyal": {
+          "correct": 9,
+          "incorrect": 1,
+          "net": 8.75,
+          "blank": 10
+        },
+        "Fen": {
+          "correct": 19,
+          "incorrect": 2,
+          "net": 18.5,
+          "blank": -1
+        }
+      },
+      "totalNet": 93.25
+    },
+    {
+      "id": "exam-ayt-std-1-5",
+      "studentId": "std-1",
+      "date": "2026-07-01",
+      "examName": "Kurumsal AYT Denemesi - 5",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 35,
+          "incorrect": 2,
+          "net": 34.5,
+          "blank": 3
+        },
+        "Fen": {
+          "correct": 29,
+          "incorrect": 1,
+          "net": 28.75,
+          "blank": 10
+        }
+      },
+      "totalNet": 63.25
+    },
+    {
+      "id": "exam-tyt-std-1-6",
+      "studentId": "std-1",
+      "date": "2026-07-16",
+      "examName": "Kurumsal TYT Denemesi - 6",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 31,
+          "incorrect": 0,
+          "net": 31,
+          "blank": 9
+        },
+        "Matematik": {
+          "correct": 40,
+          "incorrect": 3,
+          "net": 39.25,
+          "blank": -3
+        },
+        "Sosyal": {
+          "correct": 12,
+          "incorrect": 2,
+          "net": 11.5,
+          "blank": 6
+        },
+        "Fen": {
+          "correct": 20,
+          "incorrect": 0,
+          "net": 20,
+          "blank": 0
+        }
+      },
+      "totalNet": 101.75
+    },
+    {
+      "id": "exam-ayt-std-1-6",
+      "studentId": "std-1",
+      "date": "2026-07-16",
+      "examName": "Kurumsal AYT Denemesi - 6",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 36,
+          "incorrect": 2,
+          "net": 35.5,
+          "blank": 2
+        },
+        "Fen": {
+          "correct": 29,
+          "incorrect": 1,
+          "net": 28.75,
+          "blank": 10
+        }
+      },
+      "totalNet": 64.25
+    },
+    {
+      "id": "exam-tyt-std-2-1",
+      "studentId": "std-2",
+      "date": "2026-05-08",
+      "examName": "Kurumsal TYT Denemesi - 1",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 32,
+          "incorrect": 3,
+          "net": 31.25,
+          "blank": 5
+        },
+        "Matematik": {
+          "correct": 30,
+          "incorrect": 2,
+          "net": 29.5,
+          "blank": 8
+        },
+        "Sosyal": {
+          "correct": 17,
+          "incorrect": 1,
+          "net": 16.75,
+          "blank": 2
+        },
+        "Fen": {
+          "correct": 10,
+          "incorrect": 3,
+          "net": 9.25,
+          "blank": 7
+        }
+      },
+      "totalNet": 86.75
+    },
+    {
+      "id": "exam-ayt-std-2-1",
+      "studentId": "std-2",
+      "date": "2026-05-08",
+      "examName": "Kurumsal AYT Denemesi - 1",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 24,
+          "incorrect": 2,
+          "net": 23.5,
+          "blank": 14
+        },
+        "EdebiyatSosyal1": {
+          "correct": 23,
+          "incorrect": 0,
+          "net": 23,
+          "blank": 17
+        }
+      },
+      "totalNet": 46.5
+    },
+    {
+      "id": "exam-tyt-std-2-2",
+      "studentId": "std-2",
+      "date": "2026-05-21",
+      "examName": "Kurumsal TYT Denemesi - 2",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 31,
+          "incorrect": 2,
+          "net": 30.5,
+          "blank": 7
+        },
+        "Matematik": {
+          "correct": 32,
+          "incorrect": 0,
+          "net": 32,
+          "blank": 8
+        },
+        "Sosyal": {
+          "correct": 18,
+          "incorrect": 2,
+          "net": 17.5,
+          "blank": 0
+        },
+        "Fen": {
+          "correct": 11,
+          "incorrect": 2,
+          "net": 10.5,
+          "blank": 7
+        }
+      },
+      "totalNet": 90.5
+    },
+    {
+      "id": "exam-ayt-std-2-2",
+      "studentId": "std-2",
+      "date": "2026-05-21",
+      "examName": "Kurumsal AYT Denemesi - 2",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 27,
+          "incorrect": 0,
+          "net": 27,
+          "blank": 13
+        },
+        "EdebiyatSosyal1": {
+          "correct": 26,
+          "incorrect": 4,
+          "net": 25,
+          "blank": 10
+        }
+      },
+      "totalNet": 52
+    },
+    {
+      "id": "exam-tyt-std-2-3",
+      "studentId": "std-2",
+      "date": "2026-06-03",
+      "examName": "Kurumsal TYT Denemesi - 3",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 29,
+          "incorrect": 2,
+          "net": 28.5,
+          "blank": 9
+        },
+        "Matematik": {
+          "correct": 30,
+          "incorrect": 0,
+          "net": 30,
+          "blank": 10
+        },
+        "Sosyal": {
+          "correct": 17,
+          "incorrect": 1,
+          "net": 16.75,
+          "blank": 2
+        },
+        "Fen": {
+          "correct": 11,
+          "incorrect": 1,
+          "net": 10.75,
+          "blank": 8
+        }
+      },
+      "totalNet": 86
+    },
+    {
+      "id": "exam-ayt-std-2-3",
+      "studentId": "std-2",
+      "date": "2026-06-03",
+      "examName": "Kurumsal AYT Denemesi - 3",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 25,
+          "incorrect": 1,
+          "net": 24.75,
+          "blank": 14
+        },
+        "EdebiyatSosyal1": {
+          "correct": 25,
+          "incorrect": 2,
+          "net": 24.5,
+          "blank": 13
+        }
+      },
+      "totalNet": 49.25
+    },
+    {
+      "id": "exam-tyt-std-2-4",
+      "studentId": "std-2",
+      "date": "2026-06-19",
+      "examName": "Kurumsal TYT Denemesi - 4",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 32,
+          "incorrect": 4,
+          "net": 31,
+          "blank": 4
+        },
+        "Matematik": {
+          "correct": 34,
+          "incorrect": 0,
+          "net": 34,
+          "blank": 6
+        },
+        "Sosyal": {
+          "correct": 19,
+          "incorrect": 1,
+          "net": 18.75,
+          "blank": 0
+        },
+        "Fen": {
+          "correct": 12,
+          "incorrect": 2,
+          "net": 11.5,
+          "blank": 6
+        }
+      },
+      "totalNet": 95.25
+    },
+    {
+      "id": "exam-ayt-std-2-4",
+      "studentId": "std-2",
+      "date": "2026-06-19",
+      "examName": "Kurumsal AYT Denemesi - 4",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 26,
+          "incorrect": 3,
+          "net": 25.25,
+          "blank": 11
+        },
+        "EdebiyatSosyal1": {
+          "correct": 26,
+          "incorrect": 1,
+          "net": 25.75,
+          "blank": 13
+        }
+      },
+      "totalNet": 51
+    },
+    {
+      "id": "exam-tyt-std-2-5",
+      "studentId": "std-2",
+      "date": "2026-07-01",
+      "examName": "Kurumsal TYT Denemesi - 5",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 32,
+          "incorrect": 0,
+          "net": 32,
+          "blank": 8
+        },
+        "Matematik": {
+          "correct": 33,
+          "incorrect": 0,
+          "net": 33,
+          "blank": 7
+        },
+        "Sosyal": {
+          "correct": 19,
+          "incorrect": 3,
+          "net": 18.25,
+          "blank": -2
+        },
+        "Fen": {
+          "correct": 11,
+          "incorrect": 0,
+          "net": 11,
+          "blank": 9
+        }
+      },
+      "totalNet": 94.25
+    },
+    {
+      "id": "exam-ayt-std-2-5",
+      "studentId": "std-2",
+      "date": "2026-07-01",
+      "examName": "Kurumsal AYT Denemesi - 5",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 34,
+          "incorrect": 3,
+          "net": 33.25,
+          "blank": 3
+        },
+        "EdebiyatSosyal1": {
+          "correct": 33,
+          "incorrect": 1,
+          "net": 32.75,
+          "blank": 6
+        }
+      },
+      "totalNet": 66
+    },
+    {
+      "id": "exam-tyt-std-2-6",
+      "studentId": "std-2",
+      "date": "2026-07-16",
+      "examName": "Kurumsal TYT Denemesi - 6",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 32,
+          "incorrect": 1,
+          "net": 31.75,
+          "blank": 7
+        },
+        "Matematik": {
+          "correct": 32,
+          "incorrect": 0,
+          "net": 32,
+          "blank": 8
+        },
+        "Sosyal": {
+          "correct": 18,
+          "incorrect": 2,
+          "net": 17.5,
+          "blank": 0
+        },
+        "Fen": {
+          "correct": 9,
+          "incorrect": 1,
+          "net": 8.75,
+          "blank": 10
+        }
+      },
+      "totalNet": 90
+    },
+    {
+      "id": "exam-ayt-std-2-6",
+      "studentId": "std-2",
+      "date": "2026-07-16",
+      "examName": "Kurumsal AYT Denemesi - 6",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 29,
+          "incorrect": 2,
+          "net": 28.5,
+          "blank": 9
+        },
+        "EdebiyatSosyal1": {
+          "correct": 28,
+          "incorrect": 2,
+          "net": 27.5,
+          "blank": 10
+        }
+      },
+      "totalNet": 56
+    },
+    {
+      "id": "exam-tyt-std-3-1",
+      "studentId": "std-3",
+      "date": "2026-05-08",
+      "examName": "Kurumsal TYT Denemesi - 1",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 21,
+          "incorrect": 1,
+          "net": 20.75,
+          "blank": 18
+        },
+        "Matematik": {
+          "correct": 28,
+          "incorrect": 4,
+          "net": 27,
+          "blank": 8
+        },
+        "Sosyal": {
+          "correct": 7,
+          "incorrect": 0,
+          "net": 7,
+          "blank": 13
+        },
+        "Fen": {
+          "correct": 13,
+          "incorrect": 0,
+          "net": 13,
+          "blank": 7
+        }
+      },
+      "totalNet": 67.75
+    },
+    {
+      "id": "exam-ayt-std-3-1",
+      "studentId": "std-3",
+      "date": "2026-05-08",
+      "examName": "Kurumsal AYT Denemesi - 1",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 25,
+          "incorrect": 0,
+          "net": 25,
+          "blank": 15
+        },
+        "Fen": {
+          "correct": 20,
+          "incorrect": 4,
+          "net": 19,
+          "blank": 16
+        }
+      },
+      "totalNet": 44
+    },
+    {
+      "id": "exam-tyt-std-3-2",
+      "studentId": "std-3",
+      "date": "2026-05-22",
+      "examName": "Kurumsal TYT Denemesi - 2",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 21,
+          "incorrect": 1,
+          "net": 20.75,
+          "blank": 18
+        },
+        "Matematik": {
+          "correct": 27,
+          "incorrect": 4,
+          "net": 26,
+          "blank": 9
+        },
+        "Sosyal": {
+          "correct": 8,
+          "incorrect": 0,
+          "net": 8,
+          "blank": 12
+        },
+        "Fen": {
+          "correct": 15,
+          "incorrect": 2,
+          "net": 14.5,
+          "blank": 3
+        }
+      },
+      "totalNet": 69.25
+    },
+    {
+      "id": "exam-ayt-std-3-2",
+      "studentId": "std-3",
+      "date": "2026-05-22",
+      "examName": "Kurumsal AYT Denemesi - 2",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 28,
+          "incorrect": 0,
+          "net": 28,
+          "blank": 12
+        },
+        "Fen": {
+          "correct": 23,
+          "incorrect": 1,
+          "net": 22.75,
+          "blank": 16
+        }
+      },
+      "totalNet": 50.75
+    },
+    {
+      "id": "exam-tyt-std-3-3",
+      "studentId": "std-3",
+      "date": "2026-06-03",
+      "examName": "Kurumsal TYT Denemesi - 3",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 22,
+          "incorrect": 0,
+          "net": 22,
+          "blank": 18
+        },
+        "Matematik": {
+          "correct": 31,
+          "incorrect": 1,
+          "net": 30.75,
+          "blank": 8
+        },
+        "Sosyal": {
+          "correct": 8,
+          "incorrect": 1,
+          "net": 7.75,
+          "blank": 11
+        },
+        "Fen": {
+          "correct": 15,
+          "incorrect": 3,
+          "net": 14.25,
+          "blank": 2
+        }
+      },
+      "totalNet": 74.75
+    },
+    {
+      "id": "exam-ayt-std-3-3",
+      "studentId": "std-3",
+      "date": "2026-06-03",
+      "examName": "Kurumsal AYT Denemesi - 3",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 30,
+          "incorrect": 0,
+          "net": 30,
+          "blank": 10
+        },
+        "Fen": {
+          "correct": 25,
+          "incorrect": 1,
+          "net": 24.75,
+          "blank": 14
+        }
+      },
+      "totalNet": 54.75
+    },
+    {
+      "id": "exam-tyt-std-3-4",
+      "studentId": "std-3",
+      "date": "2026-06-18",
+      "examName": "Kurumsal TYT Denemesi - 4",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 26,
+          "incorrect": 0,
+          "net": 26,
+          "blank": 14
+        },
+        "Matematik": {
+          "correct": 34,
+          "incorrect": 0,
+          "net": 34,
+          "blank": 6
+        },
+        "Sosyal": {
+          "correct": 10,
+          "incorrect": 2,
+          "net": 9.5,
+          "blank": 8
+        },
+        "Fen": {
+          "correct": 17,
+          "incorrect": 3,
+          "net": 16.25,
+          "blank": 0
+        }
+      },
+      "totalNet": 85.75
+    },
+    {
+      "id": "exam-ayt-std-3-4",
+      "studentId": "std-3",
+      "date": "2026-06-18",
+      "examName": "Kurumsal AYT Denemesi - 4",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 31,
+          "incorrect": 0,
+          "net": 31,
+          "blank": 9
+        },
+        "Fen": {
+          "correct": 25,
+          "incorrect": 2,
+          "net": 24.5,
+          "blank": 13
+        }
+      },
+      "totalNet": 55.5
+    },
+    {
+      "id": "exam-tyt-std-3-5",
+      "studentId": "std-3",
+      "date": "2026-07-02",
+      "examName": "Kurumsal TYT Denemesi - 5",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 24,
+          "incorrect": 0,
+          "net": 24,
+          "blank": 16
+        },
+        "Matematik": {
+          "correct": 33,
+          "incorrect": 2,
+          "net": 32.5,
+          "blank": 5
+        },
+        "Sosyal": {
+          "correct": 10,
+          "incorrect": 3,
+          "net": 9.25,
+          "blank": 7
+        },
+        "Fen": {
+          "correct": 16,
+          "incorrect": 1,
+          "net": 15.75,
+          "blank": 3
+        }
+      },
+      "totalNet": 81.5
+    },
+    {
+      "id": "exam-ayt-std-3-5",
+      "studentId": "std-3",
+      "date": "2026-07-02",
+      "examName": "Kurumsal AYT Denemesi - 5",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 29,
+          "incorrect": 0,
+          "net": 29,
+          "blank": 11
+        },
+        "Fen": {
+          "correct": 24,
+          "incorrect": 2,
+          "net": 23.5,
+          "blank": 14
+        }
+      },
+      "totalNet": 52.5
+    },
+    {
+      "id": "exam-tyt-std-3-6",
+      "studentId": "std-3",
+      "date": "2026-07-16",
+      "examName": "Kurumsal TYT Denemesi - 6",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 27,
+          "incorrect": 3,
+          "net": 26.25,
+          "blank": 10
+        },
+        "Matematik": {
+          "correct": 36,
+          "incorrect": 3,
+          "net": 35.25,
+          "blank": 1
+        },
+        "Sosyal": {
+          "correct": 9,
+          "incorrect": 3,
+          "net": 8.25,
+          "blank": 8
+        },
+        "Fen": {
+          "correct": 18,
+          "incorrect": 0,
+          "net": 18,
+          "blank": 2
+        }
+      },
+      "totalNet": 87.75
+    },
+    {
+      "id": "exam-ayt-std-3-6",
+      "studentId": "std-3",
+      "date": "2026-07-16",
+      "examName": "Kurumsal AYT Denemesi - 6",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 29,
+          "incorrect": 4,
+          "net": 28,
+          "blank": 7
+        },
+        "Fen": {
+          "correct": 24,
+          "incorrect": 3,
+          "net": 23.25,
+          "blank": 13
+        }
+      },
+      "totalNet": 51.25
+    },
+    {
+      "id": "exam-tyt-std-4-1",
+      "studentId": "std-4",
+      "date": "2026-05-06",
+      "examName": "Kurumsal TYT Denemesi - 1",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 23,
+          "incorrect": 0,
+          "net": 23,
+          "blank": 17
+        },
+        "Matematik": {
+          "correct": 23,
+          "incorrect": 2,
+          "net": 22.5,
+          "blank": 15
+        },
+        "Sosyal": {
+          "correct": 14,
+          "incorrect": 3,
+          "net": 13.25,
+          "blank": 3
+        },
+        "Fen": {
+          "correct": 8,
+          "incorrect": 2,
+          "net": 7.5,
+          "blank": 10
+        }
+      },
+      "totalNet": 66.25
+    },
+    {
+      "id": "exam-ayt-std-4-1",
+      "studentId": "std-4",
+      "date": "2026-05-06",
+      "examName": "Kurumsal AYT Denemesi - 1",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 23,
+          "incorrect": 2,
+          "net": 22.5,
+          "blank": 15
+        },
+        "EdebiyatSosyal1": {
+          "correct": 23,
+          "incorrect": 4,
+          "net": 22,
+          "blank": 13
+        }
+      },
+      "totalNet": 44.5
+    },
+    {
+      "id": "exam-tyt-std-4-2",
+      "studentId": "std-4",
+      "date": "2026-05-23",
+      "examName": "Kurumsal TYT Denemesi - 2",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 26,
+          "incorrect": 3,
+          "net": 25.25,
+          "blank": 11
+        },
+        "Matematik": {
+          "correct": 24,
+          "incorrect": 1,
+          "net": 23.75,
+          "blank": 15
+        },
+        "Sosyal": {
+          "correct": 14,
+          "incorrect": 2,
+          "net": 13.5,
+          "blank": 4
+        },
+        "Fen": {
+          "correct": 7,
+          "incorrect": 1,
+          "net": 6.75,
+          "blank": 12
+        }
+      },
+      "totalNet": 69.25
+    },
+    {
+      "id": "exam-ayt-std-4-2",
+      "studentId": "std-4",
+      "date": "2026-05-23",
+      "examName": "Kurumsal AYT Denemesi - 2",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 24,
+          "incorrect": 2,
+          "net": 23.5,
+          "blank": 14
+        },
+        "EdebiyatSosyal1": {
+          "correct": 23,
+          "incorrect": 3,
+          "net": 22.25,
+          "blank": 14
+        }
+      },
+      "totalNet": 45.75
+    },
+    {
+      "id": "exam-tyt-std-4-3",
+      "studentId": "std-4",
+      "date": "2026-06-06",
+      "examName": "Kurumsal TYT Denemesi - 3",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 28,
+          "incorrect": 1,
+          "net": 27.75,
+          "blank": 11
+        },
+        "Matematik": {
+          "correct": 27,
+          "incorrect": 3,
+          "net": 26.25,
+          "blank": 10
+        },
+        "Sosyal": {
+          "correct": 16,
+          "incorrect": 0,
+          "net": 16,
+          "blank": 4
+        },
+        "Fen": {
+          "correct": 9,
+          "incorrect": 3,
+          "net": 8.25,
+          "blank": 8
+        }
+      },
+      "totalNet": 78.25
+    },
+    {
+      "id": "exam-ayt-std-4-3",
+      "studentId": "std-4",
+      "date": "2026-06-06",
+      "examName": "Kurumsal AYT Denemesi - 3",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 28,
+          "incorrect": 3,
+          "net": 27.25,
+          "blank": 9
+        },
+        "EdebiyatSosyal1": {
+          "correct": 27,
+          "incorrect": 3,
+          "net": 26.25,
+          "blank": 10
+        }
+      },
+      "totalNet": 53.5
+    },
+    {
+      "id": "exam-tyt-std-4-4",
+      "studentId": "std-4",
+      "date": "2026-06-18",
+      "examName": "Kurumsal TYT Denemesi - 4",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 26,
+          "incorrect": 2,
+          "net": 25.5,
+          "blank": 12
+        },
+        "Matematik": {
+          "correct": 27,
+          "incorrect": 0,
+          "net": 27,
+          "blank": 13
+        },
+        "Sosyal": {
+          "correct": 15,
+          "incorrect": 2,
+          "net": 14.5,
+          "blank": 3
+        },
+        "Fen": {
+          "correct": 10,
+          "incorrect": 3,
+          "net": 9.25,
+          "blank": 7
+        }
+      },
+      "totalNet": 76.25
+    },
+    {
+      "id": "exam-ayt-std-4-4",
+      "studentId": "std-4",
+      "date": "2026-06-18",
+      "examName": "Kurumsal AYT Denemesi - 4",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 31,
+          "incorrect": 3,
+          "net": 30.25,
+          "blank": 6
+        },
+        "EdebiyatSosyal1": {
+          "correct": 30,
+          "incorrect": 4,
+          "net": 29,
+          "blank": 6
+        }
+      },
+      "totalNet": 59.25
+    },
+    {
+      "id": "exam-tyt-std-4-5",
+      "studentId": "std-4",
+      "date": "2026-07-02",
+      "examName": "Kurumsal TYT Denemesi - 5",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 31,
+          "incorrect": 2,
+          "net": 30.5,
+          "blank": 7
+        },
+        "Matematik": {
+          "correct": 31,
+          "incorrect": 3,
+          "net": 30.25,
+          "blank": 6
+        },
+        "Sosyal": {
+          "correct": 18,
+          "incorrect": 1,
+          "net": 17.75,
+          "blank": 1
+        },
+        "Fen": {
+          "correct": 9,
+          "incorrect": 1,
+          "net": 8.75,
+          "blank": 10
+        }
+      },
+      "totalNet": 87.25
+    },
+    {
+      "id": "exam-ayt-std-4-5",
+      "studentId": "std-4",
+      "date": "2026-07-02",
+      "examName": "Kurumsal AYT Denemesi - 5",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 28,
+          "incorrect": 4,
+          "net": 27,
+          "blank": 8
+        },
+        "EdebiyatSosyal1": {
+          "correct": 28,
+          "incorrect": 4,
+          "net": 27,
+          "blank": 8
+        }
+      },
+      "totalNet": 54
+    },
+    {
+      "id": "exam-tyt-std-4-6",
+      "studentId": "std-4",
+      "date": "2026-07-18",
+      "examName": "Kurumsal TYT Denemesi - 6",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 32,
+          "incorrect": 4,
+          "net": 31,
+          "blank": 4
+        },
+        "Matematik": {
+          "correct": 31,
+          "incorrect": 4,
+          "net": 30,
+          "blank": 5
+        },
+        "Sosyal": {
+          "correct": 18,
+          "incorrect": 1,
+          "net": 17.75,
+          "blank": 1
+        },
+        "Fen": {
+          "correct": 9,
+          "incorrect": 3,
+          "net": 8.25,
+          "blank": 8
+        }
+      },
+      "totalNet": 87
+    },
+    {
+      "id": "exam-ayt-std-4-6",
+      "studentId": "std-4",
+      "date": "2026-07-18",
+      "examName": "Kurumsal AYT Denemesi - 6",
+      "type": "AYT",
+      "scores": {
+        "Matematik": {
+          "correct": 30,
+          "incorrect": 4,
+          "net": 29,
+          "blank": 6
+        },
+        "EdebiyatSosyal1": {
+          "correct": 29,
+          "incorrect": 4,
+          "net": 28,
+          "blank": 7
+        }
+      },
+      "totalNet": 57
+    },
+    {
+      "id": "exam-tyt-std-5-1",
+      "studentId": "std-5",
+      "date": "2026-05-06",
+      "examName": "Kurumsal TYT Denemesi - 1",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 26,
+          "incorrect": 0,
+          "net": 26,
+          "blank": 14
+        },
+        "Matematik": {
+          "correct": 11,
+          "incorrect": 2,
+          "net": 10.5,
+          "blank": 27
+        },
+        "Sosyal": {
+          "correct": 20,
+          "incorrect": 1,
+          "net": 19.75,
+          "blank": -1
+        },
+        "Fen": {
+          "correct": 3,
+          "incorrect": 1,
+          "net": 2.75,
+          "blank": 16
+        }
+      },
+      "totalNet": 59
+    },
+    {
+      "id": "exam-ayt-std-5-1",
+      "studentId": "std-5",
+      "date": "2026-05-06",
+      "examName": "Kurumsal AYT Denemesi - 1",
+      "type": "AYT",
+      "scores": {
+        "EdebiyatSosyal1": {
+          "correct": 21,
+          "incorrect": 4,
+          "net": 20,
+          "blank": 15
+        },
+        "Sosyal2": {
+          "correct": 20,
+          "incorrect": 2,
+          "net": 19.5,
+          "blank": 18
+        }
+      },
+      "totalNet": 39.5
+    },
+    {
+      "id": "exam-tyt-std-5-2",
+      "studentId": "std-5",
+      "date": "2026-05-22",
+      "examName": "Kurumsal TYT Denemesi - 2",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 27,
+          "incorrect": 1,
+          "net": 26.75,
+          "blank": 12
+        },
+        "Matematik": {
+          "correct": 10,
+          "incorrect": 2,
+          "net": 9.5,
+          "blank": 28
+        },
+        "Sosyal": {
+          "correct": 20,
+          "incorrect": 2,
+          "net": 19.5,
+          "blank": -2
+        },
+        "Fen": {
+          "correct": 6,
+          "incorrect": 1,
+          "net": 5.75,
+          "blank": 13
+        }
+      },
+      "totalNet": 61.5
+    },
+    {
+      "id": "exam-ayt-std-5-2",
+      "studentId": "std-5",
+      "date": "2026-05-22",
+      "examName": "Kurumsal AYT Denemesi - 2",
+      "type": "AYT",
+      "scores": {
+        "EdebiyatSosyal1": {
+          "correct": 24,
+          "incorrect": 3,
+          "net": 23.25,
+          "blank": 13
+        },
+        "Sosyal2": {
+          "correct": 23,
+          "incorrect": 3,
+          "net": 22.25,
+          "blank": 14
+        }
+      },
+      "totalNet": 45.5
+    },
+    {
+      "id": "exam-tyt-std-5-3",
+      "studentId": "std-5",
+      "date": "2026-06-06",
+      "examName": "Kurumsal TYT Denemesi - 3",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 27,
+          "incorrect": 4,
+          "net": 26,
+          "blank": 9
+        },
+        "Matematik": {
+          "correct": 12,
+          "incorrect": 4,
+          "net": 11,
+          "blank": 24
+        },
+        "Sosyal": {
+          "correct": 20,
+          "incorrect": 1,
+          "net": 19.75,
+          "blank": -1
+        },
+        "Fen": {
+          "correct": 5,
+          "incorrect": 1,
+          "net": 4.75,
+          "blank": 14
+        }
+      },
+      "totalNet": 61.5
+    },
+    {
+      "id": "exam-ayt-std-5-3",
+      "studentId": "std-5",
+      "date": "2026-06-06",
+      "examName": "Kurumsal AYT Denemesi - 3",
+      "type": "AYT",
+      "scores": {
+        "EdebiyatSosyal1": {
+          "correct": 24,
+          "incorrect": 3,
+          "net": 23.25,
+          "blank": 13
+        },
+        "Sosyal2": {
+          "correct": 24,
+          "incorrect": 3,
+          "net": 23.25,
+          "blank": 13
+        }
+      },
+      "totalNet": 46.5
+    },
+    {
+      "id": "exam-tyt-std-5-4",
+      "studentId": "std-5",
+      "date": "2026-06-18",
+      "examName": "Kurumsal TYT Denemesi - 4",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 27,
+          "incorrect": 1,
+          "net": 26.75,
+          "blank": 12
+        },
+        "Matematik": {
+          "correct": 12,
+          "incorrect": 3,
+          "net": 11.25,
+          "blank": 25
+        },
+        "Sosyal": {
+          "correct": 20,
+          "incorrect": 3,
+          "net": 19.25,
+          "blank": -3
+        },
+        "Fen": {
+          "correct": 5,
+          "incorrect": 1,
+          "net": 4.75,
+          "blank": 14
+        }
+      },
+      "totalNet": 62
+    },
+    {
+      "id": "exam-ayt-std-5-4",
+      "studentId": "std-5",
+      "date": "2026-06-18",
+      "examName": "Kurumsal AYT Denemesi - 4",
+      "type": "AYT",
+      "scores": {
+        "EdebiyatSosyal1": {
+          "correct": 29,
+          "incorrect": 4,
+          "net": 28,
+          "blank": 7
+        },
+        "Sosyal2": {
+          "correct": 28,
+          "incorrect": 2,
+          "net": 27.5,
+          "blank": 10
+        }
+      },
+      "totalNet": 55.5
+    },
+    {
+      "id": "exam-tyt-std-5-5",
+      "studentId": "std-5",
+      "date": "2026-07-02",
+      "examName": "Kurumsal TYT Denemesi - 5",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 28,
+          "incorrect": 4,
+          "net": 27,
+          "blank": 8
+        },
+        "Matematik": {
+          "correct": 12,
+          "incorrect": 0,
+          "net": 12,
+          "blank": 28
+        },
+        "Sosyal": {
+          "correct": 20,
+          "incorrect": 0,
+          "net": 20,
+          "blank": 0
+        },
+        "Fen": {
+          "correct": 5,
+          "incorrect": 1,
+          "net": 4.75,
+          "blank": 14
+        }
+      },
+      "totalNet": 63.75
+    },
+    {
+      "id": "exam-ayt-std-5-5",
+      "studentId": "std-5",
+      "date": "2026-07-02",
+      "examName": "Kurumsal AYT Denemesi - 5",
+      "type": "AYT",
+      "scores": {
+        "EdebiyatSosyal1": {
+          "correct": 24,
+          "incorrect": 4,
+          "net": 23,
+          "blank": 12
+        },
+        "Sosyal2": {
+          "correct": 24,
+          "incorrect": 4,
+          "net": 23,
+          "blank": 12
+        }
+      },
+      "totalNet": 46
+    },
+    {
+      "id": "exam-tyt-std-5-6",
+      "studentId": "std-5",
+      "date": "2026-07-18",
+      "examName": "Kurumsal TYT Denemesi - 6",
+      "type": "TYT",
+      "scores": {
+        "Turkce": {
+          "correct": 28,
+          "incorrect": 1,
+          "net": 27.75,
+          "blank": 11
+        },
+        "Matematik": {
+          "correct": 12,
+          "incorrect": 2,
+          "net": 11.5,
+          "blank": 26
+        },
+        "Sosyal": {
+          "correct": 20,
+          "incorrect": 0,
+          "net": 20,
+          "blank": 0
+        },
+        "Fen": {
+          "correct": 5,
+          "incorrect": 1,
+          "net": 4.75,
+          "blank": 14
+        }
+      },
+      "totalNet": 64
+    },
+    {
+      "id": "exam-ayt-std-5-6",
+      "studentId": "std-5",
+      "date": "2026-07-18",
+      "examName": "Kurumsal AYT Denemesi - 6",
+      "type": "AYT",
+      "scores": {
+        "EdebiyatSosyal1": {
+          "correct": 30,
+          "incorrect": 1,
+          "net": 29.75,
+          "blank": 9
+        },
+        "Sosyal2": {
+          "correct": 30,
+          "incorrect": 3,
+          "net": 29.25,
+          "blank": 7
+        }
+      },
+      "totalNet": 59
+    }
+  ],
+  "subjectProficiencies": {
+    "std-1": [
+      {
+        "subjectId": "mat-temel",
+        "subjectName": "Temel Kavramlar",
+        "category": "Matematik",
+        "status": "YETERLI",
+        "lastTested": "2026-07-02",
+        "accuracy": 79
+      },
+      {
+        "subjectId": "mat-fonksiyon",
+        "subjectName": "Fonksiyonlar",
+        "category": "Matematik",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "mat-limit",
+        "subjectName": "Limit ve Süreklilik",
+        "category": "Matematik",
+        "status": "YETERLI",
+        "lastTested": "2026-06-30",
+        "accuracy": 79
+      },
+      {
+        "subjectId": "mat-türev",
+        "subjectName": "Türev",
+        "category": "Matematik",
+        "status": "YETERLI",
+        "lastTested": "2026-07-14",
+        "accuracy": 84
+      },
+      {
+        "subjectId": "mat-integral",
+        "subjectName": "İntegral",
+        "category": "Matematik",
+        "status": "YETERLI",
+        "lastTested": "2026-07-07",
+        "accuracy": 79
+      },
+      {
+        "subjectId": "fiz-vektor",
+        "subjectName": "Vektörler ve Kuvvet",
+        "category": "Fizik",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-11",
+        "accuracy": 60
+      },
+      {
+        "subjectId": "fiz-optik",
+        "subjectName": "Optik",
+        "category": "Fizik",
+        "status": "YETERLI",
+        "lastTested": "2026-07-11",
+        "accuracy": 85
+      },
+      {
+        "subjectId": "fiz-elektrik",
+        "subjectName": "Elektriksel Kuvvet ve Alan",
+        "category": "Fizik",
+        "status": "YETERLI",
+        "lastTested": "2026-07-03",
+        "accuracy": 90
+      },
+      {
+        "subjectId": "fiz-modern",
+        "subjectName": "Modern Fizik",
+        "category": "Fizik",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-15",
+        "accuracy": 72
+      },
+      {
+        "subjectId": "kim-atom",
+        "subjectName": "Atom ve Periyodik Sistem",
+        "category": "Kimya",
+        "status": "YETERLI",
+        "lastTested": "2026-07-14",
+        "accuracy": 85
+      },
+      {
+        "subjectId": "kim-gazlar",
+        "subjectName": "Gazlar",
+        "category": "Kimya",
+        "status": "YETERLI",
+        "lastTested": "2026-07-13",
+        "accuracy": 98
+      },
+      {
+        "subjectId": "kim-organik",
+        "subjectName": "Organik Kimya",
+        "category": "Kimya",
+        "status": "YETERLI",
+        "lastTested": "2026-06-28",
+        "accuracy": 97
+      },
+      {
+        "subjectId": "biy-hucre",
+        "subjectName": "Hücre ve Organeller",
+        "category": "Biyoloji",
+        "status": "YETERLI",
+        "lastTested": "2026-07-06",
+        "accuracy": 76
+      },
+      {
+        "subjectId": "biy-sistemler",
+        "subjectName": "İnsan Fizyolojisi (Sistemler)",
+        "category": "Biyoloji",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-09",
+        "accuracy": 66
+      },
+      {
+        "subjectId": "biy-genetik",
+        "subjectName": "Genden Proteine",
+        "category": "Biyoloji",
+        "status": "YETERLI",
+        "lastTested": "2026-07-13",
+        "accuracy": 83
+      }
+    ],
+    "std-2": [
+      {
+        "subjectId": "mat-temel",
+        "subjectName": "Temel Kavramlar",
+        "category": "Matematik",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-14",
+        "accuracy": 67
+      },
+      {
+        "subjectId": "mat-fonksiyon",
+        "subjectName": "Fonksiyonlar",
+        "category": "Matematik",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "mat-limit",
+        "subjectName": "Limit ve Süreklilik",
+        "category": "Matematik",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-02",
+        "accuracy": 56
+      },
+      {
+        "subjectId": "mat-türev",
+        "subjectName": "Türev",
+        "category": "Matematik",
+        "status": "YETERLI",
+        "lastTested": "2026-06-28",
+        "accuracy": 89
+      },
+      {
+        "subjectId": "edb-siir",
+        "subjectName": "Şiir Bilgisi",
+        "category": "Edebiyat",
+        "status": "YETERLI",
+        "lastTested": "2026-06-28",
+        "accuracy": 89
+      },
+      {
+        "subjectId": "edb-donemler",
+        "subjectName": "Edebi Dönemler",
+        "category": "Edebiyat",
+        "status": "YETERLI",
+        "lastTested": "2026-06-30",
+        "accuracy": 92
+      },
+      {
+        "subjectId": "edb-divan",
+        "subjectName": "Divan Edebiyatı",
+        "category": "Edebiyat",
+        "status": "YETERLI",
+        "lastTested": "2026-07-09",
+        "accuracy": 80
+      },
+      {
+        "subjectId": "edb-cumhuriyet",
+        "subjectName": "Cumhuriyet Dönemi",
+        "category": "Edebiyat",
+        "status": "YETERLI",
+        "lastTested": "2026-06-29",
+        "accuracy": 79
+      },
+      {
+        "subjectId": "tar-tarih",
+        "subjectName": "Tarih Bilimine Giriş",
+        "category": "Tarih",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-16",
+        "accuracy": 57
+      },
+      {
+        "subjectId": "tar-islam",
+        "subjectName": "İslam Tarihi",
+        "category": "Tarih",
+        "status": "YETERLI",
+        "lastTested": "2026-07-04",
+        "accuracy": 84
+      },
+      {
+        "subjectId": "tar-inkilap",
+        "subjectName": "Atatürk İlkeleri ve İnkılap Tarihi",
+        "category": "Tarih",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "cogr-nufus",
+        "subjectName": "Nüfus ve Göç",
+        "category": "Coğrafya",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "cogr-iklim",
+        "subjectName": "İklim Bilgisi",
+        "category": "Coğrafya",
+        "status": "OLCULMEDI"
+      }
+    ],
+    "std-3": [
+      {
+        "subjectId": "mat-temel",
+        "subjectName": "Temel Kavramlar",
+        "category": "Matematik",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-02",
+        "accuracy": 65
+      },
+      {
+        "subjectId": "mat-fonksiyon",
+        "subjectName": "Fonksiyonlar",
+        "category": "Matematik",
+        "status": "YETERLI",
+        "lastTested": "2026-07-14",
+        "accuracy": 95
+      },
+      {
+        "subjectId": "mat-limit",
+        "subjectName": "Limit ve Süreklilik",
+        "category": "Matematik",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-06",
+        "accuracy": 54
+      },
+      {
+        "subjectId": "mat-türev",
+        "subjectName": "Türev",
+        "category": "Matematik",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-16",
+        "accuracy": 57
+      },
+      {
+        "subjectId": "mat-integral",
+        "subjectName": "İntegral",
+        "category": "Matematik",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "fiz-vektor",
+        "subjectName": "Vektörler ve Kuvvet",
+        "category": "Fizik",
+        "status": "KRITIK",
+        "lastTested": "2026-07-03",
+        "accuracy": 48
+      },
+      {
+        "subjectId": "fiz-optik",
+        "subjectName": "Optik",
+        "category": "Fizik",
+        "status": "KRITIK",
+        "lastTested": "2026-06-28",
+        "accuracy": 29
+      },
+      {
+        "subjectId": "fiz-elektrik",
+        "subjectName": "Elektriksel Kuvvet ve Alan",
+        "category": "Fizik",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "fiz-modern",
+        "subjectName": "Modern Fizik",
+        "category": "Fizik",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-09",
+        "accuracy": 69
+      },
+      {
+        "subjectId": "kim-atom",
+        "subjectName": "Atom ve Periyodik Sistem",
+        "category": "Kimya",
+        "status": "YETERLI",
+        "lastTested": "2026-07-15",
+        "accuracy": 82
+      },
+      {
+        "subjectId": "kim-gazlar",
+        "subjectName": "Gazlar",
+        "category": "Kimya",
+        "status": "KRITIK",
+        "lastTested": "2026-06-28",
+        "accuracy": 42
+      },
+      {
+        "subjectId": "kim-organik",
+        "subjectName": "Organik Kimya",
+        "category": "Kimya",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "biy-hucre",
+        "subjectName": "Hücre ve Organeller",
+        "category": "Biyoloji",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-12",
+        "accuracy": 62
+      },
+      {
+        "subjectId": "biy-sistemler",
+        "subjectName": "İnsan Fizyolojisi (Sistemler)",
+        "category": "Biyoloji",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-09",
+        "accuracy": 51
+      },
+      {
+        "subjectId": "biy-genetik",
+        "subjectName": "Genden Proteine",
+        "category": "Biyoloji",
+        "status": "KRITIK",
+        "lastTested": "2026-07-01",
+        "accuracy": 30
+      }
+    ],
+    "std-4": [
+      {
+        "subjectId": "mat-temel",
+        "subjectName": "Temel Kavramlar",
+        "category": "Matematik",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "mat-fonksiyon",
+        "subjectName": "Fonksiyonlar",
+        "category": "Matematik",
+        "status": "YETERLI",
+        "lastTested": "2026-07-06",
+        "accuracy": 79
+      },
+      {
+        "subjectId": "mat-limit",
+        "subjectName": "Limit ve Süreklilik",
+        "category": "Matematik",
+        "status": "YETERLI",
+        "lastTested": "2026-07-05",
+        "accuracy": 78
+      },
+      {
+        "subjectId": "mat-türev",
+        "subjectName": "Türev",
+        "category": "Matematik",
+        "status": "KRITIK",
+        "lastTested": "2026-07-13",
+        "accuracy": 23
+      },
+      {
+        "subjectId": "edb-siir",
+        "subjectName": "Şiir Bilgisi",
+        "category": "Edebiyat",
+        "status": "KRITIK",
+        "lastTested": "2026-07-05",
+        "accuracy": 45
+      },
+      {
+        "subjectId": "edb-donemler",
+        "subjectName": "Edebi Dönemler",
+        "category": "Edebiyat",
+        "status": "KRITIK",
+        "lastTested": "2026-07-16",
+        "accuracy": 30
+      },
+      {
+        "subjectId": "edb-divan",
+        "subjectName": "Divan Edebiyatı",
+        "category": "Edebiyat",
+        "status": "YETERLI",
+        "lastTested": "2026-07-07",
+        "accuracy": 96
+      },
+      {
+        "subjectId": "edb-cumhuriyet",
+        "subjectName": "Cumhuriyet Dönemi",
+        "category": "Edebiyat",
+        "status": "KRITIK",
+        "lastTested": "2026-07-14",
+        "accuracy": 21
+      },
+      {
+        "subjectId": "tar-tarih",
+        "subjectName": "Tarih Bilimine Giriş",
+        "category": "Tarih",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "tar-islam",
+        "subjectName": "İslam Tarihi",
+        "category": "Tarih",
+        "status": "GELISIYOR",
+        "lastTested": "2026-06-30",
+        "accuracy": 73
+      },
+      {
+        "subjectId": "tar-inkilap",
+        "subjectName": "Atatürk İlkeleri ve İnkılap Tarihi",
+        "category": "Tarih",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "cogr-nufus",
+        "subjectName": "Nüfus ve Göç",
+        "category": "Coğrafya",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "cogr-iklim",
+        "subjectName": "İklim Bilgisi",
+        "category": "Coğrafya",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-14",
+        "accuracy": 56
+      }
+    ],
+    "std-5": [
+      {
+        "subjectId": "edb-siir",
+        "subjectName": "Şiir Bilgisi",
+        "category": "Edebiyat",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-05",
+        "accuracy": 55
+      },
+      {
+        "subjectId": "edb-donemler",
+        "subjectName": "Edebi Dönemler",
+        "category": "Edebiyat",
+        "status": "YETERLI",
+        "lastTested": "2026-06-28",
+        "accuracy": 84
+      },
+      {
+        "subjectId": "edb-divan",
+        "subjectName": "Divan Edebiyatı",
+        "category": "Edebiyat",
+        "status": "YETERLI",
+        "lastTested": "2026-07-08",
+        "accuracy": 85
+      },
+      {
+        "subjectId": "edb-cumhuriyet",
+        "subjectName": "Cumhuriyet Dönemi",
+        "category": "Edebiyat",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "tar-tarih",
+        "subjectName": "Tarih Bilimine Giriş",
+        "category": "Tarih",
+        "status": "OLCULMEDI"
+      },
+      {
+        "subjectId": "tar-islam",
+        "subjectName": "İslam Tarihi",
+        "category": "Tarih",
+        "status": "KRITIK",
+        "lastTested": "2026-07-05",
+        "accuracy": 28
+      },
+      {
+        "subjectId": "tar-osmanli",
+        "subjectName": "Osmanlı Tarihi",
+        "category": "Tarih",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-15",
+        "accuracy": 72
+      },
+      {
+        "subjectId": "tar-inkilap",
+        "subjectName": "Atatürk İlkeleri ve İnkılap Tarihi",
+        "category": "Tarih",
+        "status": "KRITIK",
+        "lastTested": "2026-07-16",
+        "accuracy": 23
+      },
+      {
+        "subjectId": "cogr-iklim",
+        "subjectName": "İklim Bilgisi",
+        "category": "Coğrafya",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-01",
+        "accuracy": 63
+      },
+      {
+        "subjectId": "cogr-cevre",
+        "subjectName": "Çevre ve Toplum",
+        "category": "Coğrafya",
+        "status": "GELISIYOR",
+        "lastTested": "2026-07-04",
+        "accuracy": 68
+      },
+      {
+        "subjectId": "fel-felsefe",
+        "subjectName": "Felsefeyle Tanışma",
+        "category": "Felsefe",
+        "status": "YETERLI",
+        "lastTested": "2026-06-30",
+        "accuracy": 80
+      },
+      {
+        "subjectId": "fel-mantik",
+        "subjectName": "Mantığa Giriş",
+        "category": "Felsefe",
+        "status": "KRITIK",
+        "lastTested": "2026-06-29",
+        "accuracy": 46
+      },
+      {
+        "subjectId": "din-inanclar",
+        "subjectName": "İnanç ve İbadet",
+        "category": "Din Kültürü",
+        "status": "OLCULMEDI"
+      }
+    ]
+  },
+  "weeklyMeetings": [
+    {
+      "id": "meet-std-1-1",
+      "studentId": "std-1",
+      "date": "2026-05-30",
+      "notes": "Genel durum iyi. Limit konusundaki eksikler tamamlandı, türeve başlandı. Haftalık soru hedefi artırıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 800,
+      "solvedQuestions": 664
+    },
+    {
+      "id": "meet-std-1-2",
+      "studentId": "std-1",
+      "date": "2026-06-06",
+      "notes": "Deneme analizi yapıldı. Matematikteki dikkat hataları üzerinde duruldu. Süre yönetimi planı revize edildi.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1200,
+      "solvedQuestions": 1188
+    },
+    {
+      "id": "meet-std-1-3",
+      "studentId": "std-1",
+      "date": "2026-06-13",
+      "notes": "Geometriye biraz daha vakit ayrılması gerekiyor. Programda paragraf çözümü artırıldı. Motivasyon yüksek.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1000,
+      "solvedQuestions": 810
+    },
+    {
+      "id": "meet-std-1-4",
+      "studentId": "std-1",
+      "date": "2026-06-20",
+      "notes": "Fizikte modern fizik ünitesi çalışıldı. Kimya organik kimya tekrarı planlandı. Çalışma saatleri stabil.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 900,
+      "solvedQuestions": 675
+    },
+    {
+      "id": "meet-std-1-5",
+      "studentId": "std-1",
+      "date": "2026-06-27",
+      "notes": "Haftalık soru çözme hedefinin gerisinde kalındı. Hastalık sebebiyle 2 gün aksama olmuş. Telafi planı yapıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1000,
+      "solvedQuestions": 900
+    },
+    {
+      "id": "meet-std-1-6",
+      "studentId": "std-1",
+      "date": "2026-07-04",
+      "notes": "AYT netlerindeki yükseliş devam ediyor. Türkçe dil bilgisinde eksik olan konular listelendi ve ödev verildi.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1000,
+      "solvedQuestions": 1090
+    },
+    {
+      "id": "meet-std-1-7",
+      "studentId": "std-1",
+      "date": "2026-07-11",
+      "notes": "Sosyal denemelerine ağırlık vermeye karar verdik. Haftalık 3 adet TYT branş denemesi çözülecek.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1400,
+      "solvedQuestions": 1540
+    },
+    {
+      "id": "meet-std-1-8",
+      "studentId": "std-1",
+      "date": "2026-07-18",
+      "notes": "Genel tekrar haftası. Son 10 yılın çıkmış sorularının çözümü yapıldı. Sınav kaygısı ve nefes egzersizi çalışıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 900,
+      "solvedQuestions": 729
+    },
+    {
+      "id": "meet-std-2-1",
+      "studentId": "std-2",
+      "date": "2026-05-30",
+      "notes": "Genel durum iyi. Limit konusundaki eksikler tamamlandı, türeve başlandı. Haftalık soru hedefi artırıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1100,
+      "solvedQuestions": 891
+    },
+    {
+      "id": "meet-std-2-2",
+      "studentId": "std-2",
+      "date": "2026-06-06",
+      "notes": "Deneme analizi yapıldı. Matematikteki dikkat hataları üzerinde duruldu. Süre yönetimi planı revize edildi.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1300,
+      "solvedQuestions": 1300
+    },
+    {
+      "id": "meet-std-2-3",
+      "studentId": "std-2",
+      "date": "2026-06-13",
+      "notes": "Geometriye biraz daha vakit ayrılması gerekiyor. Programda paragraf çözümü artırıldı. Motivasyon yüksek.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1500,
+      "solvedQuestions": 1200
+    },
+    {
+      "id": "meet-std-2-4",
+      "studentId": "std-2",
+      "date": "2026-06-20",
+      "notes": "Fizikte modern fizik ünitesi çalışıldı. Kimya organik kimya tekrarı planlandı. Çalışma saatleri stabil.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1200,
+      "solvedQuestions": 900
+    },
+    {
+      "id": "meet-std-2-5",
+      "studentId": "std-2",
+      "date": "2026-06-27",
+      "notes": "Haftalık soru çözme hedefinin gerisinde kalındı. Hastalık sebebiyle 2 gün aksama olmuş. Telafi planı yapıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1200,
+      "solvedQuestions": 1212
+    },
+    {
+      "id": "meet-std-2-6",
+      "studentId": "std-2",
+      "date": "2026-07-04",
+      "notes": "AYT netlerindeki yükseliş devam ediyor. Türkçe dil bilgisinde eksik olan konular listelendi ve ödev verildi.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1100,
+      "solvedQuestions": 1067
+    },
+    {
+      "id": "meet-std-2-7",
+      "studentId": "std-2",
+      "date": "2026-07-11",
+      "notes": "Sosyal denemelerine ağırlık vermeye karar verdik. Haftalık 3 adet TYT branş denemesi çözülecek.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 900,
+      "solvedQuestions": 765
+    },
+    {
+      "id": "meet-std-2-8",
+      "studentId": "std-2",
+      "date": "2026-07-18",
+      "notes": "Genel tekrar haftası. Son 10 yılın çıkmış sorularının çözümü yapıldı. Sınav kaygısı ve nefes egzersizi çalışıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 800,
+      "solvedQuestions": 832
+    },
+    {
+      "id": "meet-std-3-1",
+      "studentId": "std-3",
+      "date": "2026-05-30",
+      "notes": "Genel durum iyi. Limit konusundaki eksikler tamamlandı, türeve başlandı. Haftalık soru hedefi artırıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 900,
+      "solvedQuestions": 684
+    },
+    {
+      "id": "meet-std-3-2",
+      "studentId": "std-3",
+      "date": "2026-06-06",
+      "notes": "Deneme analizi yapıldı. Matematikteki dikkat hataları üzerinde duruldu. Süre yönetimi planı revize edildi.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 800,
+      "solvedQuestions": 600
+    },
+    {
+      "id": "meet-std-3-3",
+      "studentId": "std-3",
+      "date": "2026-06-13",
+      "notes": "Geometriye biraz daha vakit ayrılması gerekiyor. Programda paragraf çözümü artırıldı. Motivasyon yüksek.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 900,
+      "solvedQuestions": 693
+    },
+    {
+      "id": "meet-std-3-4",
+      "studentId": "std-3",
+      "date": "2026-06-20",
+      "notes": "Fizikte modern fizik ünitesi çalışıldı. Kimya organik kimya tekrarı planlandı. Çalışma saatleri stabil.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1100,
+      "solvedQuestions": 1056
+    },
+    {
+      "id": "meet-std-3-5",
+      "studentId": "std-3",
+      "date": "2026-06-27",
+      "notes": "Haftalık soru çözme hedefinin gerisinde kalındı. Hastalık sebebiyle 2 gün aksama olmuş. Telafi planı yapıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1100,
+      "solvedQuestions": 858
+    },
+    {
+      "id": "meet-std-3-6",
+      "studentId": "std-3",
+      "date": "2026-07-04",
+      "notes": "AYT netlerindeki yükseliş devam ediyor. Türkçe dil bilgisinde eksik olan konular listelendi ve ödev verildi.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1100,
+      "solvedQuestions": 836
+    },
+    {
+      "id": "meet-std-3-7",
+      "studentId": "std-3",
+      "date": "2026-07-11",
+      "notes": "Sosyal denemelerine ağırlık vermeye karar verdik. Haftalık 3 adet TYT branş denemesi çözülecek.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 800,
+      "solvedQuestions": 832
+    },
+    {
+      "id": "meet-std-3-8",
+      "studentId": "std-3",
+      "date": "2026-07-18",
+      "notes": "Genel tekrar haftası. Son 10 yılın çıkmış sorularının çözümü yapıldı. Sınav kaygısı ve nefes egzersizi çalışıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1200,
+      "solvedQuestions": 1272
+    },
+    {
+      "id": "meet-std-4-1",
+      "studentId": "std-4",
+      "date": "2026-05-30",
+      "notes": "Genel durum iyi. Limit konusundaki eksikler tamamlandı, türeve başlandı. Haftalık soru hedefi artırıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1100,
+      "solvedQuestions": 957
+    },
+    {
+      "id": "meet-std-4-2",
+      "studentId": "std-4",
+      "date": "2026-06-06",
+      "notes": "Deneme analizi yapıldı. Matematikteki dikkat hataları üzerinde duruldu. Süre yönetimi planı revize edildi.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1100,
+      "solvedQuestions": 902
+    },
+    {
+      "id": "meet-std-4-3",
+      "studentId": "std-4",
+      "date": "2026-06-13",
+      "notes": "Geometriye biraz daha vakit ayrılması gerekiyor. Programda paragraf çözümü artırıldı. Motivasyon yüksek.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 900,
+      "solvedQuestions": 990
+    },
+    {
+      "id": "meet-std-4-4",
+      "studentId": "std-4",
+      "date": "2026-06-20",
+      "notes": "Fizikte modern fizik ünitesi çalışıldı. Kimya organik kimya tekrarı planlandı. Çalışma saatleri stabil.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1200,
+      "solvedQuestions": 1152
+    },
+    {
+      "id": "meet-std-4-5",
+      "studentId": "std-4",
+      "date": "2026-06-27",
+      "notes": "Haftalık soru çözme hedefinin gerisinde kalındı. Hastalık sebebiyle 2 gün aksama olmuş. Telafi planı yapıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1500,
+      "solvedQuestions": 1170
+    },
+    {
+      "id": "meet-std-4-6",
+      "studentId": "std-4",
+      "date": "2026-07-04",
+      "notes": "AYT netlerindeki yükseliş devam ediyor. Türkçe dil bilgisinde eksik olan konular listelendi ve ödev verildi.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 800,
+      "solvedQuestions": 728
+    },
+    {
+      "id": "meet-std-4-7",
+      "studentId": "std-4",
+      "date": "2026-07-11",
+      "notes": "Sosyal denemelerine ağırlık vermeye karar verdik. Haftalık 3 adet TYT branş denemesi çözülecek.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1400,
+      "solvedQuestions": 1204
+    },
+    {
+      "id": "meet-std-4-8",
+      "studentId": "std-4",
+      "date": "2026-07-18",
+      "notes": "Genel tekrar haftası. Son 10 yılın çıkmış sorularının çözümü yapıldı. Sınav kaygısı ve nefes egzersizi çalışıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 800,
+      "solvedQuestions": 760
+    },
+    {
+      "id": "meet-std-5-1",
+      "studentId": "std-5",
+      "date": "2026-05-30",
+      "notes": "Genel durum iyi. Limit konusundaki eksikler tamamlandı, türeve başlandı. Haftalık soru hedefi artırıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1500,
+      "solvedQuestions": 1170
+    },
+    {
+      "id": "meet-std-5-2",
+      "studentId": "std-5",
+      "date": "2026-06-06",
+      "notes": "Deneme analizi yapıldı. Matematikteki dikkat hataları üzerinde duruldu. Süre yönetimi planı revize edildi.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1500,
+      "solvedQuestions": 1125
+    },
+    {
+      "id": "meet-std-5-3",
+      "studentId": "std-5",
+      "date": "2026-06-13",
+      "notes": "Geometriye biraz daha vakit ayrılması gerekiyor. Programda paragraf çözümü artırıldı. Motivasyon yüksek.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1000,
+      "solvedQuestions": 1090
+    },
+    {
+      "id": "meet-std-5-4",
+      "studentId": "std-5",
+      "date": "2026-06-20",
+      "notes": "Fizikte modern fizik ünitesi çalışıldı. Kimya organik kimya tekrarı planlandı. Çalışma saatleri stabil.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1300,
+      "solvedQuestions": 1131
+    },
+    {
+      "id": "meet-std-5-5",
+      "studentId": "std-5",
+      "date": "2026-06-27",
+      "notes": "Haftalık soru çözme hedefinin gerisinde kalındı. Hastalık sebebiyle 2 gün aksama olmuş. Telafi planı yapıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1400,
+      "solvedQuestions": 1162
+    },
+    {
+      "id": "meet-std-5-6",
+      "studentId": "std-5",
+      "date": "2026-07-04",
+      "notes": "AYT netlerindeki yükseliş devam ediyor. Türkçe dil bilgisinde eksik olan konular listelendi ve ödev verildi.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1100,
+      "solvedQuestions": 990
+    },
+    {
+      "id": "meet-std-5-7",
+      "studentId": "std-5",
+      "date": "2026-07-11",
+      "notes": "Sosyal denemelerine ağırlık vermeye karar verdik. Haftalık 3 adet TYT branş denemesi çözülecek.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1300,
+      "solvedQuestions": 1092
+    },
+    {
+      "id": "meet-std-5-8",
+      "studentId": "std-5",
+      "date": "2026-07-18",
+      "notes": "Genel tekrar haftası. Son 10 yılın çıkmış sorularının çözümü yapıldı. Sınav kaygısı ve nefes egzersizi çalışıldı.",
+      "attendance": "KATILDI",
+      "weeklyTargetQuestions": 1200,
+      "solvedQuestions": 1164
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-std-1-0",
+      "studentId": "std-1",
+      "title": "Türev Konu Anlatımı ve Soru Çözümü",
+      "description": "Fasikülden türev 1. ve 2. ünite bitecek, en az 300 soru çözülecek.",
+      "dueDate": "2026-07-27",
+      "status": "YAPILACAK"
+    },
+    {
+      "id": "task-std-1-1",
+      "studentId": "std-1",
+      "title": "Kimya Organik Tekrarı",
+      "description": "Organik kimyadaki fonksiyonel gruplar özet çıkarılacak.",
+      "dueDate": "2026-07-28",
+      "status": "TAMAMLANDI"
+    },
+    {
+      "id": "task-std-1-2",
+      "studentId": "std-1",
+      "title": "Edebiyat Cumhuriyet Dönemi Yazar Eşleştirmesi",
+      "description": "Cumhuriyet dönemi tiyatro yazarları hafıza kartları çalışılacak.",
+      "dueDate": "2026-07-23",
+      "status": "YAPILACAK"
+    },
+    {
+      "id": "task-std-1-3",
+      "studentId": "std-1",
+      "title": "Haftalık 2 Adet TYT Matematik Branş Denemesi",
+      "description": "Süre tutularak çözülecek ve analizleri koça gönderilecek.",
+      "dueDate": "2026-07-23",
+      "status": "DEVAM_EDIYOR"
+    },
+    {
+      "id": "task-std-1-4",
+      "studentId": "std-1",
+      "title": "Fizik Optik Ünitesi Bitirme",
+      "description": "Optik konusunda kırılma ve mercekler eksikleri kapatılacak.",
+      "dueDate": "2026-07-24",
+      "status": "TAMAMLANDI"
+    },
+    {
+      "id": "task-std-2-0",
+      "studentId": "std-2",
+      "title": "Türev Konu Anlatımı ve Soru Çözümü",
+      "description": "Fasikülden türev 1. ve 2. ünite bitecek, en az 300 soru çözülecek.",
+      "dueDate": "2026-07-24",
+      "status": "DEVAM_EDIYOR"
+    },
+    {
+      "id": "task-std-2-1",
+      "studentId": "std-2",
+      "title": "Kimya Organik Tekrarı",
+      "description": "Organik kimyadaki fonksiyonel gruplar özet çıkarılacak.",
+      "dueDate": "2026-07-22",
+      "status": "YAPILACAK"
+    },
+    {
+      "id": "task-std-2-2",
+      "studentId": "std-2",
+      "title": "Edebiyat Cumhuriyet Dönemi Yazar Eşleştirmesi",
+      "description": "Cumhuriyet dönemi tiyatro yazarları hafıza kartları çalışılacak.",
+      "dueDate": "2026-07-27",
+      "status": "DEVAM_EDIYOR"
+    },
+    {
+      "id": "task-std-2-3",
+      "studentId": "std-2",
+      "title": "Haftalık 2 Adet TYT Matematik Branş Denemesi",
+      "description": "Süre tutularak çözülecek ve analizleri koça gönderilecek.",
+      "dueDate": "2026-07-27",
+      "status": "TAMAMLANDI"
+    },
+    {
+      "id": "task-std-2-4",
+      "studentId": "std-2",
+      "title": "Fizik Optik Ünitesi Bitirme",
+      "description": "Optik konusunda kırılma ve mercekler eksikleri kapatılacak.",
+      "dueDate": "2026-07-19",
+      "status": "DEVAM_EDIYOR"
+    },
+    {
+      "id": "task-std-3-0",
+      "studentId": "std-3",
+      "title": "Türev Konu Anlatımı ve Soru Çözümü",
+      "description": "Fasikülden türev 1. ve 2. ünite bitecek, en az 300 soru çözülecek.",
+      "dueDate": "2026-07-24",
+      "status": "DEVAM_EDIYOR"
+    },
+    {
+      "id": "task-std-3-1",
+      "studentId": "std-3",
+      "title": "Kimya Organik Tekrarı",
+      "description": "Organik kimyadaki fonksiyonel gruplar özet çıkarılacak.",
+      "dueDate": "2026-07-22",
+      "status": "TAMAMLANDI"
+    },
+    {
+      "id": "task-std-3-2",
+      "studentId": "std-3",
+      "title": "Edebiyat Cumhuriyet Dönemi Yazar Eşleştirmesi",
+      "description": "Cumhuriyet dönemi tiyatro yazarları hafıza kartları çalışılacak.",
+      "dueDate": "2026-07-25",
+      "status": "YAPILACAK"
+    },
+    {
+      "id": "task-std-3-3",
+      "studentId": "std-3",
+      "title": "Haftalık 2 Adet TYT Matematik Branş Denemesi",
+      "description": "Süre tutularak çözülecek ve analizleri koça gönderilecek.",
+      "dueDate": "2026-07-25",
+      "status": "TAMAMLANDI"
+    },
+    {
+      "id": "task-std-3-4",
+      "studentId": "std-3",
+      "title": "Fizik Optik Ünitesi Bitirme",
+      "description": "Optik konusunda kırılma ve mercekler eksikleri kapatılacak.",
+      "dueDate": "2026-07-20",
+      "status": "TAMAMLANDI"
+    },
+    {
+      "id": "task-std-4-0",
+      "studentId": "std-4",
+      "title": "Türev Konu Anlatımı ve Soru Çözümü",
+      "description": "Fasikülden türev 1. ve 2. ünite bitecek, en az 300 soru çözülecek.",
+      "dueDate": "2026-07-19",
+      "status": "YAPILACAK"
+    },
+    {
+      "id": "task-std-4-1",
+      "studentId": "std-4",
+      "title": "Kimya Organik Tekrarı",
+      "description": "Organik kimyadaki fonksiyonel gruplar özet çıkarılacak.",
+      "dueDate": "2026-07-26",
+      "status": "YAPILACAK"
+    },
+    {
+      "id": "task-std-4-2",
+      "studentId": "std-4",
+      "title": "Edebiyat Cumhuriyet Dönemi Yazar Eşleştirmesi",
+      "description": "Cumhuriyet dönemi tiyatro yazarları hafıza kartları çalışılacak.",
+      "dueDate": "2026-07-26",
+      "status": "DEVAM_EDIYOR"
+    },
+    {
+      "id": "task-std-4-3",
+      "studentId": "std-4",
+      "title": "Haftalık 2 Adet TYT Matematik Branş Denemesi",
+      "description": "Süre tutularak çözülecek ve analizleri koça gönderilecek.",
+      "dueDate": "2026-07-27",
+      "status": "YAPILACAK"
+    },
+    {
+      "id": "task-std-4-4",
+      "studentId": "std-4",
+      "title": "Fizik Optik Ünitesi Bitirme",
+      "description": "Optik konusunda kırılma ve mercekler eksikleri kapatılacak.",
+      "dueDate": "2026-07-20",
+      "status": "DEVAM_EDIYOR"
+    },
+    {
+      "id": "task-std-5-0",
+      "studentId": "std-5",
+      "title": "Türev Konu Anlatımı ve Soru Çözümü",
+      "description": "Fasikülden türev 1. ve 2. ünite bitecek, en az 300 soru çözülecek.",
+      "dueDate": "2026-07-25",
+      "status": "YAPILACAK"
+    },
+    {
+      "id": "task-std-5-1",
+      "studentId": "std-5",
+      "title": "Kimya Organik Tekrarı",
+      "description": "Organik kimyadaki fonksiyonel gruplar özet çıkarılacak.",
+      "dueDate": "2026-07-28",
+      "status": "YAPILACAK"
+    },
+    {
+      "id": "task-std-5-2",
+      "studentId": "std-5",
+      "title": "Edebiyat Cumhuriyet Dönemi Yazar Eşleştirmesi",
+      "description": "Cumhuriyet dönemi tiyatro yazarları hafıza kartları çalışılacak.",
+      "dueDate": "2026-07-27",
+      "status": "TAMAMLANDI"
+    },
+    {
+      "id": "task-std-5-3",
+      "studentId": "std-5",
+      "title": "Haftalık 2 Adet TYT Matematik Branş Denemesi",
+      "description": "Süre tutularak çözülecek ve analizleri koça gönderilecek.",
+      "dueDate": "2026-07-20",
+      "status": "TAMAMLANDI"
+    },
+    {
+      "id": "task-std-5-4",
+      "studentId": "std-5",
+      "title": "Fizik Optik Ünitesi Bitirme",
+      "description": "Optik konusunda kırılma ve mercekler eksikleri kapatılacak.",
+      "dueDate": "2026-07-24",
+      "status": "TAMAMLANDI"
+    }
+  ]
+}

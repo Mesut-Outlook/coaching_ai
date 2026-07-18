@@ -12,18 +12,25 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 ---
 
 ## Fable — Planlama & Tasarım
-- [x] Koç paneli ilk tasarım turu — 5 ekran (Panel, Öğrenci Profili, Konu Yeterlilik Haritası, Deneme Girişi, Haftalık Görüşme). Artifact: https://claude.ai/code/artifact/04e9bd11-0c63-4c43-b126-6fe457d037e8
+- [x] Koç paneli ilk tasarım turu — 5 ekran (Panel, Öğrenci Profili, Konu Yeterlilik Haritası, Deneme Girişi, Haftalık Görüşme).
+- [x] Konu takip derinleştirme — resmi 2022 TYT konu listesinden (141 konu, 10 ders) gerçek taksonomi işlendi; konu bazlı test+deneme birleşik geçmişi ve "Koç Kararı" onay mekanizması (otomatik durum önerisi + koç override) eklendi; 6. ekran "Haftalık Program" (gün gün konu planlama, ekle/çıkar + sürükle-bırak taşıma) eklendi. Güncel artifact: https://claude.ai/code/artifact/04e9bd11-0c63-4c43-b126-6fe457d037e8
 - [ ] Mobil (öğrenci tarafı) akış tasarımı — kapsam henüz tanımlanmadı
 - [ ] Bilgi mimarisi: öğrenci verisi, deneme verisi, konu verisi arasındaki ilişkiler (ürün/veri modeli taslağı, kod değil)
 
 ## Sonnet — Yazılım
 - [x] Proje iskeleti kurulumu (Vite + React + TS ve Git entegrasyonu tamamlandı)
-- [ ] Veri modeli / şema implementasyonu (öğrenci, deneme, konu yeterlilik, görev atama)
-- [ ] Netlik tasarımının gerçek koda dönüştürülmesi (5 ekran)
+- [ ] Veri modeli / şema implementasyonu (öğrenci, deneme, konu yeterlilik, görev atama, koç kararı override, haftalık program)
+- [ ] Netlik tasarımının gerçek koda dönüştürülmesi (6 ekran)
 - [ ] Kimlik doğrulama (koç girişi)
+- [ ] Kaynak: `/home/mesuto/Downloads/07093256_2022-TYT-Konulari.pdf` — resmi TYT konu listesi, veri modelindeki konu taksonomisinin kaynağı (141 konu / 10 ders)
 
 ## Antigravity — Bağımsız Küçük Modüller
-- [ ] Henüz görev atanmadı — ana akıştan izole, tekil script/entegrasyon işleri buraya düşecek
+- [x] TypeScript tip tanımlamaları (`src/types/coaching.ts`)
+- [x] YKS Net ve İstatistik Hesaplayıcı yardımcı modülü (`src/utils/yksCalculator.ts`)
+- [x] Gerçekçi test verisi üretici script (`scripts/generateMockData.cjs`) ve veri dosyası (`src/mockData.json`)
+- [x] Resmi TYT konu listesi PDF ayrıştırıcı script (`scripts/parse_subjects.py`) ve veritabanı dosyası (`src/tytSubjects.json`) (141 konu / 10 ders)
+
+
 
 ---
 
