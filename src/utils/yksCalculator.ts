@@ -1,4 +1,4 @@
-import { ExamResult, SubjectResult, ProficiencyStatus } from '../types/coaching';
+import type { ExamResult, SubjectResult, ProficiencyStatus } from '../types/coaching';
 
 /**
  * Calculates YKS net score based on correct and incorrect answers.

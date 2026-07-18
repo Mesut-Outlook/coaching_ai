@@ -1,0 +1,448 @@
+import { useEffect, useState, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, Plus, Trash2, Calendar, CheckSquare, Save, X, Search } from 'lucide-react'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import PageHeader from '../components/layout/PageHeader'
+import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
+import { mondayOf, weekKey, fmtWeekRange, DAYS, DAY_ABBR } from '../lib/weeks'
+
+export default function ProgramPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialStudentId = searchParams.get('studentId') || ''
+
+  const [students, setStudents] = useState<Student[]>([])
+  const [selectedStudentId, setSelectedStudentId] = useState(initialStudentId)
+  
+  const [topics, setTopics] = useState<(Topic & { subjects: Subject | null })[]>([])
+  const [tasks, setTasks] = useState<WeeklyTask[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  // Navigation for weeks
+  const [currentMonday, setCurrentMonday] = useState<Date>(() => mondayOf(new Date()))
+  
+  // Inline Add Form State (per day)
+  const [addingDayIndex, setAddingDayIndex] = useState<number | null>(null)
+  const [selectedTopicId, setSelectedTopicId] = useState<string>('custom')
+  const [customLabel, setCustomLabel] = useState('')
+  const [questionCount, setQuestionCount] = useState<number>(100)
+  const [isExam, setIsExam] = useState<boolean>(false)
+  const [addingTask, setAddingTask] = useState(false)
+
+  // Sync selectedStudentId with query parameters
+  const handleStudentChange = (id: string) => {
+    setSelectedStudentId(id)
+    setSearchParams({ studentId: id })
+  }
+
+  // Load students, topics
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    
+    // Load students
+    supabase.from('students').select('*').order('full_name', { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          setStudents(data)
+          if (!selectedStudentId && data.length > 0) {
+            setSelectedStudentId(data[0].id)
+            setSearchParams({ studentId: data[0].id })
+          }
+        }
+      })
+
+    // Load topics
+    supabase.from('topics').select('*, subjects(*)').order('name', { ascending: true })
+      .then(({ data }) => {
+        if (data) setTopics(data as any)
+      })
+  }, [])
+
+  // Load tasks for the selected student and week
+  const loadTasks = async () => {
+    if (!selectedStudentId || !isSupabaseConfigured) return
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const startKey = weekKey(currentMonday)
+      const { data, error: tasksError } = await supabase
+        .from('weekly_tasks')
+        .select('*')
+        .eq('student_id', selectedStudentId)
+        .eq('week_start', startKey)
+        .order('day_index', { ascending: true })
+      
+      if (tasksError) throw tasksError
+      setTasks(data || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Görevler yüklenemedi')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadTasks()
+  }, [selectedStudentId, currentMonday])
+
+  const currentStudent = useMemo(() => {
+    return students.find(s => s.id === selectedStudentId)
+  }, [students, selectedStudentId])
+
+  // Week navigation handlers
+  const handlePrevWeek = () => {
+    setCurrentMonday(prev => new Date(prev.getTime() - 7 * 86400000))
+  }
+  
+  const handleNextWeek = () => {
+    setCurrentMonday(prev => new Date(prev.getTime() + 7 * 86400000))
+  }
+  
+  const handleJumpToToday = () => {
+    setCurrentMonday(mondayOf(new Date()))
+  }
+
+  // HTML5 Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData('text/plain', taskId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = async (e: React.DragEvent, targetDayIndex: number) => {
+    e.preventDefault()
+    const taskId = e.dataTransfer.getData('text/plain')
+    if (!taskId || !isSupabaseConfigured) return
+
+    // Optimistic local state update
+    const updatedTasks = tasks.map(t => {
+      if (t.id === taskId) {
+        return { ...t, day_index: targetDayIndex }
+      }
+      return t
+    })
+    setTasks(updatedTasks)
+
+    try {
+      // Update in Supabase
+      const { error } = await supabase
+        .from('weekly_tasks')
+        .update({ day_index: targetDayIndex })
+        .eq('id', taskId)
+      
+      if (error) throw error
+    } catch (err) {
+      // Rollback on error
+      loadTasks()
+      alert('Görev taşınırken hata oluştu.')
+    }
+  }
+
+  // Toggle Task Completion
+  const handleToggleComplete = async (taskId: string, currentCompleted: boolean) => {
+    if (!isSupabaseConfigured) return
+    
+    // Optimistic update
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, completed: !currentCompleted } : t))
+    
+    try {
+      const { error } = await supabase
+        .from('weekly_tasks')
+        .update({ completed: !currentCompleted })
+        .eq('id', taskId)
+      if (error) throw error
+    } catch (err) {
+      loadTasks()
+      alert('Görev durumu güncellenemedi.')
+    }
+  }
+
+  // Add a new task to a specific day
+  const handleAddTask = async (dayIndex: number) => {
+    if (!selectedStudentId || !isSupabaseConfigured) return
+    
+    const topicIdVal = selectedTopicId === 'custom' ? null : parseInt(selectedTopicId)
+    const labelVal = selectedTopicId === 'custom' ? customLabel : null
+    
+    if (selectedTopicId === 'custom' && !customLabel.trim()) {
+      return alert('Lütfen görev açıklaması girin.')
+    }
+
+    setAddingTask(true)
+    
+    try {
+      const weekStartStr = weekKey(currentMonday)
+      
+      const { data, error } = await supabase
+        .from('weekly_tasks')
+        .insert({
+          student_id: selectedStudentId,
+          week_start: weekStartStr,
+          day_index: dayIndex,
+          topic_id: topicIdVal,
+          custom_label: labelVal,
+          question_count: questionCount,
+          is_exam: isExam,
+          completed: false
+        })
+        .select()
+      
+      if (error) throw error
+      if (data) {
+        setTasks(prev => [...prev, data[0]])
+      }
+
+      // Reset form
+      setAddingDayIndex(null)
+      setSelectedTopicId('custom')
+      setCustomLabel('')
+      setQuestionCount(100)
+      setIsExam(false)
+    } catch (err) {
+      alert('Görev eklenirken hata oluştu.')
+    } finally {
+      setAddingTask(false)
+    }
+  }
+
+  // Delete task
+  const handleDeleteTask = async (taskId: string) => {
+    if (!window.confirm('Bu görevi silmek istediğinize emin misiniz?')) return
+    if (!isSupabaseConfigured) return
+
+    // Optimistic update
+    setTasks(prev => prev.filter(t => t.id !== taskId))
+
+    try {
+      const { error } = await supabase.from('weekly_tasks').delete().eq('id', taskId)
+      if (error) throw error
+    } catch (err) {
+      loadTasks()
+      alert('Görev silinemedi.')
+    }
+  }
+
+  // Filter topics based on student track
+  const filteredTopics = useMemo(() => {
+    if (!currentStudent) return topics
+    // Filter to show topics relevant to their track or common
+    return topics
+  }, [topics, currentStudent])
+
+  return (
+    <section className="screen">
+      <PageHeader title="Haftalık Program" subtitle="Öğrencinin haftalık çalışma planını hazırlayın. Görevleri sürükleyerek gününü değiştirebilirsiniz." />
+
+      {!isSupabaseConfigured && (
+        <div className="card" style={{ padding: 16, marginBottom: 20, background: 'var(--warning-bg)', border: 'none', color: 'var(--warning-text)' }}>
+          Supabase bağlı değil — Lütfen Supabase yapılandırmasını tamamlayın.
+        </div>
+      )}
+
+      {isSupabaseConfigured && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          
+          {/* Toolbar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
+            {/* Student Selector */}
+            <div className="field" style={{ minWidth: 200 }}>
+              <select value={selectedStudentId} onChange={(e) => handleStudentChange(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10 }}>
+                {students.map(s => (
+                  <option key={s.id} value={s.id}>{s.full_name} ({s.track})</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Week Navigator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '4px 8px' }}>
+              <button onClick={handlePrevWeek} style={{ border: 'none', background: 'none', padding: 6, display: 'flex', color: 'var(--ink-soft)' }}><ChevronLeft size={16} /></button>
+              <button onClick={handleJumpToToday} style={{ border: 'none', background: 'none', fontSize: 12.5, fontWeight: 600, padding: '4px 10px', color: 'var(--indigo-600)' }}>Bugün</button>
+              <span style={{ fontSize: 13, fontWeight: 700, padding: '0 8px', color: 'var(--ink)' }}>{fmtWeekRange(currentMonday)}</span>
+              <button onClick={handleNextWeek} style={{ border: 'none', background: 'none', padding: 6, display: 'flex', color: 'var(--ink-soft)' }}><ChevronRight size={16} /></button>
+            </div>
+          </div>
+
+          {error && (
+            <div className="card" style={{ padding: 12, background: 'var(--critical-bg)', color: 'var(--critical-text)', border: 'none', fontSize: 13 }}>
+              {error}
+            </div>
+          )}
+
+          {/* Kanban Board */}
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 16, minHeight: 480 }}>
+            {DAYS.map((dayName, dayIndex) => {
+              const dayTasks = tasks.filter(t => t.day_index === dayIndex)
+              const isAddingHere = addingDayIndex === dayIndex
+              
+              return (
+                <div
+                  key={dayIndex}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, dayIndex)}
+                  style={{
+                    flex: '1 0 240px',
+                    maxWidth: 320,
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 14,
+                    padding: 12,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10
+                  }}
+                >
+                  {/* Column Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-soft)', paddingBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontWeight: 700, fontSize: 13.5 }}>{dayName}</span>
+                      <span style={{ fontSize: 11, color: 'var(--ink-faint)', background: 'var(--measured-bg)', padding: '1px 6px', borderRadius: 10 }}>
+                        {dayTasks.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Task Cards List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minHeight: 200 }}>
+                    {dayTasks.map(task => {
+                      const topic = topics.find(t => t.id === task.topic_id)
+                      return (
+                        <div
+                          key={task.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, task.id)}
+                          style={{
+                            padding: '10px 12px',
+                            background: task.completed ? 'var(--success-bg)' : 'var(--surface-alt)',
+                            border: '1px solid var(--border-soft)',
+                            borderRadius: 10,
+                            cursor: 'grab',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 8,
+                            opacity: task.completed ? 0.75 : 1,
+                            position: 'relative'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleComplete(task.id, task.completed)}
+                              style={{ border: 'none', background: 'none', padding: 0, marginTop: 2, cursor: 'pointer', display: 'flex' }}
+                            >
+                              <CheckSquare size={15} color={task.completed ? 'var(--success)' : 'var(--ink-faint)'} />
+                            </button>
+                            
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 12.5, fontWeight: 600, textDecoration: task.completed ? 'line-through' : 'none', color: 'var(--ink)', wordBreak: 'break-word' }}>
+                                {topic?.name || task.custom_label || 'Özel Görev'}
+                              </div>
+                              {topic?.subjects && (
+                                <div style={{ fontSize: 9.5, color: 'var(--ink-faint)', marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: topic.subjects.color }}></span>
+                                  {topic.subjects.name}
+                                </div>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTask(task.id)}
+                              style={{ border: 'none', background: 'none', padding: 2, color: 'var(--ink-faint)', cursor: 'pointer', opacity: 0.5 }}
+                              className="delete-btn"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-soft)', paddingTop: 6 }}>
+                            <span style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--indigo-600)' }}>
+                              {task.question_count} soru
+                            </span>
+                            {task.is_exam && (
+                              <span style={{ fontSize: 9, background: 'var(--critical-bg)', color: 'var(--critical-text)', fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>
+                                DENEME
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Add Task Form Button / Section */}
+                  {isAddingHere ? (
+                    <div style={{ background: 'var(--surface-alt)', border: '1px dashed var(--border)', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div className="field">
+                        <label style={{ fontSize: 10 }}>Konu / Görev Türü</label>
+                        <select value={selectedTopicId} onChange={e => setSelectedTopicId(e.target.value)} style={{ padding: 6, fontSize: 11.5 }}>
+                          <option value="custom">Özel Görev (Metin)</option>
+                          {filteredTopics.map(t => (
+                            <option key={t.id} value={t.id}>{t.subjects?.name}: {t.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {selectedTopicId === 'custom' && (
+                        <div className="field">
+                          <label style={{ fontSize: 10 }}>Görev Açıklaması</label>
+                          <input type="text" placeholder="Örn: Paragraf Çözümü" value={customLabel} onChange={e => setCustomLabel(e.target.value)} style={{ padding: 6, fontSize: 11.5 }} />
+                        </div>
+                      )}
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 6 }}>
+                        <div className="field">
+                          <label style={{ fontSize: 10 }}>Soru Sayısı</label>
+                          <input type="number" value={questionCount} onChange={e => setQuestionCount(parseInt(e.target.value) || 0)} style={{ padding: 6, fontSize: 11.5 }} />
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 14 }}>
+                          <input type="checkbox" id="isExamCheck" checked={isExam} onChange={e => setIsExam(e.target.checked)} />
+                          <label htmlFor="isExamCheck" style={{ fontSize: 10.5, fontWeight: 600, cursor: 'pointer' }}>Deneme mi?</label>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                        <button type="button" className="btn btn-ghost btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setAddingDayIndex(null)}><X size={12} /></button>
+                        <button type="button" className="btn btn-primary btn-sm" style={{ flex: 2, justifyContent: 'center' }} onClick={() => handleAddTask(dayIndex)} disabled={addingTask}>
+                          Ekle
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setAddingDayIndex(dayIndex)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        border: '1px dashed var(--border)',
+                        borderRadius: 10,
+                        background: 'none',
+                        color: 'var(--indigo-600)',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Plus size={14} /> Görev Ekle
+                    </button>
+                  )}
+
+                </div>
+              )
+            })}
+          </div>
+
+        </div>
+      )}
+    </section>
+  )
+}
