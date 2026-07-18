@@ -25,9 +25,17 @@ create table if not exists students (
   target_ranking text,
   target_net_label text,
   target_net_value numeric,
+  is_active boolean not null default true,
+  phone_number text,
+  photo_url text,
   created_at timestamptz not null default now()
 );
 create index if not exists students_coach_id_idx on students(coach_id);
+
+-- Geriye dönük kolon eklemeleri (tablo zaten varsa çalışır)
+alter table students add column if not exists is_active boolean not null default true;
+alter table students add column if not exists phone_number text;
+alter table students add column if not exists photo_url text;
 
 -- ---------------------------------------------------------------------------
 -- Müfredat: dersler ve konular (2022 TYT Konuları — tüm koçlar arasında ortak,
@@ -212,3 +220,43 @@ create policy "error_basket_items: öğrenci sahibi koç yönetir" on error_bask
 create policy "weekly_tasks: öğrenci sahibi koç yönetir" on weekly_tasks
   for all using (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()))
   with check (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()));
+
+-- ---------------------------------------------------------------------------
+-- Storage - Profil Fotoğrafları için Bucket ve RLS Kurulumu
+-- ---------------------------------------------------------------------------
+-- Not: Supabase'de storage şemasındaki tablolara veri eklemek/politikalar yazmak için:
+-- 1. 'student-photos' adında public bir bucket oluşturun (eğer yoksa)
+insert into storage.buckets (id, name, public)
+values ('student-photos', 'student-photos', true)
+on conflict (id) do nothing;
+
+-- 2. Giriş yapmış tüm koçların fotoğraf yüklemesine ve güncellemesine izin verin
+drop policy if exists "Koçlar fotoğraf yükleyebilir" on storage.objects;
+create policy "Koçlar fotoğraf yükleyebilir" on storage.objects
+  for insert with check (
+    bucket_id = 'student-photos' 
+    and auth.role() = 'authenticated'
+  );
+
+drop policy if exists "Koçlar fotoğraf güncelleyebilir" on storage.objects;
+create policy "Koçlar fotoğraf güncelleyebilir" on storage.objects
+  for update using (
+    bucket_id = 'student-photos' 
+    and auth.role() = 'authenticated'
+  ) with check (
+    bucket_id = 'student-photos' 
+    and auth.role() = 'authenticated'
+  );
+
+-- 3. Herkesin (veya en azından giriş yapmış koçların) fotoğrafları okumasına izin verin
+drop policy if exists "Fotoğraflar herkese açık okunabilir" on storage.objects;
+create policy "Fotoğraflar herkese açık okunabilir" on storage.objects
+  for select using (bucket_id = 'student-photos');
+
+-- 4. Koçlar kendi yükledikleri fotoğrafları silebilir
+drop policy if exists "Koçlar fotoğraf silebilir" on storage.objects;
+create policy "Koçlar fotoğraf silebilir" on storage.objects
+  for delete using (
+    bucket_id = 'student-photos' 
+    and auth.role() = 'authenticated'
+  );

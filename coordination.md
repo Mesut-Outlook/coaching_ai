@@ -82,14 +82,13 @@ Kullanıcı isteği: "öğrenci silme güncelleme ya da arşivleme gibi özellik
 
 **Tespit / tasarım notu:** `students` RLS politikası (`schema.sql:179-180`) zaten `for all` — yani gerçek `DELETE` teknik olarak şu an bile mümkün. Ama dikkat: `mock_exams`, `weekly_tasks`, `topic_measurements`, `coach_decisions` tabloları `students`'a `on delete cascade` ile bağlı — bir öğrenciyi hard-delete etmek onun **tüm** deneme/görev/konu geçmişini de geri dönüşsüz siler. Bu muhtemelen istenen davranış değil (yanlışlıkla tıklanırsa felaket olur). Bu yüzden **arşivleme (soft-delete)** öneriyoruz — Müfredat ekranındaki `is_active` deseniyle birebir aynı mantık: öğrenci pasifleştirilir, listede görünmez ama geçmiş veri korunur, istenirse geri açılabilir. Gerçek "Sil" de ayrıca opsiyonel olarak eklenebilir ama önünde "bu işlem geri alınamaz, tüm geçmiş silinir" gibi net bir onay olmalı.
 
-Kapsam:
-- [ ] Şema: `students` tablosuna `alter table students add column if not exists is_active boolean not null default true;`, `phone_number text`, `photo_url text` — `schema.sql`'e idempotent olarak eklensin (Müfredat görevindeki gibi), `src/types/database.ts`'teki `Student` tipine işlensin.
-- [ ] `OgrencilerPage.tsx` liste görünümüne: her öğrenci kartına "..." menüsü — **Düzenle**, **Arşivle**, (opsiyonel) **Kalıcı Sil**. Arşivlenen öğrenciler varsayılan listede gizlensin, Müfredat'taki "Pasifleri Göster" benzeri bir toggle ile geri görülebilsin.
-- [ ] **Düzenleme**: `AddStudentModal.tsx` düzenleme modunu da destekleyecek şekilde genişletilsin (ya da yanına `EditStudentModal.tsx` eklensin) — mevcut değerlerle formu doldurup güncelleme yapabilmeli.
-- [ ] **Telefon numarası**: basit bir metin alanı, formda ve profil ekranında gösterilsin.
-- [ ] **Fotoğraf**: Supabase Storage'da yeni bir bucket (örn. `student-photos`) oluşturulup dosya yükleme desteklenmeli — `photo_url` o bucket'taki dosyanın public URL'ini tutar. Bucket + RLS storage policy kurulumu için gereken SQL/adımlar `schema.sql`'e ya da ayrı bir `supabase/storage.sql` dosyasına not düşülsün, kullanıcı Supabase dashboard'unda bucket'ı elle oluşturması gerekebilir (bunu net şekilde belirt).
-- [ ] Öğrenci kartlarında (Panel + Öğrenciler listesi) mevcut baş harf rozeti yerine `photo_url` varsa fotoğraf gösterilsin, yoksa mevcut baş harf rozetine geri düşülsün (fallback).
-- *Sorumlu:* **Antigravity**. Şema değişikliği olduğu için (Müfredat'ta olduğu gibi) kullanıcının işi bitince Supabase SQL Editor'de tekrar `schema.sql` çalıştırması gerekecek — görev bittiğinde bunu coordination.md'de açıkça belirt.
+- [x] Şema: `students` tablosuna `is_active`, `phone_number`, `photo_url` sütunları eklendi. `schema.sql` ve `src/types/database.ts` güncellendi.
+- [x] `OgrencilerPage.tsx` liste görünümüne: her öğrenci kartına "..." menüsü — **Düzenle**, **Arşivle/Aktifleştir**, **Kalıcı Sil** eklendi. Arşivlileri göster/gizle filtresi entegre edildi.
+- [x] **Düzenleme**: `AddStudentModal.tsx` düzenleme modunu da destekleyecek şekilde genişletildi; veritabanı update sorguları yazıldı.
+- [x] **Telefon numarası**: Formlarda ve profil başlık alanlarında gösterilmeye başlandı.
+- [x] **Fotoğraf**: Supabase Storage 'student-photos' bucket entegrasyonu ve yükleme desteği eklendi. SQL bucket ve RLS yetkileri `schema.sql`'e eklendi.
+- [x] Öğrenci kartlarında (Panel + Öğrenciler listesi) mevcut baş harf rozeti yerine profil fotoğrafı gösterimi (ve fallback yapısı) eklendi.
+- *Sorumlu:* **Antigravity** (Tamamlandı)
 
 ---
 

@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { 
-  Plus, Search, ChevronRight, Award, TrendingUp, CheckSquare, 
-  ArrowLeft
+  ArrowLeft, ChevronRight, Plus, Search, TrendingUp, Award,
+  CheckSquare, MoreVertical,
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
@@ -42,6 +42,9 @@ export default function OgrencilerPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
+  const [menuOpenStudentId, setMenuOpenStudentId] = useState<string | null>(null)
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   
   // State for single-student detail view
   const [studentData, setStudentData] = useState<StudentData | null>(null)
@@ -152,11 +155,56 @@ export default function OgrencilerPage() {
       .finally(() => setLoading(false))
   }, [studentId])
 
+  const handleToggleActive = async (student: Student) => {
+    try {
+      const { error } = await supabase
+        .from('students')
+        .update({ is_active: !student.is_active })
+        .eq('id', student.id)
+      
+      if (error) throw error
+
+      setStudents(prev => prev.map(s => s.id === student.id ? { ...s, is_active: !s.is_active } : s))
+      // Update studentData if currently viewing
+      if (studentData && studentData.student.id === student.id) {
+        setStudentData({
+          ...studentData,
+          student: { ...studentData.student, is_active: !student.is_active }
+        })
+      }
+    } catch (err) {
+      alert('Öğrenci durumu güncellenemedi.')
+    }
+  }
+
+  const handleDeleteStudent = async (studentId: string) => {
+    if (!window.confirm('Bu öğrenciyi kalıcı olarak silmek istediğinize emin misiniz? Bu işlem öğrenciye bağlı tüm deneme, görev ve istatistik verilerini geri alınamayacak şekilde silecektir!')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('students')
+        .delete()
+        .eq('id', studentId)
+
+      if (error) throw error
+
+      setStudents(prev => prev.filter(s => s.id !== studentId))
+    } catch (err) {
+      alert('Öğrenci silinirken hata oluştu.')
+    }
+  }
+
   // Filter students (list view)
   const filteredStudents = useMemo(() => {
     if (!students) return []
-    return students.filter(s => s.full_name.toLowerCase().includes(search.toLowerCase()))
-  }, [students, search])
+    return students.filter(s => {
+      const matchesSearch = s.full_name.toLowerCase().includes(search.toLowerCase())
+      const matchesActive = showArchived ? true : s.is_active
+      return matchesSearch && matchesActive
+    })
+  }, [students, search, showArchived])
 
   // Calculated stats (detail view)
   const stats = useMemo(() => {
@@ -256,6 +304,20 @@ export default function OgrencilerPage() {
           />
         )}
 
+        {editingStudent && (
+          <AddStudentModal
+            editingStudent={editingStudent}
+            onClose={() => setEditingStudent(null)}
+            onCreated={(updatedStudent) => {
+              setStudents(prev => prev.map(st => st.id === updatedStudent.id ? updatedStudent : st))
+              if (studentData && studentData.student.id === updatedStudent.id) {
+                setStudentData({ ...studentData, student: updatedStudent })
+              }
+              setEditingStudent(null)
+            }}
+          />
+        )}
+
         {!isSupabaseConfigured && (
           <div className="card" style={{ padding: 16, marginBottom: 20, background: 'var(--warning-bg)', border: 'none', color: 'var(--warning-text)', fontSize: 13 }}>
             Supabase bağlı değil — Lütfen Supabase kurulumunu tamamlayın.
@@ -263,15 +325,22 @@ export default function OgrencilerPage() {
         )}
 
         {isSupabaseConfigured && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', marginBottom: 20, maxWidth: 320, color: 'var(--ink-faint)' }}>
-            <Search size={14} />
-            <input
-              type="text"
-              placeholder="Öğrenci ara…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ border: 'none', outline: 'none', background: 'none', flex: 1, color: 'var(--ink)', fontSize: 13.5 }}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', width: '100%', maxWidth: 320, color: 'var(--ink-faint)' }}>
+              <Search size={14} />
+              <input
+                type="text"
+                placeholder="Öğrenci ara…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ border: 'none', outline: 'none', background: 'none', flex: 1, color: 'var(--ink)', fontSize: 13.5 }}
+              />
+            </div>
+            
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: 'var(--ink-soft)', cursor: 'pointer' }}>
+              <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
+              Arşivlenmiş öğrencileri de göster
+            </label>
           </div>
         )}
 
@@ -285,25 +354,123 @@ export default function OgrencilerPage() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
             {filteredStudents.map(s => (
-              <Link to={`/ogrenciler/${s.id}`} key={s.id} className="card" style={{ padding: 20, textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--indigo-050)', color: 'var(--indigo-700)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15 }}>
-                    {s.full_name[0].toUpperCase()}
+              <Link
+                to={`/ogrenciler/${s.id}`}
+                key={s.id}
+                className="card"
+                style={{
+                  padding: 20,
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 14,
+                  opacity: s.is_active ? 1 : 0.6
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, flexShrink: 0, border: '1px solid var(--border-soft)' }}>
+                      {s.photo_url ? (
+                        <img src={s.photo_url} alt={s.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        s.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+                      )}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <h3 style={{ fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
+                        {s.full_name}
+                      </h3>
+                      <p style={{ color: 'var(--ink-soft)', fontSize: 12, marginTop: 4, margin: 0 }}>
+                        {s.grade} · {s.track} {!s.is_active && <strong style={{ color: 'var(--critical-text)' }}>(Arşivli)</strong>}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 style={{ fontSize: 15 }}>{s.full_name}</h3>
-                    <p style={{ color: 'var(--ink-soft)', fontSize: 12, marginTop: 2 }}>{s.grade} · {s.track}</p>
+
+                  {/* Actions Dropdown */}
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      style={{ padding: 4, minHeight: 'auto', background: 'none' }}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setMenuOpenStudentId(menuOpenStudentId === s.id ? null : s.id)
+                      }}
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                    {menuOpenStudentId === s.id && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          right: 0,
+                          top: 28,
+                          background: 'var(--surface)',
+                          border: '1px solid var(--border)',
+                          borderRadius: 8,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                          zIndex: 10,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          minWidth: 120,
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <button
+                          type="button"
+                          style={{ padding: '8px 12px', fontSize: 12, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', color: 'var(--ink)', width: '100%' }}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setEditingStudent(s)
+                            setMenuOpenStudentId(null)
+                          }}
+                        >
+                          Düzenle
+                        </button>
+                        <button
+                          type="button"
+                          style={{ padding: '8px 12px', fontSize: 12, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', color: 'var(--ink)', width: '100%' }}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleToggleActive(s)
+                            setMenuOpenStudentId(null)
+                          }}
+                        >
+                          {s.is_active ? 'Arşivle' : 'Aktifleştir'}
+                        </button>
+                        <button
+                          type="button"
+                          style={{ padding: '8px 12px', fontSize: 12, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', color: 'var(--critical-text)', width: '100%', borderTop: '1px solid var(--border-soft)' }}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleDeleteStudent(s.id)
+                            setMenuOpenStudentId(null)
+                          }}
+                        >
+                          Kalıcı Sil
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
+                
                 {s.target_program && (
-                  <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: 12 }}>
-                    <div style={{ fontSize: 10.5, color: 'var(--ink-faint)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Hedef Program</div>
-                    <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--ink-soft)', marginTop: 2 }}>{s.target_program}</div>
+                  <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: 10 }}>
+                    <div style={{ fontSize: 9.5, color: 'var(--ink-faint)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Hedef Program</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--ink-soft)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {s.target_program}
+                    </div>
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                  <span style={{ fontSize: 12, color: 'var(--indigo-600)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                    Profili Aç <ChevronRight size={14} />
+                
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                  <span style={{ fontSize: 11.5, color: 'var(--indigo-600)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                    Profili Aç <ChevronRight size={13} />
                   </span>
                 </div>
               </Link>
@@ -337,21 +504,45 @@ export default function OgrencilerPage() {
       <Link to="/ogrenciler" className="back-link"><ArrowLeft size={14} /> Öğrenciler Listesi</Link>
       
       {/* Student Profile Header */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 26, marginTop: 10 }}>
-        <div>
-          <h1 style={{ fontSize: 24, margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            {student.full_name}
-            <span className={`chip ${student.track === 'SAY' ? 'chip-say' : student.track === 'EA' ? 'chip-ea' : 'chip-soz'}`} style={{ fontSize: 11, padding: '2px 8px' }}>
-              {student.track}
-            </span>
-          </h1>
-          <p style={{ color: 'var(--ink-soft)', fontSize: 13, marginTop: 6 }}>
-            {student.grade} öğrencisi · Hedef: {student.target_program || 'Girilmedi'} ({student.target_ranking || '—'})
-          </p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'space-between', alignItems: 'center', marginBottom: 26, marginTop: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 20, border: '2px solid var(--border-soft)', flexShrink: 0 }}>
+            {student.photo_url ? (
+              <img src={student.photo_url} alt={student.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              student.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+            )}
+          </div>
+          <div>
+            <h1 style={{ fontSize: 24, margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+              {student.full_name}
+              <span className={`chip ${student.track === 'SAY' ? 'chip-say' : student.track === 'EA' ? 'chip-ea' : 'chip-soz'}`} style={{ fontSize: 11, padding: '2px 8px' }}>
+                {student.track}
+              </span>
+            </h1>
+            <p style={{ color: 'var(--ink-soft)', fontSize: 13, marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', margin: 0 }}>
+              <span>{student.grade} öğrencisi</span>
+              <span>•</span>
+              <span>Hedef: {student.target_program || 'Girilmedi'} ({student.target_ranking || '—'})</span>
+              {student.phone_number && (
+                <>
+                  <span>•</span>
+                  <span style={{ color: 'var(--indigo-600)', fontWeight: 600 }}>Tlf: {student.phone_number}</span>
+                </>
+              )}
+            </p>
+          </div>
         </div>
         
         {/* Navigation Actions to other parts */}
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => setEditingStudent(student)}
+          >
+            Düzenle
+          </button>
           <Link to={`/program?studentId=${studentId}`} className="btn btn-ghost btn-sm">
             Haftalık Program
           </Link>
@@ -363,6 +554,20 @@ export default function OgrencilerPage() {
           </Link>
         </div>
       </div>
+
+      {editingStudent && (
+        <AddStudentModal
+          editingStudent={editingStudent}
+          onClose={() => setEditingStudent(null)}
+          onCreated={(updatedStudent) => {
+            setStudents(prev => prev.map(st => st.id === updatedStudent.id ? updatedStudent : st))
+            if (studentData && studentData.student.id === updatedStudent.id) {
+              setStudentData({ ...studentData, student: updatedStudent })
+            }
+            setEditingStudent(null)
+          }}
+        />
+      )}
 
       {/* Tabs Menu */}
       <div style={{ display: 'flex', gap: 20, borderBottom: '1px solid var(--border)', marginBottom: 24 }}>
