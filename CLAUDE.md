@@ -3,7 +3,7 @@
 ## Ne inşa ediyoruz
 Eda Cangert'in YKS (üniversite giriş sınavı) koçluk merkezi için web/mobil bir uygulama. Web dashboard tarafı için ilk tasarım turu tamamlandı: "Netlik" adlı koç paneli, 5 ekran (Koç Paneli, Öğrenci Profili, Konu Yeterlilik Haritası, Deneme Girişi, Haftalık Görüşme). Tasarım artifact'i: https://claude.ai/code/artifact/04e9bd11-0c63-4c43-b126-6fe457d037e8
 
-Yazılım tarafı başladı: **Vite + React + TypeScript + Supabase**. Auth, tasarım sistemi, routing/layout ve Koç Paneli ekranı gerçek Supabase sorgusuna bağlı çalışıyor. Kalan 5 ekran henüz placeholder — bkz. `coordination.md`. Şema: `supabase/schema.sql` (henüz gerçek bir Supabase projesine uygulanmadı — kullanıcının kendi projesini oluşturup `.env.local`'a bilgileri girmesi gerekiyor, bkz. `.env.example`).
+Yazılım tarafı tamamlandı: **Vite + React + TypeScript + Supabase**. Auth, tasarım sistemi, routing/layout ve tüm 6 ekran (Koç Paneli, Öğrenci Profili, Konu Yeterlilik Haritası, Deneme Girişi, Haftalık Program, Haftalık Görüşme) gerçek Supabase sorgularına ve veritabanı tiplerine bağlı olarak çalışmaktadır. Şema: `supabase/schema.sql`. Service-role key kullanarak RLS kurallarını bypass eden ve `src/tytSubjects.json` müfredatını seede hazır hale getiren bir seed script'i (`scripts/seedSupabase.ts`) ve `npm run seed` komutu eklenmiştir. Proje `npm run build` ile hatasız bir şekilde derlenebilmektedir.
 
 ## İş dağılımı (kullanıcı talimatı)
 - **Sonnet**: tüm yazılım/implementasyon işleri (frontend, backend, entegrasyon, test).
