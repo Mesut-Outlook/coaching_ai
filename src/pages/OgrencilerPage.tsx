@@ -2,16 +2,13 @@ import { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { 
   Plus, Search, ChevronRight, Award, TrendingUp, CheckSquare, 
-  Calendar, Layers, ClipboardList, User, ArrowLeft, Info, Edit3, Trash2
+  ArrowLeft
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import ProgressRing from '../components/charts/ProgressRing'
-import Sparkline from '../components/charts/Sparkline'
 import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
-import { mondayOf, weekKey, fmtWeekRange } from '../lib/weeks'
 
-// CSS tab styling helper
 type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks'
 
 interface StudentData {
@@ -23,12 +20,25 @@ interface StudentData {
   topics: (Topic & { subjects: Subject | null })[]
 }
 
+const subjectConfig: Record<string, { color: string; soru_sayisi: string }> = {
+  'Türkçe': { color: '#4f46e5', soru_sayisi: '40' },
+  'Matematik': { color: '#7c3aed', soru_sayisi: '30' },
+  'Geometri': { color: '#9333ea', soru_sayisi: '10' },
+  'Fizik': { color: '#2563eb', soru_sayisi: '7' },
+  'Kimya': { color: '#0d9488', soru_sayisi: '7' },
+  'Biyoloji': { color: '#16a34a', soru_sayisi: '6' },
+  'Tarih': { color: '#d97706', soru_sayisi: '5' },
+  'Coğrafya': { color: '#059669', soru_sayisi: '5' },
+  'Felsefe': { color: '#0891b2', soru_sayisi: '5' },
+  'Din Kültürü': { color: '#e11d48', soru_sayisi: '5' },
+}
+
 export default function OgrencilerPage() {
   const { studentId } = useParams()
   const navigate = useNavigate()
   
   // State for all-students list view
-  const [students, setStudents] = useState<Student[] | null>(null)
+  const [students, setStudents] = useState<Student[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   
@@ -47,13 +57,18 @@ export default function OgrencilerPage() {
     }
     
     setLoading(true)
-    supabase.from('students').select('*').order('created_at', { ascending: true })
-      .then(({ data, error }) => {
+    const fetchStudents = async () => {
+      try {
+        const { data, error } = await supabase.from('students').select('*').order('created_at', { ascending: true })
         if (error) throw error
         setStudents(data || [])
-      })
-      .catch(err => setError(err instanceof Error ? err.message : 'Öğrenciler yüklenemedi'))
-      .finally(() => setLoading(false))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Öğrenciler yüklenemedi')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStudents()
   }, [studentId])
 
   // Load specific student data
@@ -194,6 +209,7 @@ export default function OgrencilerPage() {
           student_id: studentId,
           topic_id: topicId,
           state: newState,
+          note: null,
           decided_by: coachId,
           decided_at: new Date().toISOString()
         })
@@ -326,13 +342,13 @@ export default function OgrencilerPage() {
         {/* Navigation Actions to other parts */}
         <div style={{ display: 'flex', gap: 10 }}>
           <Link to={`/program?studentId=${studentId}`} className="btn btn-ghost btn-sm">
-            <Calendar size={14} /> Haftalık Program
+            Haftalık Program
           </Link>
           <Link to={`/denemeler?studentId=${studentId}`} className="btn btn-ghost btn-sm">
-            <ClipboardList size={14} /> Deneme Girişi
+            Deneme Girişi
           </Link>
           <Link to={`/konular?studentId=${studentId}`} className="btn btn-ghost btn-sm">
-            <Layers size={14} /> Yeterlilik Haritası
+            Yeterlilik Haritası
           </Link>
         </div>
       </div>
@@ -397,7 +413,7 @@ export default function OgrencilerPage() {
 
             {/* Task Progress */}
             <div className="card" style={{ padding: 20, display: 'flex', gap: 16, alignItems: 'center' }}>
-              <ProgressRing percent={stats.taskCompletion} size={44} strokeWidth={4.5} />
+              <ProgressRing percent={stats.taskCompletion} size={44} stroke={4.5} />
               <div>
                 <div style={{ fontSize: 11, color: 'var(--ink-faint)', textTransform: 'uppercase' }}>Haftalık Görev Tamamlama</div>
                 <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4 }}>%{stats.taskCompletion}</div>
@@ -416,7 +432,7 @@ export default function OgrencilerPage() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ height: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
-                    {stats.tytExams.map((e, index) => (
+                    {stats.tytExams.map((e) => (
                       <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--indigo-600)' }}>{e.totalNet}</span>
                         <div style={{ width: 14, height: `${(e.totalNet / 120) * 80}px`, background: 'linear-gradient(to top, var(--indigo-500), var(--indigo-300))', borderRadius: '4px 4px 0 0' }}></div>
@@ -438,7 +454,7 @@ export default function OgrencilerPage() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ height: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
-                    {stats.aytExams.map((e, index) => (
+                    {stats.aytExams.map((e) => (
                       <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal-text)' }}>{e.totalNet}</span>
                         <div style={{ width: 14, height: `${(e.totalNet / 80) * 80}px`, background: 'linear-gradient(to top, var(--teal), #7fd8e8)', borderRadius: '4px 4px 0 0' }}></div>

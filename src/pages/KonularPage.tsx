@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, ChevronDown, ChevronUp, AlertCircle, Save, Info, CheckCircle2, AlertTriangle, XCircle, HelpCircle } from 'lucide-react'
+import { Search, ChevronDown, ChevronUp, Save, Info, CheckCircle2, AlertTriangle, XCircle, HelpCircle } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, Subject, Topic, CoachDecision, TopicMeasurement } from '../types/database'
@@ -256,7 +256,6 @@ export default function KonularPage() {
                   const countKritik = subjectDecisions.filter(d => d.state === 'kritik').length
                   const countGelisiyor = subjectDecisions.filter(d => d.state === 'gelisiyor').length
                   const countYeterli = subjectDecisions.filter(d => d.state === 'yeterli').length
-                  const countOlculmedi = totalCount - (countKritik + countGelisiyor + countYeterli)
 
                   return (
                     <div key={subject.id} className="card" style={{ overflow: 'hidden' }}>

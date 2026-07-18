@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Calendar, CheckSquare, AlertTriangle, ArrowRight, Plus, Trash2, CheckCircle2, ChevronRight, Save } from 'lucide-react'
+import { CheckSquare, Plus, Trash2, CheckCircle2, ChevronRight } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
@@ -9,7 +9,7 @@ import { mondayOf, weekKey, fmtWeekRange } from '../lib/weeks'
 export default function RaporlarPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const initialStudentId = searchParams.get('studentId') || ''
-
+  
   const [students, setStudents] = useState<Student[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState(initialStudentId)
   
@@ -99,10 +99,6 @@ export default function RaporlarPage() {
   useEffect(() => {
     loadReviewData()
   }, [selectedStudentId])
-
-  const currentStudent = useMemo(() => {
-    return students.find(s => s.id === selectedStudentId)
-  }, [students, selectedStudentId])
 
   // Stats for the past week
   const pastWeekStats = useMemo(() => {

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, Trash2, ClipboardList, AlertCircle, Save } from 'lucide-react'
+import { Trash2, ClipboardList, AlertCircle, Save } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, MockExam, MockExamSection } from '../types/database'
@@ -178,7 +178,8 @@ export default function DenemelerPage() {
           max_questions: sec.max,
           correct_count: score.correct,
           wrong_count: score.wrong,
-          blank_count: Math.max(0, blank)
+          blank_count: Math.max(0, blank),
+          net: 0
         }
       })
 

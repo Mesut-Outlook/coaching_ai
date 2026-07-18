@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Plus, Trash2, Calendar, CheckSquare, Save, X, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Trash2, CheckSquare, X } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
-import { mondayOf, weekKey, fmtWeekRange, DAYS, DAY_ABBR } from '../lib/weeks'
+import { mondayOf, weekKey, fmtWeekRange, DAYS } from '../lib/weeks'
 
 export default function ProgramPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -273,7 +273,10 @@ export default function ProgramPage() {
           )}
 
           {/* Kanban Board */}
-          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 16, minHeight: 480 }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Yükleniyor…</div>
+          ) : (
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 16, minHeight: 480 }}>
             {DAYS.map((dayName, dayIndex) => {
               const dayTasks = tasks.filter(t => t.day_index === dayIndex)
               const isAddingHere = addingDayIndex === dayIndex
@@ -440,6 +443,7 @@ export default function ProgramPage() {
               )
             })}
           </div>
+          )}
 
         </div>
       )}

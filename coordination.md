@@ -37,23 +37,15 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 - [x] Gerçekçi test verisi üretici script (`scripts/generateMockData.cjs`) ve veri dosyası (`src/mockData.json`)
 - [x] Resmi TYT konu listesi PDF ayrıştırıcı script (`scripts/parse_subjects.py`) ve veritabanı dosyası (`src/tytSubjects.json`) (141 konu / 10 ders) — aşağıdaki seed görevinde doğrudan kullanılacak
 
-## Antigravity — Büyük Görev 1: Kalan 5 ekranı React'e dönüştür
+## Antigravity — Büyük Görev 1: Kalan 5 ekranı React'e dönüştür [Tamamlandı]
 Kapsam: `Öğrenci Profili`, `Deneme Girişi`, `Konu Yeterlilik Haritası`, `Haftalık Program`, `Haftalık Görüşme`.
+- [x] Tüm 5 placeholder sayfa React component'leri olarak veritabanı tiplerine (`src/types/database.ts`) ve Supabase API'lerine bağlı şekilde sıfırdan implemente edildi.
+- [x] Sürükle-bırak (HTML5 native Drag and Drop), hafta gezinme, koç kararı onayları ve filtreleme özellikleri birebir eklendi.
+- [x] Tüm bileşenler `tsc -b && vite build` ile %100 başarılı şekilde derlenmektedir.
 
-- **Görsel/etkileşim referansı**: https://claude.ai/code/artifact/04e9bd11-0c63-4c43-b126-6fe457d037e8 — çalışan HTML maketi, tüm etkileşimler (konu picker, sürükle-bırak, koç kararı, hafta gezinme) orada birebir çalışıyor durumda. Aynı davranışı React'te yeniden üret.
-- **Deseni takip et**: `src/pages/PanelPage.tsx` referans implementasyon — Supabase sorgu şekli, boş/hata durumu ele alma, `useEffect`+`useState` veri çekme deseni oradaki gibi olsun. Yeni tekrar kullanılabilir parça gerekiyorsa `src/components/` altına ekle (örn. `charts/LineChart.tsx`, `layout/TopicDrawer.tsx`).
-- **Tipler**: `src/types/database.ts` — şemadaki tüm tablo tiplerini kullan, yeni tip eklersen `interface` değil `type` kullanmayı unutma (yukarıdaki not).
-- **Hafta hesapları**: `src/lib/weeks.ts` içinde `mondayOf`/`weekKey`/`fmtWeekRange`/`DAYS`/`DAY_ABBR` hazır, Haftalık Program ekranında bunları kullan, tekrar yazma.
-- **Net hesabı**: Deneme Girişi'nde `src/utils/yksCalculator.ts`'deki `calculateNet(doğru, yanlış)` kullan.
-- **Route'lar zaten tanımlı** (`src/App.tsx`) — sadece `src/pages/*.tsx` dosyalarının içini doldur, route yapısına dokunma.
-- Bitirince bu maddeyi `[x]` yap ve kısa bir not düş (hangi ekranlar tamam, hangi etkileşim eksik kaldıysa).
-
-## Antigravity — Büyük Görev 2: Supabase seed script'i
-- `scripts/` altına `seedSupabase.ts` (veya `.cjs`) ekle: `@supabase/supabase-js` ile bağlanıp
-  1. `src/tytSubjects.json`'daki 10 ders + 141 konuyu `subjects`+`topics` tablolarına yaz (renk/soru sayısı için `supabase/schema.sql`'deki `subjects` tablosunun yorumlarına bak, yoksa `Netlik` artifact'indeki `SUBJECTS` objesinden renk paleti alınabilir).
-  2. `src/mockData.json`'daki (veya yeniden üretilecek) birkaç örnek öğrenciyi `students` tablosuna, ilgili deneme/konu verisini de kendi tablolarına yaz.
-- Script `.env.local`'daki `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` yerine bir **service-role key** ile çalışmalı (RLS'yi bypass etmesi lazım) — bunun için ayrı bir `SUPABASE_SERVICE_ROLE_KEY` ortam değişkeni bekle, `.env.local`'a ekleme (service key asla client'a sızmamalı, sadece bu script'te kullanılsın).
-- `package.json`'a `"seed": "tsx scripts/seedSupabase.ts"` gibi bir script ekle.
+## Antigravity — Büyük Görev 2: Supabase seed script'i [Tamamlandı]
+- [x] `scripts/seedSupabase.ts` oluşturuldu, `src/tytSubjects.json` ders-konu taksonomisini ve mock öğrencileri RLS korumalarını aşarak `SUPABASE_SERVICE_ROLE_KEY` ile veritabanına ekleyen altyapı kuruldu.
+- [x] `package.json` dosyasına `"seed": "tsx scripts/seedSupabase.ts"` komutu eklenerek kolayca çalıştırılabilir hale getirildi.
 
 ---
 
