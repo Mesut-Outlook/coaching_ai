@@ -171,34 +171,46 @@ alter table mock_exam_sections enable row level security;
 alter table error_basket_items enable row level security;
 alter table weekly_tasks enable row level security;
 
+drop policy if exists "profiles: kendi profilini okur/günceller" on profiles;
 create policy "profiles: kendi profilini okur/günceller" on profiles
   for all using (id = auth.uid()) with check (id = auth.uid());
 
+drop policy if exists "subjects: herkes okur" on subjects;
 create policy "subjects: herkes okur" on subjects for select using (true);
+drop policy if exists "topics: herkes okur" on topics;
 create policy "topics: herkes okur" on topics for select using (true);
 -- Müfredat (subjects/topics) tüm koçlar arasında ortak — herhangi bir giriş
 -- yapmış koç ekleyebilir/güncelleyebilir. Silme politikası kasıtlı olarak yok:
 -- RLS her delete isteğini reddeder, arayüz is_active=false ile "pasifleştirir".
+drop policy if exists "subjects: giriş yapan koç ekler" on subjects;
 create policy "subjects: giriş yapan koç ekler" on subjects for insert with check (auth.uid() is not null);
+drop policy if exists "subjects: giriş yapan koç günceller" on subjects;
 create policy "subjects: giriş yapan koç günceller" on subjects for update using (auth.uid() is not null) with check (auth.uid() is not null);
+drop policy if exists "topics: giriş yapan koç ekler" on topics;
 create policy "topics: giriş yapan koç ekler" on topics for insert with check (auth.uid() is not null);
+drop policy if exists "topics: giriş yapan koç günceller" on topics;
 create policy "topics: giriş yapan koç günceller" on topics for update using (auth.uid() is not null) with check (auth.uid() is not null);
 
+drop policy if exists "students: koç kendi öğrencilerini yönetir" on students;
 create policy "students: koç kendi öğrencilerini yönetir" on students
   for all using (coach_id = auth.uid()) with check (coach_id = auth.uid());
 
+drop policy if exists "topic_measurements: öğrenci sahibi koç yönetir" on topic_measurements;
 create policy "topic_measurements: öğrenci sahibi koç yönetir" on topic_measurements
   for all using (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()))
   with check (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()));
 
+drop policy if exists "coach_decisions: öğrenci sahibi koç yönetir" on coach_decisions;
 create policy "coach_decisions: öğrenci sahibi koç yönetir" on coach_decisions
   for all using (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()))
   with check (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()));
 
+drop policy if exists "mock_exams: öğrenci sahibi koç yönetir" on mock_exams;
 create policy "mock_exams: öğrenci sahibi koç yönetir" on mock_exams
   for all using (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()))
   with check (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()));
 
+drop policy if exists "mock_exam_sections: öğrenci sahibi koç yönetir" on mock_exam_sections;
 create policy "mock_exam_sections: öğrenci sahibi koç yönetir" on mock_exam_sections
   for all using (exists (
     select 1 from mock_exams e join students s on s.id = e.student_id
@@ -208,6 +220,7 @@ create policy "mock_exam_sections: öğrenci sahibi koç yönetir" on mock_exam_
     where e.id = mock_exam_id and s.coach_id = auth.uid()
   ));
 
+drop policy if exists "error_basket_items: öğrenci sahibi koç yönetir" on error_basket_items;
 create policy "error_basket_items: öğrenci sahibi koç yönetir" on error_basket_items
   for all using (exists (
     select 1 from mock_exams e join students s on s.id = e.student_id
@@ -217,6 +230,7 @@ create policy "error_basket_items: öğrenci sahibi koç yönetir" on error_bask
     where e.id = mock_exam_id and s.coach_id = auth.uid()
   ));
 
+drop policy if exists "weekly_tasks: öğrenci sahibi koç yönetir" on weekly_tasks;
 create policy "weekly_tasks: öğrenci sahibi koç yönetir" on weekly_tasks
   for all using (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()))
   with check (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()));

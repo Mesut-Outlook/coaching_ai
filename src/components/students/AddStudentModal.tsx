@@ -121,7 +121,7 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
           
           {/* Profile Photo Upload Row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--surface-alt)', padding: 12, borderRadius: 10 }}>
-            <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border-soft)' }}>
+            <div style={{ width: 76, height: 76, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border-soft)' }}>
               {photoUrl ? (
                 <img src={photoUrl} alt="Öğrenci" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (

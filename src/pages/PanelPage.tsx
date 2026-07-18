@@ -182,7 +182,7 @@ export default function PanelPage() {
           <Link to={`/ogrenciler/${student.id}`} key={student.id} className="card" style={{ padding: '18px 18px 16px', display: 'flex', flexDirection: 'column', gap: 14, textDecoration: 'none', color: 'inherit' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
               <div style={{ display: 'flex', gap: 11, alignItems: 'center', minWidth: 0 }}>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-disp)', fontWeight: 700, fontSize: 13.5, flexShrink: 0, border: '1px solid var(--border-soft)' }}>
+                <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-disp)', fontWeight: 700, fontSize: 15, flexShrink: 0, border: '1px solid var(--border-soft)' }}>
                   {student.photo_url ? (
                     <img src={student.photo_url} alt={student.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (

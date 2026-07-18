@@ -370,7 +370,7 @@ export default function OgrencilerPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, flexShrink: 0, border: '1px solid var(--border-soft)' }}>
+                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 17, flexShrink: 0, border: '1px solid var(--border-soft)' }}>
                       {s.photo_url ? (
                         <img src={s.photo_url} alt={s.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
@@ -506,7 +506,7 @@ export default function OgrencilerPage() {
       {/* Student Profile Header */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'space-between', alignItems: 'center', marginBottom: 26, marginTop: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 20, border: '2px solid var(--border-soft)', flexShrink: 0 }}>
+          <div style={{ width: 88, height: 88, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 26, border: '2px solid var(--border-soft)', flexShrink: 0 }}>
             {student.photo_url ? (
               <img src={student.photo_url} alt={student.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
