@@ -6,8 +6,13 @@ import { isSupabaseConfigured } from '../lib/supabase'
 export default function LoginPage() {
   const { signIn } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(() => {
+    return localStorage.getItem('remembered_email') || ''
+  })
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(() => {
+    return Boolean(localStorage.getItem('remembered_email'))
+  })
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -15,6 +20,13 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setSubmitting(true)
+
+    if (rememberMe) {
+      localStorage.setItem('remembered_email', email)
+    } else {
+      localStorage.removeItem('remembered_email')
+    }
+
     const { error: signInError } = await signIn(email, password)
     setSubmitting(false)
     if (signInError) {
@@ -99,6 +111,28 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: -4 }}>
+            <input
+              id="rememberMe"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              style={{ cursor: 'pointer', width: 16, height: 16 }}
+            />
+            <label
+              htmlFor="rememberMe"
+              style={{
+                fontSize: 13,
+                cursor: 'pointer',
+                color: 'var(--ink-soft)',
+                margin: 0,
+                fontWeight: 400,
+                userSelect: 'none'
+              }}
+            >
+              Beni Hatırla
+            </label>
           </div>
           {error && (
             <p style={{ color: 'var(--critical-text)', fontSize: 12.5, margin: 0 }}>{error}</p>

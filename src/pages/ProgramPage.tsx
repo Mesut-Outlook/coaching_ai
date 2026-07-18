@@ -30,6 +30,15 @@ export default function ProgramPage() {
   const [isExam, setIsExam] = useState<boolean>(false)
   const [addingTask, setAddingTask] = useState(false)
 
+  // Task Editing State
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+  const [editSubjectId, setEditSubjectId] = useState<string>('custom')
+  const [editTopicId, setEditTopicId] = useState<string>('')
+  const [editCustomLabel, setEditCustomLabel] = useState('')
+  const [editQuestionCount, setEditQuestionCount] = useState<number>(100)
+  const [editIsExam, setEditIsExam] = useState<boolean>(false)
+  const [savingTask, setSavingTask] = useState(false)
+
   // Sync selectedStudentId with query parameters
   const handleStudentChange = (id: string) => {
     setSelectedStudentId(id)
@@ -227,6 +236,62 @@ export default function ProgramPage() {
     }
   }
 
+  // Handle task editing start
+  const handleStartEdit = (task: WeeklyTask) => {
+    setEditingTaskId(task.id)
+    if (task.topic_id) {
+      const topic = topics.find(t => t.id === task.topic_id)
+      setEditSubjectId(topic ? String(topic.subject_id) : 'custom')
+      setEditTopicId(String(task.topic_id))
+    } else {
+      setEditSubjectId('custom')
+      setEditTopicId('')
+    }
+    setEditCustomLabel(task.custom_label || '')
+    setEditQuestionCount(task.question_count)
+    setEditIsExam(task.is_exam)
+  }
+
+  // Handle task editing save
+  const handleSaveEdit = async (taskId: string) => {
+    if (!isSupabaseConfigured) return
+
+    const topicIdVal = editSubjectId === 'custom' ? null : (editTopicId ? parseInt(editTopicId) : null)
+    const labelVal = editSubjectId === 'custom' ? editCustomLabel : null
+
+    if (editSubjectId === 'custom' && !editCustomLabel.trim()) {
+      return alert('Lütfen görev açıklaması girin.')
+    }
+    if (editSubjectId !== 'custom' && !editTopicId) {
+      return alert('Lütfen konu seçin.')
+    }
+
+    setSavingTask(true)
+    try {
+      const { data, error } = await supabase
+        .from('weekly_tasks')
+        .update({
+          topic_id: topicIdVal,
+          custom_label: labelVal,
+          question_count: editQuestionCount,
+          is_exam: editIsExam
+        })
+        .eq('id', taskId)
+        .select()
+
+      if (error) throw error
+
+      if (data && data.length > 0) {
+        setTasks(prev => prev.map(t => t.id === taskId ? data[0] : t))
+      }
+      setEditingTaskId(null)
+    } catch (err) {
+      alert('Görev güncellenirken hata oluştu.')
+    } finally {
+      setSavingTask(false)
+    }
+  }
+
   // Unique subjects, derived from the joined topics list
   const subjectsList = useMemo(() => {
     const bySubjectId = new Map<number, Subject>()
@@ -242,6 +307,13 @@ export default function ProgramPage() {
     const subjectId = parseInt(selectedSubjectId)
     return topics.filter((t) => t.subject_id === subjectId).sort((a, b) => a.sort_order - b.sort_order)
   }, [topics, selectedSubjectId])
+
+  // Topics belonging to the currently selected subject in the edit-task form
+  const editTopicsForSubject = useMemo(() => {
+    if (editSubjectId === 'custom') return []
+    const subjectId = parseInt(editSubjectId)
+    return topics.filter((t) => t.subject_id === subjectId).sort((a, b) => a.sort_order - b.sort_order)
+  }, [topics, editSubjectId])
 
   return (
     <section className="screen">
@@ -322,11 +394,115 @@ export default function ProgramPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minHeight: 200 }}>
                     {dayTasks.map(task => {
                       const topic = topics.find(t => t.id === task.topic_id)
+                      const isEditing = editingTaskId === task.id
+
+                      if (isEditing) {
+                        return (
+                          <div
+                            key={task.id}
+                            style={{
+                              padding: 10,
+                              background: 'var(--surface-alt)',
+                              border: '1px solid var(--indigo-500)',
+                              borderRadius: 10,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 8
+                            }}
+                          >
+                            <div className="field">
+                              <label style={{ fontSize: 9, fontWeight: 700 }}>Ders</label>
+                              <select
+                                value={editSubjectId}
+                                onChange={e => { setEditSubjectId(e.target.value); setEditTopicId('') }}
+                                style={{ padding: 4, fontSize: 11, height: 'auto' }}
+                              >
+                                <option value="custom">Özel Görev (Metin)</option>
+                                {subjectsList.map(s => (
+                                  <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {editSubjectId === 'custom' ? (
+                              <div className="field">
+                                <label style={{ fontSize: 9, fontWeight: 700 }}>Görev Açıklaması</label>
+                                <input
+                                  type="text"
+                                  value={editCustomLabel}
+                                  onChange={e => setEditCustomLabel(e.target.value)}
+                                  style={{ padding: 4, fontSize: 11 }}
+                                />
+                              </div>
+                            ) : (
+                              <div className="field">
+                                <label style={{ fontSize: 9, fontWeight: 700 }}>Konu</label>
+                                <select
+                                  value={editTopicId}
+                                  onChange={e => setEditTopicId(e.target.value)}
+                                  style={{ padding: 4, fontSize: 11, height: 'auto' }}
+                                >
+                                  <option value="" disabled>Konu seçin</option>
+                                  {editTopicsForSubject.map(t => (
+                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 6 }}>
+                              <div className="field">
+                                <label style={{ fontSize: 9, fontWeight: 700 }}>Soru Sayısı</label>
+                                <input
+                                  type="number"
+                                  value={editQuestionCount}
+                                  onChange={e => setEditQuestionCount(parseInt(e.target.value) || 0)}
+                                  style={{ padding: 4, fontSize: 11 }}
+                                />
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 12 }}>
+                                <input
+                                  type="checkbox"
+                                  id={`editIsExam-${task.id}`}
+                                  checked={editIsExam}
+                                  onChange={e => setEditIsExam(e.target.checked)}
+                                />
+                                <label htmlFor={`editIsExam-${task.id}`} style={{ fontSize: 9.5, fontWeight: 700, cursor: 'pointer', margin: 0 }}>
+                                  Deneme mi?
+                                </label>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                style={{ flex: 1, padding: '3px 6px', fontSize: 10, justifyContent: 'center' }}
+                                onClick={() => setEditingTaskId(null)}
+                              >
+                                İptal
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-sm"
+                                style={{ flex: 1.5, padding: '3px 6px', fontSize: 10, justifyContent: 'center' }}
+                                onClick={() => handleSaveEdit(task.id)}
+                                disabled={savingTask}
+                              >
+                                Kaydet
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      }
+
                       return (
                         <div
                           key={task.id}
                           draggable
                           onDragStart={(e) => handleDragStart(e, task.id)}
+                          onDoubleClick={() => handleStartEdit(task)}
+                          title="Düzenlemek için çift tıklayın"
                           style={{
                             padding: '10px 12px',
                             background: task.completed ? 'var(--success-bg)' : 'var(--surface-alt)',

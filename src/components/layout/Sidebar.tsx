@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutGrid, Users, ClipboardList, Layers, Calendar, BarChart2, BookOpen } from 'lucide-react'
+import { LayoutGrid, Users, ClipboardList, Layers, Calendar, BarChart2, BookOpen, HelpCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -10,6 +10,10 @@ const NAV_ITEMS = [
   { to: '/program', label: 'Program', icon: Calendar },
   { to: '/raporlar', label: 'Raporlar', icon: BarChart2 },
   { to: '/mufredat', label: 'Müfredat', icon: BookOpen },
+]
+
+const UTILITY_NAV_ITEMS = [
+  { to: '/yardim', label: 'Yardım', icon: HelpCircle },
 ]
 
 function initials(name: string) {
@@ -45,6 +49,19 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {UTILITY_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) => `nav-item${isActive ? ' is-active' : ''}`}
+          >
+            <Icon className="icon" />
+            {label}
+          </NavLink>
+        ))}
+      </div>
 
       <div className="sidebar-foot">
         <button type="button" className="coach-chip" onClick={signOut} title="Çıkış yap">

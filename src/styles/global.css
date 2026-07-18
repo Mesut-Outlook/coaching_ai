@@ -77,7 +77,7 @@ a { color: inherit; }
 .screen { padding: 26px 32px 60px; }
 
 /* ==== Buttons / inputs ==== */
-.btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 10px; border: 1px solid transparent; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 10px; border: 1px solid transparent; font-size: 13px; font-weight: 600; white-space: nowrap; text-decoration: none; }
 .btn-primary { background: var(--indigo-600); color: #fff; }
 .btn-primary:hover { background: var(--indigo-700); }
 .btn-ghost { background: var(--surface); border-color: var(--border); color: var(--ink); }

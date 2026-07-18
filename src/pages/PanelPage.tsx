@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Plus, ChevronRight } from 'lucide-react'
+import { Search, Plus, ChevronRight, HelpCircle } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { mondayOf, weekKey } from '../lib/weeks'
 import PageHeader from '../components/layout/PageHeader'
@@ -111,9 +111,14 @@ export default function PanelPage() {
             : 'Yükleniyor…'
         }
         actions={
-          <button type="button" className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-            <Plus size={14} /> Öğrenci Ekle
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Link to="/yardim" className="btn btn-ghost">
+              <HelpCircle size={14} /> Yardım
+            </Link>
+            <button type="button" className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+              <Plus size={14} /> Öğrenci Ekle
+            </button>
+          </div>
         }
       />
 
