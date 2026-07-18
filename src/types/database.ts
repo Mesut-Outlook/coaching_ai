@@ -33,6 +33,7 @@ export type Subject = {
   color: string
   soru_sayisi: string
   sort_order: number
+  is_active: boolean
 }
 
 export type Topic = {
@@ -40,6 +41,7 @@ export type Topic = {
   subject_id: number
   name: string
   sort_order: number
+  is_active: boolean
 }
 
 export type TopicMeasurement = {

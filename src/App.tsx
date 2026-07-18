@@ -9,6 +9,7 @@ import DenemelerPage from './pages/DenemelerPage'
 import KonularPage from './pages/KonularPage'
 import ProgramPage from './pages/ProgramPage'
 import RaporlarPage from './pages/RaporlarPage'
+import MufredatPage from './pages/MufredatPage'
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/konular" element={<KonularPage />} />
             <Route path="/program" element={<ProgramPage />} />
             <Route path="/raporlar" element={<RaporlarPage />} />
+            <Route path="/mufredat" element={<MufredatPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/panel" replace />} />
         </Routes>

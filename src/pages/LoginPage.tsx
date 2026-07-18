@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { isSupabaseConfigured } from '../lib/supabase'
-import { Target } from 'lucide-react'
 
 export default function LoginPage() {
   const { signIn } = useAuth()
@@ -40,17 +39,19 @@ export default function LoginPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 28 }}>
           <div
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              background: 'linear-gradient(155deg, var(--indigo-500), var(--indigo-700))',
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              background: '#F6EFDD',
+              overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
+              boxShadow: '0 4px 10px -2px rgba(0,0,0,0.2)',
             }}
           >
-            <Target size={21} color="#fff" strokeWidth={1.8} />
+            <img src="/logo.png" alt="" width={48} height={48} style={{ width: '118%', height: '118%', objectFit: 'cover' }} />
           </div>
           <div>
             <div style={{ fontFamily: 'var(--font-disp)', fontWeight: 700, fontSize: 17 }}>Netlik</div>

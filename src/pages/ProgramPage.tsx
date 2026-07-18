@@ -23,7 +23,8 @@ export default function ProgramPage() {
   
   // Inline Add Form State (per day)
   const [addingDayIndex, setAddingDayIndex] = useState<number | null>(null)
-  const [selectedTopicId, setSelectedTopicId] = useState<string>('custom')
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('custom')
+  const [selectedTopicId, setSelectedTopicId] = useState<string>('')
   const [customLabel, setCustomLabel] = useState('')
   const [questionCount, setQuestionCount] = useState<number>(100)
   const [isExam, setIsExam] = useState<boolean>(false)
@@ -85,10 +86,6 @@ export default function ProgramPage() {
   useEffect(() => {
     loadTasks()
   }, [selectedStudentId, currentMonday])
-
-  const currentStudent = useMemo(() => {
-    return students.find(s => s.id === selectedStudentId)
-  }, [students, selectedStudentId])
 
   // Week navigation handlers
   const handlePrevWeek = () => {
@@ -164,12 +161,15 @@ export default function ProgramPage() {
   // Add a new task to a specific day
   const handleAddTask = async (dayIndex: number) => {
     if (!selectedStudentId || !isSupabaseConfigured) return
-    
-    const topicIdVal = selectedTopicId === 'custom' ? null : parseInt(selectedTopicId)
-    const labelVal = selectedTopicId === 'custom' ? customLabel : null
-    
-    if (selectedTopicId === 'custom' && !customLabel.trim()) {
+
+    const topicIdVal = selectedSubjectId === 'custom' ? null : (selectedTopicId ? parseInt(selectedTopicId) : null)
+    const labelVal = selectedSubjectId === 'custom' ? customLabel : null
+
+    if (selectedSubjectId === 'custom' && !customLabel.trim()) {
       return alert('Lütfen görev açıklaması girin.')
+    }
+    if (selectedSubjectId !== 'custom' && !selectedTopicId) {
+      return alert('Lütfen konu seçin.')
     }
 
     setAddingTask(true)
@@ -198,7 +198,8 @@ export default function ProgramPage() {
 
       // Reset form
       setAddingDayIndex(null)
-      setSelectedTopicId('custom')
+      setSelectedSubjectId('custom')
+      setSelectedTopicId('')
       setCustomLabel('')
       setQuestionCount(100)
       setIsExam(false)
@@ -226,12 +227,21 @@ export default function ProgramPage() {
     }
   }
 
-  // Filter topics based on student track
-  const filteredTopics = useMemo(() => {
-    if (!currentStudent) return topics
-    // Filter to show topics relevant to their track or common
-    return topics
-  }, [topics, currentStudent])
+  // Unique subjects, derived from the joined topics list
+  const subjectsList = useMemo(() => {
+    const bySubjectId = new Map<number, Subject>()
+    topics.forEach((t) => {
+      if (t.subjects && !bySubjectId.has(t.subject_id)) bySubjectId.set(t.subject_id, t.subjects)
+    })
+    return Array.from(bySubjectId.values()).sort((a, b) => a.sort_order - b.sort_order)
+  }, [topics])
+
+  // Topics belonging to the currently selected subject in the add-task form
+  const topicsForSubject = useMemo(() => {
+    if (selectedSubjectId === 'custom') return []
+    const subjectId = parseInt(selectedSubjectId)
+    return topics.filter((t) => t.subject_id === subjectId).sort((a, b) => a.sort_order - b.sort_order)
+  }, [topics, selectedSubjectId])
 
   return (
     <section className="screen">
@@ -380,19 +390,33 @@ export default function ProgramPage() {
                   {isAddingHere ? (
                     <div style={{ background: 'var(--surface-alt)', border: '1px dashed var(--border)', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div className="field">
-                        <label style={{ fontSize: 10 }}>Konu / Görev Türü</label>
-                        <select value={selectedTopicId} onChange={e => setSelectedTopicId(e.target.value)} style={{ padding: 6, fontSize: 11.5 }}>
+                        <label style={{ fontSize: 10 }}>Ders</label>
+                        <select
+                          value={selectedSubjectId}
+                          onChange={e => { setSelectedSubjectId(e.target.value); setSelectedTopicId('') }}
+                          style={{ padding: 6, fontSize: 11.5 }}
+                        >
                           <option value="custom">Özel Görev (Metin)</option>
-                          {filteredTopics.map(t => (
-                            <option key={t.id} value={t.id}>{t.subjects?.name}: {t.name}</option>
+                          {subjectsList.map(s => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
                           ))}
                         </select>
                       </div>
 
-                      {selectedTopicId === 'custom' && (
+                      {selectedSubjectId === 'custom' ? (
                         <div className="field">
                           <label style={{ fontSize: 10 }}>Görev Açıklaması</label>
                           <input type="text" placeholder="Örn: Paragraf Çözümü" value={customLabel} onChange={e => setCustomLabel(e.target.value)} style={{ padding: 6, fontSize: 11.5 }} />
+                        </div>
+                      ) : (
+                        <div className="field">
+                          <label style={{ fontSize: 10 }}>Konu</label>
+                          <select value={selectedTopicId} onChange={e => setSelectedTopicId(e.target.value)} style={{ padding: 6, fontSize: 11.5 }}>
+                            <option value="" disabled>Konu seçin</option>
+                            {topicsForSubject.map(t => (
+                              <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
+                          </select>
                         </div>
                       )}
 

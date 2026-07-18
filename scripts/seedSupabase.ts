@@ -37,23 +37,28 @@ async function main() {
 
   // Parse environment variables manually from .env.local
   let supabaseUrl = process.env.VITE_SUPABASE_URL;
+  let serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   try {
     const envPath = path.join(process.cwd(), '.env.local');
     if (fs.existsSync(envPath)) {
       const envContent = fs.readFileSync(envPath, 'utf8');
-      const match = envContent.match(/VITE_SUPABASE_URL\s*=\s*(.+)/);
-      if (match && match[1]) {
-        supabaseUrl = match[1].trim().replace(/['"]/g, '');
+      
+      const urlMatch = envContent.match(/VITE_SUPABASE_URL\s*=\s*(.+)/);
+      if (urlMatch && urlMatch[1]) {
+        supabaseUrl = urlMatch[1].trim().replace(/['"]/g, '');
+      }
+
+      const keyMatch = envContent.match(/SUPABASE_SERVICE_ROLE_KEY\s*=\s*(.+)/);
+      if (keyMatch && keyMatch[1]) {
+        serviceRoleKey = keyMatch[1].trim().replace(/['"]/g, '');
       }
     }
   } catch (e) {
     // Ignore
   }
 
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
   if (!supabaseUrl || !serviceRoleKey) {
-    console.error('Error: VITE_SUPABASE_URL (in .env.local or environment) and SUPABASE_SERVICE_ROLE_KEY (in environment) are required.');
+    console.error('Error: VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (in .env.local or environment) are required.');
     process.exit(1);
   }
 

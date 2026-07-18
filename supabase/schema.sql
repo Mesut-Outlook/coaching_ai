@@ -33,12 +33,17 @@ create index if not exists students_coach_id_idx on students(coach_id);
 -- Müfredat: dersler ve konular (2022 TYT Konuları — tüm koçlar arasında ortak,
 -- koça özel değil, herkes aynı müfredatı görür)
 -- ---------------------------------------------------------------------------
+-- is_active: müfredat yıldan yıla değişebiliyor. Bir konu/ders kaldırılmak
+-- istendiğinde SİLİNMEZ (silinirse ona bağlı tüm ölçüm/görev geçmişi cascade
+-- ile yok olur) — is_active=false yapılıp Müfredat ekranında gizlenir, geçmiş
+-- veri korunur. Yeni bir yılın müfredatı geldiğinde yeni ders/konu eklenir.
 create table if not exists subjects (
   id serial primary key,
   name text not null unique,
   color text not null,
   soru_sayisi text not null,
-  sort_order int not null default 0
+  sort_order int not null default 0,
+  is_active boolean not null default true
 );
 
 create table if not exists topics (
@@ -46,9 +51,15 @@ create table if not exists topics (
   subject_id int not null references subjects(id) on delete cascade,
   name text not null,
   sort_order int not null default 0,
+  is_active boolean not null default true,
   unique (subject_id, name)
 );
 create index if not exists topics_subject_id_idx on topics(subject_id);
+
+-- Bu şemayı daha önce çalıştırdıysan (subjects/topics zaten vardı), yukarıdaki
+-- "create table if not exists" onları atlar — is_active sütununu buradan ekle.
+alter table subjects add column if not exists is_active boolean not null default true;
+alter table topics add column if not exists is_active boolean not null default true;
 
 -- ---------------------------------------------------------------------------
 -- Konu bazlı ölçümler — hem konu testi hem deneme sonuçları buraya düşer.
@@ -157,6 +168,13 @@ create policy "profiles: kendi profilini okur/günceller" on profiles
 
 create policy "subjects: herkes okur" on subjects for select using (true);
 create policy "topics: herkes okur" on topics for select using (true);
+-- Müfredat (subjects/topics) tüm koçlar arasında ortak — herhangi bir giriş
+-- yapmış koç ekleyebilir/güncelleyebilir. Silme politikası kasıtlı olarak yok:
+-- RLS her delete isteğini reddeder, arayüz is_active=false ile "pasifleştirir".
+create policy "subjects: giriş yapan koç ekler" on subjects for insert with check (auth.uid() is not null);
+create policy "subjects: giriş yapan koç günceller" on subjects for update using (auth.uid() is not null) with check (auth.uid() is not null);
+create policy "topics: giriş yapan koç ekler" on topics for insert with check (auth.uid() is not null);
+create policy "topics: giriş yapan koç günceller" on topics for update using (auth.uid() is not null) with check (auth.uid() is not null);
 
 create policy "students: koç kendi öğrencilerini yönetir" on students
   for all using (coach_id = auth.uid()) with check (coach_id = auth.uid());

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { 
   Plus, Search, ChevronRight, Award, TrendingUp, CheckSquare, 
   ArrowLeft
@@ -7,6 +7,7 @@ import {
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import ProgressRing from '../components/charts/ProgressRing'
+import AddStudentModal from '../components/students/AddStudentModal'
 import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
 
 type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks'
@@ -35,12 +36,12 @@ const subjectConfig: Record<string, { color: string; soru_sayisi: string }> = {
 
 export default function OgrencilerPage() {
   const { studentId } = useParams()
-  const navigate = useNavigate()
-  
+
   // State for all-students list view
   const [students, setStudents] = useState<Student[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [showAddModal, setShowAddModal] = useState(false)
   
   // State for single-student detail view
   const [studentData, setStudentData] = useState<StudentData | null>(null)
@@ -239,11 +240,21 @@ export default function OgrencilerPage() {
           title="Öğrenciler" 
           subtitle="Öğrenci listesini gör, arama yap ve profillerini incele."
           actions={
-            <button className="btn btn-primary" onClick={() => navigate('/panel')}>
+            <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
               <Plus size={14} /> Yeni Öğrenci
             </button>
           }
         />
+
+        {showAddModal && (
+          <AddStudentModal
+            onClose={() => setShowAddModal(false)}
+            onCreated={(student) => {
+              setStudents((prev) => [...prev, student])
+              setShowAddModal(false)
+            }}
+          />
+        )}
 
         {!isSupabaseConfigured && (
           <div className="card" style={{ padding: 16, marginBottom: 20, background: 'var(--warning-bg)', border: 'none', color: 'var(--warning-text)', fontSize: 13 }}>

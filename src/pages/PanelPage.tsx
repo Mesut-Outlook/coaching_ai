@@ -6,6 +6,7 @@ import { mondayOf, weekKey } from '../lib/weeks'
 import PageHeader from '../components/layout/PageHeader'
 import ProgressRing from '../components/charts/ProgressRing'
 import Sparkline from '../components/charts/Sparkline'
+import AddStudentModal from '../components/students/AddStudentModal'
 import type { Student } from '../types/database'
 
 interface StudentCardData {
@@ -79,6 +80,7 @@ export default function PanelPage() {
   const [search, setSearch] = useState('')
   const [trackFilter, setTrackFilter] = useState<'Tümü' | Student['track']>('Tümü')
   const [gradeFilter, setGradeFilter] = useState<'Tümü' | Student['grade']>('Tümü')
+  const [showAddModal, setShowAddModal] = useState(false)
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -109,11 +111,21 @@ export default function PanelPage() {
             : 'Yükleniyor…'
         }
         actions={
-          <button type="button" className="btn btn-primary">
+          <button type="button" className="btn btn-primary" onClick={() => setShowAddModal(true)}>
             <Plus size={14} /> Öğrenci Ekle
           </button>
         }
       />
+
+      {showAddModal && (
+        <AddStudentModal
+          onClose={() => setShowAddModal(false)}
+          onCreated={(student) => {
+            setCards((prev) => [...(prev ?? []), { student, completion: 0, criticalCount: 0, recentNets: [] }])
+            setShowAddModal(false)
+          }}
+        />
+      )}
 
       {!isSupabaseConfigured && (
         <div className="card" style={{ padding: 16, marginBottom: 20, background: 'var(--warning-bg)', border: 'none', color: 'var(--warning-text)', fontSize: 13 }}>

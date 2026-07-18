@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutGrid, Users, ClipboardList, Layers, Calendar, BarChart2, Target } from 'lucide-react'
+import { LayoutGrid, Users, ClipboardList, Layers, Calendar, BarChart2, BookOpen } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/konular', label: 'Konular', icon: Layers },
   { to: '/program', label: 'Program', icon: Calendar },
   { to: '/raporlar', label: 'Raporlar', icon: BarChart2 },
+  { to: '/mufredat', label: 'Müfredat', icon: BookOpen },
 ]
 
 function initials(name: string) {
@@ -24,7 +25,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="brand">
         <div className="brand-mark">
-          <Target size={19} color="#fff" strokeWidth={1.8} />
+          <img src="/logo.png" alt="" width={38} height={38} />
         </div>
         <div>
           <div className="brand-title">Netlik</div>
