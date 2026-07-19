@@ -57,6 +57,7 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 - [x] Giriş ekranında "Beni Hatırla" (Remember Me) checkbox'ı ve mantığı (`src/pages/LoginPage.tsx`) — email bilgisinin yerel depolamada saklanması ve otomatik doldurulması.
 - [x] Haftalık programda çift tıklama ile inline görev düzenleme formu (`src/pages/ProgramPage.tsx`) — Kartın üzerine çift tıklandığında ders, konu, soru sayısı ve deneme durumu doğrudan kartın kendi alanında düzenlenip Supabase'e kaydedilebilir.
 - [x] Tüm Deneme Geçmişi Listesi ve Yönetim Ekranı (`src/pages/DenemelerPage.tsx`) — Deneme Girişi sayfasına tüm öğrencilerin sınavlarını listeleyen, arama ve filtreleme destekleyen kapsamlı bir tablo görünümü eklendi.
+- [x] Haftalık Programı WhatsApp ile Paylaşma Desteği (`src/pages/ProgramPage.tsx` & `src/pages/OgrencilerPage.tsx`) — Program ekranına rehberlik içeren "WhatsApp ile Gönder" butonu ve öğrenci profiline hızlı WhatsApp sohbet başlatma ikonu entegre edildi.
 
 ## Antigravity — Büyük Görev 1: Kalan 5 ekranı React'e dönüştür [Tamamlandı]
 Kapsam: `Öğrenci Profili`, `Deneme Girişi`, `Konu Yeterlilik Haritası`, `Haftalık Program`, `Haftalık Görüşme`.

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Plus, Trash2, CheckSquare, X, Printer } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Trash2, CheckSquare, X, Printer, MessageCircle } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
@@ -111,6 +111,30 @@ export default function ProgramPage() {
   
   const handleJumpToToday = () => {
     setCurrentMonday(mondayOf(new Date()))
+  }
+
+  const handleSendWhatsApp = () => {
+    if (!currentStudent) return
+    if (!currentStudent.phone_number) {
+      alert('Bu öğrencinin telefon numarası girilmemiş. Lütfen önce Öğrenciler sayfasından öğrenciyi düzenleyerek bir telefon numarası kaydedin.')
+      return
+    }
+
+    const message = `Merhaba ${currentStudent.full_name}, bu haftaki (${fmtWeekRange(currentMonday)}) ders çalışma programın hazır! PDF dosyasını ekten inceleyebilirsin. İyi çalışmalar!`
+    const phoneFormatted = currentStudent.phone_number.replace(/\D/g, '').replace(/^0/, '90')
+    const finalPhone = phoneFormatted.startsWith('90') && phoneFormatted.length === 12 ? phoneFormatted : (phoneFormatted.length === 10 ? '90' + phoneFormatted : phoneFormatted)
+
+    const confirmSend = window.confirm(
+      `Öğrenciye WhatsApp üzerinden program iletmek için:\n\n` +
+      `1. Henüz indirmediyseniz, "Yazdır / PDF" butonuna tıklayıp programı PDF olarak bilgisayarınıza kaydedin.\n` +
+      `2. Bu onay kutusunda "Tamam" dediğinizde WhatsApp sohbet penceresi açılacaktır.\n` +
+      `3. Açılan sohbete mesaj otomatik eklenecektir. İndirdiğiniz PDF dosyasını sürükleyip sohbet penceresine bırakarak (veya ataç simgesinden ekleyerek) kolayca gönderebilirsiniz.\n\n` +
+      `WhatsApp sohbetini açmak istiyor musunuz?`
+    )
+
+    if (confirmSend) {
+      window.open(`https://api.whatsapp.com/send?phone=${finalPhone}&text=${encodeURIComponent(message)}`, '_blank')
+    }
   }
 
   // HTML5 Drag and Drop Handlers
@@ -325,9 +349,14 @@ export default function ProgramPage() {
         title="Haftalık Program"
         subtitle="Öğrencinin haftalık çalışma planını hazırlayın. Görevleri sürükleyerek gününü değiştirebilirsiniz."
         actions={
-          <button type="button" className="btn btn-ghost no-print" onClick={() => window.print()}>
-            <Printer size={14} /> Yazdır / PDF
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button type="button" className="btn btn-ghost no-print" onClick={() => window.print()}>
+              <Printer size={14} /> Yazdır / PDF
+            </button>
+            <button type="button" className="btn btn-primary no-print" onClick={handleSendWhatsApp} style={{ background: '#25D366', borderColor: '#25D366', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <MessageCircle size={14} /> WhatsApp ile Gönder
+            </button>
+          </div>
         }
       />
 
