@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Plus, Trash2, CheckSquare, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Trash2, CheckSquare, X, Printer } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
@@ -95,6 +95,10 @@ export default function ProgramPage() {
   useEffect(() => {
     loadTasks()
   }, [selectedStudentId, currentMonday])
+
+  const currentStudent = useMemo(() => {
+    return students.find(s => s.id === selectedStudentId)
+  }, [students, selectedStudentId])
 
   // Week navigation handlers
   const handlePrevWeek = () => {
@@ -317,7 +321,20 @@ export default function ProgramPage() {
 
   return (
     <section className="screen">
-      <PageHeader title="Haftalık Program" subtitle="Öğrencinin haftalık çalışma planını hazırlayın. Görevleri sürükleyerek gününü değiştirebilirsiniz." />
+      <PageHeader
+        title="Haftalık Program"
+        subtitle="Öğrencinin haftalık çalışma planını hazırlayın. Görevleri sürükleyerek gününü değiştirebilirsiniz."
+        actions={
+          <button type="button" className="btn btn-ghost no-print" onClick={() => window.print()}>
+            <Printer size={14} /> Yazdır / PDF
+          </button>
+        }
+      />
+
+      <div className="print-only" style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 16, fontWeight: 700 }}>{currentStudent?.full_name}</div>
+        <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>{fmtWeekRange(currentMonday)}</div>
+      </div>
 
       {!isSupabaseConfigured && (
         <div className="card" style={{ padding: 16, marginBottom: 20, background: 'var(--warning-bg)', border: 'none', color: 'var(--warning-text)' }}>
@@ -329,7 +346,7 @@ export default function ProgramPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           
           {/* Toolbar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
+          <div className="no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
             {/* Student Selector */}
             <div className="field" style={{ minWidth: 200 }}>
               <select value={selectedStudentId} onChange={(e) => handleStudentChange(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10 }}>
@@ -358,14 +375,15 @@ export default function ProgramPage() {
           {loading ? (
             <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Yükleniyor…</div>
           ) : (
-            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 16, minHeight: 480 }}>
+            <div className="program-board" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 16, minHeight: 480 }}>
             {DAYS.map((dayName, dayIndex) => {
               const dayTasks = tasks.filter(t => t.day_index === dayIndex)
               const isAddingHere = addingDayIndex === dayIndex
-              
+
               return (
                 <div
                   key={dayIndex}
+                  className="program-day-col"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, dayIndex)}
                   style={{
@@ -541,7 +559,7 @@ export default function ProgramPage() {
                               type="button"
                               onClick={() => handleDeleteTask(task.id)}
                               style={{ border: 'none', background: 'none', padding: 2, color: 'var(--ink-faint)', cursor: 'pointer', opacity: 0.5 }}
-                              className="delete-btn"
+                              className="delete-btn no-print"
                             >
                               <Trash2 size={13} />
                             </button>
@@ -564,7 +582,7 @@ export default function ProgramPage() {
 
                   {/* Add Task Form Button / Section */}
                   {isAddingHere ? (
-                    <div style={{ background: 'var(--surface-alt)', border: '1px dashed var(--border)', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div className="no-print" style={{ background: 'var(--surface-alt)', border: '1px dashed var(--border)', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div className="field">
                         <label style={{ fontSize: 10 }}>Ders</label>
                         <select
@@ -618,6 +636,7 @@ export default function ProgramPage() {
                   ) : (
                     <button
                       type="button"
+                      className="no-print"
                       onClick={() => setAddingDayIndex(dayIndex)}
                       style={{
                         width: '100%',
