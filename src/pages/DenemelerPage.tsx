@@ -229,7 +229,6 @@ export default function DenemelerPage() {
       
       if (examError) throw examError
 
-      // 2. Insert sections
       const sectionsToInsert = activeSections.map(sec => {
         const score = scores[sec.name] || { correct: 0, wrong: 0 }
         const blank = sec.max - (score.correct + score.wrong)
@@ -239,14 +238,13 @@ export default function DenemelerPage() {
           max_questions: sec.max,
           correct_count: score.correct,
           wrong_count: score.wrong,
-          blank_count: Math.max(0, blank),
-          net: 0
+          blank_count: Math.max(0, blank)
         }
       })
 
       const { error: secError } = await supabase
         .from('mock_exam_sections')
-        .insert(sectionsToInsert)
+        .insert(sectionsToInsert as any)
       if (secError) throw secError
 
       // Reset form
