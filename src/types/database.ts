@@ -26,6 +26,7 @@ export type Student = {
   target_net_value: number | null
   is_active: boolean
   phone_number: string | null
+  parent_phone_number: string | null
   photo_url: string | null
   created_at: string
 }

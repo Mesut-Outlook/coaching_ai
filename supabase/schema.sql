@@ -27,6 +27,7 @@ create table if not exists students (
   target_net_value numeric,
   is_active boolean not null default true,
   phone_number text,
+  parent_phone_number text,
   photo_url text,
   created_at timestamptz not null default now()
 );
@@ -35,6 +36,7 @@ create index if not exists students_coach_id_idx on students(coach_id);
 -- Geriye dönük kolon eklemeleri (tablo zaten varsa çalışır)
 alter table students add column if not exists is_active boolean not null default true;
 alter table students add column if not exists phone_number text;
+alter table students add column if not exists parent_phone_number text;
 alter table students add column if not exists photo_url text;
 
 -- ---------------------------------------------------------------------------
