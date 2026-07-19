@@ -160,3 +160,8 @@ Kullanıcı isteği: öğrenci sayfasında öğrenci telefonu yanında bir de ve
 - [x] `ProgramPage.tsx`: "WhatsApp ile Gönder" artık açılır menü — **Öğrenciye Gönder / Veliye Gönder / Her İkisine Gönder**. Tarayıcıda uçtan uca test edildi (veli telefonu girildi, kaydedildi, menü doğrulandı).
 - [x] `npm run build` temiz, canlıya deploy edildi: https://netlik-koc-paneli.vercel.app
 
+## Sonnet — Yardım güncellemesi + Sürüm Geçmişi ekranı (2026-07-19) [Tamamlandı & Deploy Edildi]
+- [x] `YardimPage.tsx`: Öğrenciler/Konu Yeterlilik Haritası/Haftalık Program kartları son özellikleri (düzenleme/arşivleme/fotoğraf/veli telefonu, konu testi girişi+ortalama, yazdırma, WhatsApp gönderme, AYT dersleri) yansıtacak şekilde güncellendi.
+- [x] Yeni ekran: `src/pages/SurumGecmisiPage.tsx`, route `/surum-gecmisi`, Sidebar'da "Sürüm Geçmişi" (History ikonu) — git log + coordination.md'den derlenen, tarih ve versiyon numarasıyla (v0.1 → v0.14) gruplanmış tam değişiklik günlüğü.
+- [x] Build temiz, tarayıcıda doğrulandı, canlıya deploy edildi.
+
