@@ -152,3 +152,11 @@ Kullanıcı isteği: "Müfredattaki dersleri ve konuları düzenleyecek bir ekra
 - [x] `npx tsc -b` ve `npm run lint` temiz. Görsel doğrulama: sadece login öncesi (yönlendirme doğru çalışıyor) — giriş sonrası ekranın kendisi kullanıcı tarafından tarayıcıda denenmeli.
 - **Not:** Eğer daha önce `npm run seed` çalıştırıldıysa (bkz. yukarıdaki "Durum" notu), o script'in eklediği subjects/topics satırları `is_active` sütunu olmadan eklenmiş olabilir — sütun `default true` olduğu için otomatik `true` alır, ekstra işlem gerekmez.
 
+## Sonnet + Antigravity — Veli Telefonu & WhatsApp Alıcı Seçimi (2026-07-19) [Tamamlandı & Deploy Edildi]
+Kullanıcı isteği: öğrenci sayfasında öğrenci telefonu yanında bir de veli telefonu olsun, Haftalık Program PDF'i öğrenciye/veliye/her ikisine gönderilebilsin.
+- [x] Şema: `students.parent_phone_number` eklendi (idempotent), kullanıcı SQL Editor'de çalıştırdı — doğrulandı (canlıda kayıt tutuluyor).
+- [x] Sonnet ve Antigravity aynı anda, aynı çalışma dizininde bu işi paralel yaptı — değişiklikler çakışmadan birleşti (agy'nin commit'i ikimizin de kodunu kapsadı).
+- [x] `AddStudentModal.tsx`: "Öğrenci Telefonu" / "Veli Telefonu" ayrı alanlar. `OgrencilerPage.tsx` profil başlığı: her iki telefon da WhatsApp linkiyle gösteriliyor.
+- [x] `ProgramPage.tsx`: "WhatsApp ile Gönder" artık açılır menü — **Öğrenciye Gönder / Veliye Gönder / Her İkisine Gönder**. Tarayıcıda uçtan uca test edildi (veli telefonu girildi, kaydedildi, menü doğrulandı).
+- [x] `npm run build` temiz, canlıya deploy edildi: https://netlik-koc-paneli.vercel.app
+
