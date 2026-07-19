@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Trash2, ClipboardList, AlertCircle, Save } from 'lucide-react'
+import { useSearchParams, Link } from 'react-router-dom'
+import { Trash2, ClipboardList, AlertCircle, Save, Search } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, MockExam, MockExamSection } from '../types/database'
@@ -45,6 +45,18 @@ export default function DenemelerPage() {
   const [examType, setExamType] = useState<'TYT' | 'AYT'>('TYT')
   const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0])
   const [scores, setScores] = useState<Record<string, { correct: number; wrong: number }>>({})
+
+  // Tab View State
+  const [activeViewTab, setActiveViewTab] = useState<'entry' | 'list'>('entry')
+
+  // All Exams History List State
+  const [allExams, setAllExams] = useState<(MockExam & { 
+    students: { full_name: string; track: string } | null;
+    totalNet: number; 
+    sectionsList: MockExamSection[] 
+  })[]>([])
+  const [listSearch, setListSearch] = useState('')
+  const [listTypeFilter, setListTypeFilter] = useState<'ALL' | 'TYT' | 'AYT'>('ALL')
 
   // Find selected student
   const currentStudent = useMemo(() => {
@@ -120,9 +132,58 @@ export default function DenemelerPage() {
     }
   }
 
+  // Load all exams list across all students
+  const loadAllExamsList = async () => {
+    if (!isSupabaseConfigured) return
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const { data: rawAllExams, error: examsError } = await (supabase
+        .from('mock_exams')
+        .select('*, students(full_name, track)')
+        .order('exam_date', { ascending: false }) as any)
+      if (examsError) throw examsError
+
+      if (rawAllExams && rawAllExams.length > 0) {
+        const examIds = rawAllExams.map((e: any) => e.id)
+        const { data: rawSections, error: sectionsError } = await supabase
+          .from('mock_exam_sections')
+          .select('*')
+          .in('mock_exam_id', examIds)
+        if (sectionsError) throw sectionsError
+
+        const enrichedAllExams = rawAllExams.map((exam: any) => {
+          const secs = rawSections?.filter(s => s.mock_exam_id === exam.id) || []
+          const totalNet = Math.round(secs.reduce((sum, s) => sum + Number(s.net), 0) * 100) / 100
+          return { ...exam, totalNet, sectionsList: secs, students: exam.students as any }
+        })
+        setAllExams(enrichedAllExams)
+      } else {
+        setAllExams([])
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Tüm sınav verileri yüklenemedi')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Load either student-specific exams or all exams
   useEffect(() => {
-    loadExams()
-  }, [selectedStudentId])
+    if (!isSupabaseConfigured) return
+    if (activeViewTab === 'entry') {
+      loadExams()
+    } else {
+      loadAllExamsList()
+    }
+  }, [selectedStudentId, activeViewTab])
+
+  // Fetch count of all exams on load
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    loadAllExamsList()
+  }, [])
 
   // Initialize scores state when active sections change
   useEffect(() => {
@@ -192,6 +253,7 @@ export default function DenemelerPage() {
       setExamName('')
       setPublisher('')
       loadExams()
+      loadAllExamsList()
       alert('Deneme başarıyla kaydedildi!')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Deneme kaydedilirken hata oluştu')
@@ -208,14 +270,60 @@ export default function DenemelerPage() {
       const { error } = await supabase.from('mock_exams').delete().eq('id', examId)
       if (error) throw error
       loadExams()
+      loadAllExamsList()
     } catch (err) {
       alert('Deneme silinirken hata oluştu.')
     }
   }
 
+  const filteredAllExams = useMemo(() => {
+    return allExams.filter(e => {
+      const studentName = e.students?.full_name || '';
+      const matchesSearch = studentName.toLowerCase().includes(listSearch.toLowerCase()) || e.name.toLowerCase().includes(listSearch.toLowerCase());
+      const matchesType = listTypeFilter === 'ALL' ? true : e.exam_type === listTypeFilter;
+      return matchesSearch && matchesType;
+    })
+  }, [allExams, listSearch, listTypeFilter])
+
   return (
     <section className="screen">
       <PageHeader title="Deneme Girişi" subtitle="Yeni bir deneme sonucu girin, netler sistem tarafından otomatik hesaplansın." />
+
+      {/* Tab Selectors */}
+      <div style={{ display: 'flex', gap: 20, borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
+        <button
+          type="button"
+          onClick={() => setActiveViewTab('entry')}
+          style={{
+            padding: '10px 4px',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeViewTab === 'entry' ? '2px solid var(--indigo-600)' : '2px solid transparent',
+            color: activeViewTab === 'entry' ? 'var(--indigo-600)' : 'var(--ink-soft)',
+            fontWeight: activeViewTab === 'entry' ? 700 : 500,
+            fontSize: 13.5,
+            cursor: 'pointer'
+          }}
+        >
+          Deneme Sonucu Gir
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveViewTab('list')}
+          style={{
+            padding: '10px 4px',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeViewTab === 'list' ? '2px solid var(--indigo-600)' : '2px solid transparent',
+            color: activeViewTab === 'list' ? 'var(--indigo-600)' : 'var(--ink-soft)',
+            fontWeight: activeViewTab === 'list' ? 700 : 500,
+            fontSize: 13.5,
+            cursor: 'pointer'
+          }}
+        >
+          Tüm Deneme Geçmişi ({allExams.length})
+        </button>
+      </div>
 
       {!isSupabaseConfigured && (
         <div className="card" style={{ padding: 16, marginBottom: 20, background: 'var(--warning-bg)', border: 'none', color: 'var(--warning-text)' }}>
@@ -223,7 +331,7 @@ export default function DenemelerPage() {
         </div>
       )}
 
-      {isSupabaseConfigured && (
+      {isSupabaseConfigured && activeViewTab === 'entry' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 24, alignItems: 'start' }}>
           
           {/* LEFT COLUMN: Entry Form */}
@@ -368,6 +476,101 @@ export default function DenemelerPage() {
             )}
           </div>
 
+        </div>
+      )}
+
+      {isSupabaseConfigured && activeViewTab === 'list' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Filter Tools */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', width: '100%', maxWidth: 320, color: 'var(--ink-faint)' }}>
+              <Search size={14} />
+              <input
+                type="text"
+                placeholder="Öğrenci veya sınav ara…"
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+                style={{ border: 'none', outline: 'none', background: 'none', flex: 1, color: 'var(--ink)', fontSize: 13.5 }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select
+                value={listTypeFilter}
+                onChange={(e) => setListTypeFilter(e.target.value as any)}
+                style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10, fontSize: 13, background: 'var(--surface)' }}
+              >
+                <option value="ALL">Tüm Sınav Türleri</option>
+                <option value="TYT">TYT</option>
+                <option value="AYT">AYT</option>
+              </select>
+            </div>
+          </div>
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Yükleniyor…</div>
+          ) : filteredAllExams.length === 0 ? (
+            <div className="card empty-state" style={{ padding: 40, textAlign: 'center' }}>
+              <h3>Deneme Girişi Bulunamadı</h3>
+              <p>Arama veya filtre kriterlerinize uygun deneme sınavı kaydı bulunmuyor.</p>
+            </div>
+          ) : (
+            <div className="card" style={{ padding: 20, overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--ink-soft)' }}>
+                    <th style={{ padding: '12px 14px' }}>Öğrenci</th>
+                    <th style={{ padding: '12px 14px' }}>Sınav Adı</th>
+                    <th style={{ padding: '12px 14px' }}>Yayıncı</th>
+                    <th style={{ padding: '12px 14px' }}>Tarih</th>
+                    <th style={{ padding: '12px 14px' }}>Tür</th>
+                    <th style={{ padding: '12px 14px' }}>Bölüm Netleri</th>
+                    <th style={{ padding: '12px 14px', textAlign: 'right' }}>Toplam Net</th>
+                    <th style={{ padding: '12px 14px', textAlign: 'center' }}>İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAllExams.map(e => (
+                    <tr key={e.id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
+                      <td style={{ padding: '12px 14px', fontWeight: 600 }}>
+                        {e.students ? (
+                          <Link to={`/ogrenciler/${e.student_id}`} style={{ textDecoration: 'none', color: 'var(--indigo-600)' }}>
+                            {e.students.full_name}
+                          </Link>
+                        ) : (
+                          'Bilinmeyen Öğrenci'
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 14px', fontWeight: 600 }}>{e.name}</td>
+                      <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>{e.publisher || '—'}</td>
+                      <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>{e.exam_date}</td>
+                      <td style={{ padding: '12px 14px' }}>
+                        <span className={`chip ${e.exam_type === 'TYT' ? 'chip-say' : 'chip-ea'}`} style={{ padding: '1px 6px', fontSize: 10.5 }}>
+                          {e.exam_type}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 14px', color: 'var(--ink-soft)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={e.sectionsList.map(s => `${s.section_name}: ${s.correct_count}D ${s.wrong_count}Y (${s.net} net)`).join(' · ')}>
+                        {e.sectionsList.map(s => `${s.section_name}: ${s.net}`).join(' · ')}
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 700, color: 'var(--indigo-600)', fontSize: 14 }}>
+                        {e.totalNet}
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteExam(e.id)}
+                          style={{ border: 'none', background: 'none', padding: 4, color: 'var(--critical)', cursor: 'pointer' }}
+                          title="Denemeyi sil"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </section>
