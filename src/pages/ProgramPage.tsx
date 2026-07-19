@@ -411,9 +411,14 @@ export default function ProgramPage() {
         }
       />
 
-      <div className="print-only" style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 16, fontWeight: 700 }}>{currentStudent?.full_name}</div>
-        <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>{fmtWeekRange(currentMonday)}</div>
+      <div className="print-only" style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#F6EFDD' }}>
+          <img src="/logo.png" alt="" width={34} height={34} style={{ width: '122%', height: '122%', objectFit: 'cover', margin: '-11%' }} />
+        </div>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 700 }}>{currentStudent?.full_name}</div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>{fmtWeekRange(currentMonday)}</div>
+        </div>
       </div>
 
       {!isSupabaseConfigured && (
