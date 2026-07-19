@@ -11,6 +11,7 @@ import ProgramPage from './pages/ProgramPage'
 import RaporlarPage from './pages/RaporlarPage'
 import MufredatPage from './pages/MufredatPage'
 import YardimPage from './pages/YardimPage'
+import SurumGecmisiPage from './pages/SurumGecmisiPage'
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/raporlar" element={<RaporlarPage />} />
             <Route path="/mufredat" element={<MufredatPage />} />
             <Route path="/yardim" element={<YardimPage />} />
+            <Route path="/surum-gecmisi" element={<SurumGecmisiPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/panel" replace />} />
         </Routes>

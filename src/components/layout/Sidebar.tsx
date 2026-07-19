@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutGrid, Users, ClipboardList, Layers, Calendar, BarChart2, BookOpen, HelpCircle } from 'lucide-react'
+import { LayoutGrid, Users, ClipboardList, Layers, Calendar, BarChart2, BookOpen, HelpCircle, History } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
 
 const UTILITY_NAV_ITEMS = [
   { to: '/yardim', label: 'Yardım', icon: HelpCircle },
+  { to: '/surum-gecmisi', label: 'Sürüm Geçmişi', icon: History },
 ]
 
 function initials(name: string) {
