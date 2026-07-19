@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Plus, Trash2, CheckSquare, X, Printer, MessageCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Plus, Trash2, CheckSquare, X, Printer, MessageCircle } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
@@ -38,6 +38,7 @@ export default function ProgramPage() {
   const [editQuestionCount, setEditQuestionCount] = useState<number>(100)
   const [editIsExam, setEditIsExam] = useState<boolean>(false)
   const [savingTask, setSavingTask] = useState(false)
+  const [waMenuOpen, setWaMenuOpen] = useState(false)
 
   // Sync selectedStudentId with query parameters
   const handleStudentChange = (id: string) => {
@@ -113,27 +114,54 @@ export default function ProgramPage() {
     setCurrentMonday(mondayOf(new Date()))
   }
 
-  const handleSendWhatsApp = () => {
+  const formatPhoneForWhatsApp = (raw: string) => {
+    const digitsOnly = raw.replace(/\D/g, '').replace(/^0/, '90')
+    if (digitsOnly.startsWith('90') && digitsOnly.length === 12) return digitsOnly
+    if (digitsOnly.length === 10) return '90' + digitsOnly
+    return digitsOnly
+  }
+
+  const openWhatsAppChat = (phone: string, message: string) => {
+    window.open(`https://api.whatsapp.com/send?phone=${formatPhoneForWhatsApp(phone)}&text=${encodeURIComponent(message)}`, '_blank')
+  }
+
+  const handleSendWhatsApp = (recipient: 'ogrenci' | 'veli' | 'ikisi') => {
+    setWaMenuOpen(false)
     if (!currentStudent) return
-    if (!currentStudent.phone_number) {
+
+    const wantsStudent = recipient === 'ogrenci' || recipient === 'ikisi'
+    const wantsParent = recipient === 'veli' || recipient === 'ikisi'
+
+    if (wantsStudent && !currentStudent.phone_number) {
       alert('Bu öğrencinin telefon numarası girilmemiş. Lütfen önce Öğrenciler sayfasından öğrenciyi düzenleyerek bir telefon numarası kaydedin.')
       return
     }
+    if (wantsParent && !currentStudent.parent_phone_number) {
+      alert('Bu öğrencinin veli telefon numarası girilmemiş. Lütfen önce Öğrenciler sayfasından öğrenciyi düzenleyerek bir veli telefon numarası kaydedin.')
+      return
+    }
 
-    const message = `Merhaba ${currentStudent.full_name}, bu haftaki (${fmtWeekRange(currentMonday)}) ders çalışma programın hazır! PDF dosyasını ekten inceleyebilirsin. İyi çalışmalar!`
-    const phoneFormatted = currentStudent.phone_number.replace(/\D/g, '').replace(/^0/, '90')
-    const finalPhone = phoneFormatted.startsWith('90') && phoneFormatted.length === 12 ? phoneFormatted : (phoneFormatted.length === 10 ? '90' + phoneFormatted : phoneFormatted)
+    const weekRange = fmtWeekRange(currentMonday)
+    const studentMessage = `Merhaba ${currentStudent.full_name}, bu haftaki (${weekRange}) ders çalışma programın hazır! PDF dosyasını ekten inceleyebilirsin. İyi çalışmalar!`
+    const parentMessage = `Merhaba, ${currentStudent.full_name} için bu haftaki (${weekRange}) ders çalışma programı hazır! PDF dosyasını ekte bulabilirsiniz.`
 
+    const recipientLabel = recipient === 'ogrenci' ? 'öğrenciye' : recipient === 'veli' ? 'veliye' : 'öğrenciye ve veliye'
     const confirmSend = window.confirm(
-      `Öğrenciye WhatsApp üzerinden program iletmek için:\n\n` +
+      `${recipientLabel.charAt(0).toUpperCase() + recipientLabel.slice(1)} WhatsApp üzerinden program iletmek için:\n\n` +
       `1. Henüz indirmediyseniz, "Yazdır / PDF" butonuna tıklayıp programı PDF olarak bilgisayarınıza kaydedin.\n` +
-      `2. Bu onay kutusunda "Tamam" dediğinizde WhatsApp sohbet penceresi açılacaktır.\n` +
-      `3. Açılan sohbete mesaj otomatik eklenecektir. İndirdiğiniz PDF dosyasını sürükleyip sohbet penceresine bırakarak (veya ataç simgesinden ekleyerek) kolayca gönderebilirsiniz.\n\n` +
-      `WhatsApp sohbetini açmak istiyor musunuz?`
+      `2. Bu onay kutusunda "Tamam" dediğinizde WhatsApp sohbet penceresi/pencereleri açılacaktır.\n` +
+      `3. Açılan sohbete mesaj otomatik eklenecektir. İndirdiğiniz PDF dosyasını sürükleyip sohbet penceresine bırakarak (veya ataç simgesinden ekleyerek) kolayca gönderebilirsiniz.` +
+      (recipient === 'ikisi' ? `\n\nİki sohbet penceresi açılacağı için tarayıcınız pop-up engelleyebilir — izin vermeniz gerekebilir.` : '') +
+      `\n\nWhatsApp sohbetini açmak istiyor musunuz?`
     )
 
-    if (confirmSend) {
-      window.open(`https://api.whatsapp.com/send?phone=${finalPhone}&text=${encodeURIComponent(message)}`, '_blank')
+    if (!confirmSend) return
+
+    if (wantsStudent && currentStudent.phone_number) {
+      openWhatsAppChat(currentStudent.phone_number, studentMessage)
+    }
+    if (wantsParent && currentStudent.parent_phone_number) {
+      openWhatsAppChat(currentStudent.parent_phone_number, parentMessage)
     }
   }
 
@@ -353,9 +381,32 @@ export default function ProgramPage() {
             <button type="button" className="btn btn-ghost no-print" onClick={() => window.print()}>
               <Printer size={14} /> Yazdır / PDF
             </button>
-            <button type="button" className="btn btn-primary no-print" onClick={handleSendWhatsApp} style={{ background: '#25D366', borderColor: '#25D366', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <MessageCircle size={14} /> WhatsApp ile Gönder
-            </button>
+            <div className="no-print" style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setWaMenuOpen(o => !o)}
+                style={{ background: '#25D366', borderColor: '#25D366', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <MessageCircle size={14} /> WhatsApp ile Gönder <ChevronDown size={13} />
+              </button>
+              {waMenuOpen && (
+                <>
+                  <div style={{ position: 'fixed', inset: 0, zIndex: 19 }} onClick={() => setWaMenuOpen(false)} />
+                  <div
+                    style={{
+                      position: 'absolute', top: '110%', right: 0, zIndex: 20, minWidth: 190,
+                      background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10,
+                      boxShadow: 'var(--shadow-pop)', padding: 6, display: 'flex', flexDirection: 'column', gap: 2,
+                    }}
+                  >
+                    <button type="button" className="btn btn-ghost btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => handleSendWhatsApp('ogrenci')}>Öğrenciye Gönder</button>
+                    <button type="button" className="btn btn-ghost btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => handleSendWhatsApp('veli')}>Veliye Gönder</button>
+                    <button type="button" className="btn btn-ghost btn-sm" style={{ justifyContent: 'flex-start' }} onClick={() => handleSendWhatsApp('ikisi')}>Her İkisine Gönder</button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         }
       />

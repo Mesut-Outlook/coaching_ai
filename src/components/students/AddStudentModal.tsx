@@ -17,6 +17,7 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
   const [track, setTrack] = useState<Student['track']>(editingStudent?.track ?? 'SAY')
   const [targetProgram, setTargetProgram] = useState(editingStudent?.target_program ?? '')
   const [phoneNumber, setPhoneNumber] = useState(editingStudent?.phone_number ?? '')
+  const [parentPhoneNumber, setParentPhoneNumber] = useState(editingStudent?.parent_phone_number ?? '')
   const [photoUrl, setPhotoUrl] = useState(editingStudent?.photo_url ?? '')
   
   const [saving, setSaving] = useState(false)
@@ -70,6 +71,7 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
       track,
       target_program: targetProgram.trim() || null,
       phone_number: phoneNumber.trim() || null,
+      parent_phone_number: parentPhoneNumber.trim() || null,
       photo_url: photoUrl || null,
       is_active: editingStudent ? editingStudent.is_active : true
     }
@@ -188,7 +190,7 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div className="field">
-              <label>Telefon (opsiyonel)</label>
+              <label>Öğrenci Telefonu (opsiyonel)</label>
               <input
                 type="tel"
                 placeholder="Örn: 0555 123 4567"
@@ -197,14 +199,24 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
               />
             </div>
             <div className="field">
-              <label>Hedef Program (opsiyonel)</label>
+              <label>Veli Telefonu (opsiyonel)</label>
               <input
-                type="text"
-                placeholder="Örn: Boğaziçi Bilgisayar"
-                value={targetProgram}
-                onChange={(e) => setTargetProgram(e.target.value)}
+                type="tel"
+                placeholder="Örn: 0555 765 4321"
+                value={parentPhoneNumber}
+                onChange={(e) => setParentPhoneNumber(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="field">
+            <label>Hedef Program (opsiyonel)</label>
+            <input
+              type="text"
+              placeholder="Örn: Boğaziçi Bilgisayar"
+              value={targetProgram}
+              onChange={(e) => setTargetProgram(e.target.value)}
+            />
           </div>
 
           {error && <div style={{ color: 'var(--critical-text)', fontSize: 12.5 }}>{error}</div>}

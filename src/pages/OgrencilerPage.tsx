@@ -528,10 +528,27 @@ export default function OgrencilerPage() {
                 <>
                   <span>•</span>
                   <span style={{ color: 'var(--indigo-600)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    Tlf: {student.phone_number}
-                    <a 
-                      href={`https://api.whatsapp.com/send?phone=${student.phone_number.replace(/\D/g, '').replace(/^0/, '90')}`} 
-                      target="_blank" 
+                    Öğrenci Tlf: {student.phone_number}
+                    <a
+                      href={`https://api.whatsapp.com/send?phone=${student.phone_number.replace(/\D/g, '').replace(/^0/, '90')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', color: '#25D366' }}
+                      title="WhatsApp Sohbeti Başlat"
+                    >
+                      <MessageCircle size={14} style={{ fill: '#25D366', color: '#25D366' }} />
+                    </a>
+                  </span>
+                </>
+              )}
+              {student.parent_phone_number && (
+                <>
+                  <span>•</span>
+                  <span style={{ color: 'var(--indigo-600)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    Veli Tlf: {student.parent_phone_number}
+                    <a
+                      href={`https://api.whatsapp.com/send?phone=${student.parent_phone_number.replace(/\D/g, '').replace(/^0/, '90')}`}
+                      target="_blank"
                       rel="noreferrer"
                       style={{ display: 'inline-flex', alignItems: 'center', color: '#25D366' }}
                       title="WhatsApp Sohbeti Başlat"
