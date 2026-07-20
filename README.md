@@ -1,32 +1,57 @@
-# React + TypeScript + Vite
+# Netlik — YKS Koçluk Paneli
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Eda Cangert'in YKS (üniversite giriş sınavı) koçluk merkezi için koç paneli. Öğrenci takibi, deneme sonuçları, konu bazlı yeterlilik ve haftalık çalışma programını tek yerde yönetir.
 
-Currently, two official plugins are available:
+**Canlı:** https://netlik-koc-paneli.vercel.app
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Ekranlar
 
-## React Compiler
+| Ekran | Yol | Ne işe yarar |
+|---|---|---|
+| Koç Paneli | `/panel` | Tüm öğrenciler tek bakışta — kritik konu sayısı, son deneme netleri, haftalık tamamlama oranı |
+| Öğrenciler | `/ogrenciler` | Öğrenci listesi/profili — ekleme, düzenleme, arşivleme, profil fotoğrafı, öğrenci + veli telefonu |
+| Deneme Girişi | `/denemeler` | Deneme sonucu girişi (net otomatik hesaplanır) ve tüm deneme geçmişi |
+| Konu Yeterlilik Haritası | `/konular` | Konu bazlı durum takibi, konu testi girişi, konu/ders ortalaması, "Koç Kararı" onayı |
+| Haftalık Program | `/program` | Gün gün görev planlama (sürükle-bırak), tek sayfa yazdırma/PDF, WhatsApp ile gönderme |
+| Haftalık Görüşme | `/raporlar` | Haftalık birebir görüşme özeti ve gelecek hafta planlaması |
+| Müfredat | `/mufredat` | Ders/konu listesi yönetimi (TYT + AYT), yıldan yıla değişebilen müfredat için |
+| Yardım | `/yardim` | Uygulama içi kullanım rehberi |
+| Sürüm Geçmişi | `/surum-gecmisi` | v0.1'den bugüne tam değişiklik günlüğü |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Teknoloji
 
-## Expanding the Oxlint configuration
+Vite + React + TypeScript + [Supabase](https://supabase.com) (Postgres + Auth + Storage). Tasarım sistemi: `src/styles/tokens.css` + `src/styles/global.css`.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Kurulum
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+cp .env.example .env.local   # Supabase Project URL ve anon key'i doldur
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Supabase tarafında yapılması gerekenler (bir kere):
+1. [supabase.com](https://supabase.com) üzerinde yeni proje oluştur.
+2. SQL Editor'de `supabase/schema.sql`'in tamamını çalıştır (idempotent — güvenle tekrar tekrar çalıştırılabilir).
+3. Project Settings → API'den URL ve anon key'i `.env.local`'a yapıştır.
+4. Authentication → Users'dan kendine bir koç hesabı aç, `profiles` tablosuna karşılık gelen satırı ekle.
+
+## Script'ler
+
+| Komut | Ne yapar |
+|---|---|
+| `npm run dev` | Geliştirme sunucusu |
+| `npm run build` | Prodüksiyon derlemesi (`tsc -b && vite build`) |
+| `npm run lint` | Oxlint |
+| `npm run preview` | Derlenmiş çıktıyı yerelde önizle |
+| `npm run seed` | ⚠️ **Dikkatli kullan** — `subjects`/`topics` tablosunu tamamen silip `src/tytSubjects.json`'daki listeyle yeniden doldurur (cascade ile bağlı öğrenci verisini de siler). `SUPABASE_SERVICE_ROLE_KEY` gerektirir. |
+
+## Deploy
+
+Vercel'e bağlı (proje: `netlik-koc-paneli`), `vercel --prod` ile deploy edilir. Production ortamına sadece client-safe değişkenler eklenmeli: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — `SUPABASE_SERVICE_ROLE_KEY` asla.
+
+## Proje geçmişi ve koordinasyon
+
+- **`coordination.md`** — kim ne üzerinde çalışıyor, iş dağılımı (Sonnet/Fable/Antigravity), aktif ve tamamlanan görevler.
+- **`CLAUDE.md`** — proje belleği, mimari notlar, bilinen tuzaklar.
+- **`/surum-gecmisi`** — uygulama içinden, tarihli tam değişiklik günlüğü.
