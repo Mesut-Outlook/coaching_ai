@@ -34,39 +34,31 @@ function uniqSorted(values: (string | null)[]): string[] {
   )
 }
 
-// Türkçe ek/yumuşama desteği ile program arama terimlerini genişlet (örn: Mühendislik -> Mühendisliği, Mühendis)
-function getProgramSearchTerms(rawText: string): string[] {
-  const terms = rawText
-    .split(',')
-    .map((t) => t.trim())
-    .filter(Boolean)
-
-  const expanded: string[] = []
-
-  for (const t of terms) {
-    expanded.push(t)
-    if (/lik$/i.test(t)) {
-      expanded.push(t.replace(/lik$/i, 'liği'))
-      expanded.push(t.replace(/lik$/i, ''))
-    } else if (/liği$/i.test(t)) {
-      expanded.push(t.replace(/liği$/i, 'lik'))
-      expanded.push(t.replace(/liği$/i, ''))
-    } else if (/lık$/i.test(t)) {
-      expanded.push(t.replace(/lık$/i, 'lığı'))
-      expanded.push(t.replace(/lık$/i, ''))
-    } else if (/lığı$/i.test(t)) {
-      expanded.push(t.replace(/lığı$/i, 'lık'))
-      expanded.push(t.replace(/lığı$/i, ''))
-    } else if (/lük$/i.test(t)) {
-      expanded.push(t.replace(/lük$/i, 'lüğü'))
-      expanded.push(t.replace(/lük$/i, ''))
-    } else if (/lüğü$/i.test(t)) {
-      expanded.push(t.replace(/lüğü$/i, 'lük'))
-      expanded.push(t.replace(/lüğü$/i, ''))
-    }
-  }
-
-  return Array.from(new Set(expanded.filter((x) => x.length >= 2)))
+// --- Türkçe karakter duyarsız arama ---
+// "tip" yazınca "Tıp" bulunsun. Sunucu tarafı: her harfi Türkçe varyantlarını
+// içeren regex sınıfına çevirip PostgREST imatch (~*) ile ara. İstemci: ASCII'ye katla.
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+const TR_CLASS: Record<string, string> = {
+  i: '[iıİI]', 'ı': '[iıİI]',
+  s: '[sşSŞ]', 'ş': '[sşSŞ]',
+  c: '[cçCÇ]', 'ç': '[cçCÇ]',
+  g: '[gğGĞ]', 'ğ': '[gğGĞ]',
+  u: '[uüUÜ]', 'ü': '[uüUÜ]',
+  o: '[oöOÖ]', 'ö': '[oöOÖ]',
+}
+function turkishRegex(term: string): string {
+  return Array.from(term.trim())
+    .map((ch) => TR_CLASS[ch.toLocaleLowerCase('tr')] ?? escapeRegex(ch))
+    .join('')
+}
+function foldTr(s: string): string {
+  return s
+    .toLocaleLowerCase('tr')
+    .replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ç/g, 'c')
+    .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o')
+    .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u')
 }
 
 // Öğrencinin tahmini sıralamasına göre bir programın ulaşılabilirliği.
@@ -94,6 +86,78 @@ function statusBand(label: StatusLabel, r: number): [number, number] {
   return [0, r / RISK_FACTOR] // Zor
 }
 
+// Ortak çip + otomatik-tamamlama seçici (Program, Üniversite, Şehir aynı deseni kullanır).
+function ChipMultiSelect({
+  label, placeholder, selected, onAdd, onRemove,
+  query, setQuery, open, setOpen, suggestions, loading,
+}: {
+  label: string
+  placeholder: string
+  selected: string[]
+  onAdd: (v: string) => void
+  onRemove: (v: string) => void
+  query: string
+  setQuery: (v: string) => void
+  open: boolean
+  setOpen: (v: boolean) => void
+  suggestions: string[]
+  loading?: boolean
+}) {
+  return (
+    <div className="field" style={{ position: 'relative' }}>
+      <label>{label}{selected.length > 0 ? ` (${selected.length})` : ''}</label>
+      <div
+        onClick={() => setOpen(true)}
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minHeight: 40, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 9, background: 'var(--surface)', cursor: 'text' }}
+      >
+        {selected.map((v) => (
+          <span key={v} className="chip chip-say" style={{ gap: 4 }}>
+            {v}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onRemove(v) }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', color: 'inherit' }}
+              title="Kaldır"
+            >
+              <X size={12} />
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          placeholder={selected.length ? 'Başka ekle…' : placeholder}
+          value={query}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
+          style={{ flex: 1, minWidth: 90, border: 'none', outline: 'none', background: 'transparent', color: 'var(--ink)', fontSize: 13.5, padding: '2px 0' }}
+        />
+      </div>
+      {open && (
+        <div className="card" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 25, marginTop: 4, padding: 6, maxHeight: 260, overflowY: 'auto', boxShadow: 'var(--shadow-card)' }}>
+          {loading && <div style={{ padding: 8, color: 'var(--ink-soft)', fontSize: 13 }}>Aranıyor…</div>}
+          {!loading && suggestions.length === 0 && (
+            <div style={{ padding: 8, color: 'var(--ink-soft)', fontSize: 13 }}>
+              {query.trim() ? 'Eşleşen yok' : 'Yazmaya başlayın…'}
+            </div>
+          )}
+          {!loading && suggestions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className="btn btn-ghost btn-sm"
+              style={{ width: '100%', justifyContent: 'flex-start', textAlign: 'left', border: 'none', fontWeight: 500 }}
+              onMouseDown={(e) => { e.preventDefault(); onAdd(s) }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function TercihPage() {
   const [facets, setFacets] = useState<FacetOptions>(EMPTY_FACETS)
   const [students, setStudents] = useState<Student[]>([])
@@ -101,7 +165,12 @@ export default function TercihPage() {
   // Filtreler (referanstaki 11 alan)
   const [year, setYear] = useState(2025)
   const [scoreType, setScoreType] = useState('')
-  const [universite, setUniversite] = useState('')
+  // Üniversite: otomatik-tamamlamalı çoklu seçim (Türkçe-duyarsız)
+  const [selectedUniversities, setSelectedUniversities] = useState<string[]>([])
+  const [universityQuery, setUniversityQuery] = useState('')
+  const [universitySuggestions, setUniversitySuggestions] = useState<string[]>([])
+  const [universityBoxOpen, setUniversityBoxOpen] = useState(false)
+  const [loadingUni, setLoadingUni] = useState(false)
   // Program: otomatik-tamamlamalı çoklu seçim (o puan türündeki programlar sunucuda dinamik aranır)
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([])
   const [programQuery, setProgramQuery] = useState('')
@@ -185,7 +254,7 @@ export default function TercihPage() {
       let q = supabase.from('university_rankings').select('program').eq('year', year)
       if (scoreType) q = q.eq('score_type', scoreType as ScoreType)
       const term = programQuery.trim()
-      if (term) q = q.ilike('program', `%${term}%`)
+      if (term) q = q.filter('program', 'imatch', turkishRegex(term))
       const { data } = await q.limit(1000)
       if (cancelled) return
       setProgramSuggestions(uniqSorted((data ?? []).map((r) => r.program)))
@@ -197,16 +266,47 @@ export default function TercihPage() {
     }
   }, [programQuery, scoreType, year, programBoxOpen])
 
+  // Üniversite önerileri: kutu açıkken Türkçe-duyarsız (imatch) sunucu araması, debounce'lu.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !universityBoxOpen) return
+    let cancelled = false
+    const handle = setTimeout(async () => {
+      setLoadingUni(true)
+      let q = supabase.from('university_rankings').select('university').eq('year', year)
+      const term = universityQuery.trim()
+      if (term) q = q.filter('university', 'imatch', turkishRegex(term))
+      const { data } = await q.limit(1000)
+      if (cancelled) return
+      setUniversitySuggestions(uniqSorted((data ?? []).map((r) => r.university)))
+      setLoadingUni(false)
+    }, 220)
+    return () => {
+      cancelled = true
+      clearTimeout(handle)
+    }
+  }, [universityQuery, year, universityBoxOpen])
+
   const selectedStudent = useMemo(
     () => students.find((s) => s.id === selectedStudentId) ?? null,
     [students, selectedStudentId],
   )
 
-  // Seçilmiş olanları öneri listesinden çıkar, ekranda ilk 100'ü göster.
+  // Seçilmiş olanları öneri listelerinden çıkar, ilk 100'ü göster.
   const visibleSuggestions = useMemo(
     () => programSuggestions.filter((p) => !selectedPrograms.includes(p)).slice(0, 100),
     [programSuggestions, selectedPrograms],
   )
+  const visibleUniSuggestions = useMemo(
+    () => universitySuggestions.filter((u) => !selectedUniversities.includes(u)).slice(0, 100),
+    [universitySuggestions, selectedUniversities],
+  )
+  // Şehir önerileri istemci tarafı (facet listesi) — Türkçe-duyarsız katlama ile.
+  const citySuggestions = useMemo(() => {
+    const q = foldTr(citySearch)
+    return facets.cities
+      .filter((c) => !cities.includes(c) && (q === '' || foldTr(c).includes(q)))
+      .slice(0, 100)
+  }, [facets.cities, citySearch, cities])
 
   function addProgram(p: string) {
     setSelectedPrograms((prev) => (prev.includes(p) ? prev : [...prev, p]))
@@ -215,8 +315,19 @@ export default function TercihPage() {
   function removeProgram(p: string) {
     setSelectedPrograms((prev) => prev.filter((x) => x !== p))
   }
-  function openProgramBox() {
-    setProgramBoxOpen(true)
+  function addUniversity(u: string) {
+    setSelectedUniversities((prev) => (prev.includes(u) ? prev : [...prev, u]))
+    setUniversityQuery('')
+  }
+  function removeUniversity(u: string) {
+    setSelectedUniversities((prev) => prev.filter((x) => x !== u))
+  }
+  function addCity(c: string) {
+    setCities((prev) => (prev.includes(c) ? prev : [...prev, c]))
+    setCitySearch('')
+  }
+  function removeCity(c: string) {
+    setCities((prev) => prev.filter((x) => x !== c))
   }
 
   const rank = studentRank.trim() ? Number(studentRank.trim()) : null
@@ -247,16 +358,14 @@ export default function TercihPage() {
     }
   }
 
-  function toggleCity(city: string) {
-    setCities((prev) => (prev.includes(city) ? prev.filter((c) => c !== city) : [...prev, city]))
-  }
-
   function clearFilters() {
     setScoreType('')
-    setUniversite('')
+    setSelectedUniversities([])
+    setUniversityQuery('')
     setSelectedPrograms([])
     setProgramQuery('')
     setCities([])
+    setCitySearch('')
     setDegreeLevel('')
     setUniversityType('')
     setFeeType('')
@@ -289,19 +398,20 @@ export default function TercihPage() {
     if (feeType) query = query.eq('fee_type', feeType)
     if (educationType) query = query.eq('education_type', educationType)
     if (cities.length) query = query.in('city', cities)
-    if (universite.trim()) query = query.ilike('university', `%${universite.trim()}%`)
     if (programCode.trim()) query = query.eq('program_code', Number(programCode.trim()))
 
-    // Program: seçilmiş çipler varsa tam eşleşme (.in); yoksa yazılan metne Türkçe-ek genişletmeli ilike.
+    // Üniversite: seçili çipler → tam eşleşme (.in); yoksa yazılan metne Türkçe-duyarsız imatch.
+    if (selectedUniversities.length) {
+      query = query.in('university', selectedUniversities)
+    } else if (universityQuery.trim()) {
+      query = query.filter('university', 'imatch', turkishRegex(universityQuery.trim()))
+    }
+
+    // Program: seçili çipler → tam eşleşme (.in); yoksa yazılan metne Türkçe-duyarsız imatch.
     if (selectedPrograms.length) {
       query = query.in('program', selectedPrograms)
     } else if (programQuery.trim()) {
-      const programTerms = getProgramSearchTerms(programQuery)
-      if (programTerms.length === 1) {
-        query = query.ilike('program', `%${programTerms[0]}%`)
-      } else if (programTerms.length > 1) {
-        query = query.or(programTerms.map((t) => `program.ilike.*${t}*`).join(','))
-      }
+      query = query.filter('program', 'imatch', turkishRegex(programQuery.trim()))
     }
 
     if (minSira.trim()) query = query.gte('base_ranking', Number(minSira.trim()))
@@ -339,7 +449,7 @@ export default function TercihPage() {
       : '🎓 *NETLİK TERCIH LİSTESİ ÖNERİLERİ*'
 
     const rankStr = rank ? `\n📊 Tahmini Sıralama: *${rank.toLocaleString('tr')}*` : ''
-    const metaStr = `\n📌 Yıl: ${year} | Puan Türü: ${scoreType || 'Tümü'}${selectedPrograms.length ? ` | Program: ${selectedPrograms.join(', ')}` : ''}${cities.length ? ` | Şehir: ${cities.join(', ')}` : ''}`
+    const metaStr = `\n📌 Yıl: ${year} | Puan Türü: ${scoreType || 'Tümü'}${selectedUniversities.length ? ` | Üniversite: ${selectedUniversities.join(', ')}` : ''}${selectedPrograms.length ? ` | Program: ${selectedPrograms.join(', ')}` : ''}${cities.length ? ` | Şehir: ${cities.join(', ')}` : ''}`
 
     const topItems = displayResults.slice(0, 15)
     const listStr = topItems
@@ -365,10 +475,6 @@ export default function TercihPage() {
     window.open(url, '_blank')
     setWaMenuOpen(false)
   }
-
-  const filteredCityOptions = facets.cities.filter((c) =>
-    c.toLocaleLowerCase('tr').includes(citySearch.toLocaleLowerCase('tr')),
-  )
 
   const inputStyle = { width: '100%' }
 
@@ -424,116 +530,46 @@ export default function TercihPage() {
             </select>
           </div>
 
-          <div className="field">
-            <label>Üniversite</label>
-            <input style={inputStyle} type="text" placeholder="Örn: Boğaziçi" value={universite} onChange={(e) => setUniversite(e.target.value)} />
-          </div>
+          <ChipMultiSelect
+            label="Üniversite"
+            placeholder="Örn: boğaziçi"
+            selected={selectedUniversities}
+            onAdd={addUniversity}
+            onRemove={removeUniversity}
+            query={universityQuery}
+            setQuery={setUniversityQuery}
+            open={universityBoxOpen}
+            setOpen={setUniversityBoxOpen}
+            suggestions={visibleUniSuggestions}
+            loading={loadingUni}
+          />
 
-          {/* Program: otomatik-tamamlamalı çoklu seçim */}
-          <div className="field" style={{ position: 'relative' }}>
-            <label>Program{selectedPrograms.length > 0 ? ` (${selectedPrograms.length})` : ''}</label>
-            <div
-              onClick={openProgramBox}
-              style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minHeight: 40, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 9, background: 'var(--surface)', cursor: 'text' }}
-            >
-              {selectedPrograms.map((p) => (
-                <span key={p} className="chip chip-say" style={{ gap: 4 }}>
-                  {p}
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); removeProgram(p) }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', color: 'inherit' }}
-                    title="Kaldır"
-                  >
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-              <input
-                type="text"
-                placeholder={selectedPrograms.length ? 'Başka program ekle…' : 'Yaz — programlar listelenir'}
-                value={programQuery}
-                onFocus={openProgramBox}
-                onBlur={() => setTimeout(() => setProgramBoxOpen(false), 150)}
-                onChange={(e) => { setProgramQuery(e.target.value); openProgramBox() }}
-                style={{ flex: 1, minWidth: 90, border: 'none', outline: 'none', background: 'transparent', color: 'var(--ink)', fontSize: 13.5, padding: '2px 0' }}
-              />
-            </div>
-            {programBoxOpen && (
-              <div
-                className="card"
-                style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 25, marginTop: 4, padding: 6, maxHeight: 260, overflowY: 'auto', boxShadow: 'var(--shadow-card)' }}
-              >
-                {loadingPool && <div style={{ padding: 8, color: 'var(--ink-soft)', fontSize: 13 }}>Aranıyor…</div>}
-                {!loadingPool && visibleSuggestions.length === 0 && (
-                  <div style={{ padding: 8, color: 'var(--ink-soft)', fontSize: 13 }}>
-                    {programQuery.trim() ? 'Eşleşen program yok' : 'Yazmaya başlayın…'}
-                  </div>
-                )}
-                {!loadingPool && visibleSuggestions.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    style={{ width: '100%', justifyContent: 'flex-start', textAlign: 'left', border: 'none', fontWeight: 500 }}
-                    onMouseDown={(e) => { e.preventDefault(); addProgram(p) }}
-                  >
-                    {p}
-                  </button>
-                ))}
-                {!loadingPool && visibleSuggestions.length > 0 && (
-                  <div style={{ padding: '6px 8px 2px', fontSize: 11, color: 'var(--ink-soft)', borderTop: '1px solid var(--border)', marginTop: 4 }}>
-                    {scoreType ? `${scoreType} · ` : 'Tüm türler · '}tıklayarak ekle, birden fazla seçebilirsin
-                    {programSuggestions.length > visibleSuggestions.length + selectedPrograms.length ? ' · daraltmak için yazın' : ''}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <ChipMultiSelect
+            label="Program"
+            placeholder="Örn: tıp (Türkçe karakter gerekmez)"
+            selected={selectedPrograms}
+            onAdd={addProgram}
+            onRemove={removeProgram}
+            query={programQuery}
+            setQuery={setProgramQuery}
+            open={programBoxOpen}
+            setOpen={setProgramBoxOpen}
+            suggestions={visibleSuggestions}
+            loading={loadingPool}
+          />
 
-          {/* Şehir: çoklu seçim */}
-          <div className="field" style={{ position: 'relative' }}>
-            <label>Şehir</label>
-            <button
-              type="button"
-              className="btn btn-ghost"
-              style={{ width: '100%', justifyContent: 'space-between', fontWeight: 500 }}
-              onClick={() => setCityPickerOpen((o) => !o)}
-            >
-              <span style={{ color: cities.length ? 'var(--ink)' : 'var(--ink-soft)' }}>
-                {cities.length ? `${cities.length} şehir seçili` : 'Şehir seçin'}
-              </span>
-              <ChevronDown size={16} />
-            </button>
-            {cityPickerOpen && (
-              <div
-                className="card"
-                style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, marginTop: 4, padding: 10, maxHeight: 280, overflowY: 'auto', boxShadow: 'var(--shadow-card)' }}
-              >
-                <input
-                  type="text"
-                  placeholder="Şehir ara…"
-                  value={citySearch}
-                  onChange={(e) => setCitySearch(e.target.value)}
-                  style={{ width: '100%', marginBottom: 8, padding: '7px 9px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--surface)', color: 'var(--ink)', fontSize: 13 }}
-                />
-                {cities.length > 0 && (
-                  <button type="button" className="btn btn-sm btn-ghost" style={{ marginBottom: 8 }} onClick={() => setCities([])}>
-                    Seçimi temizle
-                  </button>
-                )}
-                {filteredCityOptions.map((c) => (
-                  <label key={c} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 4px', fontSize: 13, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={cities.includes(c)} onChange={() => toggleCity(c)} />
-                    {c}
-                  </label>
-                ))}
-                {filteredCityOptions.length === 0 && (
-                  <div style={{ padding: 8, color: 'var(--ink-soft)', fontSize: 13 }}>Sonuç yok</div>
-                )}
-              </div>
-            )}
-          </div>
+          <ChipMultiSelect
+            label="Şehir"
+            placeholder="Şehir ara…"
+            selected={cities}
+            onAdd={addCity}
+            onRemove={removeCity}
+            query={citySearch}
+            setQuery={setCitySearch}
+            open={cityPickerOpen}
+            setOpen={setCityPickerOpen}
+            suggestions={citySuggestions}
+          />
         </div>
 
         {/* 2. satır */}

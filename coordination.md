@@ -326,4 +326,12 @@ Kullanıcı isteği: "program yazarken mevcut programlar dinamik listelensin, se
 - [x] ✅ **Opus canlı görsel test:** "tıp" yazınca dinamik liste; "Tıp" + "Bilgisayar Mühendisliği (İngilizce)" çip olarak eklendi; Ara → 111 program, iki tip karışık, başarı sırasına göre sıralı. Şehir facet'i tam (82 şehir). GEÇTİ.
 - *Yapan:* **Opus**.
 
+### Durum (ulaşılabilirlik) filtresi [TAMAMLANDI — Opus, 2026-07-23]
+Kullanıcı isteği: sonuçlardaki "Durum" (Ulaşılabilir/Riskli/Zor) bir seçim kriteri olsun, sonuçları ona göre kısıtlayalım.
+- [x] Durum = öğrenci tahmini sıralaması vs programın taban başarı sırası (≤ taban → Ulaşılabilir, ≤ taban×1.15 → Riskli, ötesi → Zor).
+- [x] Öğrenci bölümüne **Durum filtresi** (Ulaşılabilir/Riskli/Zor toggle çipleri) eklendi — sıralama girilince aktif. Seçime göre `base_ranking` bandı sorguya eklenir (`statusBand` + gte/lt) ve render'da `displayResults` ile kesin süzülür. Boş = hepsi. Başlık aktif durumu gösterir.
+- [x] `npm run build` temiz; canlı deploy (commit `54af9f3`).
+- [x] ✅ **Opus canlı test:** Tıp + sıralama 50.000 → "Ulaşılabilir" boş (doğru: Tıp cutoff'ları 50k'dan iyi), "Zor" → 84 program hepsi "Zor" rozetli, başarı sırasına göre. GEÇTİ.
+- *Yapan:* **Opus**.
+
 
