@@ -316,6 +316,14 @@ Kullanıcı "kalan işleri yap/yaptırt" dedi; hepsi bitti:
 - [x] **Deploy**: commit `592ece8` main'e push edildi → Vercel prod. Canlı JS hash yerelle eşleşti, `/tercih` HTTP 200.
 - [x] **Görsel test** (Opus, canlı site): sayfa render + gerçek arama ("Mühendislik" → 300 program, başarı sırasına göre, gerçek verilerle) doğrulandı.
 - ⚠️ **Kullanıcıya açık uyarı (B2):** `.github/workflows/backup.yml` yedeği GitHub **artifact** olarak yüklüyor. Repo (`Mesut-Outlook/coaching_ai`) **public ise** artifact'lar erişilebilir → öğrenci PII riski. Secret'leri eklemeden önce repo'yu **private** yap ya da artifact-upload adımını kaldır. Ayrıca workflow secret'siz her gece başarısız olur — `VITE_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` secret'leri eklenmeli.
-- **Kalan opsiyoneller:** tercih listesini öğrenciye kaydetme (DB); Program alanını typeahead'e çevirme (Türkçe-ek genişletmesi şimdilik çözüyor).
+- **Kalan opsiyoneller:** tercih listesini öğrenciye kaydetme (DB).
+
+### Program alanı → otomatik-tamamlamalı çoklu seçim + 1000-cap düzeltmesi [TAMAMLANDI — Opus, 2026-07-23]
+Kullanıcı isteği: "program yazarken mevcut programlar dinamik listelensin, seçtikçe başka programlar da eklenebilsin, o puan türündeki tüm programlar dökülsün."
+- [x] `TercihPage.tsx`: Program artık serbest metin değil — yazdıkça **sunucuda `ilike` ile** o puan türündeki programlar listelenir; tıklayınca **çip** olarak eklenir, birden fazla seçilebilir (`Program (n)`). Arama `.in('program', seçilenler)` ile **tam eşleşme** yapar (Türkçe-ek sorunu tamamen ortadan kalkar). Seçim yoksa yazılan metne eski `getProgramSearchTerms` ilike fallback korunur.
+- [x] ⚠️ **ÖNEMLİ GENEL BULGU — Supabase 1000 satır hard-cap:** Tek `.select()` en fazla **1000 satır** döndürüyor (`.limit(5000)`/`.range(0,3999)` bile 1000). Bu yüzden facet fetch'i (özellikle **şehir listesi**) ilk 1000 satırdan türediği için eksik olabiliyordu. Düzeltme: `count` + **paralel `.range()` sayfalama** ile tüm distinct değerler çekiliyor (82 şehir doğrulandı). **Uyarı (Sonnet/agy): projedeki başka `.select()` çağrıları da sessizce 1000'de kesiliyor olabilir — çok satırlı okumalarda bu deseni (count+range) kullanın ya da farkında olun.**
+- [x] `npm run build` temiz; canlı deploy (commit `861dc23`).
+- [x] ✅ **Opus canlı görsel test:** "tıp" yazınca dinamik liste; "Tıp" + "Bilgisayar Mühendisliği (İngilizce)" çip olarak eklendi; Ara → 111 program, iki tip karışık, başarı sırasına göre sıralı. Şehir facet'i tam (82 şehir). GEÇTİ.
+- *Yapan:* **Opus**.
 
 

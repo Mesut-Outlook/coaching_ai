@@ -71,11 +71,27 @@ function getProgramSearchTerms(rawText: string): string[] {
 
 // Öğrencinin tahmini sıralamasına göre bir programın ulaşılabilirliği.
 // Daha küçük sıra = daha iyi. Öğrenci sırası ≤ taban sıra → girebilir.
+type StatusLabel = 'Ulaşılabilir' | 'Riskli' | 'Zor'
+const STATUS_ORDER: StatusLabel[] = ['Ulaşılabilir', 'Riskli', 'Zor']
+const STATUS_TONE: Record<StatusLabel, 'yeterli' | 'gelisiyor' | 'kritik'> = {
+  'Ulaşılabilir': 'yeterli',
+  'Riskli': 'gelisiyor',
+  'Zor': 'kritik',
+}
+const RISK_FACTOR = 1.15
+
 function reachability(studentRank: number | null, baseRanking: number | null) {
   if (!studentRank || baseRanking == null) return null
-  if (studentRank <= baseRanking) return { label: 'Ulaşılabilir', tone: 'yeterli' as const }
-  if (studentRank <= baseRanking * 1.15) return { label: 'Riskli', tone: 'gelisiyor' as const }
-  return { label: 'Zor', tone: 'kritik' as const }
+  if (studentRank <= baseRanking) return { label: 'Ulaşılabilir' as StatusLabel, tone: STATUS_TONE['Ulaşılabilir'] }
+  if (studentRank <= baseRanking * RISK_FACTOR) return { label: 'Riskli' as StatusLabel, tone: STATUS_TONE['Riskli'] }
+  return { label: 'Zor' as StatusLabel, tone: STATUS_TONE['Zor'] }
+}
+
+// Bir durum etiketinin base_ranking bandı (öğrenci sırası r için). [lo, hi) — hi=Infinity üst sınırsız.
+function statusBand(label: StatusLabel, r: number): [number, number] {
+  if (label === 'Ulaşılabilir') return [r, Infinity]
+  if (label === 'Riskli') return [r / RISK_FACTOR, r]
+  return [0, r / RISK_FACTOR] // Zor
 }
 
 export default function TercihPage() {
@@ -104,6 +120,8 @@ export default function TercihPage() {
   // Öğrenci entegrasyonu (elle + ön-doldur)
   const [selectedStudentId, setSelectedStudentId] = useState('')
   const [studentRank, setStudentRank] = useState('')
+  // Durum (ulaşılabilirlik) filtresi — öğrenci sıralaması girilince çalışır
+  const [statusFilter, setStatusFilter] = useState<StatusLabel[]>([])
 
   const [cityPickerOpen, setCityPickerOpen] = useState(false)
   const [citySearch, setCitySearch] = useState('')
@@ -203,6 +221,19 @@ export default function TercihPage() {
 
   const rank = studentRank.trim() ? Number(studentRank.trim()) : null
 
+  function toggleStatus(s: StatusLabel) {
+    setStatusFilter((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
+  }
+
+  // Durum filtresi aktifse (öğrenci sırası + seçili durum) sonuçları o duruma göre süz.
+  const displayResults = useMemo(() => {
+    if (!rank || statusFilter.length === 0 || statusFilter.length === 3) return results
+    return results.filter((r) => {
+      const reach = reachability(rank, r.base_ranking)
+      return reach !== null && statusFilter.includes(reach.label)
+    })
+  }, [results, rank, statusFilter])
+
   function handleStudentChange(id: string) {
     setSelectedStudentId(id)
     const student = students.find((s) => s.id === id)
@@ -235,6 +266,7 @@ export default function TercihPage() {
     setMaxSira('')
     setSelectedStudentId('')
     setStudentRank('')
+    setStatusFilter([])
     setResults([])
     setHasSearched(false)
     setTruncated(false)
@@ -275,6 +307,16 @@ export default function TercihPage() {
     if (minSira.trim()) query = query.gte('base_ranking', Number(minSira.trim()))
     if (maxSira.trim()) query = query.lte('base_ranking', Number(maxSira.trim()))
 
+    // Durum (ulaşılabilirlik) filtresi: öğrenci sırası + seçili durum(lar) → base_ranking bandı.
+    // Bitişik seçimler tek aralık olur; kesin süzme render'da displayResults ile yapılır.
+    if (rank && statusFilter.length > 0 && statusFilter.length < 3) {
+      const bands = statusFilter.map((s) => statusBand(s, rank))
+      const lo = Math.min(...bands.map((b) => b[0]))
+      const hi = Math.max(...bands.map((b) => b[1]))
+      if (lo > 0) query = query.gte('base_ranking', lo)
+      if (hi !== Infinity) query = query.lt('base_ranking', hi)
+    }
+
     query = query
       .order('base_ranking', { ascending: true, nullsFirst: false })
       .limit(RESULT_LIMIT + 1)
@@ -291,7 +333,7 @@ export default function TercihPage() {
   }
 
   function generateWhatsAppText() {
-    if (results.length === 0) return ''
+    if (displayResults.length === 0) return ''
     const header = selectedStudent
       ? `🎓 *NETLİK TERCIH LİSTESİ - ${selectedStudent.full_name.toUpperCase()}*`
       : '🎓 *NETLİK TERCIH LİSTESİ ÖNERİLERİ*'
@@ -299,7 +341,7 @@ export default function TercihPage() {
     const rankStr = rank ? `\n📊 Tahmini Sıralama: *${rank.toLocaleString('tr')}*` : ''
     const metaStr = `\n📌 Yıl: ${year} | Puan Türü: ${scoreType || 'Tümü'}${selectedPrograms.length ? ` | Program: ${selectedPrograms.join(', ')}` : ''}${cities.length ? ` | Şehir: ${cities.join(', ')}` : ''}`
 
-    const topItems = results.slice(0, 15)
+    const topItems = displayResults.slice(0, 15)
     const listStr = topItems
       .map((r, i) => {
         const reach = reachability(rank, r.base_ranking)
@@ -575,14 +617,36 @@ export default function TercihPage() {
           <div className="field">
             <label>Öğrenci Tahmini Sıralaması</label>
             <input style={inputStyle} type="number" placeholder="Ulaşılabilirlik için" value={studentRank} onChange={(e) => setStudentRank(e.target.value)} />
-          </div>
-          {selectedStudent && (
-            <div className="field" style={{ justifyContent: 'flex-end' }}>
-              <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
+            {selectedStudent && (
+              <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 2 }}>
                 Sıralama <strong>tahminidir</strong>, elle düzeltebilirsiniz.
               </div>
+            )}
+          </div>
+          <div className="field" style={{ gridColumn: 'span 2' }}>
+            <label>Durum (ulaşılabilirlik) filtresi</label>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', minHeight: 40 }}>
+              {STATUS_ORDER.map((s) => {
+                const active = statusFilter.includes(s)
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => toggleStatus(s)}
+                    disabled={!rank}
+                    className={active ? `pill-state pill-${STATUS_TONE[s]}` : 'btn btn-ghost btn-sm'}
+                    style={{ cursor: rank ? 'pointer' : 'not-allowed', opacity: rank ? 1 : 0.5, border: active ? '1px solid transparent' : undefined }}
+                    title={rank ? '' : 'Önce öğrenci tahmini sıralaması girin'}
+                  >
+                    {s}
+                  </button>
+                )
+              })}
             </div>
-          )}
+            <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 2 }}>
+              {rank ? 'Seçtiklerin gösterilir · boş = hepsi' : 'Öğrenci sıralaması girilince aktifleşir'}
+            </div>
+          </div>
         </div>
 
         {/* Butonlar */}
@@ -597,17 +661,18 @@ export default function TercihPage() {
       </div>
 
       {/* SONUÇLAR */}
-      {hasSearched && !loading && results.length === 0 && (
+      {hasSearched && !loading && displayResults.length === 0 && (
         <div className="card empty-state" style={{ padding: 40, textAlign: 'center' }}>
           Bu kriterlere uyan program bulunamadı. Filtreleri gevşetmeyi deneyin.
         </div>
       )}
 
-      {results.length > 0 && (
+      {displayResults.length > 0 && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
             <div style={{ fontWeight: 600, color: 'var(--ink-soft)', fontSize: 13 }}>
-              {results.length} program{truncated ? ` (ilk ${RESULT_LIMIT} gösteriliyor — filtreleri daraltın)` : ''} · başarı sırasına göre
+              {displayResults.length} program{truncated ? ` (ilk ${RESULT_LIMIT} taranıyor — filtreleri daraltın)` : ''} · başarı sırasına göre
+              {rank && statusFilter.length > 0 && statusFilter.length < 3 ? ` · ${statusFilter.join(' + ')}` : ''}
             </div>
 
             {/* Aksiyon butonları */}
@@ -701,7 +766,7 @@ export default function TercihPage() {
                 </tr>
               </thead>
               <tbody>
-                {results.map((r) => {
+                {displayResults.map((r) => {
                   const reach = reachability(rank, r.base_ranking)
                   return (
                     <tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}>
