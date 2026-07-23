@@ -303,4 +303,19 @@ Veriyi denetledim ve Tercih Sihirbazı sorgusunu uçtan uca simüle ettim — **
 - [x] ⚠️ **Gizlilik:** Yedek gerçek öğrenci + veli telefon/isim (kişisel veri) içerir → repo MUTLAKA private, erişim kısıtlı. Service-role key yalnız secret olarak, koda gömülü DEĞİL.
 - *Sorumlu:* **agy** (Tamamlandı).
 
+---
+
+## ✅ TERCİH SİHİRBAZI — TAMAMLANDI & CANLIDA (Opus, 2026-07-23)
+Kullanıcı "kalan işleri yap/yaptırt" dedi; hepsi bitti:
+- [x] **Şema + tip** (Opus): `university_rankings` tablosu + `UniversityRanking` tipi, tsc temiz.
+- [x] **A2 seed** (agy): 66.416 kayıt canlı Supabase'e yüklendi, Opus REST API ile doğruladı (base_score numeric).
+- [x] **/tercih ekranı** (Opus yazdı, agy Türkçe-ek genişletmesi + Yazdır/WhatsApp ekledi): 11 filtre, ulaşılabilirlik rozeti, `npm run build` temiz.
+- [x] **Yardım + Sürüm** (Opus): TercihPage kartı + v0.15 girişi eklendi.
+- [x] **B1 yedek doğrulama** (Opus): `npm run backup` çalıştı — 8 öğrenci/64 deneme/188 bölüm/99 görev/40 ölçüm/42 karar + 3 fotoğraf `backups/2026-07-23/`'e alındı. `restoreData.ts` FK sıralı upsert, statik doğrulandı (tam restore için boş hedef proje gerekir).
+- [x] **`.gitignore`**: `backups/` eklendi — öğrenci PII git'e girmiyor.
+- [x] **Deploy**: commit `592ece8` main'e push edildi → Vercel prod. Canlı JS hash yerelle eşleşti, `/tercih` HTTP 200.
+- [x] **Görsel test** (Opus, canlı site): sayfa render + gerçek arama ("Mühendislik" → 300 program, başarı sırasına göre, gerçek verilerle) doğrulandı.
+- ⚠️ **Kullanıcıya açık uyarı (B2):** `.github/workflows/backup.yml` yedeği GitHub **artifact** olarak yüklüyor. Repo (`Mesut-Outlook/coaching_ai`) **public ise** artifact'lar erişilebilir → öğrenci PII riski. Secret'leri eklemeden önce repo'yu **private** yap ya da artifact-upload adımını kaldır. Ayrıca workflow secret'siz her gece başarısız olur — `VITE_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` secret'leri eklenmeli.
+- **Kalan opsiyoneller:** tercih listesini öğrenciye kaydetme (DB); Program alanını typeahead'e çevirme (Türkçe-ek genişletmesi şimdilik çözüyor).
+
 

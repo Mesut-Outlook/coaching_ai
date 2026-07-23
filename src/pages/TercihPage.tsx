@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Trash2, ChevronDown, SlidersHorizontal, GraduationCap, Printer, Send, MessageSquare } from 'lucide-react'
+import { Search, Trash2, ChevronDown, SlidersHorizontal, GraduationCap, Printer, Send, MessageSquare, X } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, UniversityRanking, ScoreType } from '../types/database'
@@ -86,7 +86,12 @@ export default function TercihPage() {
   const [year, setYear] = useState(2025)
   const [scoreType, setScoreType] = useState('')
   const [universite, setUniversite] = useState('')
-  const [programText, setProgramText] = useState('')
+  // Program: otomatik-tamamlamalı çoklu seçim (o puan türündeki programlar sunucuda dinamik aranır)
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([])
+  const [programQuery, setProgramQuery] = useState('')
+  const [programSuggestions, setProgramSuggestions] = useState<string[]>([])
+  const [programBoxOpen, setProgramBoxOpen] = useState(false)
+  const [loadingPool, setLoadingPool] = useState(false)
   const [cities, setCities] = useState<string[]>([])
   const [degreeLevel, setDegreeLevel] = useState('')
   const [universityType, setUniversityType] = useState('')
@@ -113,20 +118,33 @@ export default function TercihPage() {
   useEffect(() => {
     if (!isSupabaseConfigured) return
 
-    supabase
-      .from('university_rankings')
-      .select('city, university_type, degree_level, fee_type, education_type')
-      .eq('year', 2025)
-      .then(({ data }) => {
-        if (!data) return
-        setFacets({
-          cities: uniqSorted(data.map((r) => r.city)),
-          universityTypes: uniqSorted(data.map((r) => r.university_type)),
-          degreeLevels: uniqSorted(data.map((r) => r.degree_level)),
-          feeTypes: uniqSorted(data.map((r) => r.fee_type)),
-          educationTypes: uniqSorted(data.map((r) => r.education_type)),
-        })
+    // Supabase 1000 satır hard-cap → tüm distinct facet değerleri (özellikle şehirler) için
+    // önce sayım, sonra parça parça (range) paralel çekip birleştir.
+    ;(async () => {
+      const PAGE = 1000
+      const { count } = await supabase
+        .from('university_rankings')
+        .select('*', { count: 'exact', head: true })
+        .eq('year', 2025)
+      const pages = Math.max(1, Math.ceil((count ?? 0) / PAGE))
+      const reqs = Array.from({ length: pages }, (_, i) =>
+        supabase
+          .from('university_rankings')
+          .select('city, university_type, degree_level, fee_type, education_type')
+          .eq('year', 2025)
+          .range(i * PAGE, i * PAGE + PAGE - 1),
+      )
+      const results = await Promise.all(reqs)
+      const rows = results.flatMap((r) => r.data ?? [])
+      if (rows.length === 0) return
+      setFacets({
+        cities: uniqSorted(rows.map((r) => r.city)),
+        universityTypes: uniqSorted(rows.map((r) => r.university_type)),
+        degreeLevels: uniqSorted(rows.map((r) => r.degree_level)),
+        feeTypes: uniqSorted(rows.map((r) => r.fee_type)),
+        educationTypes: uniqSorted(rows.map((r) => r.education_type)),
       })
+    })()
 
     supabase
       .from('students')
@@ -138,10 +156,50 @@ export default function TercihPage() {
       })
   }, [])
 
+  // Program önerileri: kutu açıkken, yazılan metne göre SUNUCUDA ilike ile ara (debounce'lu).
+  // 1000 satır cap sorun değil — program adları üniversiteler arası tekrar ettiği için
+  // yazılan terimin distinct adları tek istekte yakalanır. Boş sorgu → o puan türünden bir örnek liste.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !programBoxOpen) return
+    let cancelled = false
+    const handle = setTimeout(async () => {
+      setLoadingPool(true)
+      let q = supabase.from('university_rankings').select('program').eq('year', year)
+      if (scoreType) q = q.eq('score_type', scoreType as ScoreType)
+      const term = programQuery.trim()
+      if (term) q = q.ilike('program', `%${term}%`)
+      const { data } = await q.limit(1000)
+      if (cancelled) return
+      setProgramSuggestions(uniqSorted((data ?? []).map((r) => r.program)))
+      setLoadingPool(false)
+    }, 220)
+    return () => {
+      cancelled = true
+      clearTimeout(handle)
+    }
+  }, [programQuery, scoreType, year, programBoxOpen])
+
   const selectedStudent = useMemo(
     () => students.find((s) => s.id === selectedStudentId) ?? null,
     [students, selectedStudentId],
   )
+
+  // Seçilmiş olanları öneri listesinden çıkar, ekranda ilk 100'ü göster.
+  const visibleSuggestions = useMemo(
+    () => programSuggestions.filter((p) => !selectedPrograms.includes(p)).slice(0, 100),
+    [programSuggestions, selectedPrograms],
+  )
+
+  function addProgram(p: string) {
+    setSelectedPrograms((prev) => (prev.includes(p) ? prev : [...prev, p]))
+    setProgramQuery('')
+  }
+  function removeProgram(p: string) {
+    setSelectedPrograms((prev) => prev.filter((x) => x !== p))
+  }
+  function openProgramBox() {
+    setProgramBoxOpen(true)
+  }
 
   const rank = studentRank.trim() ? Number(studentRank.trim()) : null
 
@@ -165,7 +223,8 @@ export default function TercihPage() {
   function clearFilters() {
     setScoreType('')
     setUniversite('')
-    setProgramText('')
+    setSelectedPrograms([])
+    setProgramQuery('')
     setCities([])
     setDegreeLevel('')
     setUniversityType('')
@@ -201,12 +260,16 @@ export default function TercihPage() {
     if (universite.trim()) query = query.ilike('university', `%${universite.trim()}%`)
     if (programCode.trim()) query = query.eq('program_code', Number(programCode.trim()))
 
-    // Program: Türkçe ek/yumuşama genişletmesi ile PostgREST ilike or query
-    const programTerms = getProgramSearchTerms(programText)
-    if (programTerms.length === 1) {
-      query = query.ilike('program', `%${programTerms[0]}%`)
-    } else if (programTerms.length > 1) {
-      query = query.or(programTerms.map((t) => `program.ilike.*${t}*`).join(','))
+    // Program: seçilmiş çipler varsa tam eşleşme (.in); yoksa yazılan metne Türkçe-ek genişletmeli ilike.
+    if (selectedPrograms.length) {
+      query = query.in('program', selectedPrograms)
+    } else if (programQuery.trim()) {
+      const programTerms = getProgramSearchTerms(programQuery)
+      if (programTerms.length === 1) {
+        query = query.ilike('program', `%${programTerms[0]}%`)
+      } else if (programTerms.length > 1) {
+        query = query.or(programTerms.map((t) => `program.ilike.*${t}*`).join(','))
+      }
     }
 
     if (minSira.trim()) query = query.gte('base_ranking', Number(minSira.trim()))
@@ -234,7 +297,7 @@ export default function TercihPage() {
       : '🎓 *NETLİK TERCIH LİSTESİ ÖNERİLERİ*'
 
     const rankStr = rank ? `\n📊 Tahmini Sıralama: *${rank.toLocaleString('tr')}*` : ''
-    const metaStr = `\n📌 Yıl: ${year} | Puan Türü: ${scoreType || 'Tümü'}${cities.length ? ` | Şehir: ${cities.join(', ')}` : ''}`
+    const metaStr = `\n📌 Yıl: ${year} | Puan Türü: ${scoreType || 'Tümü'}${selectedPrograms.length ? ` | Program: ${selectedPrograms.join(', ')}` : ''}${cities.length ? ` | Şehir: ${cities.join(', ')}` : ''}`
 
     const topItems = results.slice(0, 15)
     const listStr = topItems
@@ -324,9 +387,66 @@ export default function TercihPage() {
             <input style={inputStyle} type="text" placeholder="Örn: Boğaziçi" value={universite} onChange={(e) => setUniversite(e.target.value)} />
           </div>
 
-          <div className="field">
-            <label>Program</label>
-            <input style={inputStyle} type="text" placeholder="Örn: Tıp, Mühendislik" value={programText} onChange={(e) => setProgramText(e.target.value)} />
+          {/* Program: otomatik-tamamlamalı çoklu seçim */}
+          <div className="field" style={{ position: 'relative' }}>
+            <label>Program{selectedPrograms.length > 0 ? ` (${selectedPrograms.length})` : ''}</label>
+            <div
+              onClick={openProgramBox}
+              style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minHeight: 40, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 9, background: 'var(--surface)', cursor: 'text' }}
+            >
+              {selectedPrograms.map((p) => (
+                <span key={p} className="chip chip-say" style={{ gap: 4 }}>
+                  {p}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); removeProgram(p) }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', color: 'inherit' }}
+                    title="Kaldır"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+              <input
+                type="text"
+                placeholder={selectedPrograms.length ? 'Başka program ekle…' : 'Yaz — programlar listelenir'}
+                value={programQuery}
+                onFocus={openProgramBox}
+                onBlur={() => setTimeout(() => setProgramBoxOpen(false), 150)}
+                onChange={(e) => { setProgramQuery(e.target.value); openProgramBox() }}
+                style={{ flex: 1, minWidth: 90, border: 'none', outline: 'none', background: 'transparent', color: 'var(--ink)', fontSize: 13.5, padding: '2px 0' }}
+              />
+            </div>
+            {programBoxOpen && (
+              <div
+                className="card"
+                style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 25, marginTop: 4, padding: 6, maxHeight: 260, overflowY: 'auto', boxShadow: 'var(--shadow-card)' }}
+              >
+                {loadingPool && <div style={{ padding: 8, color: 'var(--ink-soft)', fontSize: 13 }}>Aranıyor…</div>}
+                {!loadingPool && visibleSuggestions.length === 0 && (
+                  <div style={{ padding: 8, color: 'var(--ink-soft)', fontSize: 13 }}>
+                    {programQuery.trim() ? 'Eşleşen program yok' : 'Yazmaya başlayın…'}
+                  </div>
+                )}
+                {!loadingPool && visibleSuggestions.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    style={{ width: '100%', justifyContent: 'flex-start', textAlign: 'left', border: 'none', fontWeight: 500 }}
+                    onMouseDown={(e) => { e.preventDefault(); addProgram(p) }}
+                  >
+                    {p}
+                  </button>
+                ))}
+                {!loadingPool && visibleSuggestions.length > 0 && (
+                  <div style={{ padding: '6px 8px 2px', fontSize: 11, color: 'var(--ink-soft)', borderTop: '1px solid var(--border)', marginTop: 4 }}>
+                    {scoreType ? `${scoreType} · ` : 'Tüm türler · '}tıklayarak ekle, birden fazla seçebilirsin
+                    {programSuggestions.length > visibleSuggestions.length + selectedPrograms.length ? ' · daraltmak için yazın' : ''}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Şehir: çoklu seçim */}
