@@ -273,6 +273,43 @@ create policy "Fotoğraflar herkese açık okunabilir" on storage.objects
 drop policy if exists "Koçlar fotoğraf silebilir" on storage.objects;
 create policy "Koçlar fotoğraf silebilir" on storage.objects
   for delete using (
-    bucket_id = 'student-photos' 
+    bucket_id = 'student-photos'
     and auth.role() = 'authenticated'
   );
+
+-- =========================================================
+-- Üniversite Sıralamaları (YÖK Atlas, 2023-2026) — "Tercih Sihirbazı" verisi
+-- Ortak, salt-okunur referans veri. YALNIZ service-role seed yazar
+-- (bkz. scripts/seedUniversityRankings.ts). Client'tan insert/update/delete YOK.
+-- program_code = ÖSYM tercih (YÖP) kodu; (program_code, year) veride tekil.
+-- =========================================================
+create table if not exists university_rankings (
+  id bigserial primary key,
+  program_code bigint not null,
+  university text not null,
+  university_type text,          -- DEVLET / VAKIF / KKTC / YURTDISI VAKIF
+  city text,
+  faculty text,
+  program text not null,
+  degree_level text,             -- LISANS / ÖNLISANS
+  fee_type text,                 -- Burslu / Ücretsiz / Ücretli / %50 İndirimli / %25 İndirimli
+  education_type text,           -- Örgün Öğretim / Uzaktan Öğretim / UOLP ...
+  score_type text,               -- SAY / EA / SÖZ / DİL / TYT  (nadiren null)
+  year int not null,
+  base_score numeric,            -- taban puan (kaynak JSON'da string → seed Number()/::numeric cast etmeli)
+  base_ranking numeric,          -- taban başarı sırası (dolmayan programlarda null)
+  quota int,                     -- kontenjan
+  unique (program_code, year)
+);
+create index if not exists university_rankings_program_idx on university_rankings(program);
+create index if not exists university_rankings_city_idx on university_rankings(city);
+create index if not exists university_rankings_score_type_idx on university_rankings(score_type);
+create index if not exists university_rankings_year_idx on university_rankings(year);
+create index if not exists university_rankings_base_ranking_idx on university_rankings(base_ranking);
+create index if not exists university_rankings_program_code_idx on university_rankings(program_code);
+
+alter table university_rankings enable row level security;
+-- Herkese açık okuma (subjects/topics deseniyle aynı — ortak referans veri)
+drop policy if exists "university_rankings: herkes okur" on university_rankings;
+create policy "university_rankings: herkes okur" on university_rankings for select using (true);
+-- insert/update/delete politikası KASITLI YOK: client yazamaz, yalnız service-role (RLS bypass) seed yazar.

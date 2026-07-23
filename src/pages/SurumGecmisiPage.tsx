@@ -14,6 +14,21 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '23 Temmuz 2026',
+    entries: [
+      {
+        version: 'v0.15',
+        title: 'Tercih Sihirbazı',
+        items: [
+          'Yeni ekran: YÖK Atlas 2025 verisiyle (66.416 kayıt, ÖSYM program kodları dahil) bölüm arama ve tercih listesi oluşturma.',
+          '11 filtre: puan türü, üniversite, program, şehir (çoklu), ön lisans/lisans, üniversite türü, ücret/burs, öğretim türü, program kodu, en az/en çok başarı sırası.',
+          'Öğrenci seçilince puan türü otomatik dolar; tahmini sıralamaya göre her program için Ulaşılabilir / Riskli / Zor durumu gösterilir.',
+          'Sonuçlar başarı sırasına göre sıralanır.',
+        ],
+      },
+    ],
+  },
+  {
     date: '19 Temmuz 2026',
     entries: [
       {

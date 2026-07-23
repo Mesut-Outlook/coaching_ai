@@ -114,6 +114,28 @@ export type WeeklyTask = {
   created_at: string
 }
 
+export type ScoreType = 'SAY' | 'EA' | 'SÖZ' | 'DİL' | 'TYT'
+
+// YÖK Atlas üniversite/bölüm sıralama verisi — "Tercih Sihirbazı" ekranı.
+// Ortak, salt-okunur referans (RLS: herkese açık okuma). id bigserial, program_code = ÖSYM/YÖP kodu.
+export type UniversityRanking = {
+  id: number
+  program_code: number
+  university: string
+  university_type: string | null
+  city: string | null
+  faculty: string | null
+  program: string
+  degree_level: string | null
+  fee_type: string | null
+  education_type: string | null
+  score_type: ScoreType | null
+  year: number
+  base_score: number | null
+  base_ranking: number | null
+  quota: number | null
+}
+
 // Supabase JS v2 generic client tipi için minimal Database şeması.
 // Her tablo Row/Insert/Update varyantlarını paylaşır (Insert: id/created_at opsiyonel).
 // Relationships boş bırakılıyor — postgrest-js sadece dizi tipini istiyor, foreign-key
@@ -138,6 +160,7 @@ export type Database = {
       mock_exam_sections: TableDef<MockExamSection>
       error_basket_items: TableDef<ErrorBasketItem>
       weekly_tasks: TableDef<WeeklyTask>
+      university_rankings: TableDef<UniversityRanking>
     }
     Views: Record<string, never>
     Functions: Record<string, never>

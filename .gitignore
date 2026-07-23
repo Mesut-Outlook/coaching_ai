@@ -24,3 +24,9 @@ dist-ssr
 *.sw?
 .vercel
 .env*
+
+# Üniversite sıralama seed verisi (büyük, agy script'i yerelde üretir/seed'ler)
+src/data/universityRankings.json
+
+# Veri yedekleri — ÖĞRENCİ + VELİ KİŞİSEL VERİSİ İÇERİR, ASLA git'e girmemeli
+backups/

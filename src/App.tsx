@@ -10,6 +10,7 @@ import KonularPage from './pages/KonularPage'
 import ProgramPage from './pages/ProgramPage'
 import RaporlarPage from './pages/RaporlarPage'
 import MufredatPage from './pages/MufredatPage'
+import TercihPage from './pages/TercihPage'
 import YardimPage from './pages/YardimPage'
 import SurumGecmisiPage from './pages/SurumGecmisiPage'
 
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/program" element={<ProgramPage />} />
             <Route path="/raporlar" element={<RaporlarPage />} />
             <Route path="/mufredat" element={<MufredatPage />} />
+            <Route path="/tercih" element={<TercihPage />} />
             <Route path="/yardim" element={<YardimPage />} />
             <Route path="/surum-gecmisi" element={<SurumGecmisiPage />} />
           </Route>

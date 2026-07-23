@@ -1,0 +1,56 @@
+name: Database & Storage Daily Backup
+
+on:
+  schedule:
+    # Her gün saat 02:00 UTC (TSİ 05:00) çalışır
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Backup Script
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run backup
+
+      - name: Upload Backup Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup-${{ github.run_id }}
+          path: backups/
+          retention-days: 30
+
+      # İsteğe bağlı: Özel (private) yedek deposuna push etmek için BACKUP_REPO_TOKEN tanımlandıysa
+      - name: Push Backup to Private Repository
+        if: env.BACKUP_REPO_TOKEN != ''
+        env:
+          BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
+          BACKUP_REPO_URL: ${{ secrets.BACKUP_REPO_URL }}
+        run: |
+          if [ -n "$BACKUP_REPO_TOKEN" ] && [ -n "$BACKUP_REPO_URL" ]; then
+            git config --global user.name "Netlik Backup Bot"
+            git config --global user.email "backup@netlik.app"
+            mkdir -p /tmp/backup-repo
+            git clone "https://x-access-token:${BACKUP_REPO_TOKEN}@${BACKUP_REPO_URL}" /tmp/backup-repo
+            cp -r backups/* /tmp/backup-repo/
+            cd /tmp/backup-repo
+            git add .
+            git commit -m "Automated backup: $(date -Iseconds)" || echo "No changes to commit"
+            git push origin main
+          fi

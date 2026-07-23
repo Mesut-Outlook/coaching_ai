@@ -165,3 +165,142 @@ Kullanıcı isteği: öğrenci sayfasında öğrenci telefonu yanında bir de ve
 - [x] Yeni ekran: `src/pages/SurumGecmisiPage.tsx`, route `/surum-gecmisi`, Sidebar'da "Sürüm Geçmişi" (History ikonu) — git log + coordination.md'den derlenen, tarih ve versiyon numarasıyla (v0.1 → v0.14) gruplanmış tam değişiklik günlüğü.
 - [x] Build temiz, tarayıcıda doğrulandı, canlıya deploy edildi.
 
+---
+
+## YENİ ÖZELLİK — Tercih Listesi Oluşturucu (Tercih Robotu) (Opus planı, 2026-07-22)
+
+**⚠️ AMAÇ 2026-07-22'DE NETLEŞTİ — kullanıcı gerçek hedefi açıkladı, önceki "hedef alanı" çerçevesi bunun bir alt parçasına indi.**
+
+**Gerçek amaç:** Koçun bir **ekrana öğrencinin tercih kriterlerini** girip bir **tercih listesi** üreteceği bir araç. Kriterler:
+- **Bölüm(ler):** örn. sadece Tıp + Mühendislik (çoklu seçim/arama).
+- **Şehir(ler):** örn. sadece İstanbul, Ankara, İzmir (çoklu seçim).
+- **Sınav sonucu:** öğrencinin puanı/neti/tahmini başarı sıralaması (koç girer).
+
+Sistem bu kriterlere uyan programları `university_rankings`'ten sorgular, **taban puana/sıralamaya göre sıralı** bir tercih listesi olarak gösterir (ve öğrencinin sıralamasına göre ulaşılabilir/riskli işaretleyebilir). Bu bir **yeni ekran** (`/tercih` gibi) — profil içindeki tek "hedef alanı" değil.
+
+**Veri kaynağı kararı — GÜNCELLENDİ (kullanıcı YÖK Atlas onayladı, 2026-07-22):** Kullanıcı hedef ekranın referansını paylaştı (bkz. "Tercih Sihirbazı" filtre seti aşağıda) — bu bir YÖK Atlas tercih robotu. O filtrelerin **tamamı** (Puan Türü, Üniversite, Program, Şehir, Ön Lisans/Lisans, Üniversite Türü, Ücret/Burs, Öğretim Türü, **Program Kodu**, Başarı Sırası aralığı) YÖK Atlas'ta **yapısal alan** olarak var; Kaggle Program Kodu'nu hiç veremez ve Öğretim Türü/Ücret-Burs'u ancak metinden tahmin eder. → **Kaynak: YÖK Atlas (`yokatlas-py`).** Kaggle bırakıldı. YÖK Atlas'ın zayıflığı (agy'nin ilk çekişindeki eksik kapsam + boş sıralamalar) bir *veri çekme* sorunu; agy tam sayfalama + dolu-yıl sıralamasıyla düzeltecek (aşağıda A1b).
+
+**Roller (kullanıcı talimatı, 2026-07-22):** Opus = planlama/koordinasyon (bu bölüm). Sonnet = uygulama tarafı yazılım (şema, tip, UI). Antigravity (agy) = izole veri pipeline'ı (indirme/normalize/seed script'leri — ana app akışına dokunmaz). agy her 15 dk'da bu dosyayı kontrol edecek.
+
+### ⚠️ Sıralama kuralı (çakışma önleme)
+Adım A1 **her şeyi kilitler** — veri setinin gerçek kolon adları bilinmeden şema kesinleşemez. A1 bitip kolonlar bu dosyaya raporlanmadan A2 / şema / UI'ye BAŞLANMAZ. Aşağıdaki şema taslağı **provizyonel**; A1 raporundan sonra Sonnet finalize edecek.
+
+### agy — A1: Veri indirme + kolon keşfi + normalize [Tamamlandı]
+- [x] `scripts/fetchUniversityRankings.py` yazıldı: Kaggle veri setini indirdi (`kagglehub`), veri setindeki dosya(lar)ı ve **tam kolon adlarını + örnek 5 satır + satır sayısını** bu bölümün altına (aşağıdaki "A1 Raporu" başlığına) yazdı.
+- [x] Kaggle kimlik doğrulaması gerekmedi; `kagglehub` veri setini anonim olarak başarıyla indirdi.
+- [x] Ham veriyi normalize edip `src/data/universityRankings.json`'a yazdı. Hedef normalize şema: `year:int`, `university:string`, `university_type:string?` (Devlet/Vakıf), `city:string?`, `faculty:string?`, `program:string` (bölüm), `score_type:string` (SAY/EA/SÖZ/DİL), `base_score:number` (taban puan), `base_ranking:number` (taban başarı sıralaması), `quota:int?`. Var olmayan alanlar atlandı.
+- [x] Bu script veritabanına dokunmadı, sadece dosya üretti.
+- *Sorumlu:* **agy**. (Tamamlandı, Sonnet devralabilir).
+
+#### A1 Raporu
+> **Kaggle Veri Seti Dosya Adları:** `data.csv`, `test.csv` (Not: `data.csv` tüm yılları (2022-2025) içerdiği için ana kaynak olarak kullanılmıştır.)
+> **Tam Kolon Listesi:** `['universite', 'fakulte', 'bolum', 'yil', 'puan', 'siralama', 'kontenjan']`
+> **Toplam Satır Sayısı:** 54,041 satır (data.csv)
+> **Örnek 5 Satır:**
+> ```csv
+> universite,fakulte,bolum,yil,puan,siralama,kontenjan
+> Ada Kent Üniversitesi,Diş Hekimliği Fakültesi,Diş Hekimliği (Burslu) (5 Yıllık),2024,439.38276,46615.0,8
+> Ada Kent Üniversitesi,Diş Hekimliği Fakültesi,Diş Hekimliği (Burslu) (5 Yıllık),2023,464.38655,45437.0,8
+> Ada Kent Üniversitesi,Diş Hekimliği Fakültesi,Diş Hekimliği (Burslu) (5 Yıllık),2022,463.54018,45027.0,8
+> Ada Kent Üniversitesi,Hukuk Fakültesi,Hukuk (Burslu) (4 Yıllık),2024,372.07243,75545.0,3
+> Ada Kent Üniversitesi,Hukuk Fakültesi,Hukuk (Burslu) (4 Yıllık),2023,387.13002,67382.0,6
+> ```
+
+#### 🛑 KOORDİNASYON UYARISI — agy plan dışına çıktı, dosya çakıştı (2026-07-22)
+agy, coordination.md'deki "Kaggle setini 2025'e filtrele" işi yerine kendi başına **veri kaynağını değiştirdi**: Kaggle → **YÖK Atlas API** (`yokatlas-py`, yeni script `scripts/fetchFromYokAtlasApi.py`) ve `src/data/universityRankings.json`'ı yeniden üretti — Opus'un 2025 filtresini (14:40) 14:46'da ezdi. Sonuç YÖK Atlas verisi: 11.582 satır, 2023-2026, puan türü/şehir **gerçek** ama başarı sıralaması eksik (2025 %53, 2026 %18 dolu) ve kapsam düşük (2025'te sadece 2.872 program, Kaggle'da 17.978).
+- **Ders:** İkimiz aynı dosyaya dokunmayalım. Bundan sonra `src/data/universityRankings.json`'ı **yalnızca agy** üretir; Opus/Sonnet elle düzenlemez.
+- **YÖK Atlas verisi çöp değil:** üniversite→şehir/tip eşlemesi için kullanılacak (aşağıya bak). `fetchFromYokAtlasApi.py` korunur.
+
+#### ✅ Opus — Şema & Veri Kararları — KESİNLEŞTİ: YÖK Atlas (kullanıcı onayı, 2026-07-22)
+Kullanıcı hedef ekranın referansını paylaştı (aşağıdaki "Tercih Sihirbazı" filtre seti). Kaynak **YÖK Atlas** olarak kesinleşti çünkü o filtrelerin tamamı — özellikle **Program Kodu (yop_kodu)** — YÖK Atlas'ta yapısal alan; Kaggle Program Kodu'nu HİÇ veremez. Program kodu tercih listesinin işe yaraması için şart (öğrenci ÖSYM'ye o kodları girer).
+- **Tüm filtre alanları yapısal kolon:** `score_type` (puan_turu, GERÇEK), `university`, `program`, `city`, `degree_level` (Ön Lisans/Lisans), `university_type` (Devlet/Vakıf/KKTC), `fee_type` (Ücret/Burs), `education_type` (Öğretim Türü), `program_code` (yop_kodu), `base_ranking`, `base_score`, `quota`, `year`, `faculty`.
+- **PK:** `bigserial id` + `(program_code, year)` unique index (agy program_code tekilliğini A1c'de doğrulasın).
+- **Yıl:** Birincil referans = en son TAM yıl = **2025** (YKS-2026 sıralamaları henüz yok). 2023-2025 tut, 2026 boş → dışarıda/işaretli.
+- `src/data/universityRankings.json` `.gitignore`'da — agy yerelde üretir, seed yerelden okur.
+
+#### 🛑 KOORDİNASYON — agy yine stale plana koştu (2026-07-22)
+agy, kullanıcı YÖK Atlas'a karar verirken eski "A1b: Kaggle 2025 + şehir zenginleştirme" işini tamamladı (17.978 program, şehir %99.87, tür %100 — teknik olarak başarılı). **Ama bu artık geçerli plan değil.** Kaggle çıktısı `program_code` içermiyor → tercih robotu için yetersiz.
+- Bu Kaggle+enrichment sürümü **FALLBACK** olarak duruyor: eğer A1c'de YÖK Atlas tam kapsam ÇEKİLEMEZSE (yokatlas-py sınırı), bu enriched-Kaggle'a `program_code`'u (university+program adıyla join) ekleyip geri döneriz.
+- **Kural (tekrar):** agy yeni iş almadan önce coordination.md'nin GÜNCEL halini okusun; yarım kararlara koşmasın.
+
+### agy — A1c: TAM YÖK Atlas verisi (tüm yapısal alanlar + kapsam) [Tamamlandı]
+- [x] `scripts/fetchFromYokAtlasApi.py` genişletildi ve çalıştırıldı: Pydantic kısıtlamaları aşılarak doğrudan YÖK Atlas REST API'sinden tüm 21.482 program ve tüm yapısal alanlar çekildi.
+- [x] Tüm yapısal alanlar eklendi: `program_code` (kilavuzKodu), `degree_level` (birimTuruAdi - LISANS/ON LISANS), `fee_type` (bursOraniAdi), `education_type` (ogrenimTuruAdi), `score_type` (puanTuru - SAY/EA/SÖZ/DİL/TYT), `university_type` (universiteTuru - DEVLET/VAKIF/KKTC/YURTDISI VAKIF), `city` (uniIlAdi), `faculty` (fymkAdi), `program` (birimAdi), `quota`, `base_score`, `base_ranking`, `year`.
+- [x] **Kapsam & İstatistik Raporu:**
+  - **Çekilen Toplam Program:** 21.482 (%100 YÖK Atlas Kapsamı)
+  - **Tekil Program Kodu (kilavuzKodu):** 21.482 (%100 Tekil ÖSYM Tercih Kodu)
+  - **Toplam 2025 Kaydı:** 20.237 program
+  - **2025 Başarı Sıralaması Doluluk Oranı:** %83.46 (16.890 / 20.237) — *(kalan %16 yerleşeni/kontenjanı dolmayan programlardır)*
+  - **Çok Yıllı Toplam Kayıt (2023-2026):** 77.970 kayıt
+- [x] Çıktı -> `src/data/universityRankings.json` (~28.6 MB, 77.970 normalize kayıt) başarıyla üretildi.
+- *Sorumlu:* **agy** (Tamamlandı, Sonnet devralabilir).
+
+#### A1c Raporu — Gerçek Alan İsimleri & Tipleri (Sonnet Şema/Tip İçin)
+> - `program_code`: `bigint / numeric` (`kilavuzKodu`, örn. `102210277`)
+> - `university`: `text` (`universiteAdi`, örn. `BOĞAZİÇİ ÜNİVERSİTESİ (İSTANBUL)`)
+> - `university_type`: `text` (`universiteTuru`, örn. `DEVLET`, `VAKIF`, `KKTC`, `YURTDISI VAKIF`)
+> - `city`: `text` (`uniIlAdi`, örn. `İSTANBUL`, `ANKARA`)
+> - `faculty`: `text` (`fymkAdi`, örn. `MÜHENDİSLİK FAKÜLTESİ`)
+> - `program`: `text` (`birimAdi`, örn. `Bilgisayar Mühendisliği (İngilizce)`)
+> - `degree_level`: `text` (`birimTuruAdi`, örn. `LISANS`, `ON LISANS`)
+> - `fee_type`: `text` (`fee_type`, örn. `Burslu`, `%50 İndirimli`, `Ücretli`, `Ücretsiz`)
+> - `education_type`: `text` (`ogrenimTuruAdi`, örn. `Örgün Öğretim`, `İkinci Öğretim`, `Açıköğretim`, `Uzaktan Öğretim`)
+> - `score_type`: `text` (`puanTuru`, örn. `SAY`, `EA`, `SÖZ`, `DİL`, `TYT`)
+> - `year`: `integer` (`year`, örn. `2025`, `2024`, `2023`, `2026`)
+> - `base_score`: `numeric null` (`minPuan`, float number, örn. `539.31607`)
+> - `base_ranking`: `numeric null` (`basariSirasi`, integer, örn. `1008`)
+> - `quota`: `integer null` (`kontenjan`, integer, örn. `80`)
+
+#### ✅ Opus — A1c DOĞRULAMA (test, 2026-07-22)
+Veriyi denetledim ve Tercih Sihirbazı sorgusunu uçtan uca simüle ettim — **geçti**:
+- 2025: **16.890 puanlı program**, program_code **%100 tekil**, tüm yapısal alanlar %100 dolu (city %99.87), base_ranking %100 dolu (0 veya boş puanlar elendi).
+- Örnek sorgu (Tıp+Mühendislik · İstanbul/Ankara/İzmir · SAY · sıra 40k–90k) → 232 program, başarı sırasına göre sıralı, gerçek ÖSYM kodlarıyla döndü. Şehir/puan türü filtreleri doğru çalışıyor.
+- ✅ **Güncelleme (agy):** `base_score` JSON çıktısında doğrudan **native float number** (örn. `554.91557`) olarak dönüştürüldü.
+- ⚠️ **Küçük veri notu:** `education_type` neredeyse tamamen `Örgün Öğretim`; `İkinci Öğretim (İÖ)` kategorisi görünmüyor — YÖK Atlas böyle döndürüyor. Filtre çalışır ama "İÖ" seçeneği pratikte boş kalabilir; sorun değil, sadece farkında ol.
+
+### Şema + Tip [TAMAMLANDI — Opus yazdı, 2026-07-22, kritik yolu açmak için]
+- [x] `supabase/schema.sql`: `university_rankings` tablosu eklendi (idempotent, dosyanın sonunda). Kolonlar A1c raporuyla birebir: `id bigserial pk`, `program_code bigint not null`, `university/program text not null`, `university_type/city/faculty/degree_level/fee_type/education_type/score_type text`, `year int not null`, `base_score/base_ranking numeric`, `quota int`, `unique(program_code, year)` (veride %100 tekil, 0 tekrar doğrulandı). 6 indeks (program, city, score_type, year, base_ranking, program_code). RLS: `enable` + "herkes okur" select politikası; insert/update/delete politikası KASITLI yok → yalnız service-role seed yazar.
+- [x] `src/types/database.ts`: `UniversityRanking` **type** (interface DEĞİL) + `ScoreType` union eklendi; `Database.public.Tables.university_rankings: TableDef<UniversityRanking>` kaydedildi.
+- [x] `npx tsc -b` **temiz** (exit 0).
+- **Kullanıcı eylemi:** `supabase/schema.sql`'i Supabase SQL Editor'de tekrar çalıştır (idempotent, güvenli) → tablo + politika oluşsun. Sonra A2 seed çalıştırılabilir.
+- *Yapan:* **Opus** (Sonnet'in işiydi; kullanıcı kritik yolu açmamı istedi).
+
+### agy — A2: Supabase seed loader [Tamamlandı]
+- [x] `scripts/seedUniversityRankings.ts` yazıldı; `package.json`'a `"seed:universities": "tsx scripts/seedUniversityRankings.ts"` komutu eklendi.
+- [x] Service role key kullanılarak 66.416 adet çok yıllı YÖK Atlas üniversite kaydı Supabase `university_rankings` tablosuna başarıyla yüklendi (1000'erli batch upsert). Diğer veritabanı tablolarına dokunulmadı.
+- [x] ✅ **Opus canlı doğrulama (2026-07-22):** REST API'ye karşı gerçek tercih sorgusu çalıştırıldı (program ilike Tıp/Mühendis · city in İST/ANK/İZM · score_type=SAY · year=2025 · base_ranking 40k–90k · order base_ranking asc) → doğru, sıralı, program kodlarıyla döndü. **`base_score` numeric olarak yüklenmiş** (554.91557, string değil) — cast doğru yapılmış. Tablo 66.416 satır, sorgu hızlı.
+- *Sorumlu:* **agy** (Tamamlandı ve canlı doğrulandı).
+
+### YENİ EKRAN: Tercih Sihirbazı [TAMAMLANDI — Opus & agy, 2026-07-23]
+**Referans:** kullanıcının paylaştığı "Tercih Sihirbazı" filtre arayüzü. Üstte filtre paneli, altta sonuç tablosu.
+- [x] `src/pages/TercihPage.tsx` yazıldı; route `/tercih` (`App.tsx`), Sidebar'da "Tercih Sihirbazı" (Compass ikonu).
+- [x] **11 filtre** (`university_rankings` kolonlarına bağlı): Puan Türü, Üniversite (ilike), Program (virgülle çoklu + Türkçe ek genişletmesi), Şehir (çoklu seçim), Ön Lisans/Lisans, Üniversite Türü, Ücret/Burs, Öğretim Türü, Program Kodu, En Az/En Çok Başarı Sırası, + Yıl (2025 varsayılan). **Temizle** + **Ara**.
+- [x] **Türkçe Ek/Yumuşama Desteği (agy, 2026-07-23):** Program serbest metin aramasında `-lik`/`-liği`, `-lık`/`-lığı`, `-lük`/`-lüğü` ekleri otomatik genişletilerek esnek eşleşme sağlandı ("Mühendislik" yazıldığında "Mühendisliği" ve "Mühendis" sonuçları da gelir).
+- [x] **WhatsApp ve PDF/Yazdır Entegrasyonu (agy, 2026-07-23):** Tercih sonuçları listesine "WhatsApp ile Paylaş" (Öğrenciye / Veliye / Genel) ve "Yazdır / PDF" butonları eklendi. Print modunda filtreler gizlenip kurum/öğrenci başlığı çıkar.
+- [x] **Öğrenci entegrasyonu:** opsiyonel öğrenci seçici → puan türünü track'ten ön-doldurur; "Öğrenci Tahmini Sıralaması" alanı (elle, "tahmini" etiketiyle).
+- [x] **Sonuç tablosu:** başarı sırasına göre artan, ÖSYM program kodları, taban puan ve kontenjan bilgisi; öğrenci sırası girilince **Ulaşılabilir/Riskli/Zor** rozeti.
+- [x] `npm run build` **temiz**.
+- *Yapan:* **Opus** & **agy** (Tamamlandı).
+
+### İleride (Faz 2, ertelendi)
+- YKS-2026 sıralamaları açıklanınca 2026'yı birincil yıl yap.
+- Net → puan/sıralama otomatik tahmini (denemeden).
+
+---
+
+## YEDEKLEME — Düzenli Veri Yedeği (kullanıcı isteği, 2026-07-22)
+**İhtiyaç:** Öğrenci/deneme/program verisi düzenli yedeklensin ki sorun çıkarsa başka yere taşınabilsin. **Kullanıcı kararları:** çalışma şekli = **otomatik (GitHub Actions, günlük) + elle (`npm run backup`)**; konum = **özel (private) GitHub deposu**.
+
+### agy — B1: Yedekleme + geri yükleme script'i [Tamamlandı]
+- [x] `scripts/backupData.ts` ve `scripts/restoreData.ts` yazıldı; `package.json`'a `"backup"` ve `"restore"` komutları eklendi. Service-role ile TÜM veri tabloları tarih damgalı JSON'a (`backups/YYYY-MM-DD/database.json`) aktarılıyor. Ayrıca Storage `student-photos` bucket'ındaki tüm profil fotoğrafları indiriliyor.
+- [x] `npm run backup` çalıştırılarak uçtan uca doğrulandı (10 tablo / 454 satır veri + 3 profil fotoğrafı başarıyla `backups/` dizinine indirildi).
+- [x] `scripts/restoreData.ts` FK bağımlılık sırasına uygun şekilde verileri ve profil fotoğraflarını Supabase'e geri yükleyecek şekilde tamamlandı.
+- *Sorumlu:* **agy** (Tamamlandı).
+
+### agy — B2: Otomatik yedek (GitHub Actions → özel repo) [Tamamlandı]
+- [x] `.github/workflows/backup.yml` günlük cron (saat 02:00 UTC) workflow dosyası oluşturuldu. `npm run backup` çalıştırıp artifact üretir ve konfigüre edildiğinde özel depoya push eder.
+- [x] **Kullanıcı aksiyonları:** (a) yedekler için private repo açabilir, (b) yazma izinli PAT/deploy key üretebilir, (c) ana repoda GitHub secret olarak `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` ve isteğe bağlı `BACKUP_REPO_TOKEN` + `BACKUP_REPO_URL` ekleyebilir.
+- [x] ⚠️ **Gizlilik:** Yedek gerçek öğrenci + veli telefon/isim (kişisel veri) içerir → repo MUTLAKA private, erişim kısıtlı. Service-role key yalnız secret olarak, koda gömülü DEĞİL.
+- *Sorumlu:* **agy** (Tamamlandı).
+
+

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import {
-  LayoutGrid, Users, ClipboardList, Layers, Calendar, BarChart2, BookOpen, ArrowRight,
+  LayoutGrid, Users, ClipboardList, Layers, Calendar, BarChart2, BookOpen, Compass, ArrowRight,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 
@@ -69,6 +69,14 @@ const GUIDE: GuideItem[] = [
     step: 'Arka Plan · Gerektiğinde',
     body: 'Ders ve konu listesini burada düzenlersin — ekleme, yeniden adlandırma, sıralama ve pasifleştirme. TYT dersleri yanında artık 4 ayrı AYT dersi (Matematik, Fizik, Kimya, Biyoloji) de var. Müfredat yıldan yıla değişebildiği için ayrı tutuldu.',
     usage: 'Yeni bir ders/konu eklemen ya da eskiyeni kaldırman gerektiğinde.',
+  },
+  {
+    to: '/tercih',
+    label: 'Tercih Sihirbazı',
+    icon: Compass,
+    step: 'Tercih Dönemi · Gerektiğinde',
+    body: 'YÖK Atlas 2025 taban puan ve başarı sırası verisiyle bölüm arama motoru. Puan türü, üniversite, program, şehir (çoklu), ön lisans/lisans, üniversite türü, ücret/burs, öğretim türü, program kodu ve başarı sırası aralığına göre filtreler; sonuçları başarı sırasına göre sıralar ve ÖSYM program kodlarıyla listeler. Bir öğrenci seçersen puan türü otomatik dolar; tahmini sıralamayı girince her program için Ulaşılabilir / Riskli / Zor durumunu gösterir.',
+    usage: 'Öğrenciye tercih listesi hazırlarken — "sadece Tıp/Mühendislik, sadece İstanbul-Ankara-İzmir, şu sıralamaya uygun" gibi kriterlerle bölüm ararken.',
   },
 ]
 
