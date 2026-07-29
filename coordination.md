@@ -334,4 +334,183 @@ Kullanıcı isteği: sonuçlardaki "Durum" (Ulaşılabilir/Riskli/Zor) bir seçi
 - [x] ✅ **Opus canlı test:** Tıp + sıralama 50.000 → "Ulaşılabilir" boş (doğru: Tıp cutoff'ları 50k'dan iyi), "Zor" → 84 program hepsi "Zor" rozetli, başarı sırasına göre. GEÇTİ.
 - *Yapan:* **Opus**.
 
+### Üniversite + Şehir çip seçimi + Türkçe-duyarsız arama [TAMAMLANDI — Opus, 2026-07-23]
+Kullanıcı isteği: Üniversite de Program gibi otomatik-tamamlamalı çip seçimi; Şehir de çip gösterimli; hepsinde Türkçe karakter kullanmadan arama ("tip" → "Tıp").
+- [x] Ortak **`ChipMultiSelect`** bileşeni; Program, Üniversite, Şehir üçü de çip + otomatik-tamamlama.
+- [x] **Türkçe-duyarsız arama:** sunucu tarafı PostgREST **`imatch`** (regex `~*`) + harf sınıfları (`turkishRegex`: i→[iıİI] vb.); şehir istemci tarafı ASCII katlama (`foldTr`). "tip"→Tıp, "bogazici"→Boğaziçi, "izmir"→İZMİR doğrulandı.
+- [x] Program/Üniversite aramaları çip seçilince `.in()` tam eşleşme; `getProgramSearchTerms` (ek-genişletme) kaldırıldı (typeahead + imatch onu gereksiz kıldı).
+- [x] `npm run build` temiz; canlı deploy (commit `adaeae2`).
+- [x] ✅ **Opus canlı test:** "bogazici"→Boğaziçi çip, "tip"→Tıp çip, "izmir"→İZMİR çip; Tıp + İZMİR → 5 program (Ege 5.290, Dokuz Eylül 7.320, Katip Çelebi 12.683…) başarı sırasına göre. GEÇTİ.
+- *Yapan:* **Opus**.
 
+### ℹ️ Veri notu — şehir "hatası" DEĞİL (2026-07-23, HATA SANMAYIN, DÜZELTMEYİN)
+Kullanıcı "Kastamonu Ü. Tıp neden Ankara?" diye sordu. Denetlendi (16.890/2025 kaydın tamamı): yaygın hata yok. Yalnız 2 kayıt üniversitenin ilinden farklı: **Kastamonu Ü. Tıp (kod 106410518) → ANKARA**, **Siirt Ü. Tıp → VAN**. Sebep: bu yeni tıp fakülteleri kendi hastaneleri olmadığı için başka ilde **afiliasyon** ile klinik eğitim veriyor; YÖK Atlas kaynağı bu programlarda o ili yazıyor. Diğer çok-şehirli üniversiteler (Sağlık Bilimleri Ü.'nün İzmir/Bursa/Adana/Kayseri/Erzurum Tıp fakülteleri, Başkent-Konya) **gerçekten doğru** (fiziksel kampüs). **Kullanıcı kararı: OLDUĞU GİBİ BIRAK** — veriye dokunulmadı. Bunu hata sanıp düzeltmeye çalışmayın.
+
+
+
+### 🔧 KRİTİK VERİ DÜZELTMESİ — YÖK Atlas yıl etiketi +1 kaymıştı (2026-07-25, Opus 4.8)
+**Sorun:** `scripts/fetchFromYokAtlasApi.py` API'nin ETİKETSİZ alanlarını (`minPuan`/`basariSirasi`/`kontenjan`) yanlışlıkla **2026** diye kaydediyordu. Oysa etiketsiz alanlar son TAMAMLANAN yerleştirme yılını (**2025**) taşır; `item["yil"]=2026` sadece tercih KILAVUZU yılıdır. Sonuç: tüm yıl etiketleri +1 kaymıştı → suffix1/2/3 = 2025/2024/2023 sanılıyordu ama gerçekte 2024/2023/2022'ydi. **Uygulama varsayılan "2025"i gösterirken aslında 2024 verisini gösteriyordu.**
+
+**Doğrulama:** Koç Tıp İng. Burslu (kod 203910699) — API etiketsiz = 550.89 puan / 43 sıra. Bağımsız kaynaklar (kariyer.net, tabanpuani.net, e-sehir) bu değeri **2025** olarak veriyor. → etiketsiz = 2025 kesinleşti.
+
+**Yapıldı:**
+- `fetchFromYokAtlasApi.py` alan→yıl eşleşmesi düzeltildi: etiketsiz→2025, suffix1→2024, suffix2→2023, suffix3→2022. **2026 kaydı artık hiç oluşturulmuyor** (2026 yerleştirmesi ~Ağustos 2026'da yapılacak, o zamana kadar gerçek 2026 sırası YOK).
+- Veri yeniden çekildi (`python scripts/fetchFromYokAtlasApi.py`) + Supabase'e yeniden basıldı (`npm run seed:universities`). JSON: 66.416 kayıt, yıllar **2022-2025** (2025=17.287). DB doğrulandı: Koç 203910699 → 2025:43/550.89 ✅, 2026 kaydı: 0.
+- Uygulama kod değişikliği gerekmedi: varsayılan `year=2025` artık gerçek 2025'i gösteriyor.
+
+**GELECEK — gerçek 2026 verisi için:** ÖSYM 2026 yerleştirme sonuçları (~Ağustos 2026) yayınlandıktan SONRA, YÖK Atlas kılavuzu bir yıl ilerleyince etiketsiz alan 2026 olur. O zaman script'teki yıl sabitlerini bir kaydırıp (etiketsiz→2026, suffix1→2025…) tekrar çek + seed et. Kaydırmadan önce mutlaka bilinen bir programı yokatlas.yok.gov.tr'de doğrula.
+
+---
+
+## YENİ ÖZELLİK — Devamsızlık Takibi + WhatsApp Bildirimi (Opus 5 planı, 2026-07-29)
+
+**Kullanıcı isteği:** "öğrencilerin devamsızlıklarını takip edecek ve gerektiğinde öğrenci ve velisine aynı anda WhatsApp mesajı ile bu devamsızlığı bildirecek bir düzenek… sonra öğrenci bazında bu devamsızlıkları takip edecek bir özet ekran… devamsızlık girişinde varsa mazeret girişi ve bir seçim de olmalı."
+
+**Roller (kullanıcı talimatı):** Opus 5 = tasarım/plan (bu bölüm). **Sonnet 5 = tüm yazılım işi.**
+
+### Kullanıcı kararları (2026-07-29, Opus sordu)
+1. **Giriş şekli: "Sadece devamsızlık kaydı"** — yoklama listesi YOK. Koç "+ Devamsızlık Ekle" der, öğrenci + tarih + durum + mazeret girer. → *Sonuç: katılım yüzdesi (%devam) HESAPLANAMAZ, çünkü payda (toplam ders sayısı) sistemde yok. Özet ekranı **mutlak sayılar** üzerine kurulacak — "%92 devam" gibi bir metrik ASLA gösterilmeyecek, uydurma olur.*
+2. **Bildirim: kaydedince sor + manuel buton** — kayıt sonrası "Şimdi bildirilsin mi? (Öğrenciye/Veliye/Her ikisine)" onayı; ayrıca kayıt satırından ve öğrenci özetinden istendiği an tekrar gönderilebilir.
+3. **Alanlar: sabit liste + serbest not** — mazeret ve oturum türü kodda sabit union tip (ayrı yönetim ekranı yok).
+
+### A. Şema — `supabase/schema.sql` sonuna (idempotent, mevcut desenle)
+```sql
+create table if not exists attendance_records (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students(id) on delete cascade,
+  absence_date date not null,
+  session_type text not null default 'birebir'
+    check (session_type in ('birebir','etut','grup','online')),
+  status text not null default 'gelmedi'
+    check (status in ('gelmedi','gec_geldi','erken_ayrildi')),
+  excuse_type text not null default 'yok'
+    check (excuse_type in ('yok','hastalik','ailevi','okul_sinav','ulasim','izinli','diger')),
+  excuse_note text,
+  notified_at timestamptz,          -- WhatsApp penceresi açıldığında damgalanır
+  notified_to text,                 -- 'ogrenci' | 'veli' | 'ikisi' | null
+  created_at timestamptz not null default now(),
+  unique (student_id, absence_date, session_type)
+);
+create index if not exists attendance_records_student_idx on attendance_records(student_id);
+create index if not exists attendance_records_date_idx on attendance_records(absence_date desc);
+```
+- **Mazeretli/mazeretsiz ayrı kolon DEĞİL, türetilir:** `excuse_type = 'yok'` → **mazeretsiz**. Ekstra `is_excused` kolonu tutulmayacak (iki kaynak = tutarsızlık riski).
+- **RLS:** `students` deseniyle birebir (`schema.sql:196-213`): `enable row level security` + tek `for all` politikası, `exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid())` hem `using` hem `with check`. **Kural gereği önce `drop policy if exists`, sonra `create policy`** (bkz. idempotency notu, `schema.sql`).
+- **DELETE serbest** (müfredat/öğrencinin aksine): yaprak tablo, hiçbir şey buna cascade bağlı değil, yanlış girilen kayıt silinebilmeli.
+- `unique (student_id, absence_date, session_type)`: aynı gün aynı oturum için çift kayıt engellenir; aynı gün farklı oturum türü serbest. Insert'te `23505` hatası "Bu öğrenci için bu tarih ve oturum türünde kayıt zaten var" mesajına çevrilecek.
+
+### B. Tipler — `src/types/database.ts`
+⚠️ **`type` kullan, `interface` DEĞİL** (postgrest-js tip çıkarımı sessizce `never`'a düşüyor — bkz. "Önemli tip notu").
+```ts
+export type SessionType = 'birebir' | 'etut' | 'grup' | 'online'
+export type AbsenceStatus = 'gelmedi' | 'gec_geldi' | 'erken_ayrildi'
+export type ExcuseType = 'yok' | 'hastalik' | 'ailevi' | 'okul_sinav' | 'ulasim' | 'izinli' | 'diger'
+export type NotifyTarget = 'ogrenci' | 'veli' | 'ikisi'
+export type AttendanceRecord = { id, student_id, absence_date, session_type, status,
+  excuse_type, excuse_note: string|null, notified_at: string|null,
+  notified_to: NotifyTarget|null, created_at }
+```
++ `Database.public.Tables.attendance_records: TableDef<AttendanceRecord>`.
+Türkçe etiket haritaları (`SESSION_LABELS`, `STATUS_LABELS`, `EXCUSE_LABELS`) tek yerde — sayfa dosyasında değil, `src/lib/attendance.ts`'te (tablo, modal, WhatsApp şablonu üçü de kullanacak).
+
+### C. Ortak WhatsApp modülü — `src/lib/whatsapp.ts` (YENİ)
+`formatPhoneForWhatsApp` şu an **3 yerde kopyalanmış** (`ProgramPage.tsx:117`, `OgrencilerPage.tsx:533,550`). Yeni modüle taşı: `formatPhoneForWhatsApp(raw)` + `openWhatsAppChat(phone, message)`. Yeni kod bunu kullanacak; `ProgramPage`/`OgrencilerPage` de bu modüle bağlanacak (davranış birebir aynı kalmalı, dokunulan yerler build+gözle doğrulanacak).
+
+### D. Ekran 1 — `/devamsizlik` (Sidebar: "Devamsızlık", `UserX` ikonu, Program'dan sonra)
+`src/pages/DevamsizlikPage.tsx`. İki sekme:
+
+**Sekme "Kayıtlar"** (varsayılan)
+- Üstte 4 özet kutusu: *Bu ay toplam*, *Bu ay mazeretsiz*, *Bildirilmemiş kayıt*, *Son 30 günde en çok devamsızlık yapan öğrenci*.
+- Filtreler: öğrenci (seçici), tarih aralığı (varsayılan son 90 gün), mazeret durumu (Hepsi / Mazeretli / Mazeretsiz), oturum türü.
+- Tablo (tarihe göre azalan): **Tarih · Öğrenci · Oturum · Durum · Mazeret · Not · Bildirim · ⋯**
+  - Bildirim kolonu: `—` ya da `✓ 29.07 · Öğrenci+Veli`.
+  - `⋯` menüsü: **WhatsApp ile Bildir** (Öğrenciye/Veliye/Her ikisine) · **Düzenle** · **Sil** (onaylı).
+- Sağ üstte **"+ Devamsızlık Ekle"**.
+
+**Sekme "Öğrenci Özeti"** ← kullanıcının istediği özet ekran
+- Aktif öğrenci başına bir kart/satır: fotoğraf + ad, **Toplam devamsızlık**, **Mazeretsiz** (kırmızı), **Son 30 gün**, **Son devamsızlık tarihi**, mini aylık dağılım (`Sparkline`, mevcut komponent).
+- **Uyarı rozeti:** son 30 günde ≥3 devamsızlık **veya** ≥2 mazeretsiz → turuncu "Takip gerekli" rozeti. Eşikler dosya başında sabit olarak tanımlansın (`ABSENCE_ALERT_THRESHOLDS`) ki sonradan değiştirilebilsin.
+- Devamsızlığı olmayan öğrenci "Devamsızlık yok" ile en altta, sönük.
+- Karta tıkla → altında o öğrencinin tüm kayıt listesi açılır + **"Veliye Özet Gönder"** butonu (aşağıdaki özet şablonu).
+- Sıralama: mazeretsiz sayısına göre azalan (en çok takip gerektiren üstte).
+
+### E. Ekran 2 — `AddAbsenceModal.tsx` (`src/components/attendance/`)
+`AddStudentModal.tsx` desenini birebir izle (aynı `.modal-overlay`/`.modal-panel` stilleri, ekleme+düzenleme aynı modal).
+Alanlar: **Öğrenci** (aktif öğrenciler; sayfada öğrenci filtresi seçiliyse ön-dolu) · **Tarih** (varsayılan bugün, gelecek tarih engelli) · **Oturum Türü** · **Durum** · **Mazeret** (varsayılan "Mazeret bildirilmedi") · **Not** (serbest metin, opsiyonel).
+Butonlar: **İptal** · **Kaydet** · **Kaydet ve Bildir**.
+- "Kaydet" → insert sonrası `window.confirm("Kayıt eklendi. Şimdi WhatsApp ile bildirilsin mi?")`; evet → alıcı seçimi.
+- "Kaydet ve Bildir" → insert + doğrudan alıcı seçimi.
+- Telefon yoksa `ProgramPage.tsx:135-142`'deki uyarı metni deseniyle uyar, kaydı yine de tut (kayıt bildirimden bağımsız).
+
+### F. WhatsApp mesaj şablonları (`src/lib/attendance.ts`)
+**Öğrenciye (mazeretli):**
+> Merhaba {ad}, {tarih} tarihli {oturum} çalışmana katılamadığını kaydettik. Mazeret: {mazeret}. Kaçırdığın konuları telafi etmek için en kısa sürede planlama yapalım. — Netlik Koçluk
+
+**Öğrenciye (mazeretsiz):**
+> Merhaba {ad}, {tarih} tarihli {oturum} çalışmasına katılmadın ve bir mazeret bildirilmedi. Lütfen en kısa sürede iletişime geç. — Netlik Koçluk
+
+**Veliye:**
+> Merhaba, {ad} {tarih} tarihli {oturum} çalışmasına katılmadı. Mazeret: {mazeret / "bildirilmedi"}. Bilginize. — Netlik Koçluk
+
+**Veliye özet (Öğrenci Özeti sekmesinden):**
+> Merhaba, {ad} için devamsızlık özeti ({başlangıç}–{bitiş}): toplam {n} devamsızlık, {m} tanesi mazeretsiz. Son devamsızlık: {tarih}. Görüşmek üzere. — Netlik Koçluk
+
+"Her ikisine" seçilirse **iki ayrı sekme** açılır (öğrenci mesajı + veli mesajı ayrı metinlerle) — `ProgramPage.tsx:160-165` deseni; pop-up engelleyici uyarısı da aynı şekilde verilsin.
+
+### G. Bildirim damgası — dürüstlük kuralı
+`wa.me`/`api.whatsapp.com` linki sadece **sohbeti açar**; mesajın gerçekten gönderildiğini uygulama BİLEMEZ. Bu yüzden:
+- Pencere açıldığında `notified_at`/`notified_to` güncellenir,
+- UI'da bu **"Bildirildi"** değil, **"WhatsApp açıldı · 29.07"** olarak yazılır (tooltip: "Mesajın gönderildiğini uygulama doğrulayamaz").
+- Aynı kayıt için tekrar gönderim serbest, damga güncellenir.
+
+### H. Entegrasyon noktaları (küçük ama gerekli)
+- `src/App.tsx`: `/devamsizlik` route. `Sidebar.tsx`: nav öğesi.
+- `OgrencilerPage.tsx` profil başlığı: küçük rozet — "Devamsızlık: 4 (2 mazeretsiz)" → `/devamsizlik` öğrenci filtresine link.
+- `YardimPage.tsx`: yeni ekran kartı (ne işe yarar, ne zaman kullanılır).
+- `SurumGecmisiPage.tsx`: **v0.16** girişi (2026-07-29, Devamsızlık Takibi).
+
+### I. Kapsam dışı (bilerek)
+- Yoklama/katılım yüzdesi, sabit haftalık ders takvimi (kullanıcı "sadece devamsızlık kaydı" dedi).
+- Otomatik/zamanlanmış bildirim (WhatsApp Business API gerekir; şu anki yöntem sekme açan manuel link).
+- Mazeret/oturum türlerinin arayüzden düzenlenmesi (kullanıcı sabit liste seçti).
+
+### J. Kabul kriterleri (Sonnet teslimden önce doğrulayacak)
+1. `npx tsc -b` ve `npm run build` **temiz**.
+2. `supabase/schema.sql` **iki kez üst üste** çalıştırıldığında hata vermez (idempotent).
+3. Kayıt ekle → listede görünür; aynı öğrenci/tarih/oturum tekrar denenince anlaşılır Türkçe hata.
+4. Öğrenci Özeti sekmesi mazeretli/mazeretsiz sayılarını doğru ayırır (`excuse_type='yok'` → mazeretsiz).
+5. "Her ikisine" iki sekme açar, mesajlar farklıdır, `notified_to='ikisi'` yazılır.
+6. Telefonsuz öğrencide uyarı çıkar, kayıt yine de durur.
+7. ⚠️ Supabase **1000 satır cap** (bkz. yukarıdaki genel bulgu): özet hesapları client-side ise `count`+`range` sayfalaması ya da tarih aralığı kısıtı ile güvenceye alınsın.
+
+### Durum
+- [x] Tasarım — **Opus 5** (2026-07-29).
+- [x] Uygulama — **Sonnet 5** (2026-07-29). Tasarımın A–J maddeleri eksiksiz uygulandı.
+- [ ] **Kullanıcı eylemi:** `supabase/schema.sql` Supabase SQL Editor'de tekrar çalıştırılacak (idempotent, güvenli — iki kez üst üste çalıştırılabilir doğrulandı) → `attendance_records` tablosu + RLS oluşsun. Bu adım tamamlanmadan `/devamsizlik` ekranı "Devamsızlık verileri yüklenemedi" hatası gösterir (uygulama çökmüyor, sadece tablo yok diye net bir hata basıyor).
+
+**Teslim notu (Sonnet 5, 2026-07-29):**
+- **Şema:** `supabase/schema.sql` sonuna `attendance_records` tablosu + index'ler + RLS eklendi (students deseniyle birebir: `for all` + `exists(...s.coach_id = auth.uid())`; DELETE serbest, yaprak tablo). `unique(student_id, absence_date, session_type)` ile aynı gün/oturum çift kaydı engelleniyor.
+- **Tipler:** `src/types/database.ts`'e `SessionType`/`AbsenceStatus`/`ExcuseType`/`NotifyTarget`/`AttendanceRecord` (`type`, `interface` değil) + `Database.public.Tables.attendance_records` eklendi.
+- **Yeni dosyalar:** `src/lib/whatsapp.ts` (ortak `formatPhoneForWhatsApp`/`openWhatsAppChat` — önceden `ProgramPage.tsx` ve `OgrencilerPage.tsx`'te kopyalanmıştı, şimdi tek kaynak), `src/lib/attendance.ts` (Türkçe etiket haritaları, `ABSENCE_ALERT_THRESHOLDS`, tarih yardımcıları, WhatsApp mesaj şablonları, `planAttendanceNotification`), `src/components/attendance/AddAbsenceModal.tsx` (AddStudentModal deseni, "Kaydet"/"Kaydet ve Bildir"), `src/pages/DevamsizlikPage.tsx` (Kayıtlar + Öğrenci Özeti iki sekme, 4 özet kutusu, filtreler, ⋯ menüsü, WhatsApp alıcı seçim popover'ı, "Takip gerekli" rozeti).
+- **Değişen dosyalar:** `src/App.tsx` (+`/devamsizlik` route), `src/components/layout/Sidebar.tsx` (+"Devamsızlık" nav, `UserX` ikonu, Program'dan sonra), `src/pages/ProgramPage.tsx` (yerel WhatsApp fonksiyonları kaldırıldı, `lib/whatsapp.ts`'ten import — davranış aynı), `src/pages/OgrencilerPage.tsx` (profil telefon linkleri `formatPhoneForWhatsApp` kullanıyor + profil başlığına devamsızlık rozeti eklendi, tablo yoksa sessizce 0 gösterip sayfayı çökertmiyor), `src/pages/YardimPage.tsx` (+Devamsızlık kartı), `src/pages/SurumGecmisiPage.tsx` (+v0.16 girişi, 29 Temmuz 2026).
+- **1000 satır cap tedbiri:** `DevamsizlikPage.tsx`'teki `fetchAllAttendanceRecords` tüm kayıtları `.range()` ile sayfalayarak çekiyor (tek `.select()`'e güvenmiyor) — özet hesapları (toplam/mazeretsiz/son 30 gün) bu yüzden ölçek büyüse de doğru kalır.
+- **Build:** `npx tsc -b` temiz (exit 0), `npm run build` temiz (vite build başarılı), `npm run lint` (oxlint) yeni dosyalarda sıfır uyarı — mevcut ön-var olan uyarılar (unused catch param, exhaustive-deps) bu işten önce de vardı, dokunulmadı.
+- **Görsel doğrulama yapılmadı** — Supabase'de tablo henüz oluşmadığı için tarayıcıda uçtan uca test edilemedi; kullanıcı SQL'i çalıştırdıktan sonra yapılmalı.
+
+#### ✅ Opus — Canlı uçtan uca test (2026-07-29, dev sunucusu + gerçek Supabase)
+Kullanıcı `schema.sql`'i çalıştırdıktan sonra hem DB hem arayüz denendi. Test "Misafir Koç" hesabıyla yapıldı (gerçek öğrenci verisinden izole), tüm test kayıtları silindi — `attendance_records` tekrar **0 satır**.
+- **DB katmanı:** tablo oluşmuş; `unique(student_id, absence_date, session_type)` → `23505`; `check` kısıtı geçersiz `excuse_type`'ı reddediyor → `23514`; RLS sağlam — giriş yapmamış istemci **okuyamıyor** ve **yazamıyor** (`42501`).
+- **Arayüz:** kayıt ekleme → liste + 4 özet kutusu anında güncellendi; mükerrer kayıt Türkçe hata verdi (çökme yok); aynı gün farklı oturum türü kabul edildi; Öğrenci Özeti sekmesi (Toplam/Mazeretsiz/Son 30 gün + sparkline, devamsızlığı olmayan öğrenci sönük altta) doğru; satır silme çalışıyor.
+- **WhatsApp:** `window.open` yakalanarak doğrulandı (gerçek mesaj gönderilmedi) — "Her İkisine" **2 pencere**, öğrenci ve veli metinleri farklı, telefon `90…` 12 haneye normalize, `notified_to='ikisi'` yazıldı, tabloda **"WhatsApp açıldı · 29/07 · Öğrenci+Veli"** göründü ve "Bildirilmemiş kayıt" sayacı düştü. Veli özet mesajı da doğru üretildi.
+- 🔧 **Testte bulunan ve düzeltilen kusur (Opus):** satır `⋯` menüsü tablo kabının `overflowX: auto`'suna takılıp **dikeyde kırpılıyordu** — az satır varken "Düzenle"/"Sil" tıklanamıyordu (kaydırmak da çözmüyordu, çünkü menü kabın içinde). Menü `position: absolute` yerine **`position: fixed` + butonun `getBoundingClientRect()` çapası** ile yeniden konumlandırıldı (`DevamsizlikPage.tsx`, `menuAnchor` state'i). Tarayıcıda doğrulandı: üç seçenek de tam görünüyor. `npx tsc -b` + `npm run build` temiz.
+- **Kalan:** commit + Vercel deploy (kullanıcı kararı bekliyor).
+
+#### ✅ Opus — 2. test turu: uç durumlar + regresyon (2026-07-29)
+Misafir Koç hesabında 5 çeşitli test kaydı seed'lendi, denendi, hepsi silindi.
+- **Filtreler:** mazeret durumu (mazeretsiz → yalnız 3 mazeretsiz kayıt), oturum türü, tarih aralığı (aralık genişletilince kapsam dışı Mart kaydı göründü), öğrenci — hepsi doğru.
+- **Öğrenci Özeti:** Ece 5 toplam / 3 mazeretsiz / son 30 günde 4 → **"Takip gerekli"** rozeti çıktı; Ela Duru 1/0/1 → rozet yok; sıralama mazeretsize göre doğru.
+- **Düzenleme:** modal ön-dolu açılıyor, öğrenci seçici **disabled**, "Kaydet ve Bildir" yok (düzenlemede bildirim sorulmaması doğru), değişiklik kaydedildi.
+- **Gelecek tarih:** tarih girdisinde `max="bugün"` var — istemci tarafı engel. (DB'de gelecek tarih CHECK'i yok; pratikte sorun değil, bilinsin.)
+- **Telefon eksikliği:** `planAttendanceNotification` saf fonksiyonu doğrudan çalıştırılarak 6 kombinasyon test edildi — eksik taraf doğru raporlanıyor, çağıran taraf uyarıp **erken dönüyor** (bildirim damgası yazılmıyor). ⚠️ Davranış notu: "Her İkisine" seçilip tek numara eksikse **hiç** gönderilmiyor (ProgramPage ile tutarlı); koçun tek alıcı seçmesi gerekir.
+- **Regresyon (ortak `whatsapp.ts` modülü):** `/program` "WhatsApp ile Gönder → Her İkisine" hâlâ 2 pencere + doğru iki metin üretiyor; `/ogrenciler` telefon linkleri ve profil rozeti **"Devamsızlık: 5 (3 mazeretsiz)"** doğru çalışıyor.
+- ℹ️ **Küçük tutarlılık notu (düzeltilmedi, kullanıcı kararı):** "BİLDİRİLMEMİŞ KAYIT" kutusu **tüm zamanları** sayıyor (kodda kasıtlı: `unnotifiedCount = allRecords.filter(!notified_at)`), ama yanındaki iki kutu "BU AY" etiketli — kafa karıştırabilir. İstenirse etiket "Bildirilmemiş (tümü)" yapılabilir.

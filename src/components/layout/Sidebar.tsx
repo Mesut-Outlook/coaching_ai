@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutGrid, Users, ClipboardList, Layers, Calendar, BarChart2, BookOpen, Compass, HelpCircle, History } from 'lucide-react'
+import { LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, HelpCircle, History } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/denemeler', label: 'Denemeler', icon: ClipboardList },
   { to: '/konular', label: 'Konular', icon: Layers },
   { to: '/program', label: 'Program', icon: Calendar },
+  { to: '/devamsizlik', label: 'Devamsızlık', icon: UserX },
   { to: '/raporlar', label: 'Raporlar', icon: BarChart2 },
   { to: '/mufredat', label: 'Müfredat', icon: BookOpen },
   { to: '/tercih', label: 'Tercih Sihirbazı', icon: Compass },

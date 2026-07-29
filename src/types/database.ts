@@ -136,6 +136,26 @@ export type UniversityRanking = {
   quota: number | null
 }
 
+// Devamsızlık takibi — yoklama listesi yok, sadece devamsızlık olayları
+// kaydediliyor (bkz. supabase/schema.sql). excuse_type='yok' → mazeretsiz.
+export type SessionType = 'birebir' | 'etut' | 'grup' | 'online'
+export type AbsenceStatus = 'gelmedi' | 'gec_geldi' | 'erken_ayrildi'
+export type ExcuseType = 'yok' | 'hastalik' | 'ailevi' | 'okul_sinav' | 'ulasim' | 'izinli' | 'diger'
+export type NotifyTarget = 'ogrenci' | 'veli' | 'ikisi'
+
+export type AttendanceRecord = {
+  id: string
+  student_id: string
+  absence_date: string
+  session_type: SessionType
+  status: AbsenceStatus
+  excuse_type: ExcuseType
+  excuse_note: string | null
+  notified_at: string | null
+  notified_to: NotifyTarget | null
+  created_at: string
+}
+
 // Supabase JS v2 generic client tipi için minimal Database şeması.
 // Her tablo Row/Insert/Update varyantlarını paylaşır (Insert: id/created_at opsiyonel).
 // Relationships boş bırakılıyor — postgrest-js sadece dizi tipini istiyor, foreign-key
@@ -161,6 +181,7 @@ export type Database = {
       error_basket_items: TableDef<ErrorBasketItem>
       weekly_tasks: TableDef<WeeklyTask>
       university_rankings: TableDef<UniversityRanking>
+      attendance_records: TableDef<AttendanceRecord>
     }
     Views: Record<string, never>
     Functions: Record<string, never>

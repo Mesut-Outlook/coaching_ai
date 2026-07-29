@@ -11,6 +11,7 @@ import ProgramPage from './pages/ProgramPage'
 import RaporlarPage from './pages/RaporlarPage'
 import MufredatPage from './pages/MufredatPage'
 import TercihPage from './pages/TercihPage'
+import DevamsizlikPage from './pages/DevamsizlikPage'
 import YardimPage from './pages/YardimPage'
 import SurumGecmisiPage from './pages/SurumGecmisiPage'
 
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/denemeler" element={<DenemelerPage />} />
             <Route path="/konular" element={<KonularPage />} />
             <Route path="/program" element={<ProgramPage />} />
+            <Route path="/devamsizlik" element={<DevamsizlikPage />} />
             <Route path="/raporlar" element={<RaporlarPage />} />
             <Route path="/mufredat" element={<MufredatPage />} />
             <Route path="/tercih" element={<TercihPage />} />

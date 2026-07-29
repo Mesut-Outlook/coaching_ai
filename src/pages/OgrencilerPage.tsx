@@ -8,6 +8,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import ProgressRing from '../components/charts/ProgressRing'
 import AddStudentModal from '../components/students/AddStudentModal'
+import { formatPhoneForWhatsApp } from '../lib/whatsapp'
 import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
 
 type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks'
@@ -19,6 +20,8 @@ interface StudentData {
   tasks: WeeklyTask[]
   decisions: CoachDecision[]
   topics: (Topic & { subjects: Subject | null })[]
+  attendanceCount: number
+  attendanceUnexcusedCount: number
 }
 
 const subjectConfig: Record<string, { color: string; soru_sayisi: string }> = {
@@ -140,13 +143,31 @@ export default function OgrencilerPage() {
         .select('*, subjects(*)')
       if (topicsError) throw topicsError
 
+      // 7. Devamsızlık sayıları (tablo henüz oluşturulmadıysa sayfayı çökertme — sessizce 0 say)
+      let attendanceCount = 0
+      let attendanceUnexcusedCount = 0
+      try {
+        const { data: attendance, error: attendanceError } = await supabase
+          .from('attendance_records')
+          .select('id, excuse_type')
+          .eq('student_id', studentId)
+        if (attendanceError) throw attendanceError
+        attendanceCount = attendance?.length ?? 0
+        attendanceUnexcusedCount = attendance?.filter((a) => a.excuse_type === 'yok').length ?? 0
+      } catch {
+        attendanceCount = 0
+        attendanceUnexcusedCount = 0
+      }
+
       setStudentData({
         student,
         exams: exams || [],
         sections,
         tasks: tasks || [],
         decisions: decisions || [],
-        topics: (topics as any) || []
+        topics: (topics as any) || [],
+        attendanceCount,
+        attendanceUnexcusedCount,
       })
     }
 
@@ -530,7 +551,7 @@ export default function OgrencilerPage() {
                   <span style={{ color: 'var(--indigo-600)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     Öğrenci Tlf: {student.phone_number}
                     <a
-                      href={`https://api.whatsapp.com/send?phone=${student.phone_number.replace(/\D/g, '').replace(/^0/, '90')}`}
+                      href={`https://api.whatsapp.com/send?phone=${formatPhoneForWhatsApp(student.phone_number)}`}
                       target="_blank"
                       rel="noreferrer"
                       style={{ display: 'inline-flex', alignItems: 'center', color: '#25D366' }}
@@ -547,7 +568,7 @@ export default function OgrencilerPage() {
                   <span style={{ color: 'var(--indigo-600)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     Veli Tlf: {student.parent_phone_number}
                     <a
-                      href={`https://api.whatsapp.com/send?phone=${student.parent_phone_number.replace(/\D/g, '').replace(/^0/, '90')}`}
+                      href={`https://api.whatsapp.com/send?phone=${formatPhoneForWhatsApp(student.parent_phone_number)}`}
                       target="_blank"
                       rel="noreferrer"
                       style={{ display: 'inline-flex', alignItems: 'center', color: '#25D366' }}
@@ -556,6 +577,17 @@ export default function OgrencilerPage() {
                       <MessageCircle size={14} style={{ fill: '#25D366', color: '#25D366' }} />
                     </a>
                   </span>
+                </>
+              )}
+              {studentData.attendanceCount > 0 && (
+                <>
+                  <span>•</span>
+                  <Link
+                    to={`/devamsizlik?studentId=${studentId}`}
+                    style={{ color: 'var(--warning-text)', fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    Devamsızlık: {studentData.attendanceCount} ({studentData.attendanceUnexcusedCount} mazeretsiz)
+                  </Link>
                 </>
               )}
             </p>

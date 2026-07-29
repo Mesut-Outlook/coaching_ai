@@ -14,6 +14,23 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '29 Temmuz 2026',
+    entries: [
+      {
+        version: 'v0.16',
+        title: 'Devamsızlık Takibi + WhatsApp Bildirimi',
+        items: [
+          'Yeni ekran: /devamsizlik — "Kayıtlar" ve "Öğrenci Özeti" iki sekmeli. Yoklama listesi yok, sadece devamsızlık olayları kaydediliyor (bu yüzden bir katılım yüzdesi HESAPLANMIYOR — sadece mutlak sayılar).',
+          'Devamsızlık Ekle: öğrenci, tarih, oturum türü (birebir/etüt/grup/online), durum (gelmedi/geç geldi/erken ayrıldı), mazeret (7 sabit seçenek) ve not.',
+          'Kayıt sonrası "Şimdi WhatsApp ile bildirilsin mi?" sorusu ya da doğrudan "Kaydet ve Bildir" ile öğrenciye/veliye/her ikisine bildirim gönderilebiliyor; bildirim damgası "WhatsApp açıldı · tarih" olarak gösteriliyor (mesajın gerçekten okunduğu uygulama tarafından doğrulanamaz).',
+          'Öğrenci Özeti sekmesi: her aktif öğrenci için toplam/mazeretsiz devamsızlık, son 30 gün, aylık mini grafik; son 30 günde 3+ devamsızlık ya da 2+ mazeretsiz devamsızlık olan öğrencilere "Takip gerekli" rozeti. Veliye toplu özet WhatsApp mesajı gönderilebiliyor.',
+          'Öğrenci profiline (Öğrenciler sayfası) devamsızlık sayısı rozeti eklendi, Devamsızlık ekranına filtreli link veriyor.',
+          'Ortak WhatsApp yardımcıları (telefon formatlama, sohbet açma) tek modüle (src/lib/whatsapp.ts) taşındı — önceden Haftalık Program ve Öğrenciler sayfalarında ayrı ayrı kopyalanmıştı.',
+        ],
+      },
+    ],
+  },
+  {
     date: '23 Temmuz 2026',
     entries: [
       {

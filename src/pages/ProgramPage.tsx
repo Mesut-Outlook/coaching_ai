@@ -5,6 +5,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange, DAYS } from '../lib/weeks'
+import { openWhatsAppChat } from '../lib/whatsapp'
 
 export default function ProgramPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -112,17 +113,6 @@ export default function ProgramPage() {
   
   const handleJumpToToday = () => {
     setCurrentMonday(mondayOf(new Date()))
-  }
-
-  const formatPhoneForWhatsApp = (raw: string) => {
-    const digitsOnly = raw.replace(/\D/g, '').replace(/^0/, '90')
-    if (digitsOnly.startsWith('90') && digitsOnly.length === 12) return digitsOnly
-    if (digitsOnly.length === 10) return '90' + digitsOnly
-    return digitsOnly
-  }
-
-  const openWhatsAppChat = (phone: string, message: string) => {
-    window.open(`https://api.whatsapp.com/send?phone=${formatPhoneForWhatsApp(phone)}&text=${encodeURIComponent(message)}`, '_blank')
   }
 
   const handleSendWhatsApp = (recipient: 'ogrenci' | 'veli' | 'ikisi') => {

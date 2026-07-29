@@ -313,3 +313,38 @@ alter table university_rankings enable row level security;
 drop policy if exists "university_rankings: herkes okur" on university_rankings;
 create policy "university_rankings: herkes okur" on university_rankings for select using (true);
 -- insert/update/delete politikası KASITLI YOK: client yazamaz, yalnız service-role (RLS bypass) seed yazar.
+
+-- =========================================================
+-- Devamsızlık Kayıtları — koç öğrenci bazında devamsızlık girer, gerektiğinde
+-- WhatsApp ile öğrenciye/veliye/her ikisine bildirir. Yoklama listesi YOK,
+-- yalnızca devamsızlık olayları kaydediliyor — bu yüzden katılım YÜZDESİ
+-- hesaplanamaz (payda, yani toplam ders/oturum sayısı sistemde bilinmiyor).
+-- Mazaretli/mazeretsiz ayrı bir kolon DEĞİL: excuse_type = 'yok' → mazeretsiz.
+-- =========================================================
+create table if not exists attendance_records (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students(id) on delete cascade,
+  absence_date date not null,
+  session_type text not null default 'birebir'
+    check (session_type in ('birebir','etut','grup','online')),
+  status text not null default 'gelmedi'
+    check (status in ('gelmedi','gec_geldi','erken_ayrildi')),
+  excuse_type text not null default 'yok'
+    check (excuse_type in ('yok','hastalik','ailevi','okul_sinav','ulasim','izinli','diger')),
+  excuse_note text,
+  notified_at timestamptz,          -- WhatsApp sohbet penceresi açıldığında damgalanır
+  notified_to text check (notified_to is null or notified_to in ('ogrenci','veli','ikisi')),
+  created_at timestamptz not null default now(),
+  unique (student_id, absence_date, session_type)
+);
+create index if not exists attendance_records_student_idx on attendance_records(student_id);
+create index if not exists attendance_records_date_idx on attendance_records(absence_date desc);
+
+alter table attendance_records enable row level security;
+-- students deseniyle birebir aynı: sadece öğrencinin koçu yönetir.
+-- DELETE serbest (müfredat/öğrencinin aksine) — yaprak tablo, hiçbir şey
+-- buna cascade bağlı değil, yanlış girilen kayıt kalıcı olarak silinebilmeli.
+drop policy if exists "attendance_records: öğrenci sahibi koç yönetir" on attendance_records;
+create policy "attendance_records: öğrenci sahibi koç yönetir" on attendance_records
+  for all using (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()))
+  with check (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()));

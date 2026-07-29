@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import {
-  LayoutGrid, Users, ClipboardList, Layers, Calendar, BarChart2, BookOpen, Compass, ArrowRight,
+  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ArrowRight,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 
@@ -53,6 +53,14 @@ const GUIDE: GuideItem[] = [
     step: '5 · Haftayı Planla',
     body: 'Haftalık plan gün gün bir pano şeklinde. Görev eklerken önce ders, sonra o derse ait konu seçilir; bir görevi sürükleyip başka güne taşıyabilirsin. Sağ üstteki "Yazdır / PDF" ile programı tek sayfaya sığacak şekilde yazdırabilir, "WhatsApp ile Gönder" ile öğrenciye, veliye ya da her ikisine birden iletebilirsin.',
     usage: 'Hafta başında planlarken, ya da hazırladığın programı öğrenciyle/veliyle paylaşman gerektiğinde.',
+  },
+  {
+    to: '/devamsizlik',
+    label: 'Devamsızlık',
+    icon: UserX,
+    step: 'Gerektiğinde',
+    body: 'Öğrenci devamsızlıklarını kaydedersin — tarih, oturum türü (birebir/etüt/grup/online), durum ve varsa mazeret. Kayıt sonrası WhatsApp ile öğrenciye, veliye ya da her ikisine bildirim gönderebilirsin. "Öğrenci Özeti" sekmesinde her öğrencinin toplam/mazeretsiz devamsızlık sayısını, son 30 gündeki durumunu ve aylık dağılımını görür, üç veya daha fazla devamsızlığı olanlar için "Takip gerekli" uyarısı görürsün. Not: yoklama listesi yok, bu yüzden bir katılım yüzdesi hesaplanmaz — sadece mutlak sayılar gösterilir.',
+    usage: 'Bir öğrenci derse/etüde gelmediğinde kaydetmek, ya da hangi öğrencilerin devamsızlık açısından takip gerektirdiğine bakmak istediğinde.',
   },
   {
     to: '/raporlar',
