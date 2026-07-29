@@ -24,6 +24,7 @@ const HISTORY: DateGroup[] = [
           'Panelden yapılan kayıtlar doğrudan veritabanına gidiyor; Konu Yeterlilik Haritası ekranında da anında görünüyor.',
           'Panel tek bir ortak bileşene taşındı (src/components/topics/TopicProgressPanel.tsx) — Konu Yeterlilik Haritası da artık aynı bileşeni kullanıyor, iki ekran birbirinden ayrışamaz.',
           'Kartın kendisine çift tıklayarak görev düzenleme eskisi gibi çalışmaya devam ediyor.',
+          'Yardım sayfası son özelliklere göre güncellendi: Devamsızlık, açılır deneme bölüm tablosu ve programdan açılan konu gelişim paneli anlatıldı.',
         ],
       },
       {

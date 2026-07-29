@@ -538,3 +538,7 @@ Kullanıcı: "öğrenciye verilen programdaki konulara tıklayarak da Konular ek
 - [x] Uçtan uca test (Misafir Koç, gerçek Supabase): Program'da konuya tıklandı → panel açıldı → 14D/4Y/2B test sonucu eklendi (%70 doğru hesaplandı) → "Gelişiyor" + koç notu kaydedildi → **/konular ekranında** hem liste kartında ("Ort: %70 (Son: %70) · Gelişiyor") hem sağ panelde (not dahil) göründü. Test verisi (1 ölçüm + 1 karar) sonradan silindi.
 - [x] `tsc` + `build` temiz, lint'te yeni uyarı yok. Sürüm Geçmişi'ne **v0.18** girişi eklendi.
 - *Yapan:* **Opus 5**.
+
+### Yardım sayfası güncellemesi (kullanıcı isteği, 2026-07-29)
+- [x] `YardimPage.tsx` son özelliklere göre güncellendi: **Öğrenciler** (profil başlığındaki devamsızlık rozeti + Deneme Geçmişi sekmesinde açılır bölüm tablosu), **Deneme Girişi** (denemeye tıklayınca açılan Bölüm·D·Y·B·Soru·Net tablosu, Tüm Deneme Geçmişi sekmesi), **Konu Yeterlilik Haritası** (aynı panelin Program'dan da açıldığı ipucu), **Haftalık Program** (konu adına tıklayınca gelişim paneli; karta çift tıkla düzenleme), **Devamsızlık** ("Takip gerekli" eşiği düzeltildi: son 30 günde 3+ devamsızlık ya da 2+ mazeretsiz; veliye özet gönderme eklendi).
+- [x] Sürüm Geçmişi v0.18 girişine bir madde eklendi. `tsc` + `build` temiz, tarayıcıda doğrulandı.

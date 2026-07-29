@@ -27,7 +27,7 @@ const GUIDE: GuideItem[] = [
     label: 'Öğrenciler',
     icon: Users,
     step: '2 · Öğrenciyi Tanı',
-    body: 'Tüm öğrenci listesi ve her birinin profili burada — hedef program, net gelişim grafiği, deneme geçmişi, konu yeterliliği ve görevler dört sekmede. Kart üzerindeki "..." menüsünden bilgileri düzenleyebilir, profil fotoğrafı yükleyebilir, öğrenci ve veli telefonu ekleyebilir, öğrenciyi arşivleyebilir ya da kalıcı silebilirsin.',
+    body: 'Tüm öğrenci listesi ve her birinin profili burada — hedef program, net gelişim grafiği, deneme geçmişi, konu yeterliliği ve görevler dört sekmede. Profil başlığında telefonların yanında devamsızlık sayısı da görünür (tıklayınca Devamsızlık ekranına gider). "Deneme Geçmişi" sekmesinde bir denemeye tıklayınca bölüm bazlı doğru/yanlış/boş/net tablosu açılır. Kart üzerindeki "..." menüsünden bilgileri düzenleyebilir, profil fotoğrafı yükleyebilir, öğrenci ve veli telefonu ekleyebilir, öğrenciyi arşivleyebilir ya da kalıcı silebilirsin.',
     usage: 'Bir öğrenciyi aramak, bilgilerini güncellemek ya da geçmişini detaylı incelemek istediğinde.',
   },
   {
@@ -35,7 +35,7 @@ const GUIDE: GuideItem[] = [
     label: 'Deneme Girişi',
     icon: ClipboardList,
     step: '3 · Sonuçları Kaydet',
-    body: 'Sınav adı, yayıncı, tarih ve bölüm bazlı doğru/yanlış sayılarını girersin; net hesaplaması (Doğru − Yanlış ÷ 4) otomatik yapılır. Sağ tarafta geçmiş denemeler listelenir ve filtrelenebilir.',
+    body: 'Sınav adı, yayıncı, tarih ve bölüm bazlı doğru/yanlış sayılarını girersin; net hesaplaması (Doğru − Yanlış ÷ 4) otomatik yapılır. Sağ tarafta geçmiş denemeler listelenir; bir denemeye tıklarsan altında bölüm tablosu açılır (Bölüm · Doğru · Yanlış · Boş · Soru · Net ve Toplam satırı). "Tüm Deneme Geçmişi" sekmesinde tüm öğrencilerin denemeleri tek tabloda aranabilir ve aynı şekilde tıklanıp detaylandırılabilir.',
     usage: 'Öğrenci her yeni deneme sonucunu paylaştığında.',
   },
   {
@@ -44,14 +44,14 @@ const GUIDE: GuideItem[] = [
     icon: Layers,
     step: '4 · Konuyu Değerlendir',
     body: 'Her konudaki durum (Yeterli / Gelişiyor / Kritik / Ölçülmedi) burada. Bir konuya tıklayıp "Test Sonucu Ekle" ile konu testi sonucu girebilir, geçmiş ölçümleri ve konu/ders ortalamasını görebilirsin. Sistem bir durum önerir, sen "Koç Kararı" ile onaylar ya da değiştirirsin.',
-    usage: 'Bir konu testi çözüldüğünde sonucu kaydetmek, ya da haftalık programı hazırlamadan önce hangi konulara ağırlık vereceğine karar verirken.',
+    usage: 'Bir konu testi çözüldüğünde sonucu kaydetmek, ya da haftalık programı hazırlamadan önce hangi konulara ağırlık vereceğine karar verirken. İpucu: aynı panel Haftalık Program ekranında konu adına tıklayarak da açılır.',
   },
   {
     to: '/program',
     label: 'Haftalık Program',
     icon: Calendar,
     step: '5 · Haftayı Planla',
-    body: 'Haftalık plan gün gün bir pano şeklinde. Görev eklerken önce ders, sonra o derse ait konu seçilir; bir görevi sürükleyip başka güne taşıyabilirsin. Sağ üstteki "Yazdır / PDF" ile programı tek sayfaya sığacak şekilde yazdırabilir, "WhatsApp ile Gönder" ile öğrenciye, veliye ya da her ikisine birden iletebilirsin.',
+    body: 'Haftalık plan gün gün bir pano şeklinde. Görev eklerken önce ders, sonra o derse ait konu seçilir; bir görevi sürükleyip başka güne taşıyabilirsin. Bir görevin konu adına tıklarsan o konunun gelişim paneli açılır — geçmiş ölçümler, ortalama doğruluk, test sonucu ekleme ve Koç Kararı, hepsi programdan çıkmadan. Görevin kendisini düzenlemek için karta çift tıkla. Sağ üstteki "Yazdır / PDF" ile programı tek sayfaya sığacak şekilde yazdırabilir, "WhatsApp ile Gönder" ile öğrenciye, veliye ya da her ikisine birden iletebilirsin.',
     usage: 'Hafta başında planlarken, ya da hazırladığın programı öğrenciyle/veliyle paylaşman gerektiğinde.',
   },
   {
@@ -59,7 +59,7 @@ const GUIDE: GuideItem[] = [
     label: 'Devamsızlık',
     icon: UserX,
     step: 'Gerektiğinde',
-    body: 'Öğrenci devamsızlıklarını kaydedersin — tarih, oturum türü (birebir/etüt/grup/online), durum ve varsa mazeret. Kayıt sonrası WhatsApp ile öğrenciye, veliye ya da her ikisine bildirim gönderebilirsin. "Öğrenci Özeti" sekmesinde her öğrencinin toplam/mazeretsiz devamsızlık sayısını, son 30 gündeki durumunu ve aylık dağılımını görür, üç veya daha fazla devamsızlığı olanlar için "Takip gerekli" uyarısı görürsün. Not: yoklama listesi yok, bu yüzden bir katılım yüzdesi hesaplanmaz — sadece mutlak sayılar gösterilir.',
+    body: 'Öğrenci devamsızlıklarını kaydedersin — tarih, oturum türü (birebir/etüt/grup/online), durum ve varsa mazeret. Kayıt sonrası WhatsApp ile öğrenciye, veliye ya da her ikisine bildirim gönderebilirsin. "Öğrenci Özeti" sekmesinde her öğrencinin toplam/mazeretsiz devamsızlık sayısını, son 30 gündeki durumunu ve aylık dağılımını görür, son 30 günde üç ya da daha fazla devamsızlığı veya iki ya da daha fazla mazeretsiz devamsızlığı olanlar için "Takip gerekli" uyarısı görürsün; veliye tek tuşla devamsızlık özeti gönderebilirsin. Not: yoklama listesi yok, bu yüzden bir katılım yüzdesi hesaplanmaz — sadece mutlak sayılar gösterilir.',
     usage: 'Bir öğrenci derse/etüde gelmediğinde kaydetmek, ya da hangi öğrencilerin devamsızlık açısından takip gerektirdiğine bakmak istediğinde.',
   },
   {
