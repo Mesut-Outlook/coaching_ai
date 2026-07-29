@@ -514,3 +514,8 @@ Misafir Koç hesabında 5 çeşitli test kaydı seed'lendi, denendi, hepsi silin
 - **Telefon eksikliği:** `planAttendanceNotification` saf fonksiyonu doğrudan çalıştırılarak 6 kombinasyon test edildi — eksik taraf doğru raporlanıyor, çağıran taraf uyarıp **erken dönüyor** (bildirim damgası yazılmıyor). ⚠️ Davranış notu: "Her İkisine" seçilip tek numara eksikse **hiç** gönderilmiyor (ProgramPage ile tutarlı); koçun tek alıcı seçmesi gerekir.
 - **Regresyon (ortak `whatsapp.ts` modülü):** `/program` "WhatsApp ile Gönder → Her İkisine" hâlâ 2 pencere + doğru iki metin üretiyor; `/ogrenciler` telefon linkleri ve profil rozeti **"Devamsızlık: 5 (3 mazeretsiz)"** doğru çalışıyor.
 - ℹ️ **Küçük tutarlılık notu (düzeltilmedi, kullanıcı kararı):** "BİLDİRİLMEMİŞ KAYIT" kutusu **tüm zamanları** sayıyor (kodda kasıtlı: `unnotifiedCount = allRecords.filter(!notified_at)`), ama yanındaki iki kutu "BU AY" etiketli — kafa karıştırabilir. İstenirse etiket "Bildirilmemiş (tümü)" yapılabilir.
+
+#### 🚀 Deploy (2026-07-29)
+- Commit `65e265f` — daha önce commit'lenmemiş YÖK Atlas yıl düzeltmesi + Tercih WhatsApp imzası (devamsızlık işine karışmasın diye ayrı commit).
+- Commit `e0b92e0` — Devamsızlık takibi özelliğinin tamamı.
+- `main`'e push edildi → Vercel otomatik deploy. Canlı JS bundle hash'i yerel build ile **birebir eşleşti**, `/devamsizlik` HTTP 200, canlı sitede görsel olarak doğrulandı: **https://netlik-koc-paneli.vercel.app/devamsizlik**
