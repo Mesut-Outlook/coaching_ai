@@ -9,6 +9,7 @@ import PageHeader from '../components/layout/PageHeader'
 import ProgressRing from '../components/charts/ProgressRing'
 import AddStudentModal from '../components/students/AddStudentModal'
 import ExamSectionsTable from '../components/exams/ExamSectionsTable'
+import ExamShareButtons from '../components/exams/ExamShareButtons'
 import { formatPhoneForWhatsApp } from '../lib/whatsapp'
 import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
 
@@ -830,7 +831,16 @@ export default function OgrencilerPage() {
                         {isOpen && (
                           <tr style={{ borderBottom: '1px solid var(--border-soft)' }}>
                             <td colSpan={6} style={{ padding: '0 12px 12px 34px', background: 'var(--surface-alt)' }}>
-                              <div style={{ maxWidth: 760 }}><ExamSectionsTable sections={examSecs} /></div>
+                              <div style={{ maxWidth: 760 }}>
+                                <ExamSectionsTable sections={examSecs} />
+                                <ExamShareButtons
+                                  exam={exam}
+                                  sections={examSecs}
+                                  studentName={student.full_name}
+                                  phone={student.phone_number}
+                                  parentPhone={student.parent_phone_number}
+                                />
+                              </div>
                             </td>
                           </tr>
                         )}

@@ -27,7 +27,7 @@ const GUIDE: GuideItem[] = [
     label: 'Öğrenciler',
     icon: Users,
     step: '2 · Öğrenciyi Tanı',
-    body: 'Tüm öğrenci listesi ve her birinin profili burada — hedef program, net gelişim grafiği, deneme geçmişi, konu yeterliliği ve görevler dört sekmede. Profil başlığında telefonların yanında devamsızlık sayısı da görünür (tıklayınca Devamsızlık ekranına gider). "Deneme Geçmişi" sekmesinde bir denemeye tıklayınca bölüm bazlı doğru/yanlış/boş/net tablosu açılır. Kart üzerindeki "..." menüsünden bilgileri düzenleyebilir, profil fotoğrafı yükleyebilir, öğrenci ve veli telefonu ekleyebilir, öğrenciyi arşivleyebilir ya da kalıcı silebilirsin.',
+    body: 'Tüm öğrenci listesi ve her birinin profili burada — hedef program, net gelişim grafiği, deneme geçmişi, konu yeterliliği ve görevler dört sekmede. Profil başlığında telefonların yanında devamsızlık sayısı da görünür (tıklayınca Devamsızlık ekranına gider). "Deneme Geçmişi" sekmesinde bir denemeye tıklayınca bölüm bazlı doğru/yanlış/boş/net tablosu açılır ve sonucu oradan WhatsApp ile paylaşabilirsin. Kart üzerindeki "..." menüsünden bilgileri düzenleyebilir, profil fotoğrafı yükleyebilir, öğrenci ve veli telefonu ekleyebilir, öğrenciyi arşivleyebilir ya da kalıcı silebilirsin.',
     usage: 'Bir öğrenciyi aramak, bilgilerini güncellemek ya da geçmişini detaylı incelemek istediğinde.',
   },
   {
@@ -35,8 +35,8 @@ const GUIDE: GuideItem[] = [
     label: 'Deneme Girişi',
     icon: ClipboardList,
     step: '3 · Sonuçları Kaydet',
-    body: 'Sınav adı, yayıncı, tarih ve bölüm bazlı doğru/yanlış sayılarını girersin; net hesaplaması (Doğru − Yanlış ÷ 4) otomatik yapılır. Sağ tarafta geçmiş denemeler listelenir; bir denemeye tıklarsan altında bölüm tablosu açılır (Bölüm · Doğru · Yanlış · Boş · Soru · Net ve Toplam satırı). "Tüm Deneme Geçmişi" sekmesinde tüm öğrencilerin denemeleri tek tabloda aranabilir ve aynı şekilde tıklanıp detaylandırılabilir.',
-    usage: 'Öğrenci her yeni deneme sonucunu paylaştığında.',
+    body: 'Sınav adı, yayıncı, tarih ve bölüm bazlı doğru/yanlış sayılarını girersin; net hesaplaması (Doğru − Yanlış ÷ 4) otomatik yapılır. Sağ tarafta geçmiş denemeler listelenir; bir denemeye tıklarsan altında bölüm tablosu açılır (Bölüm · Doğru · Yanlış · Boş · Soru · Net ve Toplam satırı). "Tüm Deneme Geçmişi" sekmesinde tüm öğrencilerin denemeleri tek tabloda aranabilir ve aynı şekilde tıklanıp detaylandırılabilir. Açılan tablonun altındaki "Sonucu WhatsApp ile gönder" ile deneme sonucunu bölüm dökümü ve toplam netiyle birlikte öğrenciye, veliye ya da her ikisine iletebilirsin.',
+    usage: 'Öğrenci her yeni deneme sonucunu paylaştığında — girdikten hemen sonra sonucu WhatsApp ile öğrenciye/veliye gönderebilirsin.',
   },
   {
     to: '/konular',

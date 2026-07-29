@@ -542,3 +542,13 @@ Kullanıcı: "öğrenciye verilen programdaki konulara tıklayarak da Konular ek
 ### Yardım sayfası güncellemesi (kullanıcı isteği, 2026-07-29)
 - [x] `YardimPage.tsx` son özelliklere göre güncellendi: **Öğrenciler** (profil başlığındaki devamsızlık rozeti + Deneme Geçmişi sekmesinde açılır bölüm tablosu), **Deneme Girişi** (denemeye tıklayınca açılan Bölüm·D·Y·B·Soru·Net tablosu, Tüm Deneme Geçmişi sekmesi), **Konu Yeterlilik Haritası** (aynı panelin Program'dan da açıldığı ipucu), **Haftalık Program** (konu adına tıklayınca gelişim paneli; karta çift tıkla düzenleme), **Devamsızlık** ("Takip gerekli" eşiği düzeltildi: son 30 günde 3+ devamsızlık ya da 2+ mazeretsiz; veliye özet gönderme eklendi).
 - [x] Sürüm Geçmişi v0.18 girişine bir madde eklendi. `tsc` + `build` temiz, tarayıcıda doğrulandı.
+
+## Deneme sonucunu WhatsApp ile gönderme (kullanıcı isteği, 2026-07-29)
+Kullanıcı: "deneme sınav sonuçlarını da diğer WhatsApp iletişimlerinde olduğu gibi öğrenci ve/veya veliye uygun güzel bir formatta gönderebilmek istiyorum."
+- [x] `src/lib/examShare.ts` — `buildExamResultMessage(exam, sections, studentName, 'ogrenci'|'veli')`. WhatsApp kalın biçimi (*yıldız*), bölüm bazlı D·Y·B → net dökümü, toplam D/Y/B ve TOPLAM NET; öğrenci/veli metinleri farklı (devamsızlık bildirimleriyle aynı ton).
+- [x] `src/components/exams/ExamShareButtons.tsx` — "Öğrenciye · Veliye · Her İkisine" butonları; eksik numarada uyarıp hiçbir pencere açmıyor, "Her İkisine"de iki sekme (pop-up uyarısıyla). Bölüm skoru olmayan denemede butonlar hiç render edilmiyor.
+- [x] Üç yere de bağlandı (açılan bölüm tablosunun altına): Deneme Girişi geçmiş kartları, "Tüm Deneme Geçmişi" tablosu, öğrenci profili Deneme Geçmişi sekmesi.
+- [x] `allExams` sorgusu artık `students(full_name, track, phone_number, parent_phone_number)` çekiyor (liste sekmesinde telefonlar gerekiyordu) — tipi de güncellendi.
+- [x] Test: mesaj kurucusu doğrudan çalıştırılıp çıktısı okundu; tarayıcıda üç yerden de gönderim denendi (`window.open` yakalandı, **gerçek mesaj gönderilmedi**) — "Her İkisine" 2 pencere + iki farklı metin, liste sekmesinden "Öğrenciye" 1 pencere. `tsc`/`build`/lint temiz.
+- [x] Yardım sayfası + Sürüm Geçmişi **v0.19** güncellendi.
+- *Yapan:* **Opus 5**.

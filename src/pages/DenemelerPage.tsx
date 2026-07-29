@@ -4,6 +4,7 @@ import { Trash2, ClipboardList, AlertCircle, Save, Search, ChevronDown, ChevronR
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import ExamSectionsTable from '../components/exams/ExamSectionsTable'
+import ExamShareButtons from '../components/exams/ExamShareButtons'
 import type { Student, MockExam, MockExamSection } from '../types/database'
 
 const SECTIONS_CONFIG = {
@@ -56,7 +57,7 @@ export default function DenemelerPage() {
 
   // All Exams History List State
   const [allExams, setAllExams] = useState<(MockExam & { 
-    students: { full_name: string; track: string } | null;
+    students: { full_name: string; track: string; phone_number: string | null; parent_phone_number: string | null } | null;
     totalNet: number; 
     sectionsList: MockExamSection[] 
   })[]>([])
@@ -146,7 +147,7 @@ export default function DenemelerPage() {
     try {
       const { data: rawAllExams, error: examsError } = await (supabase
         .from('mock_exams')
-        .select('*, students(full_name, track)')
+        .select('*, students(full_name, track, phone_number, parent_phone_number)')
         .order('exam_date', { ascending: false }) as any)
       if (examsError) throw examsError
 
@@ -493,6 +494,15 @@ export default function DenemelerPage() {
                     {isOpen && (
                       <div style={{ padding: '0 12px 12px' }}>
                         <ExamSectionsTable sections={e.sectionsList} />
+                        {currentStudent && (
+                          <ExamShareButtons
+                            exam={e}
+                            sections={e.sectionsList}
+                            studentName={currentStudent.full_name}
+                            phone={currentStudent.phone_number}
+                            parentPhone={currentStudent.parent_phone_number}
+                          />
+                        )}
                       </div>
                     )}
                   </div>
@@ -606,7 +616,18 @@ export default function DenemelerPage() {
                     {isOpen && (
                       <tr style={{ borderBottom: '1px solid var(--border-soft)' }}>
                         <td colSpan={9} style={{ padding: '0 14px 14px 34px', background: 'var(--surface-alt)' }}>
-                          <div style={{ maxWidth: 760 }}><ExamSectionsTable sections={e.sectionsList} /></div>
+                          <div style={{ maxWidth: 760 }}>
+                            <ExamSectionsTable sections={e.sectionsList} />
+                            {e.students && (
+                              <ExamShareButtons
+                                exam={e}
+                                sections={e.sectionsList}
+                                studentName={e.students.full_name}
+                                phone={e.students.phone_number}
+                                parentPhone={e.students.parent_phone_number}
+                              />
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )}

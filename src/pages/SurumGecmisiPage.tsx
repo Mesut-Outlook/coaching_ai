@@ -17,6 +17,16 @@ const HISTORY: DateGroup[] = [
     date: '29 Temmuz 2026',
     entries: [
       {
+        version: 'v0.19',
+        title: 'Deneme sonucunu WhatsApp ile gönderme',
+        items: [
+          'Bir denemeye tıklayıp bölüm tablosunu açtığında altında "Sonucu WhatsApp ile gönder: Öğrenciye · Veliye · Her İkisine" butonları çıkıyor.',
+          'Mesajda sınav adı, türü, tarihi, yayıncısı; bölüm bazlı doğru/yanlış/boş ve net dökümü; toplam doğru/yanlış/boş ve toplam net yer alıyor (WhatsApp kalın yazı biçimiyle).',
+          'Öğrenciye ve veliye giden metinler farklı; "Her İkisine" seçilirse iki ayrı sohbet penceresi açılır. Telefon numarası eksikse uyarı verilir ve hiçbir pencere açılmaz.',
+          'Üç yerden de gönderilebiliyor: Deneme Girişi geçmiş listesi, "Tüm Deneme Geçmişi" tablosu ve öğrenci profilindeki Deneme Geçmişi sekmesi. Bölüm skoru girilmemiş denemelerde butonlar görünmez.',
+        ],
+      },
+      {
         version: 'v0.18',
         title: 'Haftalık Programdaki konudan gelişim paneli açılıyor',
         items: [
