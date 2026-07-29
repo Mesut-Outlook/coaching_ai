@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, ChevronDown, Plus, Trash2, CheckSquare, X, Printer, MessageCircle } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
+import TopicProgressPanel from '../components/topics/TopicProgressPanel'
 import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange, DAYS } from '../lib/weeks'
 import { openWhatsAppChat } from '../lib/whatsapp'
@@ -33,6 +34,8 @@ export default function ProgramPage() {
 
   // Task Editing State
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+  // Konuya tıklanınca açılan gelişim paneli (Konu Yeterlilik Haritası'ndaki panelin aynısı)
+  const [progressTopic, setProgressTopic] = useState<{ id: number; name: string; subjectName?: string | null } | null>(null)
   const [editSubjectId, setEditSubjectId] = useState<string>('custom')
   const [editTopicId, setEditTopicId] = useState<string>('')
   const [editCustomLabel, setEditCustomLabel] = useState('')
@@ -595,7 +598,7 @@ export default function ProgramPage() {
                           draggable
                           onDragStart={(e) => handleDragStart(e, task.id)}
                           onDoubleClick={() => handleStartEdit(task)}
-                          title="Düzenlemek için çift tıklayın"
+                          title="Konuya tıklayın: gelişim paneli · Karta çift tıklayın: düzenle"
                           style={{
                             padding: '10px 12px',
                             background: task.completed ? 'var(--success-bg)' : 'var(--surface-alt)',
@@ -619,9 +622,23 @@ export default function ProgramPage() {
                             </button>
                             
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 12.5, fontWeight: 600, textDecoration: task.completed ? 'line-through' : 'none', color: 'var(--ink)', wordBreak: 'break-word' }}>
-                                {topic?.name || task.custom_label || 'Özel Görev'}
-                              </div>
+                              {topic ? (
+                                <div
+                                  role="button"
+                                  tabIndex={0}
+                                  title="Bu konunun gelişim panelini aç"
+                                  onClick={(ev) => { ev.stopPropagation(); setProgressTopic({ id: topic.id, name: topic.name, subjectName: topic.subjects?.name }) }}
+                                  onDoubleClick={(ev) => ev.stopPropagation()}
+                                  onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); setProgressTopic({ id: topic.id, name: topic.name, subjectName: topic.subjects?.name }) } }}
+                                  style={{ fontSize: 12.5, fontWeight: 600, textDecoration: task.completed ? 'line-through' : 'none', color: 'var(--indigo-600)', wordBreak: 'break-word', cursor: 'pointer' }}
+                                >
+                                  {topic.name}
+                                </div>
+                              ) : (
+                                <div style={{ fontSize: 12.5, fontWeight: 600, textDecoration: task.completed ? 'line-through' : 'none', color: 'var(--ink)', wordBreak: 'break-word' }}>
+                                  {task.custom_label || 'Özel Görev'}
+                                </div>
+                              )}
                               {topic?.subjects && (
                                 <div style={{ fontSize: 9.5, color: 'var(--ink-faint)', marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: topic.subjects.color }}></span>
@@ -739,6 +756,27 @@ export default function ProgramPage() {
           </div>
           )}
 
+        </div>
+      )}
+
+      {/* Konuya tıklanınca açılan gelişim paneli — Konu Yeterlilik Haritası ile aynı bileşen */}
+      {progressTopic && selectedStudentId && (
+        <div className="modal-overlay no-print" onClick={() => setProgressTopic(null)}>
+          <div className="modal-panel card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700 }}>Konu Gelişimi</h3>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setProgressTopic(null)} aria-label="Kapat">
+                <X size={14} />
+              </button>
+            </div>
+            <TopicProgressPanel
+              studentId={selectedStudentId}
+              topicId={progressTopic.id}
+              topicName={progressTopic.name}
+              subjectName={progressTopic.subjectName}
+              onClose={() => setProgressTopic(null)}
+            />
+          </div>
         </div>
       )}
     </section>

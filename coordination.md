@@ -528,3 +528,13 @@ Kullanıcı: "deneme geçmişindeki denemelere tıkladığımda o tablodaki değ
 - [x] `npx tsc -b` + `npm run build` temiz; lint'te yeni uyarı yok. Tarayıcıda üç görünüm de doğrulandı (bölüm verisi olmayan deneme dahil).
 - [x] Sürüm Geçmişi'ne **v0.17** girişi eklendi.
 - *Yapan:* **Opus 5**.
+
+## Haftalık Programdaki konudan gelişim paneli (kullanıcı isteği, 2026-07-29)
+Kullanıcı: "öğrenciye verilen programdaki konulara tıklayarak da Konular ekranındaki sağ taraftaki gelişim ekranı burada da açılabilir."
+- **Tespit:** panel `KonularPage.tsx` içinde ~200 satır JSX + 10 state + 2 handler olarak gömülüydü; kopyalamak yerine **ortak bileşene çıkarıldı**.
+- [x] Yeni bileşen `src/components/topics/TopicProgressPanel.tsx` — kendi verisini yükler (ölçümler, koç kararı, öğrencinin coach_id'si), ölçüm ekler, koç kararını upsert/delete eder; `onSaved`/`onClose` ile çağırana haber verir.
+- [x] `KonularPage.tsx` sağ sütunu bu bileşeni kullanacak şekilde sadeleşti: **665 → 333 satır**, ölü state/handler'lar (editState, editNote, test formu, handleAddTestResult, handleSaveDecision, currentStudent) kaldırıldı.
+- [x] `ProgramPage.tsx`: görev kartındaki **konu adı tıklanabilir** (indigo renk + tooltip) → aynı panel modal olarak açılıyor. Konu adı üzerindeki çift tık `stopPropagation` ile durduruldu; **karta çift tıklayarak görev düzenleme aynen çalışıyor**. Özel görevlerde (topic_id yok) ad tıklanabilir değil.
+- [x] Uçtan uca test (Misafir Koç, gerçek Supabase): Program'da konuya tıklandı → panel açıldı → 14D/4Y/2B test sonucu eklendi (%70 doğru hesaplandı) → "Gelişiyor" + koç notu kaydedildi → **/konular ekranında** hem liste kartında ("Ort: %70 (Son: %70) · Gelişiyor") hem sağ panelde (not dahil) göründü. Test verisi (1 ölçüm + 1 karar) sonradan silindi.
+- [x] `tsc` + `build` temiz, lint'te yeni uyarı yok. Sürüm Geçmişi'ne **v0.18** girişi eklendi.
+- *Yapan:* **Opus 5**.

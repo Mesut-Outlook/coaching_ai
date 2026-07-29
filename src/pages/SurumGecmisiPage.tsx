@@ -17,6 +17,16 @@ const HISTORY: DateGroup[] = [
     date: '29 Temmuz 2026',
     entries: [
       {
+        version: 'v0.18',
+        title: 'Haftalık Programdaki konudan gelişim paneli açılıyor',
+        items: [
+          'Haftalık Program\'da bir görevin konu adına tıklandığında, Konu Yeterlilik Haritası\'nın sağındaki gelişim paneli aynen bir pencere olarak açılıyor: ölçüm geçmişi, ortalama doğruluk, gelişim grafiği, "+ Test Sonucu Ekle" ve Koç Kararı + koç notu.',
+          'Panelden yapılan kayıtlar doğrudan veritabanına gidiyor; Konu Yeterlilik Haritası ekranında da anında görünüyor.',
+          'Panel tek bir ortak bileşene taşındı (src/components/topics/TopicProgressPanel.tsx) — Konu Yeterlilik Haritası da artık aynı bileşeni kullanıyor, iki ekran birbirinden ayrışamaz.',
+          'Kartın kendisine çift tıklayarak görev düzenleme eskisi gibi çalışmaya devam ediyor.',
+        ],
+      },
+      {
         version: 'v0.17',
         title: 'Deneme bölüm skorları artık tablo olarak açılıyor',
         items: [
