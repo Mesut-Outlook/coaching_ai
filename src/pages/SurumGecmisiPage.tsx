@@ -17,6 +17,15 @@ const HISTORY: DateGroup[] = [
     date: '29 Temmuz 2026',
     entries: [
       {
+        version: 'v0.17',
+        title: 'Deneme bölüm skorları artık tablo olarak açılıyor',
+        items: [
+          'Deneme geçmişindeki bir denemeye tıklandığında bölüm skorları düz metin yerine tablo olarak açılıyor: Bölüm · Doğru · Yanlış · Boş · Soru · Net ve altında "Toplam" satırı.',
+          'Üç yerde birden çalışıyor: Deneme Girişi ekranının sağındaki geçmiş listesi, "Tüm Deneme Geçmişi" tablosu ve öğrenci profilindeki "Deneme Geçmişi" sekmesi.',
+          'Satırların tıklanabilir olduğu ok işaretiyle belli ediliyor; açık olan deneme kapatılabiliyor, bölüm verisi olmayan denemelerde açıklayıcı mesaj çıkıyor.',
+        ],
+      },
+      {
         version: 'v0.16',
         title: 'Devamsızlık Takibi + WhatsApp Bildirimi',
         items: [

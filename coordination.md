@@ -519,3 +519,12 @@ Misafir Koç hesabında 5 çeşitli test kaydı seed'lendi, denendi, hepsi silin
 - Commit `65e265f` — daha önce commit'lenmemiş YÖK Atlas yıl düzeltmesi + Tercih WhatsApp imzası (devamsızlık işine karışmasın diye ayrı commit).
 - Commit `e0b92e0` — Devamsızlık takibi özelliğinin tamamı.
 - `main`'e push edildi → Vercel otomatik deploy. Canlı JS bundle hash'i yerel build ile **birebir eşleşti**, `/devamsizlik` HTTP 200, canlı sitede görsel olarak doğrulandı: **https://netlik-koc-paneli.vercel.app/devamsizlik**
+
+## Deneme bölüm skorları: düz metin → açılır tablo (kullanıcı isteği, 2026-07-29)
+Kullanıcı: "deneme geçmişindeki denemelere tıkladığımda o tablodaki değerlerin güzel bir tablo gibi görünmesi daha iyi olur, şu an düz yazı gibi görünüyor."
+- **Tespit:** bölüm skorları üç yerde de `sectionsList.map(...).join(' · ')` ile tek satır metne çevriliyordu ve denemeler **hiç tıklanabilir değildi** (hiçbir yerde onClick yoktu).
+- [x] Yeni ortak bileşen `src/components/exams/ExamSectionsTable.tsx` — Bölüm · Doğru · Yanlış · Boş · Soru · Net + "Toplam" satırı; doğru yeşil, yanlış kırmızı, net indigo; `tabular-nums` ile rakamlar hizalı; bölüm verisi yoksa açıklayıcı mesaj.
+- [x] Üç görünüm de tıklanınca bu tabloyu açıyor (akordeon, ok işaretiyle): Deneme Girişi sağ sütunundaki geçmiş kartları, "Tüm Deneme Geçmişi" tablosu (detay satırı `colSpan`), öğrenci profili "Deneme Geçmişi" sekmesi. Satır içi Sil butonu ve öğrenci linki `stopPropagation` ile korundu.
+- [x] `npx tsc -b` + `npm run build` temiz; lint'te yeni uyarı yok. Tarayıcıda üç görünüm de doğrulandı (bölüm verisi olmayan deneme dahil).
+- [x] Sürüm Geçmişi'ne **v0.17** girişi eklendi.
+- *Yapan:* **Opus 5**.

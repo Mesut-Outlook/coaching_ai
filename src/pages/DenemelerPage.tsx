@@ -1,8 +1,9 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, Fragment } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { Trash2, ClipboardList, AlertCircle, Save, Search } from 'lucide-react'
+import { Trash2, ClipboardList, AlertCircle, Save, Search, ChevronDown, ChevronRight } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
+import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import type { Student, MockExam, MockExamSection } from '../types/database'
 
 const SECTIONS_CONFIG = {
@@ -48,6 +49,10 @@ export default function DenemelerPage() {
 
   // Tab View State
   const [activeViewTab, setActiveViewTab] = useState<'entry' | 'list'>('entry')
+
+  // Tıklanan denemenin bölüm tablosu açılır (her iki sekmede de ayrı ayrı)
+  const [expandedExamId, setExpandedExamId] = useState<string | null>(null)
+  const toggleExam = (id: string) => setExpandedExamId((prev) => (prev === id ? null : id))
 
   // All Exams History List State
   const [allExams, setAllExams] = useState<(MockExam & { 
@@ -442,34 +447,57 @@ export default function DenemelerPage() {
               <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Kayıtlı deneme bulunamadı.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {exams.map(e => (
-                  <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', border: '1px solid var(--border-soft)', borderRadius: 10, background: 'var(--surface-alt)' }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 13.5 }}>{e.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 3 }}>
-                        {e.exam_date} · {e.exam_type}
+                {exams.map(e => {
+                  const isOpen = expandedExamId === e.id
+                  return (
+                  <div key={e.id} style={{ border: '1px solid var(--border-soft)', borderRadius: 10, background: 'var(--surface-alt)', overflow: 'hidden' }}>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => toggleExam(e.id)}
+                      onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleExam(e.id) } }}
+                      title={isOpen ? 'Bölüm tablosunu kapat' : 'Bölüm tablosunu aç'}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', cursor: 'pointer' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: 'var(--ink-faint)', display: 'flex' }}>
+                          {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                        </span>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 13.5 }}>{e.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 3 }}>
+                            {e.exam_date} · {e.exam_type}
+                          </div>
+                          <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 4 }}>
+                            {e.sectionsList.map(s => `${s.section_name}: ${s.net}`).join(' · ')}
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 4 }}>
-                        {e.sectionsList.map(s => `${s.section_name}: ${s.correct_count}D ${s.wrong_count}Y (${s.net} net)`).join(' · ')}
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--indigo-600)' }}>{e.totalNet}</div>
+                          <div style={{ fontSize: 9.5, color: 'var(--ink-faint)' }}>toplam net</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(ev) => { ev.stopPropagation(); handleDeleteExam(e.id) }}
+                          style={{ border: 'none', background: 'none', padding: 4, color: 'var(--critical)', cursor: 'pointer' }}
+                          title="Denemeyi sil"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
                     </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--indigo-600)' }}>{e.totalNet}</div>
-                        <div style={{ fontSize: 9.5, color: 'var(--ink-faint)' }}>toplam net</div>
+
+                    {isOpen && (
+                      <div style={{ padding: '0 12px 12px' }}>
+                        <ExamSectionsTable sections={e.sectionsList} />
                       </div>
-                      <button 
-                        type="button" 
-                        onClick={() => handleDeleteExam(e.id)} 
-                        style={{ border: 'none', background: 'none', padding: 4, color: 'var(--critical)', cursor: 'pointer' }}
-                        title="Denemeyi sil"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
+                    )}
                   </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
@@ -517,6 +545,7 @@ export default function DenemelerPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--ink-soft)' }}>
+                    <th style={{ padding: '12px 4px', width: 26 }} aria-label="Detay" />
                     <th style={{ padding: '12px 14px' }}>Öğrenci</th>
                     <th style={{ padding: '12px 14px' }}>Sınav Adı</th>
                     <th style={{ padding: '12px 14px' }}>Yayıncı</th>
@@ -528,11 +557,21 @@ export default function DenemelerPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAllExams.map(e => (
-                    <tr key={e.id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
+                  {filteredAllExams.map(e => {
+                    const isOpen = expandedExamId === e.id
+                    return (
+                    <Fragment key={e.id}>
+                    <tr
+                      onClick={() => toggleExam(e.id)}
+                      title={isOpen ? 'Bölüm tablosunu kapat' : 'Bölüm tablosunu aç'}
+                      style={{ borderBottom: isOpen ? 'none' : '1px solid var(--border-soft)', cursor: 'pointer' }}
+                    >
+                      <td style={{ padding: '12px 4px', color: 'var(--ink-faint)' }}>
+                        {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                      </td>
                       <td style={{ padding: '12px 14px', fontWeight: 600 }}>
                         {e.students ? (
-                          <Link to={`/ogrenciler/${e.student_id}`} style={{ textDecoration: 'none', color: 'var(--indigo-600)' }}>
+                          <Link to={`/ogrenciler/${e.student_id}`} onClick={(ev) => ev.stopPropagation()} style={{ textDecoration: 'none', color: 'var(--indigo-600)' }}>
                             {e.students.full_name}
                           </Link>
                         ) : (
@@ -556,7 +595,7 @@ export default function DenemelerPage() {
                       <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                         <button
                           type="button"
-                          onClick={() => handleDeleteExam(e.id)}
+                          onClick={(ev) => { ev.stopPropagation(); handleDeleteExam(e.id) }}
                           style={{ border: 'none', background: 'none', padding: 4, color: 'var(--critical)', cursor: 'pointer' }}
                           title="Denemeyi sil"
                         >
@@ -564,7 +603,16 @@ export default function DenemelerPage() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    {isOpen && (
+                      <tr style={{ borderBottom: '1px solid var(--border-soft)' }}>
+                        <td colSpan={9} style={{ padding: '0 14px 14px 34px', background: 'var(--surface-alt)' }}>
+                          <div style={{ maxWidth: 760 }}><ExamSectionsTable sections={e.sectionsList} /></div>
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

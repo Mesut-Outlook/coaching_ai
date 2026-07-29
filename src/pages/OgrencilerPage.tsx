@@ -1,13 +1,14 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, Fragment } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { 
-  ArrowLeft, ChevronRight, Plus, Search, TrendingUp, Award,
+  ArrowLeft, ChevronRight, ChevronDown, Plus, Search, TrendingUp, Award,
   CheckSquare, MoreVertical, MessageCircle,
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import ProgressRing from '../components/charts/ProgressRing'
 import AddStudentModal from '../components/students/AddStudentModal'
+import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import { formatPhoneForWhatsApp } from '../lib/whatsapp'
 import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
 
@@ -52,6 +53,8 @@ export default function OgrencilerPage() {
   // State for single-student detail view
   const [studentData, setStudentData] = useState<StudentData | null>(null)
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview')
+  // Deneme Geçmişi sekmesinde tıklanan denemenin bölüm tablosu açılır
+  const [expandedExamId, setExpandedExamId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Load all students (if no studentId)
@@ -787,6 +790,7 @@ export default function OgrencilerPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--ink-soft)' }}>
+                    <th style={{ padding: '10px 4px', width: 26 }} aria-label="Detay" />
                     <th style={{ padding: '10px 12px' }}>Sınav Adı</th>
                     <th style={{ padding: '10px 12px' }}>Tarih</th>
                     <th style={{ padding: '10px 12px' }}>Tür</th>
@@ -798,22 +802,39 @@ export default function OgrencilerPage() {
                   {exams.map(exam => {
                     const examSecs = sections.filter(s => s.mock_exam_id === exam.id)
                     const totalNet = Math.round(examSecs.reduce((sum, s) => sum + Number(s.net), 0) * 10) / 10
+                    const isOpen = expandedExamId === exam.id
                     return (
-                      <tr key={exam.id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
-                        <td style={{ padding: '12px', fontWeight: 600 }}>{exam.name}</td>
-                        <td style={{ padding: '12px', color: 'var(--ink-soft)' }}>{exam.exam_date}</td>
-                        <td style={{ padding: '12px' }}>
-                          <span className={`chip ${exam.exam_type === 'TYT' ? 'chip-say' : 'chip-ea'}`} style={{ padding: '1px 6px', fontSize: 10.5 }}>
-                            {exam.exam_type}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px', color: 'var(--ink-faint)' }}>
-                          {examSecs.map(s => `${s.section_name}: ${s.net}`).join(' · ')}
-                        </td>
-                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: 'var(--indigo-600)', fontSize: 14 }}>
-                          {totalNet}
-                        </td>
-                      </tr>
+                      <Fragment key={exam.id}>
+                        <tr
+                          onClick={() => setExpandedExamId(prev => prev === exam.id ? null : exam.id)}
+                          title={isOpen ? 'Bölüm tablosunu kapat' : 'Bölüm tablosunu aç'}
+                          style={{ borderBottom: isOpen ? 'none' : '1px solid var(--border-soft)', cursor: 'pointer' }}
+                        >
+                          <td style={{ padding: '12px 4px', color: 'var(--ink-faint)' }}>
+                            {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                          </td>
+                          <td style={{ padding: '12px', fontWeight: 600 }}>{exam.name}</td>
+                          <td style={{ padding: '12px', color: 'var(--ink-soft)' }}>{exam.exam_date}</td>
+                          <td style={{ padding: '12px' }}>
+                            <span className={`chip ${exam.exam_type === 'TYT' ? 'chip-say' : 'chip-ea'}`} style={{ padding: '1px 6px', fontSize: 10.5 }}>
+                              {exam.exam_type}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px', color: 'var(--ink-faint)' }}>
+                            {examSecs.map(s => `${s.section_name}: ${s.net}`).join(' · ')}
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: 'var(--indigo-600)', fontSize: 14 }}>
+                            {totalNet}
+                          </td>
+                        </tr>
+                        {isOpen && (
+                          <tr style={{ borderBottom: '1px solid var(--border-soft)' }}>
+                            <td colSpan={6} style={{ padding: '0 12px 12px 34px', background: 'var(--surface-alt)' }}>
+                              <div style={{ maxWidth: 760 }}><ExamSectionsTable sections={examSecs} /></div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     )
                   })}
                 </tbody>
