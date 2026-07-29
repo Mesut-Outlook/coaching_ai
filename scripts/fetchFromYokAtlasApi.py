@@ -115,10 +115,16 @@ async def fetch_all_yokatlas():
                 "score_type": score_type,
             }
             
-            # Year 2025 (History 1)
-            p_2025 = to_float(item.get("minPuan1"))
-            r_2025 = to_int(item.get("basariSirasi1"))
-            q_2025 = to_int(item.get("gk1") or item.get("kontenjan"))
+            # ÖNEMLİ — YÖK Atlas alan→yıl eşleşmesi:
+            # API'nin ETİKETSİZ alanları (minPuan/basariSirasi/kontenjan) son TAMAMLANAN
+            # yerleştirme yılını (= 2025) taşır; item["yil"]=2026 sadece tercih KILAVUZU yılıdır.
+            # suffix 1/2/3 ise sırasıyla 2024/2023/2022'dir. (2026 yerleştirmesi henüz yapılmadı,
+            # o yıl için kayıt oluşturulmaz.) Doğrulama: coordination.md / Koç Tıp İng. Burslu kod 203910699.
+
+            # Year 2025 (last completed placement — unlabeled/current fields)
+            p_2025 = to_float(item.get("minPuan"))
+            r_2025 = to_int(item.get("basariSirasi"))
+            q_2025 = to_int(item.get("kontenjan"))
             if p_2025 is not None or r_2025 is not None:
                 count_2025 += 1
                 if r_2025 is not None:
@@ -132,10 +138,10 @@ async def fetch_all_yokatlas():
                 })
                 normalized_records.append(rec_2025)
 
-            # Year 2024 (History 2)
-            p_2024 = to_float(item.get("minPuan2"))
-            r_2024 = to_int(item.get("basariSirasi2"))
-            q_2024 = to_int(item.get("gk2"))
+            # Year 2024 (History 1)
+            p_2024 = to_float(item.get("minPuan1"))
+            r_2024 = to_int(item.get("basariSirasi1"))
+            q_2024 = to_int(item.get("gk1"))
             if p_2024 is not None or r_2024 is not None:
                 rec_2024 = dict(base_meta)
                 rec_2024.update({
@@ -146,10 +152,10 @@ async def fetch_all_yokatlas():
                 })
                 normalized_records.append(rec_2024)
 
-            # Year 2023 (History 3)
-            p_2023 = to_float(item.get("minPuan3"))
-            r_2023 = to_int(item.get("basariSirasi3"))
-            q_2023 = to_int(item.get("gk3"))
+            # Year 2023 (History 2)
+            p_2023 = to_float(item.get("minPuan2"))
+            r_2023 = to_int(item.get("basariSirasi2"))
+            q_2023 = to_int(item.get("gk2"))
             if p_2023 is not None or r_2023 is not None:
                 rec_2023 = dict(base_meta)
                 rec_2023.update({
@@ -160,26 +166,26 @@ async def fetch_all_yokatlas():
                 })
                 normalized_records.append(rec_2023)
 
-            # Year 2026 (Current)
-            p_2026 = to_float(item.get("minPuan"))
-            r_2026 = to_int(item.get("basariSirasi"))
-            q_2026 = to_int(item.get("kontenjan"))
-            if p_2026 is not None or r_2026 is not None:
-                rec_2026 = dict(base_meta)
-                rec_2026.update({
-                    "year": 2026,
-                    "base_score": p_2026,
-                    "base_ranking": r_2026,
-                    "quota": q_2026
+            # Year 2022 (History 3)
+            p_2022 = to_float(item.get("minPuan3"))
+            r_2022 = to_int(item.get("basariSirasi3"))
+            q_2022 = to_int(item.get("gk3"))
+            if p_2022 is not None or r_2022 is not None:
+                rec_2022 = dict(base_meta)
+                rec_2022.update({
+                    "year": 2022,
+                    "base_score": p_2022,
+                    "base_ranking": r_2022,
+                    "quota": q_2022
                 })
-                normalized_records.append(rec_2026)
+                normalized_records.append(rec_2022)
 
         print("\n--- A1c YÖK ATLAS STATS ---")
         print(f"Total raw programs fetched: {len(all_raw_items)}")
         print(f"Unique program codes (kilavuzKodu): {len(program_codes)}")
         print(f"Total 2025 records: {count_2025}")
         print(f"2025 ranking fill rate: {count_2025_ranking} / {count_2025} ({count_2025_ranking / count_2025 * 100:.2f}%)")
-        print(f"Total normalized multi-year records (2023-2026): {len(normalized_records)}")
+        print(f"Total normalized multi-year records (2022-2025): {len(normalized_records)}")
         
         # Save to src/data/universityRankings.json
         os.makedirs("src/data", exist_ok=True)

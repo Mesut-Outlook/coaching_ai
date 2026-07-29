@@ -461,7 +461,7 @@ export default function TercihPage() {
       })
       .join('\n\n')
 
-    return `${header}${rankStr}${metaStr}\n\n${listStr}\n\n✨ *Netlik Koçluk Paneli ile oluşturuldu.*`
+    return `${header}${rankStr}${metaStr}\n\n${listStr}\n\n✨ *Eda Cangert Koçluk Merkezi tarafından hazırlandı.*`
   }
 
   function handleSendWhatsApp(targetPhone?: string | null) {
