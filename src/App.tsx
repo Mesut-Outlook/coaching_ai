@@ -13,7 +13,9 @@ import MufredatPage from './pages/MufredatPage'
 import TercihPage from './pages/TercihPage'
 import DevamsizlikPage from './pages/DevamsizlikPage'
 import YardimPage from './pages/YardimPage'
-import SurumGecmisiPage from './pages/SurumGecmisiPage'
+import PortalAccessPage from './pages/mobile/PortalAccessPage'
+import OgrenciPortalPage from './pages/mobile/OgrenciPortalPage'
+import VeliPortalPage from './pages/mobile/VeliPortalPage'
 
 export default function App() {
   return (
@@ -21,6 +23,9 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/portal" element={<PortalAccessPage />} />
+          <Route path="/ogrenci" element={<OgrenciPortalPage />} />
+          <Route path="/veli" element={<VeliPortalPage />} />
           <Route
             element={
               <ProtectedRoute>
@@ -40,7 +45,8 @@ export default function App() {
             <Route path="/mufredat" element={<MufredatPage />} />
             <Route path="/tercih" element={<TercihPage />} />
             <Route path="/yardim" element={<YardimPage />} />
-            <Route path="/surum-gecmisi" element={<SurumGecmisiPage />} />
+            {/* Eski adres korunuyor: Sürüm Geçmişi artık Yardım içinde bir sekme */}
+            <Route path="/surum-gecmisi" element={<Navigate to="/yardim?sekme=surum" replace />} />
           </Route>
           <Route path="*" element={<Navigate to="/panel" replace />} />
         </Routes>

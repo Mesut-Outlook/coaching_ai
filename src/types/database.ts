@@ -28,6 +28,8 @@ export type Student = {
   phone_number: string | null
   parent_phone_number: string | null
   photo_url: string | null
+  student_access_code?: string | null
+  parent_access_code?: string | null
   created_at: string
 }
 

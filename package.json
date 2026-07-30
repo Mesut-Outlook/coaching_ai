@@ -7,11 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "test:types": "tsc -b && tsx scripts/checkSchemaSync.ts",
     "preview": "vite preview",
     "seed": "tsx scripts/seedSupabase.ts",
     "seed:universities": "tsx scripts/seedUniversityRankings.ts",
     "backup": "tsx scripts/backupData.ts",
-    "restore": "tsx scripts/restoreData.ts"
+    "restore": "tsx scripts/restoreData.ts",
+    "generate:access-codes": "tsx scripts/generateAccessCodes.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",

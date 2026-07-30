@@ -552,3 +552,69 @@ Kullanıcı: "deneme sınav sonuçlarını da diğer WhatsApp iletişimlerinde o
 - [x] Test: mesaj kurucusu doğrudan çalıştırılıp çıktısı okundu; tarayıcıda üç yerden de gönderim denendi (`window.open` yakalandı, **gerçek mesaj gönderilmedi**) — "Her İkisine" 2 pencere + iki farklı metin, liste sekmesinden "Öğrenciye" 1 pencere. `tsc`/`build`/lint temiz.
 - [x] Yardım sayfası + Sürüm Geçmişi **v0.19** güncellendi.
 - *Yapan:* **Opus 5**.
+
+---
+
+## YENİ TASARIM VE GÖREV DAĞILIMI — Mobil Öğrenci ve Veli Arayüzü (2026-07-30)
+
+**Kullanıcı isteği:** "bir mobil ogrenci ve veli arayuzu tasarla ve sonnet ve agy ile paylastirabilirsin gerek duyarsan..."
+
+---
+
+### A. FABLE — Tasarım ve Bilgi Mimarısı (Öğrenci & Veli Mobil Deneyimi)
+
+#### 1. Erişim Modeli (Giriş / Kimlik Doğrulama)
+Öğrenci ve velilerin karmaşık e-posta/şifre süreçleriyle uğraşmaması için **Erişim Kodu (PIN / Token)** ve **Direkt Bağlantı (Magic Link)** modeli tasarlanmıştır:
+- Koç paneli üzerinden her öğrenci için otomatik ve tekil 6 haneli `student_access_code` ve `parent_access_code` üretilir.
+- Koç, tek tıkla **"Öğrenci Giriş Linki"** veya **"Veli Giriş Linki"**ni WhatsApp üzerinden paylaşabilir (Örn: `https://netlik-koc-paneli.vercel.app/portal?code=STU123` veya `/ogrenci?code=STU123`).
+
+#### 2. Öğrenci Mobil Portalı (`/ogrenci`) — Ekran Yapısı
+Mobil uyumlu, alt navigasyonlu (Bottom Navigation Bar) modern mobil web uygulaması:
+- 📱 **Bugün (Görev Takibi):**
+  - O gün tamamlanması gereken ders, konu ve hedef soru sayısı kartları.
+  - İnteraktif onay kutusu (Checkbox) ile görevi "Tamamlandı" işaretleme.
+  - Gerçekleşen soru sayısı ve doğru/yanlış girme imkanı.
+- 📝 **Deneme Girişi:**
+  - Hızlı TYT/AYT net hesaplama ve koça iletme formu.
+  - Geçmiş denemelerin net gelişim grafiği.
+- 🎯 **Konu Durumu & Hedefler:**
+  - Zayıf olunan konular, koçun belirlediği çalışma önerileri.
+  - Tercih robotu hedef sıralaması.
+- 📅 **Devamsızlık & İletişim:**
+  - Yaklaşan görüşme saatleri ve devamsızlık durumu.
+
+#### 3. Veli Mobil Portalı (`/veli`) — Ekran Yapısı
+Veliye şeffaf, güven veren ve anlaşılır bir özet sunan mobil deneyim:
+- 📊 **Haftalık Özet Kartı (Öğrenci Nabzı):**
+  - Haftalık program tamamlama oranı (örn: %85 tamamlandı).
+  - Son deneme neti ve genel başarı trendi.
+- ⚠️ **Devamsızlık & Katılım Raporu:**
+  - Yapılan etüt/birebir ders katılım geçmişi ve mazeret detayları.
+- 💬 **Koç Mesajı & İletişim:**
+  - Koçun veliye özel notları.
+  - Tek tıkla "Koç ile WhatsApp Görüşmesi Başlat" butonu.
+
+---
+
+### B. GÖREV DAĞILIMI (Sonnet & Antigravity / AGY)
+
+#### 🛠️ Sonnet — Mobil Frontend & Supabase Entegrasyonu (Sorumlu)
+- [ ] **Veritabanı Şeması:** `students` tablosuna `student_access_code` ve `parent_access_code` sütunlarının eklenmesi (idempotent migration).
+- [ ] **Mobil Alt Navigasyon (Bottom Bar):** `src/components/mobile/MobileBottomNav.tsx` mobil çubuk bileşeninin yazılması.
+- [ ] **Öğrenci Mobil Sayfası:** `src/pages/mobile/OgrenciPortalPage.tsx` — Görev tamamlama, deneme girme, konu durumu.
+- [ ] **Veli Mobil Sayfası:** `src/pages/mobile/VeliPortalPage.tsx` — Özet metrikler, deneme grafikleri, devamsızlık zaman çizelgesi, koç notu.
+- [ ] **Giriş / Portal Kapısı:** `src/pages/mobile/PortalAccessPage.tsx` — PIN kodu ile hızlı giriş ekranı.
+- [ ] **Koç Paneli Entegrasyonu:** `OgrencilerPage.tsx` ve profil kartlarına "Mobil Erişim Kodları" ve "WhatsApp ile Link Gönder" butonlarının eklenmesi.
+
+#### ⚡ Antigravity (AGY) — Yardımcı Script'ler & Mock Kod Üreteci (Sorumlu)
+- [ ] **Erişim Kodu Üretici Script:** Mevcut öğrencilere rastgele tekil 6 haneli erişim kodları oluşturan ve veritabanına işleyen `scripts/generateAccessCodes.ts` script'i.
+- [ ] **Mobil Erişim Test Script'i:** Öğrenci ve Veli token sorgularının RLS izinlerini ve Supabase servis fonksiyonlarını doğrulayan test script'i.
+
+---
+
+### C. Geliştirme ve Dağıtım Adımları
+1. `supabase/schema.sql` ve `src/types/database.ts` güncellemeleri.
+2. Mobil sayfa ve bileşenlerin responsive CSS (`src/styles/global.css`) ile kodlanması.
+3. `App.tsx` içine `/ogrenci`, `/veli` ve `/portal` route'larının eklenmesi.
+4. `npm run build` ile derleme doğrulaması ve canlıya deployment.
+

@@ -65,7 +65,11 @@ a { color: inherit; }
   position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
   padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  /* flex-wrap: dar ekranda uzun başlık + aksiyon butonları aynı satıra sığmayınca
+     butonlar ekran dışına taşıp tıklanamaz hale geliyordu; artık alt satıra iniyor. */
+  flex-wrap: wrap;
 }
+.topbar-right { flex-shrink: 0; }
 .topbar-static { position: static; backdrop-filter: none; background: none; border: none; padding: 0 0 18px; }
 .topbar-title { font-size: 21px; }
 .topbar-sub { color: var(--ink-soft); font-size: 13px; margin-top: 3px; }

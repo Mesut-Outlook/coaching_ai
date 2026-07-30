@@ -1,8 +1,9 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ArrowRight,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
+import VersionHistory from '../components/help/VersionHistory'
 
 interface GuideItem {
   to: string
@@ -89,13 +90,42 @@ const GUIDE: GuideItem[] = [
 ]
 
 export default function YardimPage() {
+  // Sürüm Geçmişi ayrı bir menü öğesiyken sol menü çok uzuyordu; buraya sekme olarak taşındı.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = searchParams.get('sekme') === 'surum' ? 'surum' : 'rehber'
+
   return (
     <section className="screen">
       <PageHeader
-        title="Yardım & Nasıl Kullanılır"
-        subtitle="Netlik'i ilk kez mi kullanıyorsun? Her ekranın ne işe yaradığı ve ne zaman kullanılacağı aşağıda."
+        title="Yardım"
+        subtitle={
+          tab === 'rehber'
+            ? "Netlik'i ilk kez mi kullanıyorsun? Her ekranın ne işe yaradığı ve ne zaman kullanılacağı aşağıda."
+            : "Netlik'e en başından beri ne zaman ne eklendiğinin tam listesi."
+        }
       />
 
+      <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid var(--border)', marginBottom: 22 }}>
+        {([['rehber', 'Nasıl Kullanılır'], ['surum', 'Sürüm Geçmişi']] as const).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setSearchParams(key === 'surum' ? { sekme: 'surum' } : {})}
+            style={{
+              padding: '10px 4px', background: 'none', border: 'none',
+              borderBottom: tab === key ? '2px solid var(--indigo-600)' : '2px solid transparent',
+              color: tab === key ? 'var(--indigo-600)' : 'var(--ink-soft)',
+              fontWeight: tab === key ? 700 : 500, fontSize: 13.5, cursor: 'pointer',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'surum' && <VersionHistory />}
+
+      {tab === 'rehber' && (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}>
         {GUIDE.map(({ to, label, icon: Icon, step, body, usage }) => (
           <Link
@@ -143,6 +173,7 @@ export default function YardimPage() {
           </Link>
         ))}
       </div>
+      )}
     </section>
   )
 }

@@ -348,3 +348,18 @@ drop policy if exists "attendance_records: öğrenci sahibi koç yönetir" on at
 create policy "attendance_records: öğrenci sahibi koç yönetir" on attendance_records
   for all using (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()))
   with check (exists (select 1 from students s where s.id = student_id and s.coach_id = auth.uid()));
+
+-- =========================================================
+-- Mobil Öğrenci & Veli Portalı Erişim Kodları (2026-07-30)
+-- =========================================================
+alter table students add column if not exists student_access_code text;
+alter table students add column if not exists parent_access_code text;
+
+create unique index if not exists students_student_access_code_idx on students(student_access_code) where student_access_code is not null;
+create unique index if not exists students_parent_access_code_idx on students(parent_access_code) where parent_access_code is not null;
+
+-- Genel/Mobil erişim okuma politikası (Erişim koduna sahip olan öğrenci veya veli kendi profil verilerini görüntüleyebilir)
+drop policy if exists "students: erişim kodu olan herkes okur" on students;
+create policy "students: erişim kodu olan herkes okur" on students
+  for select using (student_access_code is not null or parent_access_code is not null);
+

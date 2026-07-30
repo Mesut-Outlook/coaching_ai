@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, Fragment } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, ChevronRight, ChevronDown, Plus, Search, TrendingUp, Award,
-  CheckSquare, MoreVertical, MessageCircle,
+  CheckSquare, MoreVertical, MessageCircle, Smartphone,
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
@@ -10,7 +10,8 @@ import ProgressRing from '../components/charts/ProgressRing'
 import AddStudentModal from '../components/students/AddStudentModal'
 import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import ExamShareButtons from '../components/exams/ExamShareButtons'
-import { formatPhoneForWhatsApp } from '../lib/whatsapp'
+import { formatPhoneForWhatsApp, openWhatsAppChat } from '../lib/whatsapp'
+import { ensureStudentAccessCodes } from '../lib/accessCode'
 import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
 
 type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks'
@@ -600,6 +601,24 @@ export default function OgrencilerPage() {
         
         {/* Navigation Actions to other parts */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={async () => {
+              const codes = await ensureStudentAccessCodes(student)
+              const baseUrl = window.location.origin
+              const link = `${baseUrl}/portal?code=${codes.student_access_code}`
+              const msg = `Merhaba ${student.full_name}, Netlik Mobil Öğrenci Portalı erişim linkin:\n${link}\nErişim Kodun: ${codes.student_access_code}`
+              if (student.phone_number) {
+                openWhatsAppChat(student.phone_number, msg)
+              } else {
+                alert(`Mobil Link:\n${link}\n\nÖğrenci Kodu: ${codes.student_access_code}`)
+              }
+            }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <Smartphone size={14} /> Mobil Link Gönder
+          </button>
           <button
             type="button"
             className="btn btn-ghost btn-sm"

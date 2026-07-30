@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, HelpCircle, History } from 'lucide-react'
+import { LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, HelpCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 const NAV_ITEMS = [
@@ -14,9 +14,9 @@ const NAV_ITEMS = [
   { to: '/tercih', label: 'Tercih Sihirbazı', icon: Compass },
 ]
 
+// Sürüm Geçmişi ayrı bir öğeyken menü uzuyordu; Yardım sayfasında sekme oldu.
 const UTILITY_NAV_ITEMS = [
   { to: '/yardim', label: 'Yardım', icon: HelpCircle },
-  { to: '/surum-gecmisi', label: 'Sürüm Geçmişi', icon: History },
 ]
 
 function initials(name: string) {

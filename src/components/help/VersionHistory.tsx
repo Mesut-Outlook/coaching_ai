@@ -1,6 +1,7 @@
 import { History } from 'lucide-react'
-import PageHeader from '../components/layout/PageHeader'
 
+// Sürüm geçmişi listesi. Yardım sayfasının "Sürüm Geçmişi" sekmesinde gösterilir
+// (eskiden ayrı bir /surum-gecmisi ekranıydı; sol menüyü kısaltmak için Yardım'a taşındı).
 interface VersionEntry {
   version: string
   title: string
@@ -193,55 +194,48 @@ const HISTORY: DateGroup[] = [
   },
 ]
 
-export default function SurumGecmisiPage() {
+export default function VersionHistory() {
   return (
-    <section className="screen">
-      <PageHeader
-        title="Sürüm Geçmişi"
-        subtitle="Netlik'e en başından beri ne zaman ne eklendiğinin tam listesi."
-      />
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 30, maxWidth: 720 }}>
+    {HISTORY.map((group) => (
+      <div key={group.date}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <History size={15} color="var(--ink-faint)" />
+          <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-faint)', textTransform: 'uppercase', letterSpacing: 0.04 }}>
+            {group.date}
+          </h2>
+        </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 30, maxWidth: 720 }}>
-        {HISTORY.map((group) => (
-          <div key={group.date}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <History size={15} color="var(--ink-faint)" />
-              <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-faint)', textTransform: 'uppercase', letterSpacing: 0.04 }}>
-                {group.date}
-              </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, borderLeft: '2px solid var(--border-soft)', paddingLeft: 20 }}>
+          {group.entries.map((entry) => (
+            <div key={entry.version} className="card" style={{ padding: 16, position: 'relative' }}>
+              <div
+                style={{
+                  position: 'absolute', left: -26, top: 20, width: 10, height: 10, borderRadius: '50%',
+                  background: 'var(--indigo-500)', border: '2px solid var(--paper)',
+                }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <span
+                  style={{
+                    fontSize: 11, fontWeight: 800, color: 'var(--indigo-700)', background: 'var(--indigo-050)',
+                    padding: '2px 8px', borderRadius: 20, fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  {entry.version}
+                </span>
+                <h3 style={{ fontSize: 14.5 }}>{entry.title}</h3>
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {entry.items.map((item, idx) => (
+                  <li key={idx} style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.5 }}>{item}</li>
+                ))}
+              </ul>
             </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, borderLeft: '2px solid var(--border-soft)', paddingLeft: 20 }}>
-              {group.entries.map((entry) => (
-                <div key={entry.version} className="card" style={{ padding: 16, position: 'relative' }}>
-                  <div
-                    style={{
-                      position: 'absolute', left: -26, top: 20, width: 10, height: 10, borderRadius: '50%',
-                      background: 'var(--indigo-500)', border: '2px solid var(--paper)',
-                    }}
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <span
-                      style={{
-                        fontSize: 11, fontWeight: 800, color: 'var(--indigo-700)', background: 'var(--indigo-050)',
-                        padding: '2px 8px', borderRadius: 20, fontFamily: 'var(--font-mono)',
-                      }}
-                    >
-                      {entry.version}
-                    </span>
-                    <h3 style={{ fontSize: 14.5 }}>{entry.title}</h3>
-                  </div>
-                  <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {entry.items.map((item, idx) => (
-                      <li key={idx} style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.5 }}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </section>
+    ))}
+  </div>
   )
 }
