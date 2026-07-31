@@ -1,22 +1,35 @@
 # Netlik — YKS Koçluk Paneli
 
-Eda Cangert'in YKS (üniversite giriş sınavı) koçluk merkezi için koç paneli. Öğrenci takibi, deneme sonuçları, konu bazlı yeterlilik ve haftalık çalışma programını tek yerde yönetir.
+Eda Cangert'in YKS (üniversite giriş sınavı) koçluk merkezi için koç paneli. Öğrenci takibi, deneme sonuçları, konu bazlı yeterlilik, haftalık çalışma programı, devamsızlık ve tercih listesi hazırlamayı tek yerde yönetir. Öğrenci ve veli için ayrı bir mobil portalı vardır.
 
 **Canlı:** https://netlik-koc-paneli.vercel.app
 
 ## Ekranlar
 
+### Koç paneli (giriş gerektirir)
+
 | Ekran | Yol | Ne işe yarar |
 |---|---|---|
 | Koç Paneli | `/panel` | Tüm öğrenciler tek bakışta — kritik konu sayısı, son deneme netleri, haftalık tamamlama oranı |
-| Öğrenciler | `/ogrenciler` | Öğrenci listesi/profili — ekleme, düzenleme, arşivleme, profil fotoğrafı, öğrenci + veli telefonu |
-| Deneme Girişi | `/denemeler` | Deneme sonucu girişi (net otomatik hesaplanır) ve tüm deneme geçmişi |
+| Öğrenciler | `/ogrenciler` | Öğrenci listesi/profili — ekleme, düzenleme, arşivleme, profil fotoğrafı, öğrenci + veli telefonu, mobil erişim linki gönderme |
+| Deneme Girişi | `/denemeler` | Deneme sonucu girişi (net otomatik hesaplanır), açılır bölüm tablosu, tüm deneme geçmişi, sonucu WhatsApp ile gönderme |
 | Konu Yeterlilik Haritası | `/konular` | Konu bazlı durum takibi, konu testi girişi, konu/ders ortalaması, "Koç Kararı" onayı |
 | Haftalık Program | `/program` | Gün gün görev planlama (sürükle-bırak), tek sayfa yazdırma/PDF, WhatsApp ile gönderme |
+| Devamsızlık | `/devamsizlik` | Devamsızlık kaydı (oturum türü, mazeret), öğrenci özeti, "Takip gerekli" rozeti, WhatsApp bildirimi |
 | Haftalık Görüşme | `/raporlar` | Haftalık birebir görüşme özeti ve gelecek hafta planlaması |
 | Müfredat | `/mufredat` | Ders/konu listesi yönetimi (TYT + AYT), yıldan yıla değişebilen müfredat için |
-| Yardım | `/yardim` | Uygulama içi kullanım rehberi |
-| Sürüm Geçmişi | `/surum-gecmisi` | v0.1'den bugüne tam değişiklik günlüğü |
+| Tercih Sihirbazı | `/tercih` | YÖK Atlas verisiyle (~66.400 program) bölüm arama, 11 filtre, ulaşılabilirlik durumu |
+| Yardım | `/yardim` | Uygulama içi kullanım rehberi + **Sürüm Geçmişi** sekmesi (`?sekme=surum`) |
+
+### Mobil portal (giriş yok, erişim koduyla)
+
+| Ekran | Yol | Kim |
+|---|---|---|
+| Portal girişi | `/portal` | Erişim kodu girilir. `/portal?code=STU-XXXXXX` linkiyle otomatik giriş yapılır. |
+| Öğrenci portalı | `/ogrenci` | Haftalık programı gün gün görür, görevi tamamlandı işaretler, bölüm bazlı deneme sonucu girer. |
+| Veli portalı | `/veli` | Salt-okunur özet: tamamlama oranı, son deneme neti, deneme geçmişi, devamsızlık. |
+
+Erişim kodları koç panelinden üretilir (öğrenci profilindeki "Öğrenci Linki" / "Veli Linki" butonları) ve WhatsApp ile gönderilir. Öğrenci/veli bir Supabase kullanıcısı değildir — kod, sunucudaki `SECURITY DEFINER` fonksiyonlarına gönderilen bir bearer token gibi çalışır (`supabase/schema.sql` içindeki `portal_*` fonksiyonları). Portal tarafında tablolara doğrudan sorgu atılmaz.
 
 ## Teknoloji
 
@@ -36,22 +49,35 @@ Supabase tarafında yapılması gerekenler (bir kere):
 3. Project Settings → API'den URL ve anon key'i `.env.local`'a yapıştır.
 4. Authentication → Users'dan kendine bir koç hesabı aç, `profiles` tablosuna karşılık gelen satırı ekle.
 
+> Şema her değiştiğinde `supabase/schema.sql` yeniden çalıştırılmalıdır — uygulama içinden DDL çalıştırılmaz.
+
 ## Script'ler
 
 | Komut | Ne yapar |
 |---|---|
 | `npm run dev` | Geliştirme sunucusu |
-| `npm run build` | Prodüksiyon derlemesi (`tsc -b && vite build`) |
+| `npm run build` | Prodüksiyon derlemesi (`tsc -b && vite build`). `src/types/database.test-d.ts` derleme-zamanı tip testleri de burada koşar. |
+| `npm run test:types` | `src/types/database.ts` ile `supabase/schema.sql` arasındaki kaymayı **statik** denetler (DB'ye bağlanmaz). Şemaya ya da tip dosyasına dokunan her değişiklikten sonra çalıştır. |
 | `npm run lint` | Oxlint |
 | `npm run preview` | Derlenmiş çıktıyı yerelde önizle |
-| `npm run seed` | ⚠️ **Dikkatli kullan** — `subjects`/`topics` tablosunu tamamen silip `src/tytSubjects.json`'daki listeyle yeniden doldurur (cascade ile bağlı öğrenci verisini de siler). `SUPABASE_SERVICE_ROLE_KEY` gerektirir. |
+| `npm run backup` | Tüm öğrenci verisini + profil fotoğraflarını `backups/YYYY-MM-DD/`'ye indirir. `SUPABASE_SERVICE_ROLE_KEY` gerektirir. |
+| `npm run restore` | Yedeği geri yükler (FK bağımlılık sırasına göre). |
+| `npm run generate:access-codes` | Kodu olmayan öğrencilere mobil portal erişim kodu üretir. |
+| `npm run seed:universities` | YÖK Atlas verisini `university_rankings` tablosuna yükler (`src/data/universityRankings.json` gerekir). |
+| `npm run seed` | ⚠️ **Dikkatli kullan** — `subjects`/`topics` tablosunu tamamen silip `src/tytSubjects.json`'daki **eski** listeyle yeniden doldurur (cascade ile bağlı öğrenci verisini de siler). Çalıştırmadan önce `coordination.md`'ye bak. |
+
+## Yedekleme
+
+`npm run backup` 12 tablodan 11'ini (`university_rankings` hariç — script'ten yeniden üretilebilen referans veri) ve `student-photos` bucket'ını tarih damgalı klasöre indirir. `.github/workflows/backup.yml` her gece otomatik çalışır.
+
+⚠️ **Yedekler gerçek öğrenci ve veli adı/telefonu içerir.** `backups/` klasörü `.gitignore`'dadır; otomatik yedeğin gönderildiği depo **private** olmalıdır. Gerekli GitHub secret'ları: `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, (opsiyonel) `BACKUP_REPO_TOKEN` + `BACKUP_REPO_URL`.
 
 ## Deploy
 
-Vercel'e bağlı (proje: `netlik-koc-paneli`), `vercel --prod` ile deploy edilir. Production ortamına sadece client-safe değişkenler eklenmeli: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — `SUPABASE_SERVICE_ROLE_KEY` asla.
+Vercel'e bağlı (proje: `netlik-koc-paneli`). **`main`'e push edilince otomatik deploy olur**; elle `vercel --prod` de çalışır. Production ortamına sadece client-safe değişkenler eklenmeli: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — `SUPABASE_SERVICE_ROLE_KEY` asla.
 
 ## Proje geçmişi ve koordinasyon
 
-- **`coordination.md`** — kim ne üzerinde çalışıyor, iş dağılımı (Sonnet/Fable/Antigravity), aktif ve tamamlanan görevler.
-- **`CLAUDE.md`** — proje belleği, mimari notlar, bilinen tuzaklar.
-- **`/surum-gecmisi`** — uygulama içinden, tarihli tam değişiklik günlüğü.
+- **`coordination.md`** — kim ne üzerinde çalışıyor, iş dağılımı (Opus/Sonnet/Fable/Antigravity), aktif ve tamamlanan görevler, mimari kararlar ve bulunan tuzaklar.
+- **`CLAUDE.md`** — proje belleği: mimari özet, teslimden önce çalıştırılacaklar, bilinen tuzaklar.
+- **`/yardim?sekme=surum`** — uygulama içinden, tarihli tam değişiklik günlüğü.

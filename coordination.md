@@ -6,16 +6,48 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 | Kim | Kapsam |
 |---|---|
 | **Fable** | Planlama ve tasarım — ürün kararları, UX akışları, ekran/komponent tasarımı. Kod yazmaz. |
+| **Opus** | Mimari kararlar, koordinasyon, veri pipeline'ları, güvenlik/refactoring, uçtan uca doğrulama. |
 | **Sonnet** | Tüm yazılım işleri — frontend, backend, veri modeli, entegrasyon, test, deploy. |
 | **Antigravity (agy)** | Ana koddan bağımsız, izole çalışabilecek küçük modüller (script'ler, tekil entegrasyonlar) — ana uygulama akışına dokunmayan işler. |
+
+---
+
+## 📍 Güncel Durum (2026-07-31)
+
+**Bu dosya 800+ satır ve kronolojik. Aşağısı geçmiş kaydıdır — güncel durum burada.**
+
+Uygulama **canlıda ve kullanımda**: https://netlik-koc-paneli.vercel.app
+`main`'e push → Vercel otomatik deploy. Son sürüm **v0.21**.
+
+| Alan | Durum |
+|---|---|
+| Koç paneli (10 ekran) | ✅ Çalışıyor |
+| Devamsızlık takibi | ✅ Çalışıyor |
+| Tercih Sihirbazı | ✅ Çalışıyor (~66.400 program, 2025 verisi) |
+| Mobil öğrenci & veli portalı | ✅ Çalışıyor (v0.20'de düzeltildi, v0.21'de renklendirildi) |
+| Yedekleme | ✅ `npm run backup` + her gece GitHub Actions |
+| Şema ↔ tip denetimi | ✅ `npm run test:types` (12 tablo / 104 sütun) |
+
+### Açık işler / bilinen eksikler
+- **Veliye özel koç notu** — Fable tasarımında vardı, yapılmadı: `students` tablosunda böyle bir alan yok, ayrı bir iş.
+- **Veli portalında "Koç ile WhatsApp"** — yapılmadı: koçun telefon numarası veritabanında tutulmuyor (`profiles` tablosunda alan yok).
+- **YKS-2026 sıralamaları** açıklanınca Tercih Sihirbazı'nda birincil yıl 2025 → 2026 yapılmalı.
+- **Tercih listesini öğrenciye kaydetme** (DB'de saklama) — opsiyonel, yapılmadı.
+- **Müfredat "Sistem Entegrasyon Promptu"** (konu bağımlılık matrisi, 40 haftalık sarmal program) — kullanıcı onayı bekliyor, büyük ayrı özellik.
+- **GitHub Actions yedeği** secret'lar eklenmezse her gece başarısız olur; repo private değilse artifact'lar öğrenci PII'si sızdırır.
+
+### Yeni iş alan herkesin bilmesi gerekenler
+`CLAUDE.md` → "Teslimden önce çalıştırılacaklar" ve "Bilinmesi gereken tuzaklar" bölümleri.
+Özellikle: şemayı **kullanıcı** uygular; mobil portalda `supabase.from()` kullanılmaz;
+`database.ts` satır tipleri `type` olmalı; `.select()` 1000 satırda kesilir.
 
 ---
 
 ## Fable — Planlama & Tasarım
 - [x] Koç paneli ilk tasarım turu — 5 ekran (Panel, Öğrenci Profili, Konu Yeterlilik Haritası, Deneme Girişi, Haftalık Görüşme).
 - [x] Konu takip derinleştirme — resmi 2022 TYT konu listesinden (141 konu, 10 ders) gerçek taksonomi işlendi; konu bazlı test+deneme birleşik geçmişi ve "Koç Kararı" onay mekanizması (otomatik durum önerisi + koç override) eklendi; 6. ekran "Haftalık Program" (gün gün konu planlama, ekle/çıkar + sürükle-bırak taşıma) eklendi. Güncel artifact: https://claude.ai/code/artifact/04e9bd11-0c63-4c43-b126-6fe457d037e8
-- [ ] Mobil (öğrenci tarafı) akış tasarımı — kapsam henüz tanımlanmadı
-- [ ] Bilgi mimarisi: öğrenci verisi, deneme verisi, konu verisi arasındaki ilişkiler (ürün/veri modeli taslağı, kod değil)
+- [x] Mobil (öğrenci + veli) akış tasarımı — 2026-07-30'da yapıldı, bkz. aşağıdaki "A. FABLE — Tasarım ve Bilgi Mimarisi" bölümü. Erişim kodu modeli, öğrenci ekranları ve veli ekranları tanımlandı; Opus/Sonnet tarafından uygulandı (v0.20-v0.21).
+- [x] Bilgi mimarisi — pratikte `supabase/schema.sql` + `src/types/database.ts` ikilisiyle çözüldü (12 tablo). Ayrı bir taslak dokümana gerek kalmadı; `npm run test:types` ikisinin eşleştiğini denetliyor.
 
 ## Sonnet — Yazılım
 - [x] Proje iskeleti kurulumu (Vite + React + TS ve Git entegrasyonu tamamlandı)
@@ -116,18 +148,18 @@ Kullanıcı isteği: "öğrenci silme güncelleme ya da arşivleme gibi özellik
 
 ## Antigravity İş Sıralaması & Koordinasyon Planı (Fable & Sonnet Onayı Bekleniyor)
 
-### 1. Adım: Web Arayüzü Testi (Dev Sunucu & Veri Doğrulama) — *Şu anki Aşama*
-- [/] Geliştirme sunucusunun (`npm run dev`) başlatılması ve arayüzde mock verilerin (öğrenci profilleri, denemeler, konu durumları) doğru göründüğünün doğrulanması. (Sunucu http://localhost:5175 adresinde aktif, görsel doğrulama kullanıcıda)
+### 1. Adım: Web Arayüzü Testi (Dev Sunucu & Veri Doğrulama) [Tamamlandı]
+- [x] Geliştirme sunucusu ve arayüz doğrulaması tamamlandı; uygulama canlıya alındı ve kullanıcı tarafından kullanılıyor.
 - [x] Supabase RLS kurallarının ve sorguların sorunsuz çalıştığının kontrol edilmesi. (Tüm tablolar için CRUD + RLS entegrasyon test script'i yazıldı ve başarıyla doğrulandı: `scripts/testDbCRUD.ts`)
 - *Sorumlu:* **Antigravity** (Sonnet izleme modunda).
 
 ### 2. Adım: Mobil (Öğrenci Tarafı) Akış Tasarımı & Planlaması
-- [ ] Mobil tarafın kapsamı (öğrenci arayüzü, günlük ödev/program takibi, deneme neti girme vb.) Fable tarafından tasarlanacak ve bilgi mimarisi oluşturulacak.
+- [x] Tamamlandı (2026-07-30) — bkz. aşağıdaki "A. FABLE" bölümü.
 - *Önemli:* Fable bu tasarımları tamamlayıp koordinasyon dosyasında onaylamadan önce kodlama aşamasına geçilmeyecek (Çakışma önleme).
 - *Sorumlu:* **Fable** (Tasarım/Planlama), **Antigravity** (İzin isteme/Takip).
 
 ### 3. Adım: Mobil Arayüz Kodlaması ve Supabase Entegrasyonu
-- [ ] Fable'ın onayladığı taslaklara göre mobil arayüz bileşenlerinin yazılması ve Supabase şeması ile entegre edilmesi.
+- [x] Tamamlandı (2026-07-30/31) — ilk sürüm `ee92b9e`, çalışır+güvenli hale getirilmesi `7445386`, rol renkleri `a3c2e52`.
 - *Sorumlu:* **Sonnet** & **Antigravity** (Paralel yazılım).
 
 ---
@@ -163,6 +195,7 @@ Kullanıcı isteği: öğrenci sayfasında öğrenci telefonu yanında bir de ve
 ## Sonnet — Yardım güncellemesi + Sürüm Geçmişi ekranı (2026-07-19) [Tamamlandı & Deploy Edildi]
 - [x] `YardimPage.tsx`: Öğrenciler/Konu Yeterlilik Haritası/Haftalık Program kartları son özellikleri (düzenleme/arşivleme/fotoğraf/veli telefonu, konu testi girişi+ortalama, yazdırma, WhatsApp gönderme, AYT dersleri) yansıtacak şekilde güncellendi.
 - [x] Yeni ekran: `src/pages/SurumGecmisiPage.tsx`, route `/surum-gecmisi`, Sidebar'da "Sürüm Geçmişi" (History ikonu) — git log + coordination.md'den derlenen, tarih ve versiyon numarasıyla (v0.1 → v0.14) gruplanmış tam değişiklik günlüğü.
+  > **⚠️ Güncel değil:** bu ekran sonradan **Yardım sayfasının bir sekmesine taşındı**. Dosya artık `src/components/help/VersionHistory.tsx`; yol `/yardim?sekme=surum` (`/surum-gecmisi` oraya yönlendiriyor), Sidebar'daki ayrı menü öğesi kaldırıldı. Aşağıdaki eski kayıtlarda geçen `SurumGecmisiPage.tsx` adını bu dosya olarak okuyun.
 - [x] Build temiz, tarayıcıda doğrulandı, canlıya deploy edildi.
 
 ---
@@ -486,7 +519,7 @@ Butonlar: **İptal** · **Kaydet** · **Kaydet ve Bildir**.
 ### Durum
 - [x] Tasarım — **Opus 5** (2026-07-29).
 - [x] Uygulama — **Sonnet 5** (2026-07-29). Tasarımın A–J maddeleri eksiksiz uygulandı.
-- [ ] **Kullanıcı eylemi:** `supabase/schema.sql` Supabase SQL Editor'de tekrar çalıştırılacak (idempotent, güvenli — iki kez üst üste çalıştırılabilir doğrulandı) → `attendance_records` tablosu + RLS oluşsun. Bu adım tamamlanmadan `/devamsizlik` ekranı "Devamsızlık verileri yüklenemedi" hatası gösterir (uygulama çökmüyor, sadece tablo yok diye net bir hata basıyor).
+- [x] **Kullanıcı eylemi tamamlandı:** `supabase/schema.sql` çalıştırıldı → `attendance_records` tablosu + RLS oluştu, canlıda doğrulandı. Bu adım tamamlanmadan `/devamsizlik` ekranı "Devamsızlık verileri yüklenemedi" hatası gösterir (uygulama çökmüyor, sadece tablo yok diye net bir hata basıyor).
 
 **Teslim notu (Sonnet 5, 2026-07-29):**
 - **Şema:** `supabase/schema.sql` sonuna `attendance_records` tablosu + index'ler + RLS eklendi (students deseniyle birebir: `for all` + `exists(...s.coach_id = auth.uid())`; DELETE serbest, yaprak tablo). `unique(student_id, absence_date, session_type)` ile aynı gün/oturum çift kaydı engelleniyor.
@@ -599,16 +632,16 @@ Veliye şeffaf, güven veren ve anlaşılır bir özet sunan mobil deneyim:
 ### B. GÖREV DAĞILIMI (Sonnet & Antigravity / AGY)
 
 #### 🛠️ Sonnet — Mobil Frontend & Supabase Entegrasyonu (Sorumlu)
-- [ ] **Veritabanı Şeması:** `students` tablosuna `student_access_code` ve `parent_access_code` sütunlarının eklenmesi (idempotent migration).
-- [ ] **Mobil Alt Navigasyon (Bottom Bar):** `src/components/mobile/MobileBottomNav.tsx` mobil çubuk bileşeninin yazılması.
-- [ ] **Öğrenci Mobil Sayfası:** `src/pages/mobile/OgrenciPortalPage.tsx` — Görev tamamlama, deneme girme, konu durumu.
-- [ ] **Veli Mobil Sayfası:** `src/pages/mobile/VeliPortalPage.tsx` — Özet metrikler, deneme grafikleri, devamsızlık zaman çizelgesi, koç notu.
-- [ ] **Giriş / Portal Kapısı:** `src/pages/mobile/PortalAccessPage.tsx` — PIN kodu ile hızlı giriş ekranı.
-- [ ] **Koç Paneli Entegrasyonu:** `OgrencilerPage.tsx` ve profil kartlarına "Mobil Erişim Kodları" ve "WhatsApp ile Link Gönder" butonlarının eklenmesi.
+- [x] **Veritabanı Şeması:** `student_access_code` / `parent_access_code` sütunları + tekil indeksler eklendi. (Ayrıca portal veri katmanı için 5 `SECURITY DEFINER` RPC — bkz. yukarıdaki bölüm.)
+- [x] **Mobil Alt Navigasyon:** `src/components/mobile/MobileBottomNav.tsx` — role göre etiket, ikon ve renk değiştiriyor.
+- [x] **Öğrenci Mobil Sayfası:** `src/pages/mobile/OgrenciPortalPage.tsx` — gün gün program, görev tamamlama, bölüm bazlı deneme girişi, hedefler.
+- [x] **Veli Mobil Sayfası:** `src/pages/mobile/VeliPortalPage.tsx` — Özet / Denemeler / Devamsızlık sekmeleri. ⚠️ *Koç notu yapılmadı* — `students` tablosunda veliye özel not alanı yok, ayrı bir iş.
+- [x] **Giriş / Portal Kapısı:** `src/pages/mobile/PortalAccessPage.tsx` — kod girişi + `?code=` ile otomatik giriş.
+- [x] **Koç Paneli Entegrasyonu:** `OgrencilerPage.tsx` profilinde "Öğrenci Linki" ve "Veli Linki" butonları — kodu üretip WhatsApp mesajını hazırlıyor, numara yoksa linki ekranda gösteriyor.
 
 #### ⚡ Antigravity (AGY) — Yardımcı Script'ler & Mock Kod Üreteci (Sorumlu)
-- [ ] **Erişim Kodu Üretici Script:** Mevcut öğrencilere rastgele tekil 6 haneli erişim kodları oluşturan ve veritabanına işleyen `scripts/generateAccessCodes.ts` script'i.
-- [ ] **Mobil Erişim Test Script'i:** Öğrenci ve Veli token sorgularının RLS izinlerini ve Supabase servis fonksiyonlarını doğrulayan test script'i.
+- [x] **Erişim Kodu Üretici Script:** `scripts/generateAccessCodes.ts` + `npm run generate:access-codes`. ⚠️ Script kendi kopyasını taşıyordu ve 4 karakterde kalmıştı; üreteç `src/lib/accessCodeGenerator.ts`'e çıkarıldı, iki taraf da oradan alıyor (2026-07-31, Opus).
+- [x] **Mobil Erişim Testi:** kalıcı script yerine iki turda uçtan uca doğrulama yapıldı — RPC bloğu Docker'da Postgres 16'ya yüklenip 15 senaryo, canlı Supabase'e karşı anon key ile 22 senaryo (sızıntı + rol + yazma yetkisi). Sonuçlar yukarıdaki bölümlerde.
 
 ---
 
