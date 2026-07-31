@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react'
 import MobileBottomNav from '../../components/mobile/MobileBottomNav'
 import ExamSectionsTable from '../../components/exams/ExamSectionsTable'
 import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../../lib/attendance'
+import { PORTAL_THEME, roleBadgeStyle, roleTopBarStyle } from '../../lib/portalTheme'
 import type { AbsenceStatus, ExcuseType, SessionType } from '../../types/database'
 import {
   clearPortalSession,
@@ -83,6 +84,7 @@ export default function VeliPortalPage() {
 
   if (!data) return null
 
+  const theme = PORTAL_THEME.veli
   const { student, tasks, exams, attendance, week_start, is_current_week } = data
   const completedCount = tasks.filter((t) => t.completed).length
   const totalCount = tasks.length
@@ -92,40 +94,28 @@ export default function VeliPortalPage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: 90 }}>
-      <header
-        style={{
-          backgroundColor: '#ffffff',
-          padding: '16px 20px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 12,
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            Öğrenci: {student.full_name}
-          </h2>
-          <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>Veli Bilgilendirme Portalı</div>
-        </div>
-        <div
+      <div style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={roleTopBarStyle(theme)} />
+        <header
           style={{
-            padding: '6px 12px',
-            borderRadius: 20,
-            backgroundColor: '#ecfdf5',
-            color: '#059669',
-            fontWeight: 700,
-            fontSize: 12,
-            flexShrink: 0,
+            backgroundColor: '#ffffff',
+            padding: '14px 20px',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
           }}
         >
-          Veli
-        </div>
-      </header>
+          <div style={{ minWidth: 0 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {student.full_name}
+            </h2>
+            <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>Veli Bilgilendirme Portalı</div>
+          </div>
+          <div style={roleBadgeStyle(theme)}>{theme.label}</div>
+        </header>
+      </div>
 
       <main style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
         {activeTab === 'tasks' && (
@@ -134,7 +124,7 @@ export default function VeliPortalPage() {
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase' }}>
                 Haftalık Çalışma İlerlemesi
               </div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--indigo-600)', marginTop: 4 }}>
+              <div style={{ fontSize: 28, fontWeight: 800, color: theme.accentStrong, marginTop: 4 }}>
                 %{completionPct}
               </div>
               <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
@@ -158,7 +148,7 @@ export default function VeliPortalPage() {
                     {latestExam.exam_type}
                     {latestExam.publisher ? ` · ${latestExam.publisher}` : ''} · {formatDateTr(latestExam.exam_date)}
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--indigo-600)', marginTop: 6 }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: theme.accentStrong, marginTop: 6 }}>
                     {Math.round(Number(latestExam.total_net) * 100) / 100} <span style={{ fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>net</span>
                   </div>
                 </div>
@@ -190,7 +180,7 @@ export default function VeliPortalPage() {
                   {student.target_program}
                 </div>
                 {student.target_ranking && (
-                  <div style={{ fontSize: 13, color: 'var(--indigo-600)', fontWeight: 700, marginTop: 4 }}>
+                  <div style={{ fontSize: 13, color: theme.accentStrong, fontWeight: 700, marginTop: 4 }}>
                     Hedef Sıralama: #{student.target_ranking}
                   </div>
                 )}
@@ -235,7 +225,7 @@ export default function VeliPortalPage() {
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--indigo-600)', fontVariantNumeric: 'tabular-nums' }}>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: theme.accentStrong, fontVariantNumeric: 'tabular-nums' }}>
                           {Math.round(Number(e.total_net) * 100) / 100}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>net</div>

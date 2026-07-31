@@ -1,4 +1,5 @@
 import { CalendarDays, CheckSquare, FileText, LogOut, Target, UserX } from 'lucide-react'
+import { PORTAL_THEME } from '../../lib/portalTheme'
 
 interface MobileBottomNavProps {
   activeTab: 'tasks' | 'exams' | 'goals' | 'attendance'
@@ -13,6 +14,8 @@ export default function MobileBottomNav({
   role,
   onLogout,
 }: MobileBottomNavProps) {
+  // Aktif sekme rengi role göre değişiyor — öğrenci indigo, veli teal.
+  const accent = PORTAL_THEME[role].accentStrong
   return (
     <nav
       style={{
@@ -40,7 +43,7 @@ export default function MobileBottomNav({
           gap: 3,
           background: 'none',
           border: 'none',
-          color: activeTab === 'tasks' ? 'var(--indigo-600)' : 'var(--ink-soft)',
+          color: activeTab === 'tasks' ? accent : 'var(--ink-soft)',
           fontSize: 11,
           fontWeight: activeTab === 'tasks' ? 700 : 500,
           cursor: 'pointer',
@@ -61,7 +64,7 @@ export default function MobileBottomNav({
           gap: 3,
           background: 'none',
           border: 'none',
-          color: activeTab === 'exams' ? 'var(--indigo-600)' : 'var(--ink-soft)',
+          color: activeTab === 'exams' ? accent : 'var(--ink-soft)',
           fontSize: 11,
           fontWeight: activeTab === 'exams' ? 700 : 500,
           cursor: 'pointer',
@@ -82,7 +85,7 @@ export default function MobileBottomNav({
           gap: 3,
           background: 'none',
           border: 'none',
-          color: activeTab === 'goals' ? 'var(--indigo-600)' : 'var(--ink-soft)',
+          color: activeTab === 'goals' ? accent : 'var(--ink-soft)',
           fontSize: 11,
           fontWeight: activeTab === 'goals' ? 700 : 500,
           cursor: 'pointer',

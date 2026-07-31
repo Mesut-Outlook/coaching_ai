@@ -4,6 +4,7 @@ import { CheckCircle2, Circle, Plus, AlertTriangle } from 'lucide-react'
 import MobileBottomNav from '../../components/mobile/MobileBottomNav'
 import ExamSectionsTable from '../../components/exams/ExamSectionsTable'
 import { getExamSections } from '../../lib/examSections'
+import { PORTAL_THEME, roleBadgeStyle, roleTopBarStyle } from '../../lib/portalTheme'
 import {
   clearPortalSession,
   getPortalSession,
@@ -124,6 +125,7 @@ export default function OgrenciPortalPage() {
 
   if (!data) return null
 
+  const theme = PORTAL_THEME.ogrenci
   const { student, tasks, exams, week_start, is_current_week } = data
   const completedCount = tasks.filter((t) => t.completed).length
   const totalCount = tasks.length
@@ -141,42 +143,30 @@ export default function OgrenciPortalPage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: 90 }}>
-      <header
-        style={{
-          backgroundColor: '#ffffff',
-          padding: '16px 20px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 12,
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            👋 {student.full_name}
-          </h2>
-          <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
-            {student.grade} · {student.track}
-          </div>
-        </div>
-        <div
+      <div style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={roleTopBarStyle(theme)} />
+        <header
           style={{
-            padding: '6px 12px',
-            borderRadius: 20,
-            backgroundColor: 'var(--indigo-50)',
-            color: 'var(--indigo-600)',
-            fontWeight: 700,
-            fontSize: 12,
-            flexShrink: 0,
+            backgroundColor: '#ffffff',
+            padding: '14px 20px',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
           }}
         >
-          Öğrenci
-        </div>
-      </header>
+          <div style={{ minWidth: 0 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              👋 {student.full_name}
+            </h2>
+            <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
+              {student.grade} · {student.track}
+            </div>
+          </div>
+          <div style={roleBadgeStyle(theme)}>{theme.label}</div>
+        </header>
+      </div>
 
       {actionError && (
         <div style={{ margin: '12px 20px 0 20px', padding: 12, borderRadius: 10, backgroundColor: '#fef2f2', color: '#dc2626', fontSize: 13 }}>
@@ -191,7 +181,7 @@ export default function OgrenciPortalPage() {
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }}>
               Haftalık Program İlerlemesi
             </span>
-            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--indigo-600)' }}>%{completionPct}</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: theme.accentStrong }}>%{completionPct}</span>
           </div>
 
           <div style={{ width: '100%', height: 10, borderRadius: 5, backgroundColor: '#e2e8f0', overflow: 'hidden' }}>
@@ -199,7 +189,7 @@ export default function OgrenciPortalPage() {
               style={{
                 width: `${completionPct}%`,
                 height: '100%',
-                backgroundColor: 'var(--indigo-600)',
+                backgroundColor: theme.accent,
                 transition: 'width 0.3s ease',
               }}
             />
@@ -245,7 +235,7 @@ export default function OgrenciPortalPage() {
                           marginBottom: 8,
                           fontSize: 13,
                           fontWeight: 700,
-                          color: isToday ? 'var(--indigo-600)' : 'var(--ink-soft)',
+                          color: isToday ? theme.accentStrong : 'var(--ink-soft)',
                         }}
                       >
                         <span>{DAY_NAMES[dayIndex]}</span>
@@ -255,7 +245,7 @@ export default function OgrenciPortalPage() {
                           </span>
                         )}
                         {isToday && (
-                          <span style={{ padding: '2px 8px', borderRadius: 12, backgroundColor: 'var(--indigo-50)', fontSize: 11 }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 12, backgroundColor: theme.tint, color: theme.tintText, fontSize: 11 }}>
                             Bugün
                           </span>
                         )}
@@ -271,7 +261,7 @@ export default function OgrenciPortalPage() {
                               backgroundColor: '#ffffff',
                               borderRadius: 14,
                               padding: '14px 16px',
-                              border: isToday ? '1px solid var(--indigo-200, #c7d2fe)' : '1px solid var(--border)',
+                              border: isToday ? `1px solid ${theme.accent}` : '1px solid var(--border)',
                               display: 'flex',
                               alignItems: 'center',
                               gap: 14,
@@ -301,7 +291,7 @@ export default function OgrenciPortalPage() {
                               <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                 {t.subject_name && <span>{t.subject_name}</span>}
                                 {t.question_count > 0 && <span>Hedef: {t.question_count} soru</span>}
-                                {t.is_exam && <span style={{ color: 'var(--indigo-600)', fontWeight: 700 }}>Deneme</span>}
+                                {t.is_exam && <span style={{ color: theme.accentStrong, fontWeight: 700 }}>Deneme</span>}
                               </div>
                             </div>
                           </button>
@@ -363,7 +353,7 @@ export default function OgrenciPortalPage() {
                           </div>
                         </div>
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--indigo-600)', fontVariantNumeric: 'tabular-nums' }}>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: theme.accentStrong, fontVariantNumeric: 'tabular-nums' }}>
                             {Math.round(Number(e.total_net) * 100) / 100}
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>net</div>
@@ -391,7 +381,7 @@ export default function OgrenciPortalPage() {
                 {student.target_program || 'Henüz hedef belirtilmedi'}
               </div>
               {student.target_ranking && (
-                <div style={{ fontSize: 13, color: 'var(--indigo-600)', fontWeight: 700, marginTop: 4 }}>
+                <div style={{ fontSize: 13, color: theme.accentStrong, fontWeight: 700, marginTop: 4 }}>
                   Hedef Sıralama: #{student.target_ranking}
                 </div>
               )}
@@ -599,9 +589,9 @@ function AddExamModal({
             })}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', backgroundColor: 'var(--indigo-50)', borderRadius: 10, marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', backgroundColor: PORTAL_THEME.ogrenci.tint, borderRadius: 10, marginBottom: 14 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>Toplam Net</span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--indigo-600)' }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: PORTAL_THEME.ogrenci.accentStrong }}>
               {Math.round(totalNet * 100) / 100}
             </span>
           </div>

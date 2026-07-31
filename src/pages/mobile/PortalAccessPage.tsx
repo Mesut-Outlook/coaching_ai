@@ -64,7 +64,7 @@ export default function PortalAccessPage() {
             width: 64,
             height: 64,
             borderRadius: 20,
-            backgroundColor: 'var(--indigo-50)',
+            backgroundColor: 'var(--indigo-050)',
             color: 'var(--indigo-600)',
             display: 'flex',
             alignItems: 'center',

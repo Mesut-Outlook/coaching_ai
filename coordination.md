@@ -766,3 +766,22 @@ Bu iki araç `ee92b9e` commit'iyle geldi ama hiçbir yere kaydedilmemişti; bura
    - Dönem dönem kendi bilgisayarınızda yedek almak için terminalde tek komut: `npm run backup`.
 
 
+
+### Portal rol kimliği — görünürlük + renk ayrımı (kullanıcı isteği, 2026-07-31)
+Kullanıcı: "öğrenci ve veli rol seçimleri biraz daha görünür olabilir mi, bir de biraz renkleri de
+farklı olabilir... yine sade ve profesyonel."
+- **Kök sorun bulundu:** rol rozeti ve "Bugün" etiketi `var(--indigo-50)` kullanıyordu ama
+  tokens.css'teki gerçek değişken **`--indigo-050`** — yani arka plan hiç basılmıyordu, rozet
+  zeminsiz/sönük görünüyordu. 4 kullanımın hepsi düzeltildi.
+- Yeni `src/lib/portalTheme.ts`: rol → renk eşlemesi tek yerde. Öğrenci **indigo**, veli **teal**.
+  Dolu rozet (beyaz metin) + sayfanın üstünde 4px renk şeridi + aktif alt sekme, yüzde/net
+  vurguları ve ilerleme çubuğu rol rengine bağlandı.
+- ⚠️ **Neden `var(--token)` değil sabit hex:** portal sayfaları zemini `#f8fafc`, kartları
+  `#ffffff` olarak SABİT açık renkte çiziyor; token'lar karanlık temada dönüyor ve beyaz kartın
+  üstüne açık renk metin gelirdi. Değerler tokens.css'in açık tema paletinden birebir alındı.
+- ⚠️ **`accent` / `accentStrong` ayrımı kontrast içindir:** teal `#1D8FA6` üzerine beyaz metin
+  3.8:1 veriyor, 12px kalın rozet için AA eşiği 4.5:1 — kalıyordu. Bu yüzden **metin ve rozet
+  dolgusu daima `accentStrong`** (teal `#0F6478` → 6.8:1, indigo `#342E86` → 10.4:1);
+  `accent` yalnız metin olmayan alanlarda (şerit, çubuk, çerçeve). Yeni renk eklerken bu ayrımı koru.
+- Sürüm Geçmişi'ne **v0.21** eklendi. `tsc`/`build` temiz, iki portal da tarayıcıda doğrulandı.
+- *Yapan:* **Opus 5**.

@@ -18,6 +18,16 @@ const HISTORY: DateGroup[] = [
     date: '31 Temmuz 2026',
     entries: [
       {
+        version: 'v0.21',
+        title: 'Portalda öğrenci/veli rolü artık ilk bakışta belli',
+        items: [
+          'Rol rozeti (Öğrenci / Veli) soluk bir etiket olmaktan çıkıp dolu renkli bir rozete dönüştü; sayfanın en üstüne de ince bir renk şeridi eklendi — hangi portalda olduğun sekmeye bakmadan anlaşılıyor.',
+          'İki portal artık farklı renkte: öğrenci tarafı indigo (uygulamanın ana rengi), veli tarafı teal/petrol mavisi. Yüzdeler, netler, ilerleme çubuğu ve seçili alt sekme de bu renge uyuyor.',
+          'Düzeltme: rozet ve "Bugün" etiketinin arka plan rengi hiç basılmıyordu (yazım hatası olan bir renk değişkeni kullanılıyordu) — bu yüzden rozet zeminsiz ve sönük görünüyordu.',
+          'Renkler okunabilirlik için koyu tonlardan seçildi (beyaz yazı üzerinde WCAG AA kontrast eşiğini geçiyor).',
+        ],
+      },
+      {
         version: 'v0.20',
         title: 'Mobil Öğrenci & Veli Portalı çalışır hale getirildi',
         items: [
