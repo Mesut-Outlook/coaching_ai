@@ -25,6 +25,8 @@ const HISTORY: DateGroup[] = [
           'İki portal artık farklı renkte: öğrenci tarafı indigo (uygulamanın ana rengi), veli tarafı teal/petrol mavisi. Yüzdeler, netler, ilerleme çubuğu ve seçili alt sekme de bu renge uyuyor.',
           'Düzeltme: rozet ve "Bugün" etiketinin arka plan rengi hiç basılmıyordu (yazım hatası olan bir renk değişkeni kullanılıyordu) — bu yüzden rozet zeminsiz ve sönük görünüyordu.',
           'Renkler okunabilirlik için koyu tonlardan seçildi (beyaz yazı üzerinde WCAG AA kontrast eşiğini geçiyor).',
+          'Yardım sayfasındaki "Mobil Öğrenci & Veli Portalı" kartına ekran görüntüleri eklendi: giriş ekranı, öğrenci programı, deneme girişi ve veli özeti. Küçük görsele tıklayınca tam boy açılıyor, oklarla ya da klavyeyle aralarında gezinebiliyorsun.',
+          'Giriş ekranındaki örnek kod eski 4 haneli biçimi gösteriyordu, güncel 6 haneli biçime çevrildi.',
         ],
       },
       {

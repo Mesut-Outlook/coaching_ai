@@ -4,6 +4,7 @@ import {
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import VersionHistory from '../components/help/VersionHistory'
+import ScreenshotStrip, { type Screenshot } from '../components/help/ScreenshotStrip'
 
 interface GuideItem {
   to: string
@@ -12,6 +13,8 @@ interface GuideItem {
   step: string
   body: string
   usage: string
+  /** Karta eklenen küçük ekran görüntüleri (tıklanınca büyür). */
+  shots?: Screenshot[]
 }
 
 const GUIDE: GuideItem[] = [
@@ -94,6 +97,12 @@ const GUIDE: GuideItem[] = [
     step: 'Bir kere kur · Sonra kendiliğinden',
     body: 'Öğrenci ve veli, e-posta/şifre olmadan, sadece bir erişim koduyla telefonundan girer. Bir öğrencinin profilini aç, "Öğrenci Linki" ya da "Veli Linki" butonuna bas — kod otomatik üretilir ve kayıtlı numaraya WhatsApp mesajı olarak hazırlanır (numara yoksa link ekranda gösterilir). Öğrenci kendi portalında haftalık programını gün gün görür, biten görevi işaretler ve denemesini bölüm bazlı doğru/yanlış girerek kaydeder — işaretlediği görevler ve girdiği denemeler senin panelinde de anında görünür. Veli ise ayrı bir kodla girer ve salt-okunur bir özet görür: haftalık tamamlama oranı, son deneme neti, devamsızlık geçmişi ve hedef bölüm. Veli hiçbir şeyi değiştiremez. Kodlar kişiye özeldir, paylaşılmamalıdır.',
     usage: 'Öğrenciyi sisteme ilk aldığında bir kere linkleri gönder; sonrası kendiliğinden işler. Öğrencinin programını takip etmesini ya da velinin gelişimi görmesini istediğinde.',
+    shots: [
+      { src: '/yardim/portal-giris.webp', caption: 'Giriş ekranı — öğrenci ya da veli, kendisine iletilen erişim kodunu girer. WhatsApp\'tan gelen linke tıklanırsa kod otomatik dolar ve giriş kendiliğinden yapılır.' },
+      { src: '/yardim/portal-ogrenci-program.webp', caption: 'Öğrenci portalı — haftalık program gün gün listelenir, bugün vurgulanır. Her görevde konu ve ders adı ile hedef soru sayısı görünür; göreve dokunulunca tamamlandı işaretlenir ve bu senin panelinde de anında görünür.' },
+      { src: '/yardim/portal-ogrenci-deneme.webp', caption: 'Öğrenci deneme girişi — bölüm bölüm doğru ve yanlış girilir, boş sayısı ve netler anında hesaplanır. Kaydedilen deneme, Deneme Girişi ekranında tüm bölüm dökümüyle karşına gelir.' },
+      { src: '/yardim/portal-veli-ozet.webp', caption: 'Veli portalı — haftalık tamamlama oranı, son deneme neti, devamsızlık durumu ve hedef bölüm. Veli salt-okunur görür; hiçbir şeyi değiştiremez, ayrı bir kodla girer.' },
+    ],
   },
 ]
 
@@ -135,7 +144,7 @@ export default function YardimPage() {
 
       {tab === 'rehber' && (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}>
-        {GUIDE.map(({ to, label, icon: Icon, step, body, usage }) => (
+        {GUIDE.map(({ to, label, icon: Icon, step, body, usage, shots }) => (
           <Link
             key={to}
             to={to}
@@ -174,6 +183,8 @@ export default function YardimPage() {
                 <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2, lineHeight: 1.45 }}>{usage}</div>
               </div>
             </div>
+
+            {shots && <ScreenshotStrip shots={shots} />}
 
             <span style={{ fontSize: 12, color: 'var(--indigo-600)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               Ekrana git <ArrowRight size={14} />

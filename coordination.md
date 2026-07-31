@@ -785,3 +785,28 @@ farklı olabilir... yine sade ve profesyonel."
   `accent` yalnız metin olmayan alanlarda (şerit, çubuk, çerçeve). Yeni renk eklerken bu ayrımı koru.
 - Sürüm Geçmişi'ne **v0.21** eklendi. `tsc`/`build` temiz, iki portal da tarayıcıda doğrulandı.
 - *Yapan:* **Opus 5**.
+
+### Yardım sayfasına portal ekran görüntüleri (kullanıcı isteği, 2026-07-31)
+Kullanıcı kapsamı "sadece mobil portal", sunumu "tıklayınca büyüyen küçük görsel" olarak seçti.
+- Yeni bileşen `src/components/help/ScreenshotStrip.tsx` — küçük görsel şeridi + lightbox
+  (ok tuşları / Esc / ← → düğmeleri / sayaç). Yardım kartının kendisi bir `<Link>` olduğu için
+  tıklamalar `preventDefault + stopPropagation` ile durduruluyor; yoksa görsele basınca ilgili
+  ekrana gidiliyordu. `GuideItem`'a opsiyonel `shots` alanı eklendi (başka kartlara da eklenebilir).
+- Görseller: `public/yardim/portal-{giris,ogrenci-program,ogrenci-deneme,veli-ozet}.webp`,
+  390x710, webp q82, **toplam 68 KB**. Küçük görsel 74x135 — kaynakla aynı en-boy oranı,
+  böylece `objectFit: cover` kenarlardan kırpmıyor.
+- ⚠️ **Gizlilik:** görseller uygulama koduna giriyor, yani herkes görüyor. Hepsi Misafir Koç
+  hesabındaki test öğrencisi geçici olarak **"Örnek Öğrenci"** adına çevrilip tamamen kurgusal
+  veriyle (sahte deneme/görev/hedef, telefon yok) çekildi; çekim sonrası veri silinip öğrenci
+  eski haline döndürüldü. **Gerçek öğrenci verisiyle ekran görüntüsü alınmayacak.**
+- 🔧 **Ekran görüntüsü tekniği (tekrar gerekirse):** tarayıcı penceresi telefon boyutuna
+  inmiyordu; sayfaya geçici stil enjekte edilerek çözüldü —
+  `html,body{width:390px}` + `nav[style*="fixed"],.modal-overlay{width:390px;left:0}`
+  (modal `position:fixed` olduğu için 1536px viewport'a göre ortalanıyor, çerçevenin dışında
+  kalıyordu), sonra `zoom` ile 0,0–398,726 bölgesi kırpıldı.
+- 🔧 **Koç ekranlarını şifresiz görme:** `.env.noauth` (boş `VITE_SUPABASE_*`) + `vite --mode noauth`
+  → `isSupabaseConfigured` false olduğu için `ProtectedRoute` giriş ekranını atlıyor, statik
+  sayfalar (Yardım gibi) doğrulanabiliyor. Dosya commit'lenmedi.
+- Yan düzeltme: giriş ekranındaki örnek kod hâlâ 4 haneli biçimi (`STU-8492`) gösteriyordu →
+  `STU-4KX9M2`. Sürüm Geçmişi **v0.21**'e işlendi.
+- *Yapan:* **Opus 5**.

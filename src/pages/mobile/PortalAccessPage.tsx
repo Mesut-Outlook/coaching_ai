@@ -106,7 +106,7 @@ export default function PortalAccessPage() {
           <div style={{ marginBottom: 16, position: 'relative' }}>
             <input
               type="text"
-              placeholder="Örn: STU-8492"
+              placeholder="Örn: STU-4KX9M2"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               style={{
