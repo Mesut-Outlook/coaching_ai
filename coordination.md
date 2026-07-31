@@ -680,6 +680,61 @@ fonksiyonlar eklendi, sızdıran politika kaldırıldı. Anon istemcinin `studen
 - Yardım sayfasına "Mobil Öğrenci & Veli Portalı" kartı, Sürüm Geçmişi'ne **v0.20** eklendi.
 - `npx tsc -b` + `npm run build` temiz; yeni dosyalarda lint uyarısı yok.
 
+#### ✅ Opus — Canlı uçtan uca doğrulama (2026-07-31)
+Kullanıcı SQL'i çalıştırdıktan sonra canlı Supabase'e karşı **22 senaryo** koşuldu, hepsi geçti.
+Test "Misafir Koç" öğrencisi (Ela Duru) üzerinde yapıldı, **tüm test verisi silindi** (öğrencinin
+kodları/telefonları da null'a döndürüldü, `attendance_records` tekrar 0 satır).
+- **Sızıntı kapandı:** anon key ile `students` filtresiz select → **0 satır**; `weekly_tasks`,
+  `mock_exams`, `mock_exam_sections`, `attendance_records`, `topic_measurements` doğrudan
+  okuma → 0 satır; doğrudan insert → `42501`.
+- **RPC'ler:** geçerli/geçersiz kod, öğrenci-veli rol ayrımı, veli yazma denemeleri
+  (görev + deneme, ikisi de reddedildi), D+Y+B > soru sayısı, telefon/kod dönmeme.
+- **Tarayıcı:** `?code=` linkiyle otomatik giriş → görevler konu+ders adıyla gün gün →
+  göreve tıklama **DB'ye kalıcı yazıldı** → deneme 32D/8Y girildi, net 30, dört bölümüyle
+  kaydedildi → veli portalı %50 / 30 net / devamsızlık geçmişi doğru.
+- **Commit `7445386`.** ⚠️ **Vercel'e PUSH EDİLMEDİ** — kullanıcı kararı bekliyor.
+
+#### ⚠️ GENEL BULGU — Supabase `anon`/`authenticated`'a fonksiyonları DOĞRUDAN grant ediyor
+`revoke all on function ... from public` **tek başına yetmiyor.** Supabase, `public` şemasındaki
+fonksiyonlar için `anon` ve `authenticated` rollerine default privileges ile **doğrudan**
+`EXECUTE` veriyor; bu yetki `PUBLIC` üzerinden gelmediği için `from public` onu kaldırmıyor.
+Canlıda ölçüldü: `portal_resolve_code` revoke'a rağmen anon'dan çağrılabiliyordu.
+**Doğrusu:** `revoke all on function f(args) from public, anon, authenticated;`
+(SECURITY DEFINER fonksiyonlar owner olarak çalıştığı için birbirini yine çağırabiliyor.)
+→ İçeriden çağrılan her yardımcı fonksiyonda bu deseni kullanın.
+
+#### 🔧 Opus — Erişim kodu üreteci ikiye ayrılmıştı (2026-07-31)
+`scripts/generateAccessCodes.ts`, `src/lib/accessCode.ts`'teki fonksiyonun **kopyasını**
+taşıyordu; uygulama tarafı 6 karakter + `crypto.getRandomValues`'a geçince script 4 karakter
++ `Math.random()` ile geride kaldı — `npm run generate:access-codes` çalıştırılsa zayıf kod
+üretecekti. Üreteç bağımlılığı olmayan `src/lib/accessCodeGenerator.ts`'e çıkarıldı
+(supabase import etmiyor, bu yüzden hem tarayıcı hem tsx script'i kullanabiliyor); iki taraf
+da oradan alıyor. **Kod uzunluğu/alfabesi değişecekse tek yer orası.**
+
+---
+
+## 🧰 KALICI GUARDRAIL'LER — her tip/şema işinden sonra çalıştırın (agy yazdı, `ee92b9e`)
+Bu iki araç `ee92b9e` commit'iyle geldi ama hiçbir yere kaydedilmemişti; buraya işleniyor.
+
+- **`npm run test:types`** → `tsc -b` + `scripts/checkSchemaSync.ts`.
+  `src/types/database.ts` ile `supabase/schema.sql`'i **statik** karşılaştırır (veritabanına
+  BAĞLANMAZ): schema.sql'deki `create table`/`alter table add column` bloklarını ayrıştırır,
+  database.ts'i TypeScript compiler API ile AST'den okur, tablo/sütun/tip/null kaymasını
+  raporlar. Kayma varsa exit 1. Şu an: **12 tablo, 104 sütun, ✓ tam eşleşme.**
+  → Şema ya da tip dosyasına dokunan herkes teslimden önce bunu koşsun.
+- **`src/types/database.test-d.ts`** — derleme-zamanı tip testleri (runtime yok, hiçbir yerden
+  import edilmiyor, bundle'a girmiyor). `tsconfig.app.json` `src`'i kapsadığı için
+  **`npm run build` her seferinde denetliyor**; bir assertion bozulursa derleme
+  "Type 'false' does not satisfy the constraint 'true'" ile patlar, hata satırındaki
+  assertion adı neyin kaydığını söyler. Kapsam: `TableDef` sözleşmesi, tablo adı ↔ satır tipi
+  eşlemesi, SQL `check` kısıtlarının TS union karşılıkları.
+- ℹ️ `test:types`'ın bilgi amaçlı uyarısı: **DB varsayılanı olduğu halde `Insert` tipinde
+  zorunlu görünen 19 sütun** var (`TableDef.Insert` yalnız `id`/`created_at` düşürüyor) —
+  örn. `weekly_tasks.is_exam`, `mock_exam_sections.net` (**generated**, insert edilemez).
+  Pratik sonucu: supabase-js **toplu insert'te anahtarları birleştirip eksikleri null yolluyor**,
+  bu yüzden bir satırda `is_exam` verip diğerinde vermezsen `not-null` hatası alırsın —
+  toplu insert'te tüm satırlara aynı alanları yaz. (Bu tuzağa bu oturumda düşüldü.)
+
 ---
 
 ## 💾 YEDEKLEME SİSTEMİ GÜNCELLEMESİ & GİZLİ (PRIVATE) GITHUB DEPOSU PLANI (2026-07-31)

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import fs from 'fs'
 import path from 'path'
+import { generateRandomCode } from '../src/lib/accessCodeGenerator'
 
 // Read .env.local manually
 function loadEnv() {
@@ -32,14 +33,9 @@ if (!supabaseUrl || !serviceRoleKey) {
 
 const supabase = createClient(supabaseUrl, serviceRoleKey)
 
-function generateRandomCode(prefix: 'STU' | 'PAR'): string {
-  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
-  let code = ''
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return `${prefix}-${code}`
-}
+// ⚠️ Buraya kendi kopyanı YAZMA — kod uzunluğu/alfabesi tek yerde tutuluyor.
+// (Burada 4 karakterlik, Math.random()'lu bir kopya vardı; uygulama tarafı 6
+// karaktere ve crypto.getRandomValues'a geçince bu script geride kalmıştı.)
 
 async function run() {
   console.log('🔄 Öğrencilerin mobil erişim kodları kontrol ediliyor...')

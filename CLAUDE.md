@@ -20,6 +20,17 @@ Service-role key kullanarak RLS kurallarını bypass eden ve `src/tytSubjects.js
 
 Güncel görev listesi ve kimin ne yaptığı **coordination.md** dosyasında tutuluyor — yeni bir iş başlatmadan önce oraya bak, iş bitince orayı güncelle.
 
+## Teslimden önce çalıştırılacaklar
+- `npm run build` (= `tsc -b` + vite) — `src/types/database.test-d.ts` derleme-zamanı tip testleri de burada koşar.
+- `npm run test:types` — `src/types/database.ts` ile `supabase/schema.sql` arasındaki kaymayı statik olarak denetler (DB'ye bağlanmaz). **Şemaya ya da tip dosyasına dokunan her iş bunu koşsun.**
+- `npm run lint` (oxlint) — mevcut eski uyarılar var, en azından *yeni* uyarı çıkarma.
+
+## Bilinmesi gereken tuzaklar
+- **Şema değişikliğini uygulayan kullanıcıdır.** Ortamda DDL çalıştıracak bir yol yok (`psql` kurulu değil, DB parolası yok, Supabase Management API erişimi yok). `supabase/schema.sql`'i güncelle, sonra kullanıcıdan **Supabase SQL Editor'de çalıştırmasını iste** — dosya idempotent olmalı ki tekrar tekrar çalıştırılabilsin. SQL'i teslim etmeden önce Docker'da (`docker run postgres:16`) stub tablolarla sözdizimi/mantık doğrulaması yapılabilir.
+- **Mobil portalda `supabase.from(...)` KULLANMA.** Öğrenci/veli giriş yapmış bir Supabase kullanıcısı değil; anon rolünün hiçbir tabloda yetkisi yok, sorgu sessizce boş döner. Veri `portal_*` SECURITY DEFINER RPC'lerinden gelir.
+- **Postgrest tip çıkarımı:** `src/types/database.ts`'teki satır tipleri `type` olmalı, `interface` DEĞİL — `interface` sessizce `never`'a düşürüyor.
+- **Supabase 1000 satır cap'i:** tek `.select()` en fazla 1000 satır döndürür (`.limit()` bile aşmaz). Çok satırlı okumada `count` + `.range()` sayfalaması kullan.
+
 ## Bağlam & Yedekleme Kurulumu
 - Domain: YKS koçluk — öğrenci haftalık çalışma takibi, deneme sonuçları, konu bazlı yeterlilik (yeterli/gelişiyor/kritik/ölçülmedi).
 - Track'ler: SAY, EA, SÖZ. Sınıf: 12. Sınıf / Mezun.
