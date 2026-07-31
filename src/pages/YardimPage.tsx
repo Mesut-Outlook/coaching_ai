@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ArrowRight,
+  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ArrowRight, Smartphone,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import VersionHistory from '../components/help/VersionHistory'
@@ -86,6 +86,14 @@ const GUIDE: GuideItem[] = [
     step: 'Tercih Dönemi · Gerektiğinde',
     body: 'YÖK Atlas 2025 taban puan ve başarı sırası verisiyle bölüm arama motoru. Puan türü, üniversite, program, şehir (çoklu), ön lisans/lisans, üniversite türü, ücret/burs, öğretim türü, program kodu ve başarı sırası aralığına göre filtreler; sonuçları başarı sırasına göre sıralar ve ÖSYM program kodlarıyla listeler. Bir öğrenci seçersen puan türü otomatik dolar; tahmini sıralamayı girince her program için Ulaşılabilir / Riskli / Zor durumunu gösterir.',
     usage: 'Öğrenciye tercih listesi hazırlarken — "sadece Tıp/Mühendislik, sadece İstanbul-Ankara-İzmir, şu sıralamaya uygun" gibi kriterlerle bölüm ararken.',
+  },
+  {
+    to: '/ogrenciler',
+    label: 'Mobil Öğrenci & Veli Portalı',
+    icon: Smartphone,
+    step: 'Bir kere kur · Sonra kendiliğinden',
+    body: 'Öğrenci ve veli, e-posta/şifre olmadan, sadece bir erişim koduyla telefonundan girer. Bir öğrencinin profilini aç, "Öğrenci Linki" ya da "Veli Linki" butonuna bas — kod otomatik üretilir ve kayıtlı numaraya WhatsApp mesajı olarak hazırlanır (numara yoksa link ekranda gösterilir). Öğrenci kendi portalında haftalık programını gün gün görür, biten görevi işaretler ve denemesini bölüm bazlı doğru/yanlış girerek kaydeder — işaretlediği görevler ve girdiği denemeler senin panelinde de anında görünür. Veli ise ayrı bir kodla girer ve salt-okunur bir özet görür: haftalık tamamlama oranı, son deneme neti, devamsızlık geçmişi ve hedef bölüm. Veli hiçbir şeyi değiştiremez. Kodlar kişiye özeldir, paylaşılmamalıdır.',
+    usage: 'Öğrenciyi sisteme ilk aldığında bir kere linkleri gönder; sonrası kendiliğinden işler. Öğrencinin programını takip etmesini ya da velinin gelişimi görmesini istediğinde.',
   },
 ]
 

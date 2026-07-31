@@ -6,29 +6,7 @@ import PageHeader from '../components/layout/PageHeader'
 import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import ExamShareButtons from '../components/exams/ExamShareButtons'
 import type { Student, MockExam, MockExamSection } from '../types/database'
-
-const SECTIONS_CONFIG = {
-  TYT: [
-    { name: 'Türkçe', max: 40 },
-    { name: 'Matematik', max: 40 },
-    { name: 'Sosyal Bilimler', max: 20 },
-    { name: 'Fen Bilimleri', max: 20 },
-  ],
-  AYT: {
-    SAY: [
-      { name: 'Matematik', max: 40 },
-      { name: 'Fen Bilimleri', max: 40 },
-    ],
-    EA: [
-      { name: 'Matematik', max: 40 },
-      { name: 'Edebiyat-Sosyal1', max: 40 },
-    ],
-    SÖZ: [
-      { name: 'Edebiyat-Sosyal1', max: 40 },
-      { name: 'Sosyal Bilimler-2', max: 40 },
-    ],
-  }
-}
+import { getExamSections } from '../lib/examSections'
 
 export default function DenemelerPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -70,14 +48,10 @@ export default function DenemelerPage() {
   }, [students, selectedStudentId])
 
   // Get active exam sections layout
-  const activeSections = useMemo(() => {
-    if (examType === 'TYT') {
-      return SECTIONS_CONFIG.TYT
-    }
-    // AYT depends on student track
-    const track = currentStudent?.track || 'SAY'
-    return SECTIONS_CONFIG.AYT[track]
-  }, [examType, currentStudent])
+  const activeSections = useMemo(
+    () => getExamSections(examType, currentStudent?.track || 'SAY'),
+    [examType, currentStudent]
+  )
 
   // Load students list
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { CheckSquare, FileText, Target, LogOut } from 'lucide-react'
+import { CalendarDays, CheckSquare, FileText, LogOut, Target, UserX } from 'lucide-react'
 
 interface MobileBottomNavProps {
   activeTab: 'tasks' | 'exams' | 'goals' | 'attendance'
@@ -47,8 +47,8 @@ export default function MobileBottomNav({
           flex: 1,
         }}
       >
-        <CheckSquare size={20} />
-        <span>{role === 'ogrenci' ? 'Bugün' : 'Özet'}</span>
+        {role === 'ogrenci' ? <CheckSquare size={20} /> : <CalendarDays size={20} />}
+        <span>{role === 'ogrenci' ? 'Program' : 'Özet'}</span>
       </button>
 
       <button
@@ -89,7 +89,7 @@ export default function MobileBottomNav({
           flex: 1,
         }}
       >
-        <Target size={20} />
+        {role === 'ogrenci' ? <Target size={20} /> : <UserX size={20} />}
         <span>{role === 'ogrenci' ? 'Hedefler' : 'Devamsızlık'}</span>
       </button>
 

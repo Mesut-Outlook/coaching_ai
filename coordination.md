@@ -618,3 +618,65 @@ Veliye şeffaf, güven veren ve anlaşılır bir özet sunan mobil deneyim:
 3. `App.tsx` içine `/ogrenci`, `/veli` ve `/portal` route'larının eklenmesi.
 4. `npm run build` ile derleme doğrulaması ve canlıya deployment.
 
+---
+
+## 🛑 MOBİL PORTAL — İLK SÜRÜM ÇALIŞMIYORDU + VERİ SIZINTISI (Opus 5, 2026-07-30/31)
+
+Kullanıcı `schema.sql`'i çalıştırdıktan sonra portalı **canlı Supabase'e karşı anon key ile**
+test ettim. `ee92b9e` commit'iyle gelen ilk sürüm hem işlevsiz hem güvensizdi:
+
+1. **Portal boş görünüyordu.** `/ogrenci` ve `/veli` sayfaları `weekly_tasks`, `mock_exams`,
+   `attendance_records` tablolarını **doğrudan** sorguluyordu; bu tabloların RLS'i
+   `coach_id = auth.uid()` şartına bağlı. Öğrenci/veli giriş yapmış bir Supabase kullanıcısı
+   olmadığı için `auth.uid()` null → her sorgu **0 satır** (ölçüldü: `weekly_tasks` 0/100,
+   `mock_exams` 0/64, `mock_exam_sections` 0/192, `topic_measurements` 0/40).
+2. **PII + erişim kodu sızıntısı.** `students: erişim kodu olan herkes okur` politikası
+   (`for select using (student_access_code is not null or ...)`) **giriş yapmamış herkese**,
+   kodu üretilmiş **tüm** öğrencilerin adını, telefonunu, veli telefonunu **ve erişim
+   kodlarını** okutuyordu. Anon key bundle'da açık olduğu için, kodları çekip istenen
+   öğrencinin portalına girmek mümkündü.
+3. **Yazma da kapalıydı.** Deneme insert RLS'e takılıyordu (`42501`); görev tamamlama ise
+   sessizce 0 satır güncelliyor, UI iyimser işaretleyip yenilemede geri dönüyordu.
+
+### ✅ Çözüm: SECURITY DEFINER RPC katmanı (tablolar anon'a AÇILMADI)
+Erişim kodu bir **bearer token** gibi ele alındı: kodu **sunucuda** doğrulayan definer
+fonksiyonlar eklendi, sızdıran politika kaldırıldı. Anon istemcinin `students`/`weekly_tasks`/
+`mock_exams`/`attendance_records` üzerinde **hiçbir doğrudan yetkisi yok**.
+
+- `supabase/schema.sql` (dosya sonu): `portal_resolve_code` (iç yardımcı, anon'a **kapalı**),
+  `portal_login`, `portal_dashboard`, `portal_set_task_completed`, `portal_add_exam`.
+  Hepsi `security definer` + `set search_path = public, pg_temp`; dönüş biçimi
+  `{ok:true,...}` / `{ok:false,error:'Türkçe mesaj'}`. Yazma fonksiyonları rolün `ogrenci`
+  olmasını şart koşuyor → **veli salt-okunur**.
+- ⚠️ **Kural (Sonnet/agy):** mobil portal tarafında **asla** `supabase.from(...)` çağrısı
+  yazmayın — anon'un yetkisi yok, sessizce boş döner. Yeni bir portal verisi gerekiyorsa
+  `portal_dashboard`'a alan ekleyin ya da yeni bir definer RPC yazın. Yeni RPC eklerken
+  `revoke`/`grant execute ... to anon, authenticated` desenini koruyun.
+- **Doğrulama:** RPC bloğu Docker'da yerel Postgres 16'ya yüklenip **15 senaryo** ile test
+  edildi, hepsi geçti: öğrenci/veli rol ayrımı, geçersiz/boş/null kod, pasif öğrenci,
+  başka öğrencinin görevi, veli yazma denemesi, D+Y+B > soru sayısı, gelecek tarih,
+  hafta fallback, hiç görev yokken boş dizi.
+
+### Uygulama tarafı (Opus 5)
+- **Yeni:** `src/lib/portal.ts` (RPC sarmalayıcıları + tipler + localStorage oturumu — artık
+  sadece kod + rol tutuluyor, `student_id` istemcide tutulmuyor, sunucu koddan çözüyor),
+  `src/lib/examSections.ts` (`SECTIONS_CONFIG` + `getExamSections`, `DenemelerPage.tsx`'teki
+  kopyadan çıkarıldı — koç ekranı ve portal aynı bölüm şablonunu kullanıyor).
+- **`src/lib/accessCode.ts`:** kod 4 → **6 karakter**, `crypto.getRandomValues` ile üretiliyor
+  (~1M → ~887M ihtimal; kod kimliği doğrulanmamış istemciden geldiği ve deneme sayısı
+  sınırlanmadığı için 4 karakter kaba kuvvete açıktı). `verifyAccessCode` kaldırıldı.
+  Update hatası artık sessizce yutulmuyor. Kod üretilmiş öğrenci yoktu → geçiş sorunu yok.
+- **`OgrenciPortalPage.tsx`:** tek `portalDashboard` çağrısı; görevler **gün gün** gruplanıp
+  bugün vurgulanıyor; kart artık `Görev #a1b2` değil gerçek konu + ders adını gösteriyor;
+  tamamlama sunucuda reddedilirse iyimser güncelleme **geri alınıyor**; deneme ekleme
+  **bölüm bazlı D/Y girişi + canlı net** ile (önceden netsiz boş deneme kaydediyordu).
+- **`VeliPortalPage.tsx`:** `activeTab` hiç kullanılmıyordu (3 sekme de aynı ekranı
+  gösteriyordu) → Özet / Denemeler / Devamsızlık üçü de gerçek içerik gösteriyor.
+- **`OgrencilerPage.tsx`:** tek "Mobil Link Gönder" butonu **"Öğrenci Linki" + "Veli Linki"**
+  olarak ikiye ayrıldı (veli linki tasarımda vardı ama kodlanmamıştı).
+- **`ExamSectionsTable.tsx`:** prop tipi `id`siz satırları da kabul edecek şekilde gevşetildi
+  (`ExamSectionRow`) — portal RPC'si bölümleri id'siz döndürüyor.
+- `src/types/database.ts`: `Json` tipi + `Functions` tanımları (RPC'ler tipli çağrılıyor).
+- Yardım sayfasına "Mobil Öğrenci & Veli Portalı" kartı, Sürüm Geçmişi'ne **v0.20** eklendi.
+- `npx tsc -b` + `npm run build` temiz; yeni dosyalarda lint uyarısı yok.
+

@@ -358,8 +358,282 @@ alter table students add column if not exists parent_access_code text;
 create unique index if not exists students_student_access_code_idx on students(student_access_code) where student_access_code is not null;
 create unique index if not exists students_parent_access_code_idx on students(parent_access_code) where parent_access_code is not null;
 
--- Genel/Mobil erişim okuma politikası (Erişim koduna sahip olan öğrenci veya veli kendi profil verilerini görüntüleyebilir)
+-- ⚠️ KALDIRILDI (2026-07-30): "students: erişim kodu olan herkes okur" politikası
+-- giriş yapmamış HERKESE, erişim kodu üretilmiş TÜM öğrencilerin adını, telefonunu,
+-- veli telefonunu VE erişim kodlarını okutuyordu (anon key JS bundle'ında herkese açık).
+-- Yani kodları okuyup istediği öğrencinin portalına girmek mümkündü. Ayrıca portalın
+-- ihtiyacı olan weekly_tasks/mock_exams/attendance_records tabloları RLS ile koça bağlı
+-- olduğundan bu politikayla bile portal boş görünüyordu. Yerine aşağıdaki RPC katmanı geldi.
 drop policy if exists "students: erişim kodu olan herkes okur" on students;
-create policy "students: erişim kodu olan herkes okur" on students
-  for select using (student_access_code is not null or parent_access_code is not null);
+
+-- =========================================================
+-- Mobil Portal veri katmanı — SECURITY DEFINER RPC'ler (2026-07-30)
+-- ---------------------------------------------------------
+-- Öğrenci/veli giriş yapmış bir Supabase kullanıcısı DEĞİL; elindeki erişim kodu
+-- bir "bearer token" gibi çalışıyor. Tabloları anon role'e açmak yerine, kodu
+-- SUNUCUDA doğrulayan ve yalnız o öğrenciye ait veriyi döndüren fonksiyonlar
+-- kullanılıyor. Böylece anon istemcinin students/weekly_tasks/mock_exams/
+-- attendance_records üzerinde HİÇBİR doğrudan yetkisi yok.
+--
+-- Kural: her fonksiyon ilk iş olarak portal_resolve_code() ile kodu çözer;
+-- çözemezse veri değil, Türkçe hata döndürür. Yazma fonksiyonları ayrıca
+-- rolün 'ogrenci' olmasını şart koşar (veli salt-okunur).
+-- =========================================================
+
+-- Kodu öğrenciye + role çevirir. anon'a AÇILMAZ; yalnız aşağıdaki definer
+-- fonksiyonlar (owner olarak çalıştıkları için) çağırabilir.
+create or replace function portal_resolve_code(p_code text)
+returns table (student_id uuid, portal_role text)
+language sql
+security definer
+set search_path = public, pg_temp
+stable
+as $$
+  select s.id,
+         case when s.student_access_code = upper(btrim(p_code)) then 'ogrenci' else 'veli' end
+  from students s
+  where coalesce(btrim(p_code), '') <> ''
+    and s.is_active
+    and (s.student_access_code = upper(btrim(p_code))
+         or s.parent_access_code = upper(btrim(p_code)))
+  limit 1;
+$$;
+-- ⚠️ `from public` TEK BAŞINA YETMİYOR: Supabase, public şemasındaki fonksiyonlar için
+-- anon/authenticated rollerine DOĞRUDAN execute veriyor (default privileges), bu da
+-- PUBLIC üzerinden gelmediği için ayrıca revoke edilmeli. Canlıda ölçüldü.
+-- Definer fonksiyonlar owner olarak çalıştığı için bunu yine de çağırabiliyor.
+revoke all on function portal_resolve_code(text) from public, anon, authenticated;
+
+-- Giriş: kodu doğrular, öğrencinin güvenli alanlarını döndürür.
+-- Telefon numaraları ve DİĞER tarafın erişim kodu KASITLI olarak dönmez.
+create or replace function portal_login(p_code text)
+returns json
+language plpgsql
+security definer
+set search_path = public, pg_temp
+stable
+as $$
+declare
+  v_student_id uuid;
+  v_role text;
+  v_result json;
+begin
+  select r.student_id, r.portal_role into v_student_id, v_role
+  from portal_resolve_code(p_code) r;
+
+  if v_student_id is null then
+    return json_build_object('ok', false, 'error', 'Geçersiz erişim kodu.');
+  end if;
+
+  select json_build_object(
+    'ok', true,
+    'role', v_role,
+    'student', json_build_object(
+      'id', s.id,
+      'full_name', s.full_name,
+      'grade', s.grade,
+      'track', s.track,
+      'target_program', s.target_program,
+      'target_ranking', s.target_ranking,
+      'photo_url', s.photo_url
+    )
+  ) into v_result
+  from students s
+  where s.id = v_student_id;
+
+  return v_result;
+end;
+$$;
+grant execute on function portal_login(text) to anon, authenticated;
+
+-- Portalın tüm okuma ihtiyacı tek çağrıda: öğrenci + haftalık görevler
+-- (konu/ders adlarıyla) + son 20 deneme (bölüm netleriyle) + son 50 devamsızlık.
+-- Görev haftası: bu hafta görev varsa bu hafta, yoksa görev bulunan EN SON hafta
+-- (öğrenci boş ekran görmesin; hangi hafta olduğu week_start/is_current_week ile bildiriliyor).
+create or replace function portal_dashboard(p_code text)
+returns json
+language plpgsql
+security definer
+set search_path = public, pg_temp
+stable
+as $$
+declare
+  v_student_id uuid;
+  v_role text;
+  v_week date;
+  v_result json;
+begin
+  select r.student_id, r.portal_role into v_student_id, v_role
+  from portal_resolve_code(p_code) r;
+
+  if v_student_id is null then
+    return json_build_object('ok', false, 'error', 'Geçersiz erişim kodu.');
+  end if;
+
+  select coalesce(
+    (select wt.week_start from weekly_tasks wt
+      where wt.student_id = v_student_id
+        and wt.week_start = date_trunc('week', current_date)::date
+      limit 1),
+    (select max(wt.week_start) from weekly_tasks wt where wt.student_id = v_student_id)
+  ) into v_week;
+
+  select json_build_object(
+    'ok', true,
+    'role', v_role,
+    'week_start', v_week,
+    'is_current_week', (v_week = date_trunc('week', current_date)::date),
+    'student', (
+      select json_build_object(
+        'id', s.id, 'full_name', s.full_name, 'grade', s.grade, 'track', s.track,
+        'target_program', s.target_program, 'target_ranking', s.target_ranking,
+        'photo_url', s.photo_url
+      ) from students s where s.id = v_student_id
+    ),
+    'tasks', coalesce((
+      select json_agg(t order by t.day_index, t.created_at) from (
+        select wt.id, wt.day_index, wt.week_start, wt.question_count,
+               wt.is_exam, wt.completed, wt.created_at,
+               coalesce(wt.custom_label, tp.name, 'Görev') as label,
+               sb.name as subject_name
+        from weekly_tasks wt
+        left join topics tp on tp.id = wt.topic_id
+        left join subjects sb on sb.id = tp.subject_id
+        where wt.student_id = v_student_id and wt.week_start = v_week
+      ) t
+    ), '[]'::json),
+    'exams', coalesce((
+      select json_agg(e order by e.exam_date desc, e.created_at desc) from (
+        select me.id, me.name, me.publisher, me.exam_type, me.exam_date, me.created_at,
+          coalesce((select sum(ms.net) from mock_exam_sections ms where ms.mock_exam_id = me.id), 0) as total_net,
+          coalesce((
+            select json_agg(json_build_object(
+              'section_name', ms.section_name, 'max_questions', ms.max_questions,
+              'correct_count', ms.correct_count, 'wrong_count', ms.wrong_count,
+              'blank_count', ms.blank_count, 'net', ms.net
+            ) order by ms.section_name)
+            from mock_exam_sections ms where ms.mock_exam_id = me.id
+          ), '[]'::json) as sections
+        from mock_exams me
+        where me.student_id = v_student_id
+        order by me.exam_date desc, me.created_at desc
+        limit 20
+      ) e
+    ), '[]'::json),
+    'attendance', coalesce((
+      select json_agg(a order by a.absence_date desc) from (
+        select ar.id, ar.absence_date, ar.session_type, ar.status,
+               ar.excuse_type, ar.excuse_note
+        from attendance_records ar
+        where ar.student_id = v_student_id
+        order by ar.absence_date desc
+        limit 50
+      ) a
+    ), '[]'::json)
+  ) into v_result;
+
+  return v_result;
+end;
+$$;
+grant execute on function portal_dashboard(text) to anon, authenticated;
+
+-- Görevi tamamlandı/tamamlanmadı işaretle. Yalnız öğrenci rolü.
+create or replace function portal_set_task_completed(p_code text, p_task_id uuid, p_completed boolean)
+returns json
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_student_id uuid;
+  v_role text;
+  v_rows int;
+begin
+  select r.student_id, r.portal_role into v_student_id, v_role
+  from portal_resolve_code(p_code) r;
+
+  if v_student_id is null then
+    return json_build_object('ok', false, 'error', 'Geçersiz erişim kodu.');
+  end if;
+  if v_role <> 'ogrenci' then
+    return json_build_object('ok', false, 'error', 'Veli görev durumunu değiştiremez.');
+  end if;
+
+  update weekly_tasks set completed = coalesce(p_completed, false)
+  where id = p_task_id and student_id = v_student_id;
+  get diagnostics v_rows = row_count;
+
+  if v_rows = 0 then
+    return json_build_object('ok', false, 'error', 'Görev bulunamadı.');
+  end if;
+  return json_build_object('ok', true);
+end;
+$$;
+grant execute on function portal_set_task_completed(text, uuid, boolean) to anon, authenticated;
+
+-- Öğrenci kendi denemesini bölüm netleriyle girer. Yalnız öğrenci rolü.
+-- p_sections: [{"section_name":"Türkçe","max_questions":40,"correct_count":30,"wrong_count":4,"blank_count":6}, ...]
+create or replace function portal_add_exam(
+  p_code text,
+  p_name text,
+  p_publisher text,
+  p_exam_type text,
+  p_exam_date date,
+  p_sections jsonb
+)
+returns json
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_student_id uuid;
+  v_role text;
+  v_exam_id uuid;
+  v_bad int;
+begin
+  select r.student_id, r.portal_role into v_student_id, v_role
+  from portal_resolve_code(p_code) r;
+
+  if v_student_id is null then
+    return json_build_object('ok', false, 'error', 'Geçersiz erişim kodu.');
+  end if;
+  if v_role <> 'ogrenci' then
+    return json_build_object('ok', false, 'error', 'Veli deneme sonucu giremez.');
+  end if;
+  if coalesce(btrim(p_name), '') = '' then
+    return json_build_object('ok', false, 'error', 'Sınav adı gerekli.');
+  end if;
+  if p_exam_type not in ('TYT', 'AYT') then
+    return json_build_object('ok', false, 'error', 'Sınav türü TYT veya AYT olmalı.');
+  end if;
+  if p_exam_date is null or p_exam_date > current_date then
+    return json_build_object('ok', false, 'error', 'Sınav tarihi bugünden ileri olamaz.');
+  end if;
+
+  -- doğru+yanlış+boş, soru sayısını aşmasın
+  select count(*) into v_bad
+  from jsonb_to_recordset(coalesce(p_sections, '[]'::jsonb))
+    as x(section_name text, max_questions int, correct_count int, wrong_count int, blank_count int)
+  where coalesce(x.correct_count,0) < 0 or coalesce(x.wrong_count,0) < 0 or coalesce(x.blank_count,0) < 0
+     or coalesce(x.correct_count,0) + coalesce(x.wrong_count,0) + coalesce(x.blank_count,0)
+        > coalesce(x.max_questions, 0);
+  if v_bad > 0 then
+    return json_build_object('ok', false, 'error', 'Doğru + yanlış + boş, soru sayısını aşamaz.');
+  end if;
+
+  insert into mock_exams (student_id, name, publisher, exam_type, exam_date)
+  values (v_student_id, btrim(p_name), nullif(btrim(coalesce(p_publisher, '')), ''), p_exam_type, p_exam_date)
+  returning id into v_exam_id;
+
+  insert into mock_exam_sections (mock_exam_id, section_name, max_questions, correct_count, wrong_count, blank_count)
+  select v_exam_id, x.section_name, x.max_questions,
+         coalesce(x.correct_count,0), coalesce(x.wrong_count,0), coalesce(x.blank_count,0)
+  from jsonb_to_recordset(coalesce(p_sections, '[]'::jsonb))
+    as x(section_name text, max_questions int, correct_count int, wrong_count int, blank_count int);
+
+  return json_build_object('ok', true, 'exam_id', v_exam_id);
+end;
+$$;
+grant execute on function portal_add_exam(text, text, text, text, date, jsonb) to anon, authenticated;
 

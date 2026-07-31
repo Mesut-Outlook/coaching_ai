@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { verifyAccessCode } from '../../lib/accessCode'
+import { portalLogin, savePortalSession } from '../../lib/portal'
 import { Smartphone, ArrowRight } from 'lucide-react'
 
 export default function PortalAccessPage() {
@@ -10,43 +10,30 @@ export default function PortalAccessPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // Automatic login if ?code= is present in URL
-  useEffect(() => {
-    const urlCode = searchParams.get('code')
-    if (urlCode) {
-      handleAccess(urlCode)
-    }
-  }, [searchParams])
+  const handleAccess = useCallback(
+    async (accessCodeToTest: string) => {
+      if (!accessCodeToTest.trim()) return
+      setLoading(true)
+      setError(null)
 
-  async function handleAccess(accessCodeToTest: string) {
-    if (!accessCodeToTest.trim()) return
-    setLoading(true)
-    setError(null)
-
-    try {
-      const res = await verifyAccessCode(accessCodeToTest)
-      if (res.error || !res.student) {
-        setError(res.error || 'Erişim kodu bulunamadı.')
+      const res = await portalLogin(accessCodeToTest)
+      if (!res.ok) {
+        setError(res.error)
         setLoading(false)
         return
       }
 
-      // Save credentials locally
-      localStorage.setItem('netlik_mobile_code', accessCodeToTest.trim().toUpperCase())
-      localStorage.setItem('netlik_mobile_student_id', res.student.id)
-      localStorage.setItem('netlik_mobile_role', res.role || 'ogrenci')
+      savePortalSession(accessCodeToTest, res.role)
+      navigate(res.role === 'veli' ? '/veli' : '/ogrenci')
+    },
+    [navigate]
+  )
 
-      // Redirect to specific mobile view
-      if (res.role === 'veli') {
-        navigate('/veli')
-      } else {
-        navigate('/ogrenci')
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Giriş yapılamadı.')
-      setLoading(false)
-    }
-  }
+  // WhatsApp'tan gelen /portal?code=... linkinde otomatik giriş
+  useEffect(() => {
+    const urlCode = searchParams.get('code')
+    if (urlCode) handleAccess(urlCode)
+  }, [searchParams, handleAccess])
 
   return (
     <div
@@ -92,7 +79,7 @@ export default function PortalAccessPage() {
           Netlik Mobil Portalı
         </h1>
         <p style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginBottom: 24, lineHeight: 1.5 }}>
-          Koçunuzun size veya velinize ilettiği 6 haneli erişim kodunu girerek giriş yapabilirsiniz.
+          Koçunuzun size veya velinize ilettiği erişim kodunu girerek giriş yapabilirsiniz.
         </p>
 
         {error && (

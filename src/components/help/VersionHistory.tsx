@@ -15,6 +15,23 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '31 Temmuz 2026',
+    entries: [
+      {
+        version: 'v0.20',
+        title: 'Mobil Öğrenci & Veli Portalı çalışır hale getirildi',
+        items: [
+          'Öğrenci profilinde artık iki ayrı buton var: "Öğrenci Linki" ve "Veli Linki". Her biri kendi erişim kodunu üretip WhatsApp ile gönderiyor (numara kayıtlı değilse link ekranda gösteriliyor, elle iletebilirsin).',
+          'Öğrenci portalı (/ogrenci): haftalık program gün gün listeleniyor, bugün vurgulanıyor, konu ve ders adı görünüyor; göreve dokununca tamamlandı işaretleniyor ve bu kayıt koç panelinde de anında görünüyor.',
+          'Öğrenci artık denemesini bölüm bazlı doğru/yanlış girerek kaydedebiliyor — netler anında hesaplanıyor ve deneme koçun ekranında da tüm bölüm dökümüyle çıkıyor. (Önceden netsiz, boş deneme kaydediliyordu.)',
+          'Veli portalı (/veli) üç sekmeye kavuştu: Özet (haftalık tamamlama oranı, son deneme neti, devamsızlık durumu, hedef bölüm), Denemeler (net listesi + bölüm tablosu) ve Devamsızlık (tarih, oturum türü, mazeret geçmişi). Önceden üç sekme de aynı ekranı gösteriyordu.',
+          'Bu hafta için henüz program girilmemişse portal boş kalmıyor; en son girilen haftayı "bu hafta değil" uyarısıyla gösteriyor.',
+          'Güvenlik: öğrenci/veli verisi artık sunucuda kod doğrulayan özel fonksiyonlar üzerinden geliyor. Önceki sürümde erişim kodu üretilmiş tüm öğrencilerin adı, telefonu, veli telefonu ve erişim kodları dışarıdan okunabiliyordu — bu açık kapatıldı. Erişim kodları da 4 karakterden 6 karaktere çıkarıldı.',
+        ],
+      },
+    ],
+  },
+  {
     date: '29 Temmuz 2026',
     entries: [
       {

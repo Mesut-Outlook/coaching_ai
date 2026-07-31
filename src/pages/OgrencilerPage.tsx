@@ -16,6 +16,36 @@ import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Top
 
 type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks'
 
+/**
+ * Mobil portal erişim linkini WhatsApp ile gönderir (öğrenciye ya da veliye).
+ * Kodlar yoksa üretilip kaydedilir; numara yoksa link kopyalanabilsin diye gösterilir.
+ */
+async function sendPortalLink(student: Student, target: 'ogrenci' | 'veli') {
+  const codes = await ensureStudentAccessCodes(student)
+  if (codes.error) {
+    alert(codes.error)
+    return
+  }
+
+  const code = target === 'ogrenci' ? codes.student_access_code : codes.parent_access_code
+  const phone = target === 'ogrenci' ? student.phone_number : student.parent_phone_number
+  const link = `${window.location.origin}/portal?code=${code}`
+
+  const msg =
+    target === 'ogrenci'
+      ? `Merhaba ${student.full_name}, Netlik mobil öğrenci portalına buradan girebilirsin:\n${link}\n\nErişim kodun: ${code}\nBu kodu kimseyle paylaşma.`
+      : `Merhaba, ${student.full_name} için Netlik veli bilgilendirme portalı:\n${link}\n\nErişim kodunuz: ${code}\nBu kodu kimseyle paylaşmayın.`
+
+  if (phone) {
+    openWhatsAppChat(phone, msg)
+  } else {
+    alert(
+      `${target === 'ogrenci' ? 'Öğrenci' : 'Veli'} telefonu kayıtlı değil.\n\n` +
+        `Linki elle iletebilirsin:\n${link}\n\nErişim kodu: ${code}`
+    )
+  }
+}
+
 interface StudentData {
   student: Student
   exams: MockExam[]
@@ -604,20 +634,18 @@ export default function OgrencilerPage() {
           <button
             type="button"
             className="btn btn-secondary btn-sm"
-            onClick={async () => {
-              const codes = await ensureStudentAccessCodes(student)
-              const baseUrl = window.location.origin
-              const link = `${baseUrl}/portal?code=${codes.student_access_code}`
-              const msg = `Merhaba ${student.full_name}, Netlik Mobil Öğrenci Portalı erişim linkin:\n${link}\nErişim Kodun: ${codes.student_access_code}`
-              if (student.phone_number) {
-                openWhatsAppChat(student.phone_number, msg)
-              } else {
-                alert(`Mobil Link:\n${link}\n\nÖğrenci Kodu: ${codes.student_access_code}`)
-              }
-            }}
+            onClick={() => sendPortalLink(student, 'ogrenci')}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
           >
-            <Smartphone size={14} /> Mobil Link Gönder
+            <Smartphone size={14} /> Öğrenci Linki
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => sendPortalLink(student, 'veli')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <Smartphone size={14} /> Veli Linki
           </button>
           <button
             type="button"

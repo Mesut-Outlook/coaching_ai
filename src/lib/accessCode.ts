@@ -1,25 +1,36 @@
 import { supabase } from './supabase'
 import type { Student } from '../types/database'
 
+// Karıştırılması kolay karakterler (O/0, I/1, S/5) dışarıda bırakıldı.
+const CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRTUVWXYZ'
+const CODE_LENGTH = 6
+
 /**
- * Generates a 6-character random uppercase alphanumeric access code.
+ * 6 karakterlik rastgele erişim kodu üretir (örn. STU-4KX9M2).
+ *
+ * ⚠️ Uzunluk neden 6: kod, giriş yapmamış istemcinin sunucuya gönderdiği bir
+ * bearer token gibi çalışıyor (bkz. portal_login RPC) ve deneme sayısı sınırlı
+ * değil. 4 karakterde ~1 milyon ihtimal vardı (kaba kuvvetle saatler içinde
+ * taranabilir); 6 karakterde ~887 milyona çıkıyor. Kısaltma.
  */
 export function generateRandomCode(prefix: 'STU' | 'PAR'): string {
-  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ' // Excluding easily confused characters like O, 0, I, 1
+  const bytes = new Uint32Array(CODE_LENGTH)
+  crypto.getRandomValues(bytes)
   let code = ''
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  for (let i = 0; i < CODE_LENGTH; i++) {
+    code += CODE_ALPHABET.charAt(bytes[i] % CODE_ALPHABET.length)
   }
   return `${prefix}-${code}`
 }
 
 /**
- * Ensures a student has both student_access_code and parent_access_code.
- * If missing, generates and updates them in Supabase.
+ * Öğrencide eksik olan erişim kodlarını üretir ve kaydeder.
+ * Koç oturumu üzerinden çalışır (students RLS: sadece kendi öğrencileri).
  */
 export async function ensureStudentAccessCodes(student: Student): Promise<{
   student_access_code: string
   parent_access_code: string
+  error?: string
 }> {
   let studentCode = student.student_access_code
   let parentCode = student.parent_access_code
@@ -37,7 +48,12 @@ export async function ensureStudentAccessCodes(student: Student): Promise<{
       .eq('id', student.id)
 
     if (error) {
-      console.error('Error saving access codes:', error)
+      console.error('Erişim kodu kaydedilemedi:', error.message)
+      return {
+        student_access_code: studentCode,
+        parent_access_code: parentCode,
+        error: 'Erişim kodu kaydedilemedi. Linki göndermeden önce tekrar dene.',
+      }
     }
   }
 
@@ -45,40 +61,4 @@ export async function ensureStudentAccessCodes(student: Student): Promise<{
     student_access_code: studentCode,
     parent_access_code: parentCode,
   }
-}
-
-/**
- * Fetches a student and their access role ('ogrenci' | 'veli') by PIN code.
- */
-export async function verifyAccessCode(code: string): Promise<{
-  student: Student | null
-  role: 'ogrenci' | 'veli' | null
-  error?: string
-}> {
-  const cleanCode = code.trim().toUpperCase()
-  if (!cleanCode) return { student: null, role: null, error: 'Lütfen bir erişim kodu girin.' }
-
-  // Try student access code first
-  const { data: studentMatch } = await supabase
-    .from('students')
-    .select('*')
-    .eq('student_access_code', cleanCode)
-    .single()
-
-  if (studentMatch) {
-    return { student: studentMatch as Student, role: 'ogrenci' }
-  }
-
-  // Try parent access code
-  const { data: parentMatch } = await supabase
-    .from('students')
-    .select('*')
-    .eq('parent_access_code', cleanCode)
-    .single()
-
-  if (parentMatch) {
-    return { student: parentMatch as Student, role: 'veli' }
-  }
-
-  return { student: null, role: null, error: 'Geçersiz erişim kodu veya bağlantı.' }
 }

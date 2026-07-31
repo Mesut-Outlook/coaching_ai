@@ -1,9 +1,13 @@
 import type { MockExamSection } from '../../types/database'
 
+// Tablonun ihtiyacı olan alanlar. `id` istenmiyor — mobil portal RPC'si bölümleri
+// id'siz döndürüyor (bkz. src/lib/portal.ts), bölüm adı deneme içinde zaten tekil.
+export type ExamSectionRow = Omit<MockExamSection, 'id' | 'mock_exam_id'>
+
 // Bir denemenin bölüm skorlarını okunur bir tablo olarak gösterir.
-// Deneme Girişi geçmiş listesi, Tüm Deneme Geçmişi tablosu ve öğrenci
-// profilindeki Deneme Geçmişi sekmesi — üçü de bu bileşeni kullanır.
-export default function ExamSectionsTable({ sections }: { sections: MockExamSection[] }) {
+// Deneme Girişi geçmiş listesi, Tüm Deneme Geçmişi tablosu, öğrenci profilindeki
+// Deneme Geçmişi sekmesi ve mobil portallar — hepsi bu bileşeni kullanır.
+export default function ExamSectionsTable({ sections }: { sections: ExamSectionRow[] }) {
   if (sections.length === 0) {
     return (
       <div style={{ padding: 12, fontSize: 12.5, color: 'var(--ink-faint)' }}>
@@ -42,7 +46,7 @@ export default function ExamSectionsTable({ sections }: { sections: MockExamSect
         </thead>
         <tbody>
           {sections.map((s) => (
-            <tr key={s.id} style={{ borderTop: '1px solid var(--border-soft)' }}>
+            <tr key={s.section_name} style={{ borderTop: '1px solid var(--border-soft)' }}>
               <td style={{ ...cell, fontWeight: 600 }}>{s.section_name}</td>
               <td style={{ ...num, color: 'var(--success-text)' }}>{s.correct_count}</td>
               <td style={{ ...num, color: 'var(--critical-text)' }}>{s.wrong_count}</td>

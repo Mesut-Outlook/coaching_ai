@@ -162,6 +162,8 @@ export type AttendanceRecord = {
 // Her tablo Row/Insert/Update varyantlarını paylaşır (Insert: id/created_at opsiyonel).
 // Relationships boş bırakılıyor — postgrest-js sadece dizi tipini istiyor, foreign-key
 // bilgisini gerçek zamanlı sorgu tip çıkarımı için kullanıyor (bkz. mock_exam_sections join'i).
+export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
+
 type TableDef<Row> = {
   Row: Row
   Insert: Partial<Row> & Omit<Row, 'id' | 'created_at'>
@@ -186,6 +188,27 @@ export type Database = {
       attendance_records: TableDef<AttendanceRecord>
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    // Mobil portal RPC'leri (supabase/schema.sql "Mobil Portal veri katmanı").
+    // Hepsi json döndürüyor: { ok: true, ... } | { ok: false, error: string }.
+    // Somut alanları `src/lib/portal.ts` daraltıyor, burada Json yeterli.
+    Functions: {
+      portal_login: { Args: { p_code: string }; Returns: Json }
+      portal_dashboard: { Args: { p_code: string }; Returns: Json }
+      portal_set_task_completed: {
+        Args: { p_code: string; p_task_id: string; p_completed: boolean }
+        Returns: Json
+      }
+      portal_add_exam: {
+        Args: {
+          p_code: string
+          p_name: string
+          p_publisher: string | null
+          p_exam_type: string
+          p_exam_date: string
+          p_sections: Json
+        }
+        Returns: Json
+      }
+    }
   }
 }
