@@ -109,7 +109,8 @@ async function main() {
     'weekly_tasks',
     'topic_measurements',
     'coach_decisions',
-    'error_basket_items'
+    'error_basket_items',
+    'attendance_records'
   ];
 
   const dbData: Record<string, any[]> = {};

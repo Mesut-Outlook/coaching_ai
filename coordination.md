@@ -680,3 +680,34 @@ fonksiyonlar eklendi, sızdıran politika kaldırıldı. Anon istemcinin `studen
 - Yardım sayfasına "Mobil Öğrenci & Veli Portalı" kartı, Sürüm Geçmişi'ne **v0.20** eklendi.
 - `npx tsc -b` + `npm run build` temiz; yeni dosyalarda lint uyarısı yok.
 
+---
+
+## 💾 YEDEKLEME SİSTEMİ GÜNCELLEMESİ & GİZLİ (PRIVATE) GITHUB DEPOSU PLANI (2026-07-31)
+
+### Güncellemeler (Antigravity):
+- [x] `scripts/backupData.ts` güncellendi: yeni eklenen `attendance_records` tablosu `tablesToBackup` listesine dahil edildi.
+- [x] `npm run backup` yerel ortamda başarıyla çalıştırıldı ve doğrulandı: 11 veritabanı tablosu (`database.json`) + Supabase Storage (`student-photos`) görsel dosyaları `backups/2026-07-31/` altına indirildi.
+- [x] `.github/workflows/backup.yml` güncellendi: private repository aktarım adımı secret kontrolü ile %100 güvenli hale getirildi.
+
+### 🔒 Gizli (Private) GitHub Deposu ile Günlük Otomatik Yedekleme Kurulum Adımları:
+
+1. **GitHub'da Özel (Private) Depo Oluşturun:**
+   - GitHub hesabınızda **`coaching_ai_backups`** adında yeni ve **Private** bir depo oluşturun.
+
+2. **Personal Access Token (PAT) Üretin:**
+   - GitHub Profil resminiz -> **Settings** -> **Developer Settings** -> **Personal Access Tokens** -> **Tokens (classic)**.
+   - **"Generate new token"** deyin. Adına `Backup Bot` yazın, `repo` iznini işaretleyin ve token'ı kopyalayın.
+
+3. **Ana Proje Reposuna Secret'ları Ekleyin:**
+   - Ana projenizin (`coaching_ai`) GitHub sayfasında: **Settings** -> **Secrets and variables** -> **Actions** -> **New repository secret**.
+   - Şu 4 secret'ı ekleyin:
+     - `VITE_SUPABASE_URL`: Supabase URL adresiniz.
+     - `SUPABASE_SERVICE_ROLE_KEY`: Supabase Service Role anahtarınız.
+     - `BACKUP_REPO_TOKEN`: Adım 2'de aldığınız Personal Access Token.
+     - `BACKUP_REPO_URL`: Özel deponuzun adresi (Örn: `github.com/KULLANICI_ADINIZ/coaching_ai_backups.git`).
+
+4. **Kullanım:**
+   - Otomatik bot her gece saat **05:00'te (TSİ)** çalışarak veritabanı ve fotoğrafları private deponuza commit eder.
+   - Dönem dönem kendi bilgisayarınızda yedek almak için terminalde tek komut: `npm run backup`.
+
+

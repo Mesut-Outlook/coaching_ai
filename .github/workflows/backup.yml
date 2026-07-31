@@ -38,7 +38,7 @@ jobs:
 
       # İsteğe bağlı: Özel (private) yedek deposuna push etmek için BACKUP_REPO_TOKEN tanımlandıysa
       - name: Push Backup to Private Repository
-        if: env.BACKUP_REPO_TOKEN != ''
+        if: ${{ secrets.BACKUP_REPO_TOKEN != '' }}
         env:
           BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
           BACKUP_REPO_URL: ${{ secrets.BACKUP_REPO_URL }}
