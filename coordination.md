@@ -12,9 +12,14 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 
 ---
 
-## 📍 Güncel Durum (2026-07-31)
+## 📍 Güncel Durum (2026-08-08)
 
 **Bu dosya 800+ satır ve kronolojik. Aşağısı geçmiş kaydıdır — güncel durum burada.**
+
+> 🏛️ **AKTİF BÜYÜK İŞ: Çok Kurumlu Yapı + Rol/Yetki Sistemi (RBAC)** — dosyanın **en sonunda**.
+> Opus 5 planladı, **implementasyonu agy yapar**, Opus her paket sonunda kontrol eder.
+> 7 paket (P1→P7) **sırayla** yürür; P1 saf SQL ve kullanıcı Supabase'de çalıştırmadan
+> P3 test edilemez. Yeni iş almadan önce oradaki sıralama kuralını oku.
 
 Uygulama **canlıda ve kullanımda**: https://netlik-koc-paneli.vercel.app
 `main`'e push → Vercel otomatik deploy. Son sürüm **v0.21**.
@@ -843,3 +848,395 @@ Kullanıcı kapsamı "sadece mobil portal", sunumu "tıklayınca büyüyen küç
 - Yan düzeltme: giriş ekranındaki örnek kod hâlâ 4 haneli biçimi (`STU-8492`) gösteriyordu →
   `STU-4KX9M2`. Sürüm Geçmişi **v0.21**'e işlendi.
 - *Yapan:* **Opus 5**.
+
+---
+
+# 🏛️ BÜYÜK ÖZELLİK — Çok Kurumlu Yapı + Rol/Yetki Sistemi (RBAC)
+**Plan: Opus 5, 2026-08-06/08. İmplementasyon: agy. Kontrol/doğrulama: Opus 5.**
+
+## Neden
+
+Uygulama bugün **tek koçluk** varsayımı üzerine kurulu. Kiracılık tek bir sütun:
+`students.coach_id` (`schema.sql:20`), ve tüm RLS `coach_id = auth.uid()` ya da onun alt
+sorgu hâli (`schema.sql:196-238, 347-350`). `profiles.role` dekoratif — sadece
+`Sidebar.tsx:74`'te yazı olarak basılıyor, hiçbir yerde dallanma yok. Kurum/izin kavramı
+kodda hiç yok.
+
+İhtiyaç üç katmanlı:
+1. **Eda'nın özel koçluk öğrencileri** — bugünkü derin koçluk akışı korunur ve Eda'ya özel kalır.
+2. **Concept Akademi** — Eda'nın çalıştığı kurum; etüt merkezindeki tüm öğrencilerin
+   devamsızlık ve diğer kayıtları da bu uygulamadan yürütülür.
+3. **Diğer kurs çalışanları** — kendi hesaplarıyla girdiklerinde yalnız Concept'e ait
+   öğrencileri ve rollerinin izin verdiği ekranları görürler.
+
+Üstüne: **sistem admini** (Mesut) her şeye erişir ve kullanıcı/rol/kurum yönetir;
+**Eda** kendi kurumunda yeni roller yaratıp izin matrisinden yetki verebilir.
+
+## Kullanıcı kararları (2026-08-06/08, Opus sordu — SABİT, tartışmaya kapalı)
+
+| Konu | Karar |
+|---|---|
+| Öğrenci modeli | **Tek kayıt, iki bağlam.** Bir öğrenci hem Concept öğrencisi hem Eda'nın özel koçluk öğrencisi olabilir. İki ayrı satır AÇILMAZ. |
+| Kurum | Her öğrenci tam olarak bir kuruma bağlı. Concept Akademi bir kurum; Eda'nın özel pratiği ayrı bir kurum. |
+| Admin | Sistem admini (ozdemirmesut@gmail.com): tüm kurumlar, tüm öğrenciler, kullanıcı/rol/kurum yönetimi, Eda'nın yetkisini de değiştirebilir. |
+| Rol yönetimi | Roller **veri**, enum DEĞİL. Eda özel rol yaratır ve izin matrisinden yetki verir. Hazır şablon roller şemayla gelir. |
+| Personel kapsamı | Öğrenci listesi/profil, deneme girişi, konu/program/rapor, devamsızlık — hepsi izin anahtarıyla kapılı. |
+| **Koçluk kilidi** | Öğrencinin özel koçluk koçu varsa, o öğrencinin `topic_measurements`, `coach_decisions`, `weekly_tasks` verisi **yalnız o koça** ve sistem adminine açıktır. Personel öğrenciyi listede görür, devamsızlık/deneme girer, koçluk verisine erişemez. Koçu olmayan kurum öğrencilerinde personel izniyle normal çalışır. |
+| Davet | Uygulama içinden: e-posta + rol → davet kaydı → kişi kayıt olunca otomatik kuruma ve role bağlanır. |
+
+### ⚠️ Sıralama kuralı (çakışma önleme)
+Paketler **P1 → P7 sırayla** yürür. Bir paket bitmeden sonraki başlamaz.
+Her paket sonunda **`npm run build` + `npm run test:types` + `npm run lint` yeşil** olmalı.
+Paket bitince bu dosyadaki durumu güncelle ve **Opus'un kontrol kapısını bekle.**
+
+---
+
+### agy — P1: Şema, RLS ve yardımcı fonksiyonlar (YALNIZ SQL) [Yapılacak]
+
+`supabase/schema.sql` sonuna eklenir. **Dosya idempotent kalmalı** — kullanıcı elle,
+tekrar tekrar çalıştırabilmeli (bkz. CLAUDE.md "Bilinmesi gereken tuzaklar").
+
+**Yeni tablolar:**
+```sql
+institutions        (id uuid pk, name text unique, slug text unique, created_at)
+roles               (id uuid pk, institution_id uuid null → institutions,  -- null = sistem şablonu
+                     key text, name text, permissions text[] not null default '{}',
+                     is_system boolean not null default false, created_at)
+permission_catalog  (key text pk, label text, group_key text, group_label text, sort_order int)
+memberships         (id uuid pk, institution_id → institutions, user_id → auth.users,
+                     role_id → roles, is_active boolean not null default true, created_at,
+                     unique (institution_id, user_id))
+invitations         (id uuid pk, institution_id, email text, role_id, invited_by → auth.users,
+                     status text check in ('bekliyor','kabul','iptal') default 'bekliyor',
+                     accepted_by, accepted_at, created_at)
+```
+
+⚠️ `roles` tekilliği **kısmi indeksle** — null `institution_id` Postgres'te unique kısıtını atlar:
+```sql
+create unique index if not exists roles_system_key_idx on roles(key) where institution_id is null;
+create unique index if not exists roles_inst_key_idx  on roles(institution_id, key) where institution_id is not null;
+create unique index if not exists invitations_pending_idx
+  on invitations(institution_id, lower(email)) where status = 'bekliyor';
+```
+
+**Mevcut tablolara eklemeler:**
+```sql
+alter table profiles add column if not exists is_system_admin boolean not null default false;
+alter table students add column if not exists institution_id uuid references institutions(id) on delete restrict;
+alter table students add column if not exists coaching_coach_id uuid references auth.users(id) on delete set null;
+create index if not exists students_institution_id_idx on students(institution_id);
+create index if not exists students_coaching_coach_idx on students(coaching_coach_id);
+```
+
+⚠️ **`students.coach_id` DEĞİŞMİYOR, SİLİNMİYOR, YENİDEN ADLANDIRILMIYOR.** Anlamı
+"kaydı oluşturan kullanıcı" olarak yeniden yorumlanıyor, `not null` kalıyor. Böylece
+`AddStudentModal.tsx:68`, `OgrencilerPage.tsx:308`, `TopicProgressPanel.tsx:72` kırılmıyor ve
+`checkSchemaSync` sarsılmıyor. **Kiracılık artık `institution_id`, özel koçluk işareti `coaching_coach_id`.**
+
+**Backfill — sırası önemli, aynı çalıştırmada:**
+```sql
+insert into institutions (name, slug) values
+  ('Eda Cangert Özel Koçluk', 'eda-kocluk'),
+  ('Concept Akademi', 'concept')
+on conflict (slug) do nothing;
+
+update students set institution_id = (select id from institutions where slug = 'eda-kocluk')
+  where institution_id is null;
+update students set coaching_coach_id = coach_id where coaching_coach_id is null;
+
+alter table students alter column institution_id set not null;   -- backfill'den SONRA
+
+update profiles set is_system_admin = true
+where id in (select id from auth.users where lower(email) = 'ozdemirmesut@gmail.com');
+```
+> **Varsayım (kullanıcı onaylı):** mevcut öğrencilerin tamamı bugün Eda'nın özel koçluk
+> öğrencisi kabul edilip `eda-kocluk` kurumuna yazılıyor. Concept'e taşıma arayüzden yapılacak.
+
+`profiles.is_system_admin` kendi kendine yükseltilemesin diye BEFORE UPDATE trigger'ı:
+çağıran sistem admini değilse alan `OLD` değerine sabitlenir.
+
+**İzin kataloğu seed'i** (`permission_catalog`) — bkz. P2'deki tablo, aynı liste.
+
+**Şablon roller** (`institution_id is null`, `is_system = true`; kurum rolü yaratılırken kopyalanır):
+- `kurum_yonetici` — Yönetim dahil hepsi
+- `personel` — `panel.view`, `students.view/create/edit/archive/contact.view`, `attendance.*`, `exams.*`, `topics.*`, `program.*`, `reports.view`, `tercih.view`
+- `etut_gorevlisi` — `panel.view`, `students.view`, `attendance.*`
+
+**Yardımcı fonksiyonlar** — hepsi `security definer`, `stable`, `set search_path = public, pg_temp`:
+```sql
+is_system_admin() → boolean
+my_institution_ids() → setof uuid                 -- aktif üyelikler
+has_permission(p_institution uuid, p_key text) → boolean
+user_has_any_permission(p_key text) → boolean     -- herhangi bir kurumda
+student_permission(p_student uuid, p_key text) → boolean
+can_access_coaching(p_student uuid, p_key text) → boolean
+exam_student_id(p_exam uuid) → uuid               -- iki hop'luk tablolar için
+my_access() → json                                -- frontend erişim özeti
+```
+
+`can_access_coaching` mantığı:
+```sql
+case
+  when is_system_admin() then true
+  when (select coaching_coach_id from students where id = p_student) is not null
+    then (select coaching_coach_id from students where id = p_student) = auth.uid()
+  else student_permission(p_student, p_key)
+end
+```
+
+`my_access()` dönüşü:
+```
+{ ok, is_system_admin, memberships: [{ institution_id, institution_name,
+                                       role_id, role_key, role_name, permissions[] }] }
+```
+
+#### ⚠️⚠️ ÖZYİNELEME (RECURSION) TUZAĞI — EN KRİTİK MADDE
+`students` üzerindeki politika, `students`'ı okuyan bir fonksiyon çağırıyor. Bu fonksiyonlar
+**`security definer` OLMAK ZORUNDA** — sahibi olarak çalıştıkları için RLS'i baypas ederler ve
+sonsuz döngü oluşmaz. Aynısı `memberships`/`roles` için de geçerli. Bu yüzden:
+- **`alter table ... force row level security` ASLA KULLANILMAYACAK** — tablo sahibini de
+  RLS'e tabi kılar ve tuzağı geri açar.
+- Politika ifadelerinde fonksiyonlar **`(select fn(...))` biçiminde sarılacak** — Postgres bunu
+  InitPlan olarak sorgu başına bir kez hesaplar, satır başına değil. Sarılmazsa
+  `attendance_records` gibi çok satırlı tablolarda belirgin yavaşlama olur.
+
+#### ⚠️ Yetki (grant) tuzağı — CLAUDE.md'de kayıtlı
+`revoke ... from public` anon'a kapatmıyor. Her yardımcı fonksiyon için:
+```sql
+revoke all on function <fn>(<args>) from public, anon;
+grant execute on function <fn>(<args>) to authenticated;
+```
+`authenticated` yetkisi **ŞART** — politika ifadeleri çağıran rolün yetkisiyle değerlendirilir.
+Bunu unutursan her sorgu boş döner.
+
+**Politika yeniden yazımı** — `for all` politikaları komut bazına ayrılır (okuma ve yazma farklı izne bakıyor):
+
+| Tablo | SELECT | INSERT / UPDATE / DELETE |
+|---|---|---|
+| `students` | admin veya `institution_id in (select my_institution_ids())` | `has_permission(institution_id, 'students.create' / '.edit' / '.delete')` |
+| `attendance_records` | `student_permission(student_id,'attendance.view')` | `…,'attendance.manage'` |
+| `mock_exams` | `student_permission(student_id,'exams.view')` | `…,'exams.manage'` |
+| `mock_exam_sections`, `error_basket_items` | `student_permission(exam_student_id(mock_exam_id),'exams.view')` | `…,'exams.manage'` |
+| `topic_measurements`, `coach_decisions` | `can_access_coaching(student_id,'topics.view')` | `can_access_coaching(student_id,'topics.manage')` |
+| `weekly_tasks` | `can_access_coaching(student_id,'program.view')` | `can_access_coaching(student_id,'program.manage')` |
+| `profiles` | kendisi **veya** admin **veya** aynı kurumdan üye (Kullanıcılar ekranı isim gösterebilsin) | yalnız kendisi; `is_system_admin` trigger korumalı |
+| `institutions` | üye olduğu kurumlar veya admin | yalnız admin |
+| `roles` | kurum üyesi + sistem şablonları | `has_permission(institution_id,'roles.manage')`; şablonlar yalnız admin |
+| `memberships` | kendi + aynı kurumdaki üyeler + admin | `has_permission(institution_id,'members.manage')` + yükseltme koruması |
+| `invitations` | `has_permission(institution_id,'members.manage')` veya admin | aynı |
+| `permission_catalog` | `authenticated` okur | yazma politikası yok (seed) |
+| `subjects`, `topics` | herkes okur (değişmiyor) | **daraltılıyor:** `user_has_any_permission('curriculum.manage')`. Bugün "giriş yapmış herkes yazabilir" (`schema.sql:187-194`) — çok kullanıcılıda kabul edilemez. DELETE politikası yine YOK. |
+| `university_rankings` | değişmiyor | değişmiyor |
+
+**Yetki yükseltme koruması** — `memberships` ve `invitations` üzerinde BEFORE INSERT/UPDATE
+trigger'ı: çağıran sistem admini değilse (a) o kurumda `members.manage` izni olmalı,
+(b) atanan rolün `permissions` kümesi çağıranın kendi izin kümesinin **alt kümesi** olmalı.
+Aynı kural `roles` üzerinde: kendinde olmayan izni içeren rol yaratılamaz/güncellenemez.
+
+**`claim_invitations()` trigger'ı** — `auth.users` üzerinde `after insert`, `security definer`:
+`profiles` satırını açar, bekleyen davetleri `memberships`'e çevirir, davetleri `kabul`
+damgalar. E-posta karşılaştırmaları `lower(btrim(...))`.
+> Supabase SQL Editor'de `postgres` rolüyle oluşturulabilir (belgelenmiş `handle_new_user` deseni).
+> **Yetki hatası gelirse** claim işi bir RPC'ye (`accept_invitation()`) taşınır ve `/kayit`
+> sayfası kayıt sonrası çağırır — P5'te not düş.
+
+**Storage (`student-photos`) daraltması** — bugün dört politika da yalnız
+`auth.role() = 'authenticated'` kontrol ediyor (`schema.sql:250-278`), yani herhangi bir
+kullanıcı başkasının fotoğrafını silebiliyor. Yazma/güncelleme/silme
+`user_has_any_permission('students.edit')` şartına bağlanır; **okuma public kalır**
+(fotoğraflar public URL ile gösteriliyor). Yol bazlı (`<student_id>/…`) daraltma **bilinçli
+kapsam dışı** — mevcut dosya yollarını kırma riski var.
+
+**Kabul kriterleri:**
+- `docker run --rm postgres:16` içinde `schema.sql` **iki kez arka arkaya** hatasız koşar
+  (idempotentlik kanıtı). Stub `auth.users` / `storage.objects` tablolarıyla.
+- Hiçbir yerde `force row level security` yok.
+- Her yardımcı fonksiyon `revoke … from public, anon` + `grant … to authenticated` çifti taşıyor.
+- Her politika ifadesindeki fonksiyon çağrısı `(select fn(...))` ile sarılı.
+- Eski politika bloğunu geri yazan bir `supabase/rollback_rbac.sql` teslimata dahil.
+
+**Kullanıcı adımı (Opus onayından sonra):** doğrulanmış SQL Supabase SQL Editor'de çalıştırılır.
+**Öncesinde `npm run backup` ile tam yedek alınacak.** P3 test edilmeden önce bu şart.
+
+---
+
+### agy — P2: Tipler ve izin senkron denetimi [Yapılacak]
+
+**`src/types/database.ts`** — 5 yeni Row tipi (`Institution`, `Role`, `PermissionCatalogItem`,
+`Membership`, `Invitation`) + `TableDef` girdileri + `Functions.my_access`.
+⚠️ **Row tipleri `type` olmalı, `interface` DEĞİL** — interface sessizce `never`'a düşürüyor
+(CLAUDE.md tuzağı). `students`'a `institution_id`, `coaching_coach_id`; `profiles`'a
+`is_system_admin` eklenir.
+
+**`src/lib/permissions.ts` (YENİ)** — kanonik izin kataloğu, `PermissionKey` union tipi ve
+matris UI için grup yapısı:
+
+| Grup | Anahtarlar |
+|---|---|
+| Panel | `panel.view` |
+| Öğrenciler | `students.view`, `students.create`, `students.edit`, `students.archive`, `students.delete`, `students.contact.view`, `students.access_code.manage` |
+| Devamsızlık | `attendance.view`, `attendance.manage`, `attendance.notify` |
+| Denemeler | `exams.view`, `exams.manage` |
+| Konular | `topics.view`, `topics.manage` |
+| Program | `program.view`, `program.manage` |
+| Raporlar | `reports.view` |
+| Müfredat | `curriculum.manage` |
+| Tercih | `tercih.view` |
+| Yönetim | `members.manage`, `roles.manage` |
+
+⚠️ `reports.view` **yalnız arayüz kapısıdır** — kendine ait tablosu yok. `RaporlarPage`
+`weekly_tasks` + `coach_decisions` okuyor, DB tarafındaki kapı `program.view` / `topics.view`.
+Şablon rollerde `reports.view` verilen role bunlar da verilir.
+⚠️ Koçluk kilidi bir izin anahtarı **DEĞİLDİR** — izinlerin üstünde çalışan sert kuraldır.
+
+**`scripts/checkPermissionSync.ts` (YENİ)** + `npm run test:permissions` — `schema.sql`
+içindeki `permission_catalog` seed bloğunu regex ile okur, `src/lib/permissions.ts` ile
+karşılaştırır, fark varsa exit 1. Mevcut `scripts/checkSchemaSync.ts` yalnız tablo/sütun
+denetlediği için bu boşluğu kapatır.
+
+**`scripts/checkSchemaSync.ts`** — `SQL_TYPE_MAP`'e (`:106-134`) `text[]` girdisi.
+**`src/types/database.test-d.ts`** — yeni tablolar için TableDef sözleşmesi ve `invitations.status`
+CHECK union'ı iddiaları.
+
+**Kabul:** `build` + `test:types` + `test:permissions` yeşil. Negatif test: katalogdan bir
+anahtar elle silindiğinde `test:permissions` exit 1 veriyor.
+
+---
+
+### agy — P3: Erişim katmanı, yönlendirme, gezinme [Yapılacak]
+
+**`src/contexts/AccessContext.tsx` (YENİ)** — `AuthProvider` içinde (`App.tsx:22`). Oturum
+gelince **tek bir `my_access()` RPC çağrısı** yapar; tablo select'i YAPILMAZ.
+```ts
+interface AccessContextValue {
+  loading: boolean
+  isSystemAdmin: boolean
+  memberships: Membership[]
+  activeInstitutionId: string | null      // null = "Tümü"
+  setActiveInstitution: (id: string | null) => void
+  can: (key: PermissionKey) => boolean
+}
+```
+`can()` sözleşmesi: sistem admini → daima `true`. Aksi hâlde `activeInstitutionId` doluysa o
+kurumdaki rolün izinlerine, "Tümü" seçiliyken **herhangi bir** kurumdaki izne bakar.
+`activeInstitutionId` localStorage'da saklanır.
+
+**`src/components/routing/RequirePermission.tsx` (YENİ)** — `perm` prop'u; izin yoksa
+kullanıcının erişebildiği ilk sayfaya yönlendirir. `App.tsx:37-49`'daki her rota sarılır.
+
+**`src/components/routing/ProtectedRoute.tsx:11`** — `!isSupabaseConfigured` olduğunda
+uygulamayı tamamen açan baypas **`import.meta.env.DEV` şartına bağlanır**. Bugün üretimde env
+eksik olsa kimlik doğrulaması tamamen devre dışı kalıyor.
+⚠️ **Bu baypası SİLME** — `coordination.md:840-842`'de kayıtlı bir iş akışı: `.env.noauth` +
+`vite --mode noauth` ile koç ekranlarının şifresiz ekran görüntüsü alınıyor. `DEV` şartı bu
+akışı korur, yalnız üretimi kapatır.
+
+**`src/components/layout/Sidebar.tsx:5-20`** — `NAV_ITEMS`'a `permission` alanı, `can()` ile
+filtre. Yeni **Yönetim** grubu: Kullanıcılar (`members.manage`), Roller (`roles.manage`),
+Kurumlar (yalnız admin). `:74`'te `profile?.role` yerine aktif kurumdaki gerçek rol adı.
+**Kurum seçici**: birden fazla üyeliği olanda (Eda) ve adminde sidebar üstünde
+"Tümü / Concept Akademi / Eda Cangert Özel Koçluk".
+
+**`src/lib/students.ts` (YENİ)** — aynı öğrenci sorgusu 8 yerde kopyalanmış
+(`PanelPage.tsx:32`, `OgrencilerPage.tsx:104`, `DenemelerPage.tsx:59`, `KonularPage.tsx:40`,
+`ProgramPage.tsx:58`, `RaporlarPage.tsx:53`, `DevamsizlikPage.tsx:101`, `TercihPage.tsx:237`).
+Kurum filtresi 8 yere ayrı ayrı eklenmemeli:
+```ts
+export async function fetchStudents(opts: {
+  institutionId?: string | null
+  activeOnly?: boolean
+  orderBy?: 'full_name' | 'created_at'
+}): Promise<Student[]>
+```
+⚠️ **Kapsam sınırı:** yalnız getirme çağrısı değişir. Sayfaların iç mantığı, state'i, render'ı
+ELLENMEZ. Bu bir refactor işi değil, tek bir çağrının merkezileştirilmesi.
+
+**`src/components/students/AddStudentModal.tsx:68`** — payload'a `institution_id` (aktif kurum)
+ve `coaching_coach_id` (yeni "Özel koçluk öğrencisi" anahtarı işaretliyse `user.id`, değilse
+`null`). `coach_id: user.id` KALIR.
+
+**`decided_by` düzeltmesi** — `OgrencilerPage.tsx:308` bugün `student.coach_id` yazıyor,
+`TopicProgressPanel.tsx:72` bunun için ayrı bir `students.coach_id` sorgusu atıyor. İkisi de
+`auth.uid()` / `user.id` olacak, gereksiz sorgu kalkacak.
+
+**Kabul:** Eda'nın hesabı bugünkü her şeyi aynen görüyor (regresyon yok); kurum seçici
+çalışıyor; izni olmayan menü öğeleri gizli ve rotaya elle gidince yönlendiriyor.
+
+---
+
+### agy — P4: Yönetim ekranları [Yapılacak]
+
+Mevcut tasarım sistemine (kart + tablo + modal) sadık kal; yeni görsel dil üretme.
+
+**`/yonetim/kullanicilar`** — `members.manage`. Aktif kurumun üyeleri (ad, e-posta, rol,
+durum) + bekleyen davetler. İşlemler: davet et (e-posta + rol), rol değiştir, üyeliği
+pasifleştir, daveti iptal et. Kendi rolünden geniş rol atama seçenekleri UI'da da kapalı
+(DB trigger'ı zaten reddeder — UI sadece kullanıcıya erken geri bildirim verir).
+
+**`/yonetim/roller`** — `roles.manage`. Rol listesi + "Yeni rol" modalı. İzin matrisi
+`permission_catalog`'tan gruplanmış onay kutuları olarak render edilir. Şablon rollerden
+kopyalayarak başlama seçeneği. Sistem şablonları salt-okunur.
+
+**`/yonetim/kurumlar`** — yalnız sistem admini. Kurum listesi/ekleme/yeniden adlandırma,
+kurum başına öğrenci ve üye sayısı.
+
+**Kabul:** Eda yeni bir rol ("Etüt Görevlisi") yaratıp izin işaretleyip bir üyeye atayabiliyor;
+kendi izin kümesini aşan rol hem UI'da seçilemiyor hem DB'de reddediliyor.
+
+---
+
+### agy — P5: Davet ve kayıt akışı [Yapılacak]
+
+1. Eda/admin Kullanıcılar ekranından e-posta + rol girer → `invitations` satırı
+   (`status='bekliyor'`, e-posta `lower()` normalize).
+2. Ekran kopyalanabilir bir kayıt bağlantısı verir (`{origin}/kayit?email=…`); WhatsApp ile
+   göndermek için mevcut **`src/lib/whatsapp.ts` yeniden kullanılır**.
+3. Kişi **`/kayit`** sayfasından `supabase.auth.signUp` ile kaydolur. P1'deki
+   `claim_invitations()` trigger'ı üyeliği kurar. `LoginPage`'e "Davetiyen mi var? Kayıt ol"
+   bağlantısı eklenir.
+
+> **Kapsam dışı:** otomatik davet e-postası — service-role gerekir (Edge Function). Bağlantı
+> elle paylaşılıyor. Ayrıca Supabase Auth ayarlarında **e-posta onayının açık olup olmadığı
+> kontrol edilmeli** — açıksa davet edilen kişi doğrulama maili almadan giriş yapamaz.
+
+**Kabul:** uçtan uca — davet oluştur → `/kayit`'tan kaydol → kullanıcı doğru kurumda doğru
+rolle üye oluyor, davet `kabul` damgası alıyor.
+
+---
+
+### agy — P6: Koçluk kilidi arayüzü [Yapılacak]
+
+⚠️ **En büyük sessiz hata riski burada:** yanlış/doğru fark etmeksizin RLS "erişim reddedildi"
+DEĞİL **boş sonuç** üretir. Sayfalar bunu "veri yok" diye gösterir ve kimse fark etmez.
+
+Koçu olan öğrencilerde konu haritası / koç kararları / program / rapor ekranlarında **açık bir
+kilitli durum** gösterilecek: *"Bu öğrencinin koçluk verisi <koç adı> ile sınırlıdır."*
+Boş liste veya boş grafik DEĞİL. Etkilenen: `KonularPage.tsx`, `ProgramPage.tsx`,
+`RaporlarPage.tsx`, `OgrencilerPage.tsx` (öğrenci detayı sekmeleri).
+
+**Kabul:** personel test hesabı koçluk sekmelerinde bu mesajı görüyor; boş/kırık ekran yok.
+Aynı öğrenci için öğrenci listesi, devamsızlık ve deneme girişi çalışıyor.
+
+---
+
+### P7: İzolasyon testi, belgeleme, yayın [Yapılacak — Opus + agy]
+
+**İzolasyon testi (ZORUNLU).** Test hesabı: **Concept Personel** — yalnız Concept Akademi'de
+`personel` rolü. Doğrulanacaklar:
+1. `eda-kocluk` kurumundaki bir öğrenci listede **görünmüyor**; `/ogrenciler/<id>` elle
+   yazılınca da açılmıyor.
+2. Concept'te koçluk koçu **olan** öğrencide: listede görünüyor, devamsızlık/deneme çalışıyor,
+   konu/karar/program kilitli.
+3. Concept'te koçluk koçu **olmayan** öğrencide: konu/program/rapor normal çalışıyor.
+4. `members.manage` izni olmayan hesapta `/yonetim/*` rotaları yönlendiriyor.
+5. Personel `subjects`/`topics` yazamıyor (Müfredat salt-okunur).
+6. Personel kendi rolünden geniş rol atayamıyor.
+7. **Portal regresyonu:** `portal_*` RPC'leri kiracılıktan bağımsız ve `security definer` —
+   yeni politikalardan etkilenmemeli. Bir öğrenci ve bir veli girişi denenir.
+
+Otomatik test mümkün değil — ortamda anon anahtar dışında DB erişimi yok. Doğrulama
+tarayıcıdan (claude-in-chrome ile canlı Vercel dağıtımı üzerinde) yapılır.
+
+Sonra: `CLAUDE.md` + bu dosya güncellenir, Yardım sayfasına yeni bölüm + Sürüm Geçmişi kaydı
+(v0.22), `main`'e push, **Vercel deploy doğrulaması** (yereldeki `dist/assets/index-*.js`
+hash'i canlı `index.html` ile eşleşene kadar bekle).

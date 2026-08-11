@@ -30,3 +30,13 @@ src/data/universityRankings.json
 
 # Veri yedekleri — ÖĞRENCİ + VELİ KİŞİSEL VERİSİ İÇERİR, ASLA git'e girmemeli
 backups/
+
+# Şifre / kimlik bilgisi notları — ASLA git'e girmemeli.
+# Asıl kural: bu dosyaları repo İÇİNDE tutma (gerçek şifre dosyası
+# 2026-08-11'de ~/Documents/ altına taşındı). Aşağısı kaza koruması.
+# Desenler bilerek KÖKE sabitli (baştaki /) — src/ altındaki meşru bir
+# dosyayı (örn. secrets.ts) sessizce yoksaymasınlar.
+/*[Ss]ifre*
+/*[Şş]ifre*
+/*password*
+/*secret*
