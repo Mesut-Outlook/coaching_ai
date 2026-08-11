@@ -891,7 +891,60 @@ Paket bitince bu dosyadaki durumu güncelle ve **Opus'un kontrol kapısını bek
 
 ---
 
-### agy — P1: Şema, RLS ve yardımcı fonksiyonlar (YALNIZ SQL) [Yapılacak]
+### agy — P1: Şema, RLS ve yardımcı fonksiyonlar (YALNIZ SQL) [agy teslim etti → ⛔ Opus kontrolü: DÜZELTME GEREKLİ]
+
+> **Opus 5 kontrol sonucu (2026-08-11).** Teslim büyük ölçüde doğru, ama **kabul kriteri
+> düşüyor: şema idempotent değil.** Aşağıdaki tek kök neden düzeltilip tekrar teslim edilecek.
+> ⚠️ **Kullanıcı SQL'i Supabase'de ÇALIŞTIRMASIN** — 2. koşuda patlar.
+>
+> **Geçen kontroller:** `force row level security` yok ✅ · tablo kaybı yok (5 yeni tablo) ✅ ·
+> 18 fonksiyonun tamamı `security definer` + `set search_path` ✅ · 8 yardımcı `stable`, hepsinde
+> `revoke … from public, anon` + `grant … to authenticated` çifti tam ✅ · 42 politikada
+> `(select fn())` sarmalaması doğru ✅ · `rollback_rbac.sql` teslim ✅ · Docker seed doğrulaması:
+> 2 kurum, 22 izin, 3 şablon rol, 38 politika, 17 RLS'li tablo ✅
+>
+> **Kök neden (iki belirti, tek sebep):** yetki koruma trigger'ları çağıranın bir son kullanıcı
+> olduğunu varsayıyor. Oysa `schema.sql` **migration bağlamında** çalışır — Supabase SQL
+> Editor'de de psql'de de `auth.uid()` **NULL**'dur, dolayısıyla `is_system_admin()` false döner.
+>
+> **🔴 Belirti 1 — sert hata, 2. koşuda dosya patlıyor.**
+> Şablon rol seed'i `:165-182` (`on conflict … do update`), koruma trigger'ı `:628`'de — yani
+> seed'den SONRA kuruluyor. 1. koşuda trigger henüz yok, insert geçiyor. 2. koşuda trigger var,
+> `do update` onu tetikliyor, `check_role_privilege_escalation` "Sistem şablon rollerini yalnızca
+> sistem yöneticisi düzenleyebilir" exception'ı atıyor. Docker'da doğrulandı: **2. koşu çıkış kodu 3.**
+> ⚠️ `on conflict do nothing`'e çevirmek ÇÖZMEZ — Postgres'te BEFORE INSERT trigger'ı çakışma
+> tespitinden ÖNCE ateşlenir.
+>
+> **🟠 Belirti 2 — sessiz hata, hiç uyarı vermiyor (bu daha tehlikeli).**
+> `prevent_system_admin_escalation` (`:489-501`) exception atmıyor, sessizce
+> `NEW.is_system_admin := OLD.is_system_admin` yapıyor. Admin seed'i `:130`, trigger `:504`.
+> Senaryo: admin'in `profiles` satırı henüz yokken şema çalıştırılır (0 satır güncellenir), sonra
+> profil oluşur, düzeltmek için şema tekrar çalıştırılır → trigger sessizce geri alır →
+> **admin yetkisi hiç verilmez, tek bir hata mesajı çıkmaz.** Idempotent bir dosyanın varlık
+> sebebi "tekrar çalıştırıp düzeltmek" olduğundan bu kabul edilemez.
+>
+> **✅ İstenen düzeltme (Opus Docker'da denedi, iki koşu da çıkış 0 verdi):**
+> Dört koruma fonksiyonunun da (`prevent_system_admin_escalation`,
+> `check_membership_privilege_escalation`, `check_invitation_privilege_escalation`,
+> `check_role_privilege_escalation`) `begin`'inden hemen sonra migration muafiyeti:
+> ```sql
+> -- Migration/service bağlamı: schema.sql doğrudan çalıştırıldığında auth.uid() NULL olur.
+> -- Bu durumda koruma atlanır; anon için kapı zaten RLS politikalarıdır (yazma izni yok).
+> if auth.uid() is null then return NEW; end if;
+> ```
+> Güvenliği zayıflatmaz: `roles`/`memberships`/`invitations` yazma politikaları
+> `has_permission(...)` istiyor, bu da üyelik ⇒ `auth.uid()` non-null demek. `profiles`
+> güncellemesinde de kullanıcı kendi satırını düzenlerken `auth.uid()` doludur — yani koruma
+> gerçek kullanıcılarda aynen çalışmaya devam eder.
+> *(Alternatif `alter table … disable/enable trigger` yalnız Belirti 1'i çözer; yukarıdaki tek
+> düzeltme ikisini birden kapatır.)*
+>
+> **Yeniden teslim kriteri:** temiz bir `postgres:16` veritabanında stub `auth`/`storage` ile
+> `schema.sql` **iki kez arka arkaya çıkış kodu 0** vermeli. Opus bunu tekrar koşacak.
+
+---
+
+**Aşağısı orijinal görev tanımıdır (referans).**
 
 `supabase/schema.sql` sonuna eklenir. **Dosya idempotent kalmalı** — kullanıcı elle,
 tekrar tekrar çalıştırabilmeli (bkz. CLAUDE.md "Bilinmesi gereken tuzaklar").
@@ -1060,7 +1113,42 @@ kapsam dışı** — mevcut dosya yollarını kırma riski var.
 
 ---
 
-### agy — P2: Tipler ve izin senkron denetimi [Yapılacak]
+### agy — P2: Tipler ve izin senkron denetimi [✅ Opus kontrolü: GEÇTİ — 1 küçük düzeltme borcu]
+
+> **Opus 5 kontrol sonucu (2026-08-11).** P2 kabul edildi, **P3 başlayabilir.** Aşağıdaki tek
+> eksik P3'ü bloklamıyor, ama kapatılana kadar açık borç sayılır.
+>
+> **Geçen kontroller:** `npm run build` ✅ · `test:types` ✅ (tüm tablo/sütun eşleşiyor) ·
+> `test:permissions` ✅ (22 anahtar) · `lint` ✅ (yalnız eski uyarılar; P2 dosyalarından yeni
+> uyarı yok) · 5 yeni Row tipinin hepsi `type`, `interface` değil ✅ (CLAUDE.md tuzağı) ·
+> hepsi `Database['public']['Tables']`'a bağlı + `my_access` `Functions`'ta ✅
+>
+> **Senkron denetleyicisi gerçekten çalışıyor — negatif testle kanıtlandı.** `PERMISSION_GROUPS`
+> içindeki bir anahtar bozulduğunda `checkPermissionSync.ts` iki yönde de hata verip exit 1
+> döndü. (⚠️ Not: `permissions.ts`'te her anahtar İKİ yerde geçer — `PermissionKey` tip
+> birleşiminde ve `PERMISSION_GROUPS` içinde. Denetleyici yalnız ikincisini, yani çalışma
+> zamanı listesini görür; tip birleşimindeki bozulmayı `tsc` yakalar. Negatif test yaparken
+> doğru olanı hedefle.)
+>
+> **🟠 Açık borç — `roles.permissions` tipi denetlenmiyor.**
+> `scripts/checkSchemaSync.ts:110`'a `'text[]': 'unknown'` eklenmiş. `'unknown'` demek
+> "bu sütunu KONTROL ETME" demek: denetleyici uyarı basıp geçiyor
+> (*"roles.permissions: bilinmeyen SQL tipi text[] — tip denetlenmedi"*). `database.ts:39`
+> şu an doğru (`permissions: string[]`) ama korumasız — biri bunu `string` yapsa hiçbir şey
+> yakalamaz. Üstelik bu, yeni şemanın en kritik sütunu: izin kümesinin kendisi.
+>
+> **İstenen düzeltme (3 satır, `scripts/checkSchemaSync.ts`):**
+> 1. `:22` — `type TsPrimitive` birleşimine `'string[]'` ekle.
+> 2. `:228` `toPrimitive` — `ts.isArrayTypeNode(node)` dalı ekle; eleman tipi
+>    `StringKeyword` ise `'string[]'` döndür.
+> 3. `:110` — `'text[]': 'string[]'` yap.
+>
+> Sonrasında `npm run test:types` uyarısız geçmeli ve `database.ts`'te `permissions` alanını
+> `string` yapmak hata vermeli (negatif testle doğrula).
+
+---
+
+**Aşağısı orijinal görev tanımıdır (referans).**
 
 **`src/types/database.ts`** — 5 yeni Row tipi (`Institution`, `Role`, `PermissionCatalogItem`,
 `Membership`, `Invitation`) + `TableDef` girdileri + `Functions.my_access`.
