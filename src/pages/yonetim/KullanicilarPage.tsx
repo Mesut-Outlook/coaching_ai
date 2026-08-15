@@ -88,7 +88,21 @@ export default function KullanicilarPage() {
 
   const handleSendInvite = async (e: FormEvent) => {
     e.preventDefault()
-    if (!user || !activeInstitutionId || !inviteEmail.trim() || !inviteRoleId) return
+    // Eskiden burada koşulsuz `return` vardı: rol listesi boş geldiğinde inviteRoleId de
+    // boş kalıyor, "Davet Gönder" hiçbir şey yapmadan sessizce düşüyordu — ekranda ne hata
+    // ne davet. Sebebi kullanıcıya söyle.
+    if (!user || !activeInstitutionId) {
+      setError('Davet göndermek için önce bir kurum seçin.')
+      return
+    }
+    if (!inviteEmail.trim()) {
+      setError('E-posta adresi zorunlu.')
+      return
+    }
+    if (!inviteRoleId) {
+      setError('Atanacak bir rol seçin. Rol listesi boşsa Roller ekranından rol tanımlayın.')
+      return
+    }
 
     setSubmittingInvite(true)
     setError(null)
