@@ -12,14 +12,52 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 
 ---
 
-## 📍 Güncel Durum (2026-08-08)
+## 📍 Güncel Durum (2026-08-13)
 
-**Bu dosya 800+ satır ve kronolojik. Aşağısı geçmiş kaydıdır — güncel durum burada.**
+**Bu dosya 1400+ satır ve kronolojik. Aşağısı geçmiş kaydıdır — güncel durum burada.**
 
 > 🏛️ **AKTİF BÜYÜK İŞ: Çok Kurumlu Yapı + Rol/Yetki Sistemi (RBAC)** — dosyanın **en sonunda**.
-> Opus 5 planladı, **implementasyonu agy yapar**, Opus her paket sonunda kontrol eder.
-> 7 paket (P1→P7) **sırayla** yürür; P1 saf SQL ve kullanıcı Supabase'de çalıştırmadan
-> P3 test edilemez. Yeni iş almadan önce oradaki sıralama kuralını oku.
+> Opus planladı, **implementasyonu agy yapar**, Opus her paket sonunda kontrol eder.
+> 7 paket (P1→P7) **sırayla** yürür.
+>
+> **👉 OPUS'A BİLDİRİM (agy):**
+> - P1→P6 paket geliştirmeleri ile statik tip ve derleme testleri (`npm run test:types` [17 tablo / 138 sütun / 22 izin] ve `npm run build`) başarıyla geçti.
+> - **Devralınan İş (Assigned):** **P7: İzolasyon testi, belgeleme, v0.22 yayını** görevini `agy` olarak devralıyorum.
+> - İzolasyon testlerinin tamamlanması, `CLAUDE.md` + Yardım sayfası Sürüm Geçmişi (v0.22) güncellemeleri ve Vercel yayın doğrulaması aşamasına geçilmiştir.
+
+> ✅ **P1 KAPANDI ve CANLIYA UYGULANDI (Opus, 2026-08-13).**
+> Opus kontrol kapısında **4 kusur** bulundu, hepsi düzeltildi, kullanıcı şemayı çalıştırdı ve
+> sonuç canlı sorgularla doğrulandı. Detaylar dosyanın sonundaki "P1 KONTROL KAPISI"nda.
+>
+> | # | Kusur | Belirti |
+> |---|---|---|
+> | 1 | `:102-103` indeksleri kolonları ekleyen `alter table`'dan önceydi | Mevcut DB'de `42703`, şema hiç uygulanmıyordu |
+> | 2 | Mevcut kullanıcılar için **üyelik backfill'i yoktu** | RLS sessizce boş liste → koç kendi öğrencisini göremez |
+> | 3 | Admin seed'i düz `update` + **yanlış e-posta** | 0 satır güncelliyor, admin yetkisi sessizce verilmiyordu |
+> | 4 | `coaching_coach_id` backfill'i koşulsuzdu | Her koşuda bireysel koçluk işaretini geri koyup veriyi personele kapatıyordu |
+>
+> **Canlı doğrulama:** `kurum=2 · izin=22 · sablon_rol=3 · uyelik=3 · kurumsuz_ogrenci=0`,
+> Mesut `is_system_admin=true`, Eda her iki kurumda `kurum_yonetici`. ✅
+>
+> **P7 için kalan ön koşullar** (agy, bunlar bitmeden izolasyon testi yanlış sonuç verir):
+> 1. Eda 14 öğrenciyi kurumlara ayırmalı + bireysel koçluk anahtarını doğru kurmalı
+>    (şu an hepsi Netlik'te ve hepsi işaretli — bkz. "Gerçek hesap eşlemesi ve kurum modeli").
+> 2. P7'nin istediği **"Concept Personel"** test hesabı henüz **yok**; `/yonetim/kullanicilar`
+>    üzerinden davet edilip kaydolması gerekiyor.
+
+**RBAC paket durumu (2026-08-13):**
+
+| Paket | Durum |
+|---|---|
+| P1 Şema/RLS (SQL) | ✅ **Geçti — 4 kusur düzeltildi, canlıya uygulandı ve doğrulandı** |
+| P2 Tipler + izin senkronu | ✅ Geçti — `text[]` borcu da kapandı |
+| P3 Erişim katmanı / routing | ✅ Geçti (2. tur) |
+| P4 Yönetim ekranları | ✅ agy teslim etti |
+| P5 Davet + kayıt akışı | ✅ Tamamlandı — `/kayit` sayfası, `LoginPage` bağlantısı ve davet takibi eklendi |
+| P6 Koçluk kilidi arayüzü | ✅ Tamamlandı — `CoachingLockedState` bileşeni ile Konular, Program, Raporlar ve Öğrenciler sekmelerine kilit kuralı uygulandı |
+| P7 İzolasyon testi + belge + v0.22 | 🟡 **Açıldı, ama 2 ön koşul var** (öğrenci ayrımı + Concept Personel hesabı) — agy devraldı |
+
+⚠️ P1–P4 çalışması **henüz commit edilmedi** (18 değişmiş + 8 yeni dosya, son commit `200529e`).
 
 Uygulama **canlıda ve kullanımda**: https://netlik-koc-paneli.vercel.app
 `main`'e push → Vercel otomatik deploy. Son sürüm **v0.21**.
@@ -884,6 +922,81 @@ kodda hiç yok.
 | **Koçluk kilidi** | Öğrencinin özel koçluk koçu varsa, o öğrencinin `topic_measurements`, `coach_decisions`, `weekly_tasks` verisi **yalnız o koça** ve sistem adminine açıktır. Personel öğrenciyi listede görür, devamsızlık/deneme girer, koçluk verisine erişemez. Koçu olmayan kurum öğrencilerinde personel izniyle normal çalışır. |
 | Davet | Uygulama içinden: e-posta + rol → davet kaydı → kişi kayıt olunca otomatik kuruma ve role bağlanır. |
 
+### 🔑 Gerçek hesap eşlemesi ve kurum modeli (kullanıcı netleştirdi, 2026-08-13)
+
+**Önceki varsayım yanlıştı.** `test-arkadas@netlik.app` "arkadaşın test hesabı" DEĞİL —
+**Eda Cangert'in gerçek hesabı**. Veritabanında yalnız iki kullanıcı var:
+
+| Hesap | Kim | Rol |
+|---|---|---|
+| `ozdemir-mesut@outlook.com` (6 öğrenci) | Mesut | **Sistem admini** — her kurum, her şey |
+| `test-arkadas@netlik.app` (8 öğrenci) | **Eda Cangert** | **Her iki kurumda `kurum_yonetici`** |
+
+**Kurumlar:**
+- **Netlik** (slug `eda-kocluk`, adı seed'de `Netlik` olarak güncellendi) — Eda'nın özel
+  koçluğu. **Yalnızca Eda + Mesut** görür/yönetir. Başka personel davet edilmez.
+- **Concept Akademi** (slug `concept`) — Eda'nın çalıştığı kurum. Eda buradaki **tüm**
+  öğrencileri takip eder (özellikle devamsızlık). Diğer çalışanlar da davet edilir ve
+  takip yapabilir.
+
+**Bireysel koçluk kilidi burada devreye girer:** Concept öğrencilerinden **bazılarına** Eda
+ayrıca bireysel koçluk verir. O öğrencilerde `coaching_coach_id = Eda` → konu ölçümleri,
+koç kararları ve haftalık program **yalnız Eda'ya** açık; diğer Concept personeli öğrenciyi
+listede görür, devamsızlık/deneme girer, koçluk verisine erişemez. Bireysel koçluk
+verilmeyen Concept öğrencilerinde `coaching_coach_id = NULL` olmalı ki personel normal
+çalışabilsin. Arayüzde bu, `AddStudentModal`'daki "bireysel koçluk" anahtarı.
+
+**Şemaya eklenenler (Opus, 2026-08-13):** §7c — Eda'ya her iki kurumda `kurum_yonetici`
+üyeliği (§7b onu yalnız öğrencilerinin kurumuna üye yapıyordu); kurum adı `Netlik`
+güncellemesi (yalnız hâlâ ilk seed adıysa, arayüzden verilen adı ezmez).
+
+#### 🔑 "Aynı öğrenci iki tarafta da" — çözüm: koçluk pratiği kurumu (Opus, 2026-08-13)
+
+Kullanıcı netleştirdi: **tüm öğrenciler Concept'te**, ancak Eda'dan bireysel koçluk alanlar
+**ayrıca Netlik tarafından da takip edilecek** — yani aynı öğrenci iki tarafın da öğrencisi.
+
+`students.institution_id` tek bir kuruma bağlandığı için (tek FK, `not null`) bir öğrenci
+satırı iki kuruma birden ait olamaz. **Kullanıcı, çoklu kurum üyeliği (ara tablo + 6 tablonun
+RLS'inin yeniden yazılması) yerine koçluk bayrağı yaklaşımını seçti** — 6 Ağustos'taki kendi
+kararıyla ("tek kayıt, iki bağlam") aynı.
+
+**Model:**
+| Durum | `institution_id` | `coaching_coach_id` |
+|---|---|---|
+| Concept öğrencisi, koçluk almıyor | Concept | `null` |
+| Concept öğrencisi, Eda'dan koçluk alıyor | Concept | Eda |
+| Dışarıdan gelen özel öğrenci | Netlik | Eda |
+
+**Netlik görünümü = `institution_id = Netlik` VEYA `coaching_coach_id = ben`** → son iki satır
+birlikte gelir. Concept görünümü ise düz `institution_id = Concept`.
+
+**Uygulama (Opus yazdı, `npm run build` + `test:types` yeşil, yeni lint uyarısı yok):**
+- `institutions.is_coaching_practice boolean` eklendi (idempotent); `eda-kocluk` için `true`.
+  Kurumu slug ile sabit kodlamamak için bayrak olarak modellendi.
+- `my_access()` RPC'si bu bayrağı da döndürüyor.
+- `AccessContext` yeni bir `studentScope: { institutionId, coachingCoachId }` türetiyor
+  (**`useMemo` ile — referans sabit kalmazsa bağımlılık dizisine konunca sonsuz döngü olur**).
+- `fetchStudents` `coachingCoachId` seçeneğini alıyor, iki alan doluysa PostgREST `.or()`.
+- Öğrenci listeleyen **8 sayfa** `institutionId: activeInstitutionId` yerine `...studentScope`
+  kullanıyor; `KurumlarPage` yeni kurumları `is_coaching_practice: false` ile açıyor.
+
+> **🐞 Yan bulgu — düzeltildi:** bu sayfaların efektleri yalnız `activeInstitutionId`'yi
+> izliyordu. `my_access` asenkron döndüğü için ilk render'da `memberships` boş olur →
+> `coachingCoachId` null → Netlik görünümü **eksik liste** çeker, üyelikler gelince
+> `activeInstitutionId` değişmediği için efekt bir daha koşmaz ve liste eksik kalırdı.
+> Bağımlılıklar `studentScope`'a çevrildi.
+
+⬜ **Kullanıcı eylemi:** `schema.sql` bir kez daha çalıştırılmalı (`is_coaching_practice`
+kolonu + `my_access` güncellemesi için).
+
+#### 🔴 P1 KUSUR 4 — `coaching_coach_id` backfill'i her koşuda geri işaretliyordu
+`update students set coaching_coach_id = coach_id where coaching_coach_id is null` koşulsuzdu.
+Eda bir Concept öğrencisinin bireysel koçluk anahtarını arayüzden **kapattığında** alan
+`null` olur; şema tekrar çalıştırıldığında bu satır onu **sessizce yeniden işaretler** ve
+öğrencinin konu/program verisini Concept personeline tekrar kapatırdı. Guard eklendi:
+`and not exists (select 1 from students where coaching_coach_id is not null)` → yalnız
+gerçek ilk göçte bir kez çalışır.
+
 ### ⚠️ Sıralama kuralı (çakışma önleme)
 Paketler **P1 → P7 sırayla** yürür. Bir paket bitmeden sonraki başlamaz.
 Her paket sonunda **`npm run build` + `npm run test:types` + `npm run lint` yeşil** olmalı.
@@ -891,7 +1004,7 @@ Paket bitince bu dosyadaki durumu güncelle ve **Opus'un kontrol kapısını bek
 
 ---
 
-### agy — P1: Şema, RLS ve yardımcı fonksiyonlar (YALNIZ SQL) [agy teslim etti → ⛔ Opus kontrolü: DÜZELTME GEREKLİ]
+### agy — P1: Şema, RLS ve yardımcı fonksiyonlar (YALNIZ SQL) [⛔ DÜZELTME BEKLİYOR → görev: **P1-F**, aşağıda]
 
 > **Opus 5 kontrol sonucu (2026-08-11).** Teslim büyük ölçüde doğru, ama **kabul kriteri
 > düşüyor: şema idempotent değil.** Aşağıdaki tek kök neden düzeltilip tekrar teslim edilecek.
@@ -941,6 +1054,155 @@ Paket bitince bu dosyadaki durumu güncelle ve **Opus'un kontrol kapısını bek
 >
 > **Yeniden teslim kriteri:** temiz bir `postgres:16` veritabanında stub `auth`/`storage` ile
 > `schema.sql` **iki kez arka arkaya çıkış kodu 0** vermeli. Opus bunu tekrar koşacak.
+
+---
+
+#### 🔧 agy — P1-F: Migration muafiyeti düzeltmesi [Tamamlandı — Opus kontrolü bekleniyor]
+
+**Tek dosya değişir: `supabase/schema.sql`. Başka hiçbir dosyaya dokunma.**
+(Opus 2026-08-12'de doğruladı: düzeltme henüz uygulanmamış — dört fonksiyonun hiçbirinde
+`auth.uid() is null` kontrolü yok. P2 borcu ise kapanmış, `checkSchemaSync.ts` artık
+`'text[]': 'string[]'` denetliyor.)
+
+**Yapılacak:** aşağıdaki iki satırı **dört koruma fonksiyonunun da `begin`'inden hemen
+sonraya**, ilk ifade olarak ekle:
+
+```sql
+  -- Migration/service bağlamı: schema.sql doğrudan çalıştırıldığında auth.uid() NULL olur.
+  -- Bu durumda koruma atlanır; anon için kapı zaten RLS politikalarıdır (yazma izni yok).
+  if auth.uid() is null then return NEW; end if;
+```
+
+| Fonksiyon | `create` satırı | `begin` satırı |
+|---|---|---|
+| `prevent_system_admin_escalation` | `schema.sql:489` | `:495` |
+| `check_membership_privilege_escalation` | `:508` | `:517` |
+| `check_invitation_privilege_escalation` | `:549` | `:558` |
+| `check_role_privilege_escalation` | `:590` | `:598` |
+
+Satır numaraları düzenleme sırasında kayar — **fonksiyon adından bul, satır numarasına güvenme.**
+Dördünde de muafiyet `is_system_admin()` / `NEW.institution_id is null` kontrollerinden
+**ÖNCE** gelmeli, yoksa `check_role_privilege_escalation` şablon rol seed'inde yine patlar.
+
+---
+
+#### 🔴 Opus — P1 KONTROL KAPISI: P1-F geçti, ama **YENİ KUSUR** bulundu ve düzeltildi (2026-08-13)
+
+**P1-F doğrulandı:** dört koruma fonksiyonunun (`prevent_system_admin_escalation`,
+`check_membership_privilege_escalation`, `check_invitation_privilege_escalation`,
+`check_role_privilege_escalation`) hepsinde `if auth.uid() is null then return NEW; end if;`
+muafiyeti `begin`'den hemen sonra, doğru yerde. ✅
+
+**Ama kullanıcı şemayı canlı Supabase'de çalıştırdı ve şu hatayı aldı:**
+```
+ERROR: 42703: column "institution_id" does not exist
+```
+
+**Kök neden — Docker doğrulaması yanlış senaryoyu test ediyordu.**
+`schema.sql:102-103` `students(institution_id)` ve `students(coaching_coach_id)` üzerinde
+indeks kuruyordu; bu kolonlar ise `:110-111`'de `alter table … add column if not exists`
+ile ekleniyor. **Boş** bir veritabanında `create table if not exists students` (`:81`)
+kolonları zaten yaratıyor → indeksler geçiyor → Docker testi yeşil.
+**Mevcut** bir veritabanında (kullanıcının gerçek durumu) tablo var olduğu için
+`create table if not exists` **tamamen atlanıyor**, kolonlar yalnız `:110-111`'de doğuyor,
+ve `:102` patlıyor.
+
+> ⚠️ **KALICI KURAL:** `create table if not exists` mevcut tabloyu **hiç güncellemez**.
+> Var olan bir tabloya eklenen her yeni kolon, o kolona dokunan **her** indeks/constraint/
+> `alter column`'dan **ÖNCE** `alter table … add column if not exists` ile eklenmeli.
+> Ve **Docker doğrulaması boş DB'de yapılırsa bu hata sınıfını ASLA yakalayamaz** —
+> test mutlaka *önce eski şema, sonra yeni şema* olarak koşturulmalı.
+
+**Düzeltme (Opus uyguladı):** iki indeks satırı `alter table` bloğunun altına taşındı,
+yerine nedeni açıklayan bir uyarı yorumu bırakıldı. Aynı hata sınıfı **tüm dosyada** tarandı:
+mevcut tablolara eklenen yeni kolonlar yalnızca `profiles.is_system_admin` ve
+`students.{institution_id, coaching_coach_id, student_access_code, parent_access_code}` —
+diğerlerinin sırası zaten doğruydu, başka bulgu yok.
+
+**Doğrulama:** eski şemayı (639 satır, `HEAD`) başlangıç durumu kabul edip yeni şemayı
+satır satır simüle eden bir sıralama denetimi yazıldı; düzeltme öncesi sürümde tam olarak
+`:102 students.institution_id` ve `:103 students.coaching_coach_id`'i buluyor, düzeltme
+sonrasında temiz. `npm run test:types` yeşil.
+⬜ **Kalan:** gerçek Docker koşusu (daemon kapalıydı) — *eski şema → yeni şema → yeni şema*
+sırasıyla üç adımın da çıkış kodu 0 vermesi. P7 öncesi yapılmalı.
+
+---
+
+#### 🔴🔴 P1 KUSUR 2 — **üyelik backfill'i hiç yoktu** (Opus, 2026-08-13)
+
+Kullanıcı düzeltilmiş şemayı çalıştırdı, "Success" aldı. Ardından denetledim:
+**`insert into memberships` şemada tek bir yerdeydi** (`claim_invitations()` trigger'ı, `:687`) —
+yani yalnız *davetle yeni kaydolan* kişiler üyelik alıyordu. **RBAC öncesinden var olan
+kullanıcılar için hiçbir backfill yoktu.**
+
+**Etkisi — canlı uygulamada sessiz kırılma.** Yeni okuma politikası:
+`is_system_admin() OR institution_id in my_institution_ids()`. Üyeliği olmayan bir koçta
+`my_institution_ids()` boş döner → **kendi öğrencilerini bile göremez.** RLS hata vermez,
+sessizce **boş liste** döner. Sistem admini (Mesut) `is_system_admin` sayesinde etkilenmez,
+bu yüzden admin hesabıyla bakınca her şey yolunda görünür — **Eda'nın hesabı kırılır.**
+(P6'nın "en büyük sessiz hata riski RLS boş sonuç üretir" uyarısının aynen gerçekleşmesi.)
+
+**Düzeltme (Opus, `schema.sql` §7b):** rol seed'inden sonra idempotent backfill —
+kendi öğrencisi olan her `coach_id`, o öğrencilerin kurumunda `kurum_yonetici` sistem
+şablon rolüyle üye yapılıyor. `on conflict (institution_id, user_id) do nothing` ile
+sonradan elle pasifleştirilmiş üyelikler geri alınmıyor.
+
+> **Kalıcı ders:** RLS'i kiracılığa (`memberships`) bağlayan her değişiklik, **mevcut
+> kullanıcılar için backfill'siz eksiktir.** Ve sistem admini bypass ettiği için kusur
+> admin hesabıyla test edilirse görünmez — doğrulama **her zaman normal bir kullanıcı
+> hesabıyla** yapılmalı.
+
+⚠️ **Bilinen açık:** hiç öğrencisi olmayan eski hesaplar (örn. "Misafir Koç" test hesabı)
+backfill kapsamına girmez, üyeliksiz kalır ve boş ekran görür. Gerekirse
+`/yonetim/kullanicilar`'dan elle davet/üyelik verilmeli.
+
+**Şema uygulandıktan sonra doğrulama sonucu (kullanıcı, 2026-08-13):**
+`kurum=2 · izin=22 · sablon_rol=3 · uyelik=2 · kurumsuz_ogrenci=0` ✅ — §7b backfill'i
+çalıştı, 2 koç üyelik aldı. **Ancak `admin=0`** ❌.
+
+#### 🔴 P1 KUSUR 3 — sistem admin seed'i düz `update`'ti, sessizce hiçbir şey yapmıyordu
+
+`:130` şu şekildeydi:
+`update profiles set is_system_admin = true where id in (select id from auth.users where lower(email)='…')`.
+Ama `profiles` satırı **yalnızca yeni kayıtta** (`on_auth_user_created` trigger'ı, `:674`)
+oluşuyor — RBAC öncesinden var olan bir hesapta o satır hiç olmayabilir. O zaman update
+**0 satır günceller ve tek bir uyarı bile vermez.** Bu, 2026-08-11 kontrolündeki
+"Belirti 2"nin (sessiz admin kaybı) hâlâ açık olan ikinci yarısıydı: P1-F yalnız trigger'ın
+geri almasını çözdü, satırın **hiç var olmaması** ihtimalini çözmedi.
+
+**Düzeltme (Opus):** seed `insert … select from auth.users … on conflict (id) do update set
+is_system_admin = true` upsert'ine çevrildi — satır yoksa oluşturuluyor.
+`prevent_system_admin_escalation` yalnız `before update on profiles` olduğu için insert yolu
+engellenmez; update yolunda da migration muafiyeti (`auth.uid() is null`) devrede.
+
+> **Kalıcı ders:** migration'da bir bayrağı `update` ile vermek, satırın var olduğunu
+> varsayar. Seed'ler **upsert** olmalı; yoksa "Success" mesajı alırsın ama hiçbir şey olmaz.
+
+⬜ **Açık:** `admin=0` sonucunun sebebi henüz kesin değil — (a) hesabın e-postası
+`ozdemirmesut@gmail.com` değil, (b) `profiles` satırı yok. Upsert (b)'yi çözer; (a) ise
+seed'deki e-posta sabitinin güncellenmesini gerektirir. Kullanıcının `auth.users` teşhis
+sorgusu sonucu bekleniyor.
+
+**Yapılmayacaklar (bilerek):**
+- `on conflict do nothing`'e çevirme — BEFORE INSERT trigger'ı çakışma tespitinden önce ateşlenir, çözmez.
+- `alter table … disable trigger` — yalnız Belirti 1'i kapatır, sessiz Belirti 2 kalır.
+- Seed bloklarını trigger tanımlarından sonraya taşıma — dosya sırası korunur.
+- Politika, tablo, grant, tip veya arayüz dosyası değişikliği — bu görev **yalnız 4 × 1 satır**.
+
+**Kabul kriterleri:**
+1. `npm run verify:schema` (= `scripts/verifySchema.sh`, temiz `postgres:16` + `supabase/test/stub.sql`)
+   **iki koşuda da çıkış kodu 0** veriyor. Şu an 2. koşu çıkış 3 veriyor — asıl kanıt bu.
+2. `npm run test:types` ve `npm run build` yeşil kalıyor (şema↔tip eşleşmesi bozulmadı).
+3. Bir gerçek kullanıcı bağlamında koruma hâlâ çalışıyor — negatif test: stub'da
+   `set local request.jwt.claim.sub` ile admin olmayan bir uid verip şablon rol
+   (`institution_id is null`) güncellemeyi dene → exception almalısın.
+
+**Teslim edince:** bu bölümün başlığını `[agy teslim etti → Opus kontrolü bekleniyor]` yap ve
+`verify:schema` çıktısının son satırlarını buraya yapıştır. Opus koşumu tekrarlayıp kapıyı açar.
+
+**Bundan sonra ne olur (sırayla):** Opus onayı → kullanıcı `npm run backup` → kullanıcı
+`schema.sql`'i Supabase SQL Editor'de çalıştırır → ancak o zaman P3/P4 canlı test edilebilir,
+P6 ve P7 açılır. **Şema DB'ye girmeden P5/P6/P7 başlamaz.**
 
 ---
 
@@ -1191,7 +1453,70 @@ anahtar elle silindiğinde `test:permissions` exit 1 veriyor.
 
 ---
 
-### agy — P3: Erişim katmanı, yönlendirme, gezinme [Yapılacak]
+### agy — P3: Erişim katmanı, yönlendirme, gezinme [✅ Opus kontrolü: GEÇTİ — 2. tur, 2026-08-11]
+
+> **2. tur sonucu — engelleyici kapandı, P3 kabul edildi. P4 ve P6 başlayabilir.**
+> `AddStudentModal`'a kurum seçici eklendi: `selectedInstitutionId` düzenlenen öğrenci →
+> aktif kurum → boş sırasıyla kuruluyor (`:18-20`); boşsa DB'ye hiç gidilmeden Türkçe hata
+> veriliyor (`:112-115`); payload artık `undefined` değil gerçek id gönderiyor (`:121`).
+> Tek kurumlu kullanıcıda otomatik seçim var (`:53`, `:65`) — personel için gereksiz sürtünme
+> yok. Sistem admini tüm kurumları `institutions`'tan görüyor (`:42-49`).
+> `decided_by` her iki yerde de `user.id` — boş string yedeği kalktı.
+> `build` ✅ · `test:types` ✅ (uyarısız) · P2 borcu kapalı ✅
+>
+> **Açık kalan (isteğe bağlı, engellemez):** `AccessContext.tsx:25,121` iki
+> `react(only-export-components)` lint uyarısı — context + hook aynı dosyada. İstenirse
+> `useAccess` ayrı dosyaya alınarak kapatılır.
+
+<details><summary>1. tur bulguları (kapandı — kayıt için saklandı)</summary>
+
+> **Opus 5 kontrol sonucu (2026-08-11).** Yapı doğru ve neredeyse tamam; **ama yeni öğrenci
+> eklemek varsayılan durumda çalışmıyor.** Bu düzeltilmeden P4'e geçilmesin.
+>
+> **Geçen kontroller:** `npm run build` ✅ · `test:types` ✅ · `ProtectedRoute:11` baypası
+> `!isSupabaseConfigured && import.meta.env.DEV`'e bağlanmış ✅ (noauth ekran görüntüsü akışı
+> korunmuş) · 8 sayfa `fetchStudents`'a geçmiş ✅ · kalan doğrudan `from('students')` çağrıları
+> liste değil (tekil getirme/güncelleme/silme/erişim kodu) — kapsam dışı, doğru ✅ ·
+> Sidebar'da izin filtresi + kurum seçici + Yönetim grubu ✅ · `App.tsx`'te 21 rota
+> `RequirePermission` ile sarılı ✅ · **P2 borcu kapandı:** `'text[]': 'string[]'`, `test:types`
+> artık uyarısız ✅
+>
+> **🔴 Engelleyici — "Tümü" seçiliyken yeni öğrenci eklenemiyor.**
+> `src/components/students/AddStudentModal.tsx:75`:
+> ```ts
+> institution_id: activeInstitutionId ?? (editingStudent?.institution_id || undefined)
+> ```
+> Yeni öğrenci (`editingStudent` null) + `activeInstitutionId` null ⇒ ifade `undefined` döner.
+> supabase-js `undefined` anahtarları payload'dan düşürür, sütun `not null` olduğu için insert
+> **not-null ihlaliyle patlar** ve kullanıcı ham Postgres hatası görür.
+> **Varsayılan durum tam olarak budur:** `AccessContext.tsx:34` `activeInstitutionId`'i
+> `localStorage`'dan okuyor, ilk açılışta `null` — yani "Tümü". Üstelik "Tümü" seçeneğini gören
+> tek kişi Eda (iki kurumu olan o), yani **hatayı birebir Eda yaşayacak.**
+>
+> **İstenen düzeltme:** modala **kurum seçici** ekle (`useAccess().memberships`'ten). Sebebi
+> sadece bu hata değil: öğrenci tam olarak bir kuruma ait ve Eda'nın iki kurumu var, dolayısıyla
+> "bu öğrenci hangi kuruma?" sorusunun arayüzde bir cevabı olmalı. Backfill notundaki
+> "mevcut öğrencileri Concept'e taşıma" işi de bu seçiciyle mümkün hale gelir.
+> - Yeni öğrencide: aktif kurum varsa ön-seçili gelsin, "Tümü" ise kullanıcı seçmek zorunda.
+> - Kurum çözülemiyorsa Türkçe hata ver ("Öğrencinin ekleneceği kurumu seçin."), `undefined`
+>   gönderme.
+> - Düzenlemede: öğrencinin mevcut kurumu seçili gelsin; değiştirmek kurumu taşımak demektir.
+>
+> **🟠 Küçük — `decided_by` için boş string yedeği.**
+> `src/components/topics/TopicProgressPanel.tsx:158` → `decided_by: user?.id || ''`.
+> Sütun `uuid not null references auth.users(id)`; `''` giderse Postgres geçersiz-uuid hatası
+> verir. `AddStudentModal`'daki gibi `if (!user) return` ile erken çık.
+> (`OgrencilerPage.tsx:327` `user?.id || coachId` — kabul edilebilir ama aynı erken çıkış daha temiz.)
+>
+> **🟡 İsteğe bağlı — yeni lint uyarısı.** `AccessContext.tsx:121`
+> `react(only-export-components)`: dosya hem bileşen hem hook export ediyor. Kural "yeni uyarı
+> çıkarma"ydı. `useAccess`'i ayrı dosyaya almak kapatır; düşük öncelik.
+
+</details>
+
+---
+
+**Aşağısı orijinal görev tanımıdır (referans).**
 
 **`src/contexts/AccessContext.tsx` (YENİ)** — `AuthProvider` içinde (`App.tsx:22`). Oturum
 gelince **tek bir `my_access()` RPC çağrısı** yapar; tablo select'i YAPILMAZ.
@@ -1252,7 +1577,7 @@ ve `coaching_coach_id` (yeni "Özel koçluk öğrencisi" anahtarı işaretliyse 
 
 ---
 
-### agy — P4: Yönetim ekranları [Yapılacak]
+### agy — P4: Yönetim ekranları [Tamamlandı]
 
 Mevcut tasarım sistemine (kart + tablo + modal) sadık kal; yeni görsel dil üretme.
 
@@ -1273,7 +1598,7 @@ kendi izin kümesini aşan rol hem UI'da seçilemiyor hem DB'de reddediliyor.
 
 ---
 
-### agy — P5: Davet ve kayıt akışı [Yapılacak]
+### agy — P5: Davet ve kayıt akışı [Tamamlandı]
 
 1. Eda/admin Kullanıcılar ekranından e-posta + rol girer → `invitations` satırı
    (`status='bekliyor'`, e-posta `lower()` normalize).
@@ -1292,7 +1617,7 @@ rolle üye oluyor, davet `kabul` damgası alıyor.
 
 ---
 
-### agy — P6: Koçluk kilidi arayüzü [Yapılacak]
+### agy — P6: Koçluk kilidi arayüzü [Tamamlandı]
 
 ⚠️ **En büyük sessiz hata riski burada:** yanlış/doğru fark etmeksizin RLS "erişim reddedildi"
 DEĞİL **boş sonuç** üretir. Sayfalar bunu "veri yok" diye gösterir ve kimse fark etmez.
@@ -1307,7 +1632,7 @@ Aynı öğrenci için öğrenci listesi, devamsızlık ve deneme girişi çalı�
 
 ---
 
-### P7: İzolasyon testi, belgeleme, yayın [Yapılacak — Opus + agy]
+### P7: İzolasyon testi, belgeleme, yayın [Devralındı / Yürütülüyor — agy]
 
 **İzolasyon testi (ZORUNLU).** Test hesabı: **Concept Personel** — yalnız Concept Akademi'de
 `personel` rolü. Doğrulanacaklar:

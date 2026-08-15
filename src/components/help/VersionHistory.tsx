@@ -15,6 +15,23 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '13 Ağustos 2026',
+    entries: [
+      {
+        version: 'v0.22',
+        title: 'Çok Kurumlu Yapı ve Rol Tabanlı Yetki Sistemi (RBAC)',
+        items: [
+          'Çoklu kurum (multi-tenancy) ve esnek rol/izin mimarisi yayına alındı. Artık her kullanıcı kendi kurumunun verilerine erişir, yetkisiz alanlara erişim kısıtlanır.',
+          'Yönetim Paneli (/yonetim): Kullanıcılar, Roller ve Kurumlar olmak üzere 3 yeni yönetim sekmesi eklendi.',
+          'Kullanıcı Yönetimi (/yonetim/kullanicilar): Aktif kurumdaki üyeler listelenir, yeni üyeler e-posta ve rol seçimiyle davet edilebilir, mevcut üyelerin rolleri değiştirilebilir veya üyelikleri pasife alınabilir.',
+          'Rol & İzin Yönetimi (/yonetim/roller): Dinamik izin matrisi (22 bağımsız izin hakkı) ile kurum bazlı özel roller (örn. "Etüt Görevlisi", "Rehberlik Uzmanı") oluşturulabilir.',
+          'Davet & Kayıt Akışı (/kayit): Davet edilen kişilere özel kayıt bağlantısı üretilir, davetliler tek adımla ilgili kuruma ve role atanarak kaydolur.',
+          'Koçluk Kilidi Arayüzü: Özel koçluk öğrencisi olan bir öğrencinin Konular, Program ve Raporlar sekmelerine yetkisiz erişimlerde net ve açıklayıcı kilit ekranı gösterilir.',
+        ],
+      },
+    ],
+  },
+  {
     date: '31 Temmuz 2026',
     entries: [
       {
