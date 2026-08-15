@@ -73,17 +73,52 @@ export default function Sidebar() {
     ? activeMembership.role_name
     : profile?.role ?? 'Koç'
 
+  // Kurum secim kontrolu
+  const instNameLower = activeMembership?.institution_name.toLowerCase() ?? ''
+
+  const isKonseptSelected =
+    Boolean(activeInstitutionId) &&
+    (instNameLower.includes('konsept') || instNameLower.includes('concept'))
+
+  const isNetlikSelected =
+    !activeInstitutionId ||
+    !activeMembership ||
+    activeMembership.is_coaching_practice ||
+    instNameLower.includes('netlik')
+
+  let brandTitle = 'Netlik'
+  let brandSub = 'Eda Cangert · YKS Koçluk'
+  let brandLogo = '/logo.png'
+
+  if (isKonseptSelected) {
+    brandTitle = 'Konsept'
+    brandSub = activeMembership?.role_name ?? 'Eğitim Kurumu'
+    brandLogo = '/logo-konsept.png'
+  } else if (isNetlikSelected) {
+    brandTitle = 'Netlik'
+    brandSub = 'Eda Cangert · YKS Koçluk'
+    brandLogo = '/logo.png'
+  } else if (activeMembership) {
+    brandTitle = activeMembership.institution_name
+    brandSub = activeMembership.role_name
+    brandLogo = ''
+  }
+
   const showInstitutionSelector = isSystemAdmin || memberships.length > 1
 
   return (
     <aside className="sidebar">
       <div className="brand">
         <div className="brand-mark">
-          <img src="/logo.png" alt="" width={38} height={38} />
+          {brandLogo ? (
+            <img src={brandLogo} alt={brandTitle} width={38} height={38} />
+          ) : (
+            <Building className="w-5 h-5 text-indigo-200" />
+          )}
         </div>
         <div>
-          <div className="brand-title">Netlik</div>
-          <div className="brand-sub">Eda Cangert · YKS Koçluk</div>
+          <div className="brand-title">{brandTitle}</div>
+          <div className="brand-sub">{brandSub}</div>
         </div>
       </div>
 
@@ -93,16 +128,17 @@ export default function Sidebar() {
             <select
               value={activeInstitutionId ?? ''}
               onChange={(e) => setActiveInstitution(e.target.value ? e.target.value : null)}
-              className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-1.5 pr-8 text-xs font-medium text-[var(--ink)] shadow-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 pr-8 text-xs font-semibold text-white shadow-sm transition hover:bg-white/15 focus:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-300 cursor-pointer"
+              style={{ colorScheme: 'dark' }}
             >
-              <option value="">Tüm Kurumlar</option>
+              <option value="" className="bg-[#1E1B4B] text-white font-medium">Tüm Kurumlar (Netlik)</option>
               {memberships.map((m) => (
-                <option key={m.institution_id} value={m.institution_id}>
+                <option key={m.institution_id} value={m.institution_id} className="bg-[#1E1B4B] text-white font-medium">
                   {m.institution_name}
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-soft)]" />
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
           </div>
         </div>
       )}
