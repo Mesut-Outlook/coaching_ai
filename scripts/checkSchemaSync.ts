@@ -19,7 +19,7 @@ const ROOT = path.resolve(import.meta.dirname, '..')
 const SCHEMA_PATH = path.join(ROOT, 'supabase', 'schema.sql')
 const TYPES_PATH = path.join(ROOT, 'src', 'types', 'database.ts')
 
-type TsPrimitive = 'string' | 'number' | 'boolean' | 'unknown'
+type TsPrimitive = 'string' | 'number' | 'boolean' | 'string[]' | 'unknown'
 
 type SqlColumn = {
   name: string
@@ -107,6 +107,7 @@ const SQL_TYPE_MAP: Record<string, TsPrimitive> = {
   uuid: 'string',
   text: 'string',
   citext: 'string',
+  'text[]': 'string[]',
   varchar: 'string',
   char: 'string',
   date: 'string',
@@ -242,6 +243,9 @@ function parseTypes(source: string): ParsedTypes {
         node.literal.kind === ts.SyntaxKind.FalseKeyword
       )
         return 'boolean'
+    }
+    if (ts.isArrayTypeNode(node)) {
+      if (node.elementType.kind === ts.SyntaxKind.StringKeyword) return 'string[]'
     }
     if (literalUnionOfStrings(node)) return 'string'
     if (ts.isUnionTypeNode(node)) {

@@ -21,12 +21,18 @@ import type {
   ExamType,
   ExcuseType,
   Grade,
+  Institution,
+  Invitation,
+  InvitationStatus,
   MasteryState,
   MeasurementSource,
+  Membership,
   MockExam,
   MockExamSection,
   NotifyTarget,
+  PermissionCatalogItem,
   Profile,
+  Role,
   ScoreType,
   SessionType,
   Student,
@@ -65,7 +71,12 @@ type Update<K extends keyof Tables> = Tables[K]['Update']
 //    TableDef<...> içine yanlış tipin yazılmasını yakalar (örn. topics: TableDef<Subject>).
 // --------------------------------------------------------------------------
 
+export type _rowInstitutions = Expect<Equals<Row<'institutions'>, Institution>>
 export type _rowProfiles = Expect<Equals<Row<'profiles'>, Profile>>
+export type _rowPermissionCatalog = Expect<Equals<Row<'permission_catalog'>, PermissionCatalogItem>>
+export type _rowRoles = Expect<Equals<Row<'roles'>, Role>>
+export type _rowMemberships = Expect<Equals<Row<'memberships'>, Membership>>
+export type _rowInvitations = Expect<Equals<Row<'invitations'>, Invitation>>
 export type _rowStudents = Expect<Equals<Row<'students'>, Student>>
 export type _rowSubjects = Expect<Equals<Row<'subjects'>, Subject>>
 export type _rowTopics = Expect<Equals<Row<'topics'>, Topic>>
@@ -85,7 +96,12 @@ export type _rowAttendanceRecords = Expect<Equals<Row<'attendance_records'>, Att
 export type _tableNames = Expect<
   Equals<
     keyof Tables,
+    | 'institutions'
     | 'profiles'
+    | 'permission_catalog'
+    | 'roles'
+    | 'memberships'
+    | 'invitations'
     | 'students'
     | 'subjects'
     | 'topics'
@@ -108,7 +124,11 @@ export type _hasViews = Expect<Equals<keyof Database['public'], 'Tables' | 'View
 // --------------------------------------------------------------------------
 
 // created_at'i olan tablolarda ikisi de opsiyonel...
-export type _insStudents = Expect<Equals<OptionalKeys<Insert<'students'>>, 'id' | 'created_at' | 'student_access_code' | 'parent_access_code'>>
+export type _insInstitutions = Expect<Equals<OptionalKeys<Insert<'institutions'>>, 'id' | 'created_at'>>
+export type _insRoles = Expect<Equals<OptionalKeys<Insert<'roles'>>, 'id' | 'created_at'>>
+export type _insMemberships = Expect<Equals<OptionalKeys<Insert<'memberships'>>, 'id' | 'created_at'>>
+export type _insInvitations = Expect<Equals<OptionalKeys<Insert<'invitations'>>, 'id' | 'created_at'>>
+export type _insStudents = Expect<Equals<OptionalKeys<Insert<'students'>>, 'id' | 'created_at' | 'student_access_code' | 'parent_access_code' | 'institution_id' | 'coaching_coach_id'>>
 export type _insProfiles = Expect<Equals<OptionalKeys<Insert<'profiles'>>, 'id' | 'created_at'>>
 export type _insWeeklyTasks = Expect<
   Equals<OptionalKeys<Insert<'weekly_tasks'>>, 'id' | 'created_at'>
@@ -138,41 +158,25 @@ export type _updSubjects = Expect<Equals<OptionalKeys<Update<'subjects'>>, keyof
 
 // --------------------------------------------------------------------------
 // 3. SQL CHECK kısıtları ↔ TS union'ları
-//    Buradaki literal listeler supabase/schema.sql'deki check(... in (...)) listeleridir.
-//    TS'te yeni bir değer eklenirse (migration'sız) burada patlar.
 // --------------------------------------------------------------------------
 
-// students.grade / students.track
+export type _invitationStatus = Expect<Equals<InvitationStatus, 'bekliyor' | 'kabul' | 'iptal'>>
 export type _grade = Expect<Equals<Grade, '12. Sınıf' | 'Mezun'>>
 export type _track = Expect<Equals<Track, 'SAY' | 'EA' | 'SÖZ'>>
-
-// topic_measurements.source
 export type _source = Expect<Equals<MeasurementSource, 'konu_testi' | 'deneme'>>
-
-// coach_decisions.state
 export type _state = Expect<Equals<MasteryState, 'kritik' | 'gelisiyor' | 'yeterli'>>
-
-// mock_exams.exam_type
 export type _examType = Expect<Equals<ExamType, 'TYT' | 'AYT'>>
-
-// error_basket_items.error_type
 export type _errorType = Expect<
   Equals<ErrorType, 'bilgi_eksikligi' | 'islem_hatasi' | 'dikkat_hatasi' | 'sure_yetmedi'>
 >
-
-// attendance_records.session_type / .status / .excuse_type / .notified_to
 export type _sessionType = Expect<Equals<SessionType, 'birebir' | 'etut' | 'grup' | 'online'>>
 export type _absenceStatus = Expect<Equals<AbsenceStatus, 'gelmedi' | 'gec_geldi' | 'erken_ayrildi'>>
 export type _excuseType = Expect<
   Equals<ExcuseType, 'yok' | 'hastalik' | 'ailevi' | 'okul_sinav' | 'ulasim' | 'izinli' | 'diger'>
 >
 export type _notifyTarget = Expect<Equals<NotifyTarget, 'ogrenci' | 'veli' | 'ikisi'>>
-
-// university_rankings.score_type — schema'da CHECK yok (serbest text), ama seed
-// yalnız bu 5 değeri yazıyor; UI filtreleri bu union'a bağlı.
 export type _scoreType = Expect<Equals<ScoreType, 'SAY' | 'EA' | 'SÖZ' | 'DİL' | 'TYT'>>
 
-// Enum alanları gerçekten ilgili union'a bağlanmış (text kalmamış).
 export type _studentGradeField = Expect<Equals<Student['grade'], Grade>>
 export type _studentTrackField = Expect<Equals<Student['track'], Track>>
 export type _decisionStateField = Expect<Equals<CoachDecision['state'], MasteryState>>
@@ -185,8 +189,6 @@ export type _attendanceExcuseField = Expect<Equals<AttendanceRecord['excuse_type
 
 // --------------------------------------------------------------------------
 // 4. UI mantığının doğrudan dayandığı null'lanabilirlikler
-//    (Ör. photo_url null ise baş harf avatarı, phone null ise WhatsApp butonu kapalı,
-//     topic_id null ise custom_label gösteriliyor.)
 // --------------------------------------------------------------------------
 
 export type _studentNullables = Expect<
@@ -206,12 +208,10 @@ export type _attendanceNotified = Expect<Equals<AttendanceRecord['notified_at'],
 export type _attendanceNotifiedTo = Expect<
   Equals<AttendanceRecord['notified_to'], NotifyTarget | null>
 >
-// Dolmayan programlarda taban sıra/puan boş gelir.
 export type _rankingNullables = Expect<
   Equals<UniversityRanking['base_ranking'] | UniversityRanking['base_score'], number | null>
 >
 
-// Bunlar ASLA null olmamalı — zorunlu alan null'a düşerse hesaplar (net, ortalama) çöker.
 export type _sectionNet = Expect<Equals<MockExamSection['net'], number>>
 export type _sectionCounts = Expect<
   Equals<
@@ -228,7 +228,6 @@ export type _isActiveFlags = Expect<
 >
 export type _taskFlags = Expect<Equals<WeeklyTask['is_exam'] | WeeklyTask['completed'], boolean>>
 
-// Tarih/zaman alanları string (Supabase JSON) — Date değil.
 export type _dateFields = Expect<
   Equals<
     | Student['created_at']
@@ -241,7 +240,6 @@ export type _dateFields = Expect<
   >
 >
 
-// İlişki anahtarları: uuid → string, serial → number.
 export type _uuidKeys = Expect<
   Equals<Student['id'] | Student['coach_id'] | MockExamSection['mock_exam_id'], string>
 >

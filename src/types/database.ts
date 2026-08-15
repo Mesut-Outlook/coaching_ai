@@ -6,17 +6,69 @@ export type MeasurementSource = 'konu_testi' | 'deneme'
 export type MasteryState = 'kritik' | 'gelisiyor' | 'yeterli'
 export type ExamType = 'TYT' | 'AYT'
 export type ErrorType = 'bilgi_eksikligi' | 'islem_hatasi' | 'dikkat_hatasi' | 'sure_yetmedi'
+export type InvitationStatus = 'bekliyor' | 'kabul' | 'iptal'
+
+export type Institution = {
+  id: string
+  name: string
+  slug: string
+  /** true = bireysel koçluk pratiği (Netlik): öğrenci listesi kuruma değil koça bağlıdır */
+  is_coaching_practice: boolean
+  created_at: string
+}
 
 export type Profile = {
   id: string
   full_name: string
   role: string
+  is_system_admin: boolean
+  created_at: string
+}
+
+export type PermissionCatalogItem = {
+  key: string
+  label: string
+  group_key: string
+  group_label: string
+  sort_order: number
+}
+
+export type Role = {
+  id: string
+  institution_id: string | null
+  key: string
+  name: string
+  permissions: string[]
+  is_system: boolean
+  created_at: string
+}
+
+export type Membership = {
+  id: string
+  institution_id: string
+  user_id: string
+  role_id: string
+  is_active: boolean
+  created_at: string
+}
+
+export type Invitation = {
+  id: string
+  institution_id: string
+  email: string
+  role_id: string
+  invited_by: string
+  status: InvitationStatus
+  accepted_by: string | null
+  accepted_at: string | null
   created_at: string
 }
 
 export type Student = {
   id: string
   coach_id: string
+  institution_id?: string | null
+  coaching_coach_id?: string | null
   full_name: string
   grade: Grade
   track: Track
@@ -159,9 +211,6 @@ export type AttendanceRecord = {
 }
 
 // Supabase JS v2 generic client tipi için minimal Database şeması.
-// Her tablo Row/Insert/Update varyantlarını paylaşır (Insert: id/created_at opsiyonel).
-// Relationships boş bırakılıyor — postgrest-js sadece dizi tipini istiyor, foreign-key
-// bilgisini gerçek zamanlı sorgu tip çıkarımı için kullanıyor (bkz. mock_exam_sections join'i).
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
 
 type TableDef<Row> = {
@@ -174,7 +223,12 @@ type TableDef<Row> = {
 export type Database = {
   public: {
     Tables: {
+      institutions: TableDef<Institution>
       profiles: TableDef<Profile>
+      permission_catalog: TableDef<PermissionCatalogItem>
+      roles: TableDef<Role>
+      memberships: TableDef<Membership>
+      invitations: TableDef<Invitation>
       students: TableDef<Student>
       subjects: TableDef<Subject>
       topics: TableDef<Topic>
@@ -188,10 +242,8 @@ export type Database = {
       attendance_records: TableDef<AttendanceRecord>
     }
     Views: Record<string, never>
-    // Mobil portal RPC'leri (supabase/schema.sql "Mobil Portal veri katmanı").
-    // Hepsi json döndürüyor: { ok: true, ... } | { ok: false, error: string }.
-    // Somut alanları `src/lib/portal.ts` daraltıyor, burada Json yeterli.
     Functions: {
+      my_access: { Args: Record<string, never>; Returns: Json }
       portal_login: { Args: { p_code: string }; Returns: Json }
       portal_dashboard: { Args: { p_code: string }; Returns: Json }
       portal_set_task_completed: {
