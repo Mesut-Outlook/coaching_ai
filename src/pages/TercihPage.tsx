@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Search, Trash2, ChevronDown, SlidersHorizontal, GraduationCap, Printer, Send, MessageSquare, X } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { fetchStudents } from '../lib/students'
+import { useAccess } from '../contexts/AccessContext'
 import PageHeader from '../components/layout/PageHeader'
 import type { Student, UniversityRanking, ScoreType } from '../types/database'
 
@@ -201,6 +203,8 @@ export default function TercihPage() {
   const [hasSearched, setHasSearched] = useState(false)
   const [truncated, setTruncated] = useState(false)
 
+  const { studentScope } = useAccess()
+
   // Facet seçenekleri + öğrenciler (tek sefer)
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -233,15 +237,9 @@ export default function TercihPage() {
       })
     })()
 
-    supabase
-      .from('students')
-      .select('*')
-      .eq('is_active', true)
-      .order('full_name', { ascending: true })
-      .then(({ data }) => {
-        if (data) setStudents(data)
-      })
-  }, [])
+    fetchStudents({ activeOnly: true, orderBy: 'full_name', ...studentScope })
+      .then(setStudents)
+  }, [studentScope])
 
   // Program önerileri: kutu açıkken, yazılan metne göre SUNUCUDA ilike ile ara (debounce'lu).
   // 1000 satır cap sorun değil — program adları üniversiteler arası tekrar ettiği için

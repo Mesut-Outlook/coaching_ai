@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { X, Upload, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { useAccess } from '../../contexts/AccessContext'
 import type { Student } from '../../types/database'
 
 interface AddStudentModalProps {
@@ -12,6 +13,13 @@ interface AddStudentModalProps {
 
 export default function AddStudentModal({ onClose, onCreated, editingStudent }: AddStudentModalProps) {
   const { user } = useAuth()
+  const { memberships, activeInstitutionId, isSystemAdmin } = useAccess()
+
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState<string>(
+    editingStudent?.institution_id || activeInstitutionId || ''
+  )
+  const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([])
+
   const [fullName, setFullName] = useState(editingStudent?.full_name ?? '')
   const [grade, setGrade] = useState<Student['grade']>(editingStudent?.grade ?? '12. Sınıf')
   const [track, setTrack] = useState<Student['track']>(editingStudent?.track ?? 'SAY')
@@ -19,10 +27,50 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
   const [phoneNumber, setPhoneNumber] = useState(editingStudent?.phone_number ?? '')
   const [parentPhoneNumber, setParentPhoneNumber] = useState(editingStudent?.parent_phone_number ?? '')
   const [photoUrl, setPhotoUrl] = useState(editingStudent?.photo_url ?? '')
-  
+  const [isPrivateCoaching, setIsPrivateCoaching] = useState(
+    editingStudent ? editingStudent.coaching_coach_id !== null : true
+  )
+
   const [saving, setSaving] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const loadInstitutions = async () => {
+      const opts = memberships.map(m => ({ id: m.institution_id, name: m.institution_name }))
+      if (isSystemAdmin || opts.length === 0) {
+        const { data } = await supabase.from('institutions').select('id, name').order('name')
+        if (!cancelled && data && data.length > 0) {
+          const map = new Map<string, string>()
+          opts.forEach(o => map.set(o.id, o.name))
+          data.forEach(d => map.set(d.id, d.name))
+          const combined = Array.from(map.entries()).map(([id, name]) => ({ id, name }))
+          setInstitutions(combined)
+          if (!selectedInstitutionId) {
+            if (activeInstitutionId && map.has(activeInstitutionId)) {
+              setSelectedInstitutionId(activeInstitutionId)
+            } else if (combined.length === 1) {
+              setSelectedInstitutionId(combined[0].id)
+            }
+          }
+          return
+        }
+      }
+      if (!cancelled) {
+        setInstitutions(opts)
+        if (!selectedInstitutionId) {
+          if (activeInstitutionId && opts.some(o => o.id === activeInstitutionId)) {
+            setSelectedInstitutionId(activeInstitutionId)
+          } else if (opts.length === 1) {
+            setSelectedInstitutionId(opts[0].id)
+          }
+        }
+      }
+    }
+    loadInstitutions()
+    return () => { cancelled = true }
+  }, [memberships, activeInstitutionId, isSystemAdmin, selectedInstitutionId])
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -61,11 +109,17 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
       setError('Ad Soyad zorunlu.')
       return
     }
+    if (!selectedInstitutionId) {
+      setError('Öğrencinin ekleneceği kurumu seçin.')
+      return
+    }
     setSaving(true)
     setError(null)
 
     const payload = {
       coach_id: user.id,
+      institution_id: selectedInstitutionId,
+      coaching_coach_id: isPrivateCoaching ? user.id : null,
       full_name: fullName.trim(),
       grade,
       track,
@@ -100,8 +154,9 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
 
       if (result.error) throw result.error
       onCreated(result.data)
+      onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Öğrenci kaydedilemedi.')
+      setError(err instanceof Error ? err.message : 'Kayıt sırasında bir hata oluştu.')
     } finally {
       setSaving(false)
     }
@@ -109,34 +164,46 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-panel card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700 }}>
-            {editingStudent ? 'Öğrenci Bilgilerini Düzenle' : 'Yeni Öğrenci Ekle'}
-          </h3>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Kapat">
-            <X size={14} />
+      <div className="modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+        <div className="modal-header">
+          <h2>{editingStudent ? 'Öğrenciyi Düzenle' : 'Yeni Öğrenci Ekle'}</h2>
+          <button type="button" className="btn-icon" onClick={onClose} aria-label="Kapat">
+            <X size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          
-          {/* Profile Photo Upload Row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--surface-alt)', padding: 12, borderRadius: 10 }}>
-            <div style={{ width: 76, height: 76, borderRadius: '50%', background: 'var(--measured-bg)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border-soft)' }}>
+        {error && <div className="alert alert-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="form">
+          <div className="field">
+            <label>Profil Fotoğrafı</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               {photoUrl ? (
-                <img src={photoUrl} alt="Öğrenci" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img
+                  src={photoUrl}
+                  alt="Önizleme"
+                  style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }}
+                />
               ) : (
-                <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink-soft)' }}>
-                  {fullName ? fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?'}
-                </span>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    background: 'var(--surface-sunken)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: 'var(--ink-soft)'
+                  }}
+                >
+                  {fullName ? fullName.charAt(0).toUpperCase() : '?'}
+                </div>
               )}
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 4, color: 'var(--ink-soft)' }}>
-                Profil Fotoğrafı
-              </label>
-              <div style={{ display: 'flex', gap: 6 }}>
+
+              <div style={{ display: 'flex', gap: 8 }}>
                 <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer', margin: 0 }}>
                   {uploadingPhoto ? (
                     <>
@@ -156,6 +223,22 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="field">
+            <label>Kurum</label>
+            <select
+              value={selectedInstitutionId}
+              onChange={(e) => setSelectedInstitutionId(e.target.value)}
+              required
+            >
+              <option value="" disabled>-- Öğrencinin Kurumunu Seçin --</option>
+              {institutions.map((inst) => (
+                <option key={inst.id} value={inst.id}>
+                  {inst.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="field">
@@ -202,7 +285,7 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
               <label>Veli Telefonu (opsiyonel)</label>
               <input
                 type="tel"
-                placeholder="Örn: 0555 765 4321"
+                placeholder="Örn: 0555 987 6543"
                 value={parentPhoneNumber}
                 onChange={(e) => setParentPhoneNumber(e.target.value)}
               />
@@ -213,18 +296,32 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
             <label>Hedef Program (opsiyonel)</label>
             <input
               type="text"
-              placeholder="Örn: Boğaziçi Bilgisayar"
+              placeholder="Örn: İTÜ Bilgisayar Mühendisliği"
               value={targetProgram}
               onChange={(e) => setTargetProgram(e.target.value)}
             />
           </div>
 
-          {error && <div style={{ color: 'var(--critical-text)', fontSize: 12.5 }}>{error}</div>}
+          <div className="field" style={{ marginTop: 4 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={isPrivateCoaching}
+                onChange={(e) => setIsPrivateCoaching(e.target.checked)}
+                style={{ width: 16, height: 16 }}
+              />
+              <span style={{ fontSize: 13, fontWeight: 500 }}>
+                Özel koçluk öğrencisi (Koçluk verileri yalnızca bana görünür)
+              </span>
+            </label>
+          </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-            <button type="button" className="btn btn-ghost" onClick={onClose}>Vazgeç</button>
-            <button type="submit" className="btn btn-primary" disabled={saving || uploadingPhoto}>
-              {saving ? 'Kaydediliyor…' : 'Kaydet'}
+          <div className="modal-actions">
+            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>
+              İptal
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Kaydedilizce…' : editingStudent ? 'Güncelle' : 'Kaydet'}
             </button>
           </div>
         </form>

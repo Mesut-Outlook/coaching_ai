@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
   // Supabase henüz bağlanmadıysa geliştirme sırasında giriş ekranını atlayıp
   // ekranları görebilmek için erişime izin ver (veri boş/hata durumları görünür).
-  if (!isSupabaseConfigured) return <>{children}</>
+  if (!isSupabaseConfigured && import.meta.env.DEV) return <>{children}</>
 
   if (loading) {
     return (

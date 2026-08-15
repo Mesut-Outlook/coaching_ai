@@ -7,6 +7,8 @@ import PageHeader from '../components/layout/PageHeader'
 import ProgressRing from '../components/charts/ProgressRing'
 import Sparkline from '../components/charts/Sparkline'
 import AddStudentModal from '../components/students/AddStudentModal'
+import { fetchStudents } from '../lib/students'
+import { useAccess, type StudentScope } from '../contexts/AccessContext'
 import type { Student } from '../types/database'
 
 interface StudentCardData {
@@ -27,13 +29,8 @@ function initials(name: string) {
   return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase()
 }
 
-async function loadDashboard(): Promise<StudentCardData[]> {
-  const { data: students, error: studentsError } = await supabase
-    .from('students')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: true })
-  if (studentsError) throw studentsError
+async function loadDashboard(scope: StudentScope): Promise<StudentCardData[]> {
+  const students = await fetchStudents({ activeOnly: true, orderBy: 'created_at', ...scope })
   if (!students || students.length === 0) return []
 
   const studentIds = students.map((s) => s.id)
@@ -83,15 +80,17 @@ export default function PanelPage() {
   const [gradeFilter, setGradeFilter] = useState<'Tümü' | Student['grade']>('Tümü')
   const [showAddModal, setShowAddModal] = useState(false)
 
+  const { studentScope } = useAccess()
+
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setCards([])
       return
     }
-    loadDashboard()
+    loadDashboard(studentScope)
       .then(setCards)
       .catch((err) => setError(err instanceof Error ? err.message : 'Öğrenciler yüklenemedi.'))
-  }, [])
+  }, [studentScope])
 
   const visible = useMemo(() => {
     if (!cards) return []

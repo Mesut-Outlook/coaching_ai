@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 
@@ -145,6 +145,13 @@ export default function LoginPage() {
           >
             {submitting ? 'Giriş yapılıyor…' : 'Giriş Yap'}
           </button>
+
+          <div style={{ textAlign: 'center', marginTop: 8, fontSize: 13 }}>
+            <span style={{ color: 'var(--ink-soft)' }}>Davetiyeniz var mı? </span>
+            <Link to="/kayit" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>
+              Kayıt Ol
+            </Link>
+          </div>
         </form>
       </div>
     </div>

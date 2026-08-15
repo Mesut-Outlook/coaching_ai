@@ -4,6 +4,10 @@ import { ChevronLeft, ChevronRight, ChevronDown, Plus, Trash2, CheckSquare, X, P
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import TopicProgressPanel from '../components/topics/TopicProgressPanel'
+import { fetchStudents } from '../lib/students'
+import { useAccess } from '../contexts/AccessContext'
+import { useAuth } from '../contexts/AuthContext'
+import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange, DAYS } from '../lib/weeks'
 import { openWhatsAppChat } from '../lib/whatsapp'
@@ -14,6 +18,14 @@ export default function ProgramPage() {
 
   const [students, setStudents] = useState<Student[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState(initialStudentId)
+  const { user } = useAuth()
+  const { isSystemAdmin, studentScope } = useAccess()
+  
+  const selectedStudent = useMemo(() => {
+    return students.find(s => s.id === selectedStudentId)
+  }, [students, selectedStudentId])
+
+  const isCoachingLocked = !isSystemAdmin && Boolean(selectedStudent?.coaching_coach_id) && selectedStudent?.coaching_coach_id !== user?.id
   
   const [topics, setTopics] = useState<(Topic & { subjects: Subject | null })[]>([])
   const [tasks, setTasks] = useState<WeeklyTask[]>([])
@@ -55,8 +67,8 @@ export default function ProgramPage() {
     if (!isSupabaseConfigured) return
     
     // Load students
-    supabase.from('students').select('*').order('full_name', { ascending: true })
-      .then(({ data }) => {
+    fetchStudents({ activeOnly: true, orderBy: 'full_name', ...studentScope })
+      .then((data) => {
         if (data) {
           setStudents(data)
           if (!selectedStudentId && data.length > 0) {
@@ -71,7 +83,7 @@ export default function ProgramPage() {
       .then(({ data }) => {
         if (data) setTopics(data as any)
       })
-  }, [])
+  }, [studentScope])
 
   // Load tasks for the selected student and week
   const loadTasks = async () => {
@@ -450,7 +462,9 @@ export default function ProgramPage() {
           )}
 
           {/* Kanban Board */}
-          {loading ? (
+          {isCoachingLocked ? (
+            <CoachingLockedState />
+          ) : loading ? (
             <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Yükleniyor…</div>
           ) : (
             <div className="program-board" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 16, minHeight: 480 }}>

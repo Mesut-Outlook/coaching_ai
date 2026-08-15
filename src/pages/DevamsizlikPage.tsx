@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, MoreVertical, MessageCircle, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { fetchStudents } from '../lib/students'
+import { useAccess } from '../contexts/AccessContext'
 import PageHeader from '../components/layout/PageHeader'
 import Sparkline from '../components/charts/Sparkline'
 import AddAbsenceModal from '../components/attendance/AddAbsenceModal'
@@ -61,6 +63,7 @@ interface StudentSummary {
 
 export default function DevamsizlikPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { studentScope } = useAccess()
 
   const [students, setStudents] = useState<Student[]>([])
   const [allRecords, setAllRecords] = useState<AttendanceRecord[] | null>(null)
@@ -97,12 +100,11 @@ export default function DevamsizlikPage() {
     setLoading(true)
     setError(null)
     try {
-      const [studentsRes, records] = await Promise.all([
-        supabase.from('students').select('*').order('full_name', { ascending: true }),
+      const [studentsData, records] = await Promise.all([
+        fetchStudents({ activeOnly: true, orderBy: 'full_name', ...studentScope }),
         fetchAllAttendanceRecords(),
       ])
-      if (studentsRes.error) throw studentsRes.error
-      setStudents(studentsRes.data || [])
+      setStudents(studentsData)
       setAllRecords(records)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Devamsızlık verileri yüklenemedi.')
@@ -117,7 +119,7 @@ export default function DevamsizlikPage() {
       return
     }
     loadAll()
-  }, [])
+  }, [studentScope])
 
   const studentById = useMemo(() => {
     const map = new Map<string, Student>()

@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ArrowRight, Smartphone,
+  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ArrowRight, Smartphone, ShieldCheck,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import VersionHistory from '../components/help/VersionHistory'
@@ -89,6 +89,14 @@ const GUIDE: GuideItem[] = [
     step: 'Tercih Dönemi · Gerektiğinde',
     body: 'YÖK Atlas 2025 taban puan ve başarı sırası verisiyle bölüm arama motoru. Puan türü, üniversite, program, şehir (çoklu), ön lisans/lisans, üniversite türü, ücret/burs, öğretim türü, program kodu ve başarı sırası aralığına göre filtreler; sonuçları başarı sırasına göre sıralar ve ÖSYM program kodlarıyla listeler. Bir öğrenci seçersen puan türü otomatik dolar; tahmini sıralamayı girince her program için Ulaşılabilir / Riskli / Zor durumunu gösterir.',
     usage: 'Öğrenciye tercih listesi hazırlarken — "sadece Tıp/Mühendislik, sadece İstanbul-Ankara-İzmir, şu sıralamaya uygun" gibi kriterlerle bölüm ararken.',
+  },
+  {
+    to: '/yonetim/kullanicilar',
+    label: 'Yönetim (Roller, İzinler & Kurumlar)',
+    icon: ShieldCheck,
+    step: 'Yönetim · Yetkin Varsa',
+    body: 'Çok kurumlu yapı ve rol tabanlı erişim kontrolü (RBAC) burada yönetilir. Kurum üyelerini listeleyebilir, e-posta ile yeni üyeler davet edebilir, 22 ayrı izin hakkından özel roller ("Etüt Görevlisi", "Rehberlik Uzmanı" vb.) tanımlayabilir ve yetkileri düzenleyebilirsin.',
+    usage: 'Yeni bir ekip üyesi davet ederken, kullanıcı yetkilerini düzenlerken ya da özel bir rol oluştururken.',
   },
   {
     to: '/ogrenciler',

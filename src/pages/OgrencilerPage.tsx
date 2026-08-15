@@ -12,6 +12,10 @@ import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import ExamShareButtons from '../components/exams/ExamShareButtons'
 import { formatPhoneForWhatsApp, openWhatsAppChat } from '../lib/whatsapp'
 import { ensureStudentAccessCodes } from '../lib/accessCode'
+import { fetchStudents } from '../lib/students'
+import { useAccess } from '../contexts/AccessContext'
+import { useAuth } from '../contexts/AuthContext'
+import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
 
 type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks'
@@ -89,6 +93,11 @@ export default function OgrencilerPage() {
   const [expandedExamId, setExpandedExamId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const { isSystemAdmin, studentScope } = useAccess()
+  const { user } = useAuth()
+
+  const isCoachingLocked = !isSystemAdmin && Boolean(studentData?.student?.coaching_coach_id) && studentData?.student?.coaching_coach_id !== user?.id
+
   // Load all students (if no studentId)
   useEffect(() => {
     if (studentId) return
@@ -99,19 +108,22 @@ export default function OgrencilerPage() {
     }
     
     setLoading(true)
-    const fetchStudents = async () => {
+    const loadList = async () => {
       try {
-        const { data, error } = await supabase.from('students').select('*').order('created_at', { ascending: true })
-        if (error) throw error
-        setStudents(data || [])
+        const data = await fetchStudents({
+          activeOnly: !showArchived,
+          orderBy: 'created_at',
+          ...studentScope
+        })
+        setStudents(data)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Öğrenciler yüklenemedi')
       } finally {
         setLoading(false)
       }
     }
-    fetchStudents()
-  }, [studentId])
+    loadList()
+  }, [studentId, showArchived, studentScope])
 
   // Load specific student data
   useEffect(() => {
@@ -304,8 +316,7 @@ export default function OgrencilerPage() {
 
   // Save coach decision override
   const handleUpdateMastery = async (topicId: number, newState: 'yeterli' | 'gelisiyor' | 'kritik') => {
-    if (!studentData || !studentId) return
-    const coachId = studentData.student.coach_id
+    if (!studentData || !studentId || !user) return
     
     try {
       const { data, error } = await supabase
@@ -315,7 +326,7 @@ export default function OgrencilerPage() {
           topic_id: topicId,
           state: newState,
           note: null,
-          decided_by: coachId,
+          decided_by: user.id,
           decided_at: new Date().toISOString()
         })
         .select()
@@ -903,6 +914,9 @@ export default function OgrencilerPage() {
 
       {/* TAB CONTENT: Subject Proficiency Map */}
       {activeTab === 'subjects' && (
+        isCoachingLocked ? (
+          <CoachingLockedState />
+        ) : (
         <div className="card" style={{ padding: 20 }}>
           <h3 style={{ fontSize: 14, marginBottom: 16 }}>Müfredat Konu Yeterlilik Takibi</h3>
           <p style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginBottom: 20 }}>
@@ -959,10 +973,14 @@ export default function OgrencilerPage() {
             })}
           </div>
         </div>
+        )
       )}
 
       {/* TAB CONTENT: Weekly Tasks */}
       {activeTab === 'tasks' && (
+        isCoachingLocked ? (
+          <CoachingLockedState />
+        ) : (
         <div className="card" style={{ padding: 20 }}>
           <h3 style={{ fontSize: 14, marginBottom: 16 }}>Haftalık Atanan Görevler</h3>
           {tasks.length === 0 ? (
@@ -1019,6 +1037,7 @@ export default function OgrencilerPage() {
             </div>
           )}
         </div>
+        )
       )}
     </section>
   )

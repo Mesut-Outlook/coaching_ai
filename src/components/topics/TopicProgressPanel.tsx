@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Save, CheckCircle2, AlertTriangle, XCircle, HelpCircle } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 import Sparkline from '../charts/Sparkline'
 import type { CoachDecision, TopicMeasurement } from '../../types/database'
 
@@ -30,8 +31,8 @@ export default function TopicProgressPanel({
   onSaved,
   onClose,
 }: Props) {
+  const { user } = useAuth()
   const [measurements, setMeasurements] = useState<TopicMeasurement[]>([])
-  const [coachId, setCoachId] = useState<string>('')
   const [loading, setLoading] = useState(true)
 
   const [editState, setEditState] = useState<DecisionState>('olculmedi')
@@ -61,7 +62,7 @@ export default function TopicProgressPanel({
     setTestMeasuredAt(new Date().toISOString().split('T')[0])
 
     const load = async () => {
-      const [{ data: measData }, { data: decData }, { data: studentRow }] = await Promise.all([
+      const [{ data: measData }, { data: decData }] = await Promise.all([
         supabase
           .from('topic_measurements')
           .select('*')
@@ -69,14 +70,12 @@ export default function TopicProgressPanel({
           .eq('topic_id', topicId)
           .order('measured_at', { ascending: false }),
         supabase.from('coach_decisions').select('*').eq('student_id', studentId).eq('topic_id', topicId),
-        supabase.from('students').select('coach_id').eq('id', studentId).single(),
       ])
       if (cancelled) return
       setMeasurements(measData || [])
       const dec = (decData || [])[0] as CoachDecision | undefined
       setEditState((dec?.state as DecisionState) || 'olculmedi')
       setEditNote(dec?.note || '')
-      setCoachId(studentRow?.coach_id || '')
       setLoading(false)
     }
 
@@ -139,6 +138,7 @@ export default function TopicProgressPanel({
   }
 
   const handleSaveDecision = async () => {
+    if (!user) return
     setSavingDecision(true)
     try {
       if (editState === 'olculmedi') {
@@ -156,7 +156,7 @@ export default function TopicProgressPanel({
             topic_id: topicId,
             state: editState,
             note: editNote || null,
-            decided_by: coachId,
+            decided_by: user.id,
             decided_at: new Date().toISOString(),
           })
           .select()

@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo, Fragment } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { Trash2, ClipboardList, AlertCircle, Save, Search, ChevronDown, ChevronRight } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { fetchStudents } from '../lib/students'
+import { useAccess } from '../contexts/AccessContext'
 import PageHeader from '../components/layout/PageHeader'
 import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import ExamShareButtons from '../components/exams/ExamShareButtons'
@@ -9,6 +11,7 @@ import type { Student, MockExam, MockExamSection } from '../types/database'
 import { getExamSections } from '../lib/examSections'
 
 export default function DenemelerPage() {
+  const { studentScope } = useAccess()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialStudentId = searchParams.get('studentId') || ''
   
@@ -56,8 +59,8 @@ export default function DenemelerPage() {
   // Load students list
   useEffect(() => {
     if (!isSupabaseConfigured) return
-    supabase.from('students').select('*').order('full_name', { ascending: true })
-      .then(({ data }) => {
+    fetchStudents({ activeOnly: true, orderBy: 'full_name', ...studentScope })
+      .then((data) => {
         if (data) {
           setStudents(data)
           if (!selectedStudentId && data.length > 0) {
@@ -66,7 +69,7 @@ export default function DenemelerPage() {
           }
         }
       })
-  }, [])
+  }, [studentScope])
 
   // Sync selectedStudentId with query params
   const handleStudentChange = (id: string) => {

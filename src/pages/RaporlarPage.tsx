@@ -3,6 +3,10 @@ import { useSearchParams } from 'react-router-dom'
 import { CheckSquare, Plus, Trash2, CheckCircle2, ChevronRight } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
+import { fetchStudents } from '../lib/students'
+import { useAccess } from '../contexts/AccessContext'
+import { useAuth } from '../contexts/AuthContext'
+import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange } from '../lib/weeks'
 
@@ -12,6 +16,14 @@ export default function RaporlarPage() {
   
   const [students, setStudents] = useState<Student[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState(initialStudentId)
+  const { user } = useAuth()
+  const { isSystemAdmin, studentScope } = useAccess()
+
+  const selectedStudent = useMemo(() => {
+    return students.find(s => s.id === selectedStudentId)
+  }, [students, selectedStudentId])
+
+  const isCoachingLocked = !isSystemAdmin && Boolean(selectedStudent?.coaching_coach_id) && selectedStudent?.coaching_coach_id !== user?.id
   
   const [lastWeekTasks, setLastWeekTasks] = useState<WeeklyTask[]>([])
   const [nextWeekTasks, setNextWeekTasks] = useState<WeeklyTask[]>([])
@@ -50,8 +62,8 @@ export default function RaporlarPage() {
   useEffect(() => {
     if (!isSupabaseConfigured) return
     
-    supabase.from('students').select('*').order('full_name', { ascending: true })
-      .then(({ data }) => {
+    fetchStudents({ activeOnly: true, orderBy: 'full_name', ...studentScope })
+      .then((data) => {
         if (data) {
           setStudents(data)
           if (!selectedStudentId && data.length > 0) {
@@ -65,7 +77,7 @@ export default function RaporlarPage() {
       .then(({ data }) => {
         if (data) setTopics(data as any)
       })
-  }, [])
+  }, [studentScope])
 
   // Load data for the weekly review
   const loadReviewData = async () => {
@@ -196,7 +208,9 @@ export default function RaporlarPage() {
             </select>
           </div>
 
-          {loading ? (
+          {isCoachingLocked ? (
+            <CoachingLockedState />
+          ) : loading ? (
             <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Yükleniyor…</div>
           ) : (
             /* 3 COLUMN DASHBOARD */

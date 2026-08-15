@@ -4,6 +4,10 @@ import { Search, ChevronDown, ChevronUp, Info } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import TopicProgressPanel from '../components/topics/TopicProgressPanel'
+import { fetchStudents } from '../lib/students'
+import { useAccess } from '../contexts/AccessContext'
+import { useAuth } from '../contexts/AuthContext'
+import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, Subject, Topic, CoachDecision, TopicMeasurement } from '../types/database'
 
 export default function KonularPage() {
@@ -12,6 +16,14 @@ export default function KonularPage() {
 
   const [students, setStudents] = useState<Student[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState(initialStudentId)
+  const { user } = useAuth()
+  const { isSystemAdmin, studentScope } = useAccess()
+  
+  const selectedStudent = useMemo(() => {
+    return students.find(s => s.id === selectedStudentId)
+  }, [students, selectedStudentId])
+
+  const isCoachingLocked = !isSystemAdmin && Boolean(selectedStudent?.coaching_coach_id) && selectedStudent?.coaching_coach_id !== user?.id
   
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [topics, setTopics] = useState<Topic[]>([])
@@ -37,8 +49,8 @@ export default function KonularPage() {
     if (!isSupabaseConfigured) return
     
     // Load students
-    supabase.from('students').select('*').order('full_name', { ascending: true })
-      .then(({ data }) => {
+    fetchStudents({ activeOnly: true, orderBy: 'full_name', ...studentScope })
+      .then((data) => {
         if (data) {
           setStudents(data)
           if (!selectedStudentId && data.length > 0) {
@@ -68,7 +80,7 @@ export default function KonularPage() {
       .then(({ data }) => {
         if (data) setTopics(data)
       })
-  }, [])
+  }, [studentScope])
 
   // Load decisions and measurements for selected student
   const loadStudentData = async () => {
@@ -158,33 +170,36 @@ export default function KonularPage() {
       )}
 
       {isSupabaseConfigured && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
-          
-          {/* LEFT COLUMN: Lessons & Topics List */}
-          <div>
-            {/* Toolbar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-              <div className="field" style={{ minWidth: 200 }}>
-                <select value={selectedStudentId} onChange={(e) => handleStudentChange(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10 }}>
-                  {students.map(s => (
-                    <option key={s.id} value={s.id}>{s.full_name} ({s.track})</option>
-                  ))}
-                </select>
+        isCoachingLocked ? (
+          <CoachingLockedState />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
+            
+            {/* LEFT COLUMN: Lessons & Topics List */}
+            <div>
+              {/* Toolbar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                <div className="field" style={{ minWidth: 200 }}>
+                  <select value={selectedStudentId} onChange={(e) => handleStudentChange(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10 }}>
+                    {students.map(s => (
+                      <option key={s.id} value={s.id}>{s.full_name} ({s.track})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', flex: 1, maxWidth: 300, color: 'var(--ink-faint)' }}>
+                  <Search size={14} />
+                  <input
+                    type="text"
+                    placeholder="Konu ara…"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    style={{ border: 'none', outline: 'none', background: 'none', flex: 1, color: 'var(--ink)', fontSize: 13.5 }}
+                  />
+                </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', flex: 1, maxWidth: 300, color: 'var(--ink-faint)' }}>
-                <Search size={14} />
-                <input
-                  type="text"
-                  placeholder="Konu ara…"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  style={{ border: 'none', outline: 'none', background: 'none', flex: 1, color: 'var(--ink)', fontSize: 13.5 }}
-                />
-              </div>
-            </div>
-
-            {/* Accordion List */}
+              {/* Accordion List */}
             {loading ? (
               <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Yükleniyor…</div>
             ) : filteredData.length === 0 ? (
@@ -327,6 +342,7 @@ export default function KonularPage() {
           </div>
 
         </div>
+        )
       )}
     </section>
   )
