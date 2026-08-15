@@ -7,7 +7,7 @@ import { PERMISSION_GROUPS, type PermissionKey } from '../../lib/permissions'
 import type { Role } from '../../types/database'
 
 export default function RollerPage() {
-  const { activeInstitutionId, isSystemAdmin } = useAccess()
+  const { activeInstitutionId } = useAccess()
 
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,7 +22,11 @@ export default function RollerPage() {
   const [saving, setSaving] = useState(false)
 
   const loadRoles = async () => {
-    if (!isSupabaseConfigured || (!activeInstitutionId && !isSystemAdmin)) {
+    // "Tümü" seçiliyken hedef kurum yok: sorgu atma. activeInstitutionId null iken
+    // şablon dizeye gömülürse PostgREST'e "institution_id.eq.null" gider ve uuid
+    // sütununda 22P02 ile patlar — tüm liste boş görünür.
+    if (!isSupabaseConfigured || !activeInstitutionId) {
+      setRoles([])
       setLoading(false)
       return
     }
@@ -96,7 +100,9 @@ export default function RollerPage() {
       setError('Rol adı zorunlu.')
       return
     }
-    if (!activeInstitutionId && !isSystemAdmin) {
+    // Sistem admini de dahil: kurum seçilmeden kayıt açılırsa institution_id null gider
+    // ve kuruma özel rol yerine yeni bir sistem şablonu yaratılmış olur.
+    if (!activeInstitutionId) {
       setError('Rol oluşturmak için bir kurum seçmelisiniz.')
       return
     }
@@ -165,6 +171,12 @@ export default function RollerPage() {
       />
 
       {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+
+      {!activeInstitutionId && (
+        <div className="card" style={{ padding: 24, color: 'var(--ink-soft)' }}>
+          Roller kuruma özeldir. Devam etmek için sol menünün üstündeki kurum seçicisinden bir kurum seçin.
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
         {loading ? (

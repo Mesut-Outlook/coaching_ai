@@ -18,7 +18,7 @@ type InvitationWithRole = Invitation & {
 
 export default function KullanicilarPage() {
   const { user } = useAuth()
-  const { activeInstitutionId, isSystemAdmin } = useAccess()
+  const { activeInstitutionId } = useAccess()
 
   const [members, setMembers] = useState<MemberWithDetails[]>([])
   const [invitations, setInvitations] = useState<InvitationWithRole[]>([])
@@ -40,7 +40,10 @@ export default function KullanicilarPage() {
   const [updatingRole, setUpdatingRole] = useState(false)
 
   const loadData = async () => {
-    if (!isSupabaseConfigured || (!activeInstitutionId && !isSystemAdmin)) {
+    // "Tümü" seçiliyken hedef kurum yok: sorgu atma. activeInstitutionId null iken
+    // .eq()/.or() PostgREST'e "institution_id.eq.null" gönderir ve uuid sütununda
+    // 22P02 ile patlar — üye listesi de rol açılır listesi de sessizce boş kalır.
+    if (!isSupabaseConfigured || !activeInstitutionId) {
       setLoading(false)
       return
     }
@@ -173,7 +176,7 @@ export default function KullanicilarPage() {
     setTimeout(() => setCopiedLink(false), 2000)
   }
 
-  if (!activeInstitutionId && !isSystemAdmin) {
+  if (!activeInstitutionId) {
     return (
       <section className="screen">
         <PageHeader title="Kullanıcı Yönetimi" subtitle="Kurum Üyeleri & Davetler" />
