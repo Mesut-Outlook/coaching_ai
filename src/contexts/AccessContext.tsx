@@ -1,14 +1,15 @@
 import { createContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react'
 import { useAuth } from './AuthContext'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
-import type { PermissionKey } from '../lib/permissions'
+import { ALL_PERMISSIONS, type PermissionKey } from '../lib/permissions'
 
 export interface UserMembershipAccess {
   institution_id: string
   institution_name: string
   /** true = bireysel koçluk pratiği (Netlik) — öğrenci listesi koça göre kurulur */
   is_coaching_practice: boolean
-  role_id: string
+  /** null = gerçek üyelik değil; sistem admini için türetilmiş kurum girdisi */
+  role_id: string | null
   role_key: string
   role_name: string
   permissions: PermissionKey[]
@@ -89,7 +90,35 @@ export function AccessProvider({ children }: { children: ReactNode }) {
           memberships: UserMembershipAccess[]
         }
         setIsSystemAdmin(!!res.is_system_admin)
-        setMemberships(res.memberships || [])
+
+        const own = res.memberships || []
+
+        // my_access() yalnız gerçek üyelikleri döndürür. Sistem admini üye OLMADIĞI
+        // kurumu kurum seçicide hiç göremiyordu — seçici bu listeden besleniyor —
+        // ve o kuruma davet gönderemiyordu. Admin için eksik kurumları ekliyoruz.
+        if (res.is_system_admin) {
+          const { data: instRows } = await supabase
+            .from('institutions')
+            .select('id, name, is_coaching_practice')
+            .order('name')
+
+          const known = new Set(own.map((m) => m.institution_id))
+          const extras: UserMembershipAccess[] = (instRows || [])
+            .filter((i) => !known.has(i.id))
+            .map((i) => ({
+              institution_id: i.id,
+              institution_name: i.name,
+              is_coaching_practice: i.is_coaching_practice,
+              role_id: null,
+              role_key: 'sistem_yoneticisi',
+              role_name: 'Sistem Yöneticisi',
+              permissions: ALL_PERMISSIONS,
+            }))
+
+          setMemberships([...own, ...extras])
+        } else {
+          setMemberships(own)
+        }
       }
     } catch (err) {
       console.error('my_access çağrı hatası:', err)

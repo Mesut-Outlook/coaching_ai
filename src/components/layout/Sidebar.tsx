@@ -131,7 +131,7 @@ export default function Sidebar() {
               className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 pr-8 text-xs font-semibold text-white shadow-sm transition hover:bg-white/15 focus:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-300 cursor-pointer"
               style={{ colorScheme: 'dark' }}
             >
-              <option value="" className="bg-[#1E1B4B] text-white font-medium">Tüm Kurumlar (Netlik)</option>
+              <option value="" className="bg-[#1E1B4B] text-white font-medium">Tüm Kurumlar</option>
               {memberships.map((m) => (
                 <option key={m.institution_id} value={m.institution_id} className="bg-[#1E1B4B] text-white font-medium">
                   {m.institution_name}
