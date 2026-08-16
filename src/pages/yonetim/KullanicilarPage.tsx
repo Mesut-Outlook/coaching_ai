@@ -109,7 +109,7 @@ export default function KullanicilarPage() {
 
     try {
       const email = inviteEmail.trim().toLowerCase()
-      const { error } = await supabase
+      const { data: created, error } = await supabase
         .from('invitations')
         .insert({
           institution_id: activeInstitutionId,
@@ -120,10 +120,14 @@ export default function KullanicilarPage() {
           accepted_by: null,
           accepted_at: null,
         })
+        .select('token')
+        .single()
 
       if (error) throw error
 
-      const link = `${window.location.origin}/kayit?email=${encodeURIComponent(email)}`
+      // Bağlantı artık token taşıyor: /kayit daveti doğrulayabiliyor ve
+      // davetsiz kişi hesap açamıyor.
+      const link = `${window.location.origin}/kayit?token=${created.token}`
       setInviteResultLink(link)
       loadData()
     } catch (err) {
@@ -243,7 +247,7 @@ export default function KullanicilarPage() {
               </thead>
               <tbody>
                 {invitations.map((inv) => {
-                  const inviteUrl = `${window.location.origin}/kayit?email=${encodeURIComponent(inv.email)}`
+                  const inviteUrl = `${window.location.origin}/kayit?token=${inv.token}`
                   return (
                     <tr key={inv.id}>
                       <td style={{ fontWeight: 500 }}>{inv.email}</td>

@@ -95,7 +95,7 @@ const GUIDE: GuideItem[] = [
     label: 'Yönetim (Roller, İzinler & Kurumlar)',
     icon: ShieldCheck,
     step: 'Yönetim · Yetkin Varsa',
-    body: 'Çok kurumlu yapı ve rol tabanlı erişim kontrolü (RBAC) burada yönetilir. Kurum üyelerini listeleyebilir, e-posta ile yeni üyeler davet edebilir, 22 ayrı izin hakkından özel roller ("Etüt Görevlisi", "Rehberlik Uzmanı" vb.) tanımlayabilir ve yetkileri düzenleyebilirsin.',
+    body: 'Çok kurumlu yapı ve rol tabanlı erişim kontrolü (RBAC) burada yönetilir. Kurum üyelerini listeleyebilir, e-posta ile yeni üyeler davet edebilir, 22 ayrı izin hakkından özel roller ("Etüt Görevlisi", "Rehberlik Uzmanı" vb.) tanımlayabilir ve yetkileri düzenleyebilirsin. Davet akışı üç adımdır: (1) sol üstteki kurum seçicisinden doğru kurumu seç — "Tüm Kurumlar" seçiliyken davet gönderilemez; (2) e-posta ve rol girip daveti oluştur; (3) çıkan kayıt bağlantısını kişiye ilet. Bağlantı davete özel gizli bir anahtar taşır, yani bağlantısı olmayan kimse kayıt olamaz. ÖNEMLİ: Kişi kaydolduktan sonra Supabase\'in gönderdiği doğrulama e-postasındaki bağlantıya tıklamadan giriş yapamaz — "davet çalışmıyor" gibi görünen durumun sebebi genelde budur, gelen kutusunu (ve spam klasörünü) kontrol etsin. Şifresini unutan herkes giriş ekranındaki "Şifremi unuttum" bağlantısını kullanabilir.',
     usage: 'Yeni bir ekip üyesi davet ederken, kullanıcı yetkilerini düzenlerken ya da özel bir rol oluştururken.',
   },
   {

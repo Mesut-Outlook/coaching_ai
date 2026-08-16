@@ -93,7 +93,11 @@ create table if not exists invitations (
   accepted_at timestamptz,
   created_at timestamptz not null default now()
 );
+-- Davet bağlantısı eskiden yalnız ?email= taşıyordu: kayıt formu davetle
+-- ilişkilendirilemiyor, davetsiz kişi de /kayit'tan hesap açabiliyordu.
+alter table invitations add column if not exists token uuid not null default gen_random_uuid();
 create unique index if not exists invitations_pending_idx on invitations(institution_id, lower(email)) where status = 'bekliyor';
+create unique index if not exists invitations_token_idx on invitations(token);
 
 -- ---------------------------------------------------------------------------
 -- 5. Öğrenciler
@@ -574,6 +578,33 @@ end;
 $$;
 revoke all on function my_access() from public, anon;
 grant execute on function my_access() to authenticated;
+
+-- Kayıt sayfası daveti doğrulayabilsin diye: anon'un invitations tablosunda okuma
+-- yetkisi yok (ve olmamalı), o yüzden token karşılığını definer fonksiyon veriyor.
+-- Yalnız bekleyen davetin e-postasını ve bağlamını döndürür; token bilinmeden hiçbir şey sızmaz.
+create or replace function invitation_by_token(p_token uuid)
+returns json
+language sql
+security definer
+set search_path = public, pg_temp
+stable
+as $$
+  select coalesce(
+    (select json_build_object(
+       'ok', true,
+       'email', i.email,
+       'institution_name', ins.name,
+       'role_name', r.name
+     )
+     from invitations i
+     join institutions ins on ins.id = i.institution_id
+     join roles r on r.id = i.role_id
+     where i.token = p_token and i.status = 'bekliyor'),
+    json_build_object('ok', false)
+  );
+$$;
+revoke all on function invitation_by_token(uuid) from public, anon, authenticated;
+grant execute on function invitation_by_token(uuid) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 11. Güvenlik & Yetki Yükseltme Trigger'ları (Privilege Escalation Triggers)

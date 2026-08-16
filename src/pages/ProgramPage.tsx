@@ -502,6 +502,22 @@ export default function ProgramPage() {
 
                   {/* Task Cards List */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minHeight: 200 }}>
+                    {/* Boş gün eskiden bomboş beyaz bir kolondu — ne olduğu ne de ne
+                        yapılacağı belliydi. Artık kolonun kendisi görev eklemeye çağırıyor. */}
+                    {dayTasks.length === 0 && (
+                      <div className="day-empty">
+                        <span className="day-empty-text">Bu güne görev yok</span>
+                        {selectedStudentId && (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm no-print"
+                            onClick={() => setAddingDayIndex(dayIndex)}
+                          >
+                            <Plus size={14} /> Görev ekle
+                          </button>
+                        )}
+                      </div>
+                    )}
                     {dayTasks.map(task => {
                       const topic = topics.find(t => t.id === task.topic_id)
                       const isEditing = editingTaskId === task.id

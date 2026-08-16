@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import AuthShell from '../components/auth/AuthShell'
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams()
@@ -15,10 +16,50 @@ export default function RegisterPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  // Davet doğrulaması. Token yoksa/geçersizse form hiç gösterilmez: bu araç
+  // davetle çalışır, açık kayıt ucu istemiyoruz.
+  const [inviteState, setInviteState] = useState<'kontrol' | 'gecerli' | 'gecersiz'>('kontrol')
+  const [inviteInfo, setInviteInfo] = useState<{ institution_name: string; role_name: string } | null>(null)
+
   useEffect(() => {
-    const emailParam = searchParams.get('email')
-    if (emailParam) {
-      setEmail(emailParam)
+    const token = searchParams.get('token')
+
+    if (!isSupabaseConfigured) {
+      setInviteState('gecersiz')
+      return
+    }
+    if (!token) {
+      setInviteState('gecersiz')
+      return
+    }
+
+    let iptal = false
+    ;(async () => {
+      const { data, error: rpcError } = await supabase.rpc('invitation_by_token', { p_token: token })
+      if (iptal) return
+
+      const res = data as unknown as {
+        ok: boolean
+        email?: string
+        institution_name?: string
+        role_name?: string
+      } | null
+
+      if (rpcError || !res?.ok || !res.email) {
+        setInviteState('gecersiz')
+        return
+      }
+
+      setEmail(res.email)
+      setInviteInfo({
+        institution_name: res.institution_name ?? '',
+        role_name: res.role_name ?? '',
+      })
+      setInviteState('gecerli')
+    })()
+
+    return () => {
+      iptal = true
     }
   }, [searchParams])
 
@@ -73,6 +114,31 @@ export default function RegisterPage() {
     }
   }
 
+  // Davet doğrulanmadan form gösterilmiyor.
+  if (inviteState !== 'gecerli') {
+    return (
+      <AuthShell
+        title={inviteState === 'kontrol' ? 'Davet kontrol ediliyor…' : 'Geçersiz davet bağlantısı'}
+        subtitle={
+          inviteState === 'kontrol'
+            ? undefined
+            : 'Bu bağlantı geçersiz, süresi dolmuş ya da davet zaten kullanılmış olabilir.'
+        }
+      >
+        {inviteState === 'gecersiz' && (
+          <>
+            <div className="alert alert-error" style={{ marginBottom: 16 }}>
+              Kayıt olabilmek için kurum yöneticinden yeni bir davet bağlantısı iste.
+            </div>
+            <Link to="/login" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center' }}>
+              Girişe dön
+            </Link>
+          </>
+        )}
+      </AuthShell>
+    )
+  }
+
   return (
     <div
       style={{
@@ -85,6 +151,12 @@ export default function RegisterPage() {
       }}
     >
       <div className="card" style={{ width: '100%', maxWidth: 420, padding: '36px 32px' }}>
+        {inviteInfo && (
+          <div className="alert alert-success" style={{ marginBottom: 18 }}>
+            <strong>{inviteInfo.institution_name}</strong> kurumuna{' '}
+            <strong>{inviteInfo.role_name}</strong> olarak davet edildin.
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 28 }}>
           <div
             style={{
@@ -211,7 +283,7 @@ export default function RegisterPage() {
 
             <div style={{ textAlign: 'center', marginTop: 8, fontSize: 13 }}>
               <span style={{ color: 'var(--ink-soft)' }}>Zaten hesabınız var mı? </span>
-              <Link to="/login" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>
+              <Link to="/login" style={{ color: 'var(--indigo-600)', textDecoration: 'none', fontWeight: 500 }}>
                 Giriş Yap
               </Link>
             </div>

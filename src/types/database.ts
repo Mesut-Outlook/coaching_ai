@@ -61,6 +61,12 @@ export type Invitation = {
   status: InvitationStatus
   accepted_by: string | null
   accepted_at: string | null
+  /**
+   * Davet bağlantısındaki gizli anahtar; /kayit bunu doğrulamadan hesap açmaz.
+   * Opsiyonel çünkü DB tarafında `default gen_random_uuid()` ile üretiliyor —
+   * okumada daima dolu gelir, insert'te gönderilmez.
+   */
+  token?: string
   created_at: string
 }
 
@@ -244,6 +250,7 @@ export type Database = {
     Views: Record<string, never>
     Functions: {
       my_access: { Args: Record<string, never>; Returns: Json }
+      invitation_by_token: { Args: { p_token: string }; Returns: Json }
       portal_login: { Args: { p_code: string }; Returns: Json }
       portal_dashboard: { Args: { p_code: string }; Returns: Json }
       portal_set_task_completed: {

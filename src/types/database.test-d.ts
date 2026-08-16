@@ -127,7 +127,8 @@ export type _hasViews = Expect<Equals<keyof Database['public'], 'Tables' | 'View
 export type _insInstitutions = Expect<Equals<OptionalKeys<Insert<'institutions'>>, 'id' | 'created_at'>>
 export type _insRoles = Expect<Equals<OptionalKeys<Insert<'roles'>>, 'id' | 'created_at'>>
 export type _insMemberships = Expect<Equals<OptionalKeys<Insert<'memberships'>>, 'id' | 'created_at'>>
-export type _insInvitations = Expect<Equals<OptionalKeys<Insert<'invitations'>>, 'id' | 'created_at'>>
+// token DB tarafında gen_random_uuid() ile üretiliyor — students'taki erişim kodlarıyla aynı desen.
+export type _insInvitations = Expect<Equals<OptionalKeys<Insert<'invitations'>>, 'id' | 'created_at' | 'token'>>
 export type _insStudents = Expect<Equals<OptionalKeys<Insert<'students'>>, 'id' | 'created_at' | 'student_access_code' | 'parent_access_code' | 'institution_id' | 'coaching_coach_id'>>
 export type _insProfiles = Expect<Equals<OptionalKeys<Insert<'profiles'>>, 'id' | 'created_at'>>
 export type _insWeeklyTasks = Expect<

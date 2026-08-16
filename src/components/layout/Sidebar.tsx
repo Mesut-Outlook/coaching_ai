@@ -108,38 +108,46 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="brand">
+      {/* Marka alanı ana sayfa düğmesidir: kullanıcının "anasayfaya dönüş tuşu yok"
+          şikayeti buradandı — eskiden tıklanamayan bir div'di. */}
+      <NavLink to="/panel" className="brand" title="Koç Paneli'ne dön">
         <div className="brand-mark">
           {brandLogo ? (
             <img src={brandLogo} alt={brandTitle} width={38} height={38} />
           ) : (
-            <Building className="w-5 h-5 text-indigo-200" />
+            <Building size={20} />
           )}
         </div>
         <div>
           <div className="brand-title">{brandTitle}</div>
           <div className="brand-sub">{brandSub}</div>
         </div>
-      </div>
+      </NavLink>
 
+      {/* Kurum seçici. Tailwind bu projede kurulu değil — eski sınıflar hiçbir şey
+          yapmıyordu, seçici koyu sidebar'da çıplak sistem select'i olarak duruyordu.
+          Artık projenin kendi CSS'iyle çiziliyor ve seçili kurumdaki rolü de gösteriyor. */}
       {showInstitutionSelector && (
-        <div className="px-3 py-2">
-          <div className="relative">
+        <div className="inst-switch">
+          <span className="inst-switch-label">Kurum</span>
+          <div className="inst-switch-control">
             <select
+              aria-label="Aktif kurum"
               value={activeInstitutionId ?? ''}
               onChange={(e) => setActiveInstitution(e.target.value ? e.target.value : null)}
-              className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 pr-8 text-xs font-semibold text-white shadow-sm transition hover:bg-white/15 focus:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-300 cursor-pointer"
-              style={{ colorScheme: 'dark' }}
             >
-              <option value="" className="bg-[#1E1B4B] text-white font-medium">Tüm Kurumlar</option>
+              <option value="">Tüm Kurumlar</option>
               {memberships.map((m) => (
-                <option key={m.institution_id} value={m.institution_id} className="bg-[#1E1B4B] text-white font-medium">
+                <option key={m.institution_id} value={m.institution_id}>
                   {m.institution_name}
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
+            <ChevronDown size={15} className="inst-switch-caret" />
           </div>
+          <span className="inst-switch-role">
+            {activeInstitutionId ? (activeMembership?.role_name ?? displayRole) : 'Tüm kurumların birleşik görünümü'}
+          </span>
         </div>
       )}
 
@@ -157,9 +165,7 @@ export default function Sidebar() {
 
         {visibleMgmtItems.length > 0 && (
           <div style={{ marginTop: 16 }}>
-            <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--ink-soft)]">
-              Yönetim
-            </div>
+            <div className="nav-group-label">Yönetim</div>
             {visibleMgmtItems.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}

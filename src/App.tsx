@@ -20,6 +20,7 @@ import KullanicilarPage from './pages/yonetim/KullanicilarPage'
 import RollerPage from './pages/yonetim/RollerPage'
 import KurumlarPage from './pages/yonetim/KurumlarPage'
 import PortalAccessPage from './pages/mobile/PortalAccessPage'
+import SifreSifirlaPage from './pages/SifreSifirlaPage'
 import OgrenciPortalPage from './pages/mobile/OgrenciPortalPage'
 import VeliPortalPage from './pages/mobile/VeliPortalPage'
 
@@ -30,6 +31,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/sifre-sifirla" element={<SifreSifirlaPage />} />
             <Route path="/kayit" element={<RegisterPage />} />
             <Route path="/portal" element={<PortalAccessPage />} />
             <Route path="/ogrenci" element={<OgrenciPortalPage />} />

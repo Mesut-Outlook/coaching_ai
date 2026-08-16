@@ -13,7 +13,8 @@ import type { Student } from '../types/database'
 
 interface StudentCardData {
   student: Student
-  completion: number
+  /** null = bu hafta hiç görev planlanmamış (0% ile karıştırılmamalı) */
+  completion: number | null
   criticalCount: number
   recentNets: number[]
 }
@@ -55,7 +56,7 @@ async function loadDashboard(scope: StudentScope): Promise<StudentCardData[]> {
     const studentTasks = tasks?.filter((t) => t.student_id === student.id) ?? []
     const completion = studentTasks.length
       ? Math.round((studentTasks.filter((t) => t.completed).length / studentTasks.length) * 100)
-      : 0
+      : null
 
     const studentExams = (exams ?? [])
       .filter((e) => e.student_id === student.id)
@@ -126,7 +127,7 @@ export default function PanelPage() {
         <AddStudentModal
           onClose={() => setShowAddModal(false)}
           onCreated={(student) => {
-            setCards((prev) => [...(prev ?? []), { student, completion: 0, criticalCount: 0, recentNets: [] }])
+            setCards((prev) => [...(prev ?? []), { student, completion: null, criticalCount: 0, recentNets: [] }])
             setShowAddModal(false)
           }}
         />
@@ -193,20 +194,35 @@ export default function PanelPage() {
                   <div style={{ color: 'var(--ink-soft)', fontSize: 12, marginTop: 2 }}>{student.grade}</div>
                 </div>
               </div>
-              <span
-                className="critical-badge"
-                style={{
-                  background: criticalCount === 0 ? 'var(--success-bg)' : 'var(--critical-bg)',
-                  color: criticalCount === 0 ? 'var(--success-text)' : 'var(--critical-text)',
-                  fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 20, whiteSpace: 'nowrap', flexShrink: 0,
-                }}
-              >
-                {criticalCount === 0 ? 'Kritik yok' : `${criticalCount} kritik`}
-              </span>
+              {/* Rozet yalnız gerçekten kritik varken çıkar. Eskiden her kartta
+                  "Kritik yok" yazıyordu; 14 kartın 14'ünde tekrar eden bir etiket
+                  bilgi taşımıyor, sadece gürültü yapıyordu. */}
+              {criticalCount > 0 && (
+                <span
+                  className="critical-badge"
+                  style={{
+                    background: 'var(--critical-bg)', color: 'var(--critical-text)',
+                    fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 20, whiteSpace: 'nowrap', flexShrink: 0,
+                  }}
+                >
+                  {criticalCount} kritik
+                </span>
+              )}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <ProgressRing percent={completion} />
+              {/* Halka neyin yüzdesi olduğunu söylemiyordu; ayrıca plan yokken de %0
+                  gösterip "hiç yapmamış" gibi okunuyordu. */}
+              {completion === null ? (
+                <div style={{ width: 52, textAlign: 'center', flexShrink: 0 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-soft)', lineHeight: 1.3 }}>Plan<br />yok</div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                  <ProgressRing percent={completion} />
+                  <div style={{ fontSize: 9.5, color: 'var(--ink-faint)', marginTop: 3, letterSpacing: '.02em' }}>HAFTALIK GÖREV</div>
+                </div>
+              )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 10.5, color: 'var(--ink-faint)', marginBottom: 3 }}>Son 5 deneme neti</div>
                 <Sparkline values={recentNets} />
