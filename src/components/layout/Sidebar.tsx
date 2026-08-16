@@ -108,11 +108,20 @@ export default function Sidebar() {
     brandLogo = ''
   }
 
+  // Menü zemini kuruma göre değişir: hangi kurumda çalıştığın tek bakışta belli
+  // olsun (iki kurum arasında gidip gelirken en sık yapılan hata yanlış kurumda
+  // işlem yapmak). Bilinmeyen kurumlar adlarından türetilen sabit bir tona düşer.
+  const instTheme = isKonseptSelected
+    ? 'konsept'
+    : isNetlikSelected
+    ? 'netlik'
+    : 'diger'
+
   const showInstitutionSelector = isSystemAdmin || memberships.length > 1
 
   return (
     <aside
-      className={`sidebar${collapsed ? ' is-collapsed' : ''}${locked ? ' is-locked' : ''}`}
+      className={`sidebar sidebar-${instTheme}${collapsed ? ' is-collapsed' : ''}${locked ? ' is-locked' : ''}`}
       onMouseEnter={() => locked && setHovering(true)}
       onMouseLeave={() => locked && setHovering(false)}
     >

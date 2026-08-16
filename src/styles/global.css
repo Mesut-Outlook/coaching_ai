@@ -25,10 +25,14 @@ a { color: inherit; }
 .app { display: flex; min-height: 100vh; }
 
 .sidebar {
-  width: 248px; flex-shrink: 0; background: var(--indigo-900); color: #D6D2F5;
-  display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+  --sidebar-bg: var(--indigo-900);
+  width: 248px; flex-shrink: 0; background: var(--sidebar-bg); color: #D6D2F5;
+  display: flex; flex-direction: column; height: 100vh;
   padding: 22px 16px;
-  /* katlanma için: konumlandırma bağlamı + genişlik geçişi */
+  /* Konum HER ZAMAN fixed: katlanırken sticky->fixed geçişi yapılırsa tarayıcı
+     genişliği animasyona sokmuyor ve menü yenilemeye kadar geniş kalıyordu.
+     Yerini `.main` üzerindeki margin tutuyor. */
+  position: fixed; left: 0; top: 0; z-index: 30;
   transition: width .16s ease;
 }
 .brand { display: flex; align-items: center; gap: 11px; padding: 4px 8px 22px; border-bottom: 1px solid rgba(255,255,255,0.09); margin-bottom: 18px; text-decoration: none; border-radius: 10px; transition: opacity .12s ease; }
@@ -64,7 +68,8 @@ a { color: inherit; }
 .coach-name { color: #fff; font-size: 13px; font-weight: 600; line-height: 1.25; text-align: left; }
 .coach-role { color: #A9A3DE; font-size: 11.5px; text-align: left; }
 
-.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+/* Sidebar fixed olduğu için yerini bu margin tutuyor (bkz. .sidebar). */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; margin-left: 248px; transition: margin-left .16s ease; }
 .topbar {
   position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
@@ -213,7 +218,7 @@ a { color: inherit; }
   .no-print { display: none !important; }
   .print-only { display: block; }
   .sidebar, .topbar-sub { display: none !important; }
-  .main { width: 100%; }
+  .main { width: 100%; margin-left: 0 !important; }
   .screen { padding: 0; }
 
   .program-board {
@@ -331,9 +336,12 @@ a { color: inherit; }
 
 /* Kilitliyken menü akıştan çıkar ve dar bir şerit bırakır; fareyle üzerine
    gelince ÜSTE açılır — böylece sayfa içeriği sağa sola zıplamaz. */
-.sidebar.is-locked { position: fixed; left: 0; top: 0; width: 68px; z-index: 30; padding: 22px 12px; }
-.app:has(.sidebar.is-locked) .main { margin-left: 68px; }
+.sidebar.is-locked { width: 68px; padding: 22px 12px; }
+/* Kilitliyken fareyle üzerine gelince ÜSTE açılır: .main'in payı 68px'te kaldığı
+   için sayfa içeriği zıplamaz. */
 .sidebar.is-locked:not(.is-collapsed) { width: 248px; padding: 22px 16px; box-shadow: 8px 0 28px -12px rgba(20,17,48,.55); }
+
+.app:has(.sidebar.is-locked) .main { margin-left: 68px; }
 
 /* Dar hâlde yalnız ikonlar kalır */
 .sidebar.is-collapsed .nav-label,
@@ -349,4 +357,36 @@ a { color: inherit; }
 .sidebar.is-collapsed .coach-chip { justify-content: center; padding: 8px 0; gap: 0; }
 .sidebar.is-collapsed .sidebar-toggle { position: static; margin: 0 auto 10px; opacity: 1; }
 
-@media (prefers-reduced-motion: reduce) { .sidebar { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .sidebar, .main { transition: none; } }
+
+/* ==== Kurum temaları (menü zemini) ====
+   Aktif kurum menünün rengiyle belli olur — iki kurum arasında gidip gelirken
+   yanlış kurumda işlem yapma hatasını azaltır. Zemin hep koyu kalır ki mevcut
+   açık renkli metin/ikon paleti okunur olsun. */
+.sidebar-netlik  { --sidebar-bg: #241F5C; }   /* indigo — Netlik */
+.sidebar-konsept { --sidebar-bg: #123A3A; }   /* teal   — Konsept */
+.sidebar-diger   { --sidebar-bg: #3A2145; }   /* plum   — diğer kurumlar */
+
+/* Kurum rengi seçicide ve aktif menü öğesinde de yankılansın */
+.sidebar-konsept .coach-avatar { background: linear-gradient(155deg, #4FB3A4, #1E6F66); }
+.sidebar-diger .coach-avatar { background: linear-gradient(155deg, #B98AD1, #6E3D86); }
+
+/* ==== Haftalık program panosu ====
+   Eskiden yatay kaydırmalı flex şeritti (7 × 240px ≈ 1750px), yani her ekranda
+   sağa kaydırmak gerekiyordu. Artık ızgara: 7 gün ekrana sığar, dar ekranda
+   sütun sayısı azalıp alta sarar — yatay kaydırma yok. */
+.program-board {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px; padding-bottom: 16px; align-items: start;
+}
+.program-day-col {
+  min-width: 0; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 9px;
+  min-height: 300px;
+}
+/* Dar sütunda uzun konu adları taşmasın */
+.program-day-col * { overflow-wrap: anywhere; }
+
+@media (max-width: 1400px) { .program-board { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 1000px) { .program-board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px)  { .program-board { grid-template-columns: 1fr; } }

@@ -467,7 +467,7 @@ export default function ProgramPage() {
           ) : loading ? (
             <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Yükleniyor…</div>
           ) : (
-            <div className="program-board" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 16, minHeight: 480 }}>
+            <div className="program-board">
             {DAYS.map((dayName, dayIndex) => {
               const dayTasks = tasks.filter(t => t.day_index === dayIndex)
               const isAddingHere = addingDayIndex === dayIndex
@@ -478,17 +478,6 @@ export default function ProgramPage() {
                   className="program-day-col"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, dayIndex)}
-                  style={{
-                    flex: '1 0 240px',
-                    maxWidth: 320,
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 14,
-                    padding: 12,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 10
-                  }}
                 >
                   {/* Column Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-soft)', paddingBottom: 8 }}>
