@@ -806,6 +806,28 @@ create trigger on_auth_user_created_claim_invitations
 -- ---------------------------------------------------------------------------
 -- 13. Row Level Security (RLS) Politikaları
 -- ---------------------------------------------------------------------------
+
+-- ⚠️ RBAC ÖNCESİ POLİTİKALARIN TEMİZLİĞİ — SİLME.
+-- RBAC turunda politikalar yeniden adlandırıldı; yeni bloklar yalnız KENDİ adlarını
+-- düşürdüğü için eski adlar canlı veritabanında kaldı. RLS politikaları OR'lanır:
+-- tek bir izin veren politika yeterlidir, yani eski satırlar yeni kısıtlamaların
+-- tamamını sessizce baypas ediyordu. (2026-08-16 izolasyon testinde yakalandı:
+-- 'personel' rolü curriculum.manage izni olmadan subjects'e INSERT yapabiliyordu.)
+-- Yeni bir politikayı yeniden adlandırırsan eski adı buraya eklemek ZORUNLUDUR.
+drop policy if exists "profiles: kendi profilini okur/günceller" on profiles;
+drop policy if exists "students: koç kendi öğrencilerini yönetir" on students;
+drop policy if exists "subjects: giriş yapan koç ekler" on subjects;
+drop policy if exists "subjects: giriş yapan koç günceller" on subjects;
+drop policy if exists "topics: giriş yapan koç ekler" on topics;
+drop policy if exists "topics: giriş yapan koç günceller" on topics;
+drop policy if exists "mock_exams: öğrenci sahibi koç yönetir" on mock_exams;
+drop policy if exists "mock_exam_sections: öğrenci sahibi koç yönetir" on mock_exam_sections;
+drop policy if exists "error_basket_items: öğrenci sahibi koç yönetir" on error_basket_items;
+drop policy if exists "topic_measurements: öğrenci sahibi koç yönetir" on topic_measurements;
+drop policy if exists "coach_decisions: öğrenci sahibi koç yönetir" on coach_decisions;
+drop policy if exists "weekly_tasks: öğrenci sahibi koç yönetir" on weekly_tasks;
+drop policy if exists "attendance_records: öğrenci sahibi koç yönetir" on attendance_records;
+
 alter table profiles enable row level security;
 alter table institutions enable row level security;
 alter table roles enable row level security;
