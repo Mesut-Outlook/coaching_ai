@@ -67,6 +67,21 @@ create table if not exists memberships (
 create index if not exists memberships_user_id_idx on memberships(user_id);
 create index if not exists memberships_inst_id_idx on memberships(institution_id);
 
+-- user_id yalnız auth.users'a bakıyordu; profiles'a bakan bir FK olmadığı için
+-- PostgREST `memberships?select=*,profiles(*)` gömmesini çözemiyor ve sorgu
+-- PGRST200 ile 400 dönüyordu (Kullanıcılar ekranı komple boş kalıyordu).
+-- profiles.id zaten auth.users(id)'ye bağlı, yani bu kısıt mevcut veriyle uyumlu.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'memberships_user_id_profiles_fkey'
+  ) then
+    alter table memberships
+      add constraint memberships_user_id_profiles_fkey
+      foreign key (user_id) references profiles(id) on delete cascade;
+  end if;
+end $$;
+
 create table if not exists invitations (
   id uuid primary key default gen_random_uuid(),
   institution_id uuid not null references institutions(id) on delete cascade,

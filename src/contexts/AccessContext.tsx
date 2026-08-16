@@ -43,7 +43,7 @@ export const AccessContext = createContext<AccessContextValue | undefined>(undef
 const STORAGE_KEY = 'netlik_active_institution_id'
 
 export function AccessProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [isSystemAdmin, setIsSystemAdmin] = useState(false)
   const [memberships, setMemberships] = useState<UserMembershipAccess[]>([])
@@ -69,6 +69,14 @@ export function AccessProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const fetchAccess = useCallback(async () => {
+    // Auth henüz oturumu çözmediyse user null'dur. Bunu "izni yok" saymak,
+    // sayfa yenilendiğinde RequirePermission'ı boş izin kümesiyle çalıştırıp
+    // kullanıcıyı /yardim'a atıyordu. Auth bitene kadar yüklemede kal.
+    if (authLoading) {
+      setLoading(true)
+      return
+    }
+
     if (!user || !isSupabaseConfigured) {
       setIsSystemAdmin(false)
       setMemberships([])
@@ -125,7 +133,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [user, authLoading])
 
   useEffect(() => {
     fetchAccess()
