@@ -1895,3 +1895,17 @@ aynı (`StudentSearch.tsx` dahil), Opus'un sonraki commit'inde yalnız `coordina
 İş kaybı olmadı ama geçmiş yanıltıcı hâle geldi. **Kural:** aynı dizinde iki oturum
 çalışıyorsa `git add -A` yerine dosya adlarını açıkça belirtin; commit'lemeden önce
 `git status`'a bakıp size ait olmayan değişiklik var mı kontrol edin.
+
+### ✅ Şifre sıfırlama uçtan uca doğrulandı (2026-08-16)
+İlk denemede bağlantı `localhost:3000/#error=...&error_code=otp_expired` veriyordu.
+Sebep koddaki `redirectTo` değil, **Supabase URL ayarı**: `redirectTo` yalnız Redirect URLs
+izin listesindeki adrese gider, listede yoksa sessizce **Site URL**'e düşer — o da
+`localhost:3000`'de kalmıştı. Token yanlış adrese taşındığı için hiç doğrulanmadan yandı.
+
+Kullanıcı ayarı düzeltti (Site URL = canlı adres, Redirect URLs'e `…/**` eklendi) ve
+şifresini başarıyla sıfırladı. **Aynı ayar kayıt onayı e-postalarını da etkiliyordu** —
+yani gerçek bir davetli o ana kadar hiçbir şekilde kaydolamazdı; Eda ve Concept Personel
+admin API'den onaylı açıldığı için bu tuzağa denk gelinmemişti.
+
+Kalıcı not `CLAUDE.md` → "Bilinmesi gereken tuzaklar" bölümüne işlendi (Tailwind'in kurulu
+olmaması ve var olmayan CSS token'ları da aynı bölüme eklendi).
