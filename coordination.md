@@ -1653,3 +1653,81 @@ tarayıcıdan (claude-in-chrome ile canlı Vercel dağıtımı üzerinde) yapıl
 Sonra: `CLAUDE.md` + bu dosya güncellenir, Yardım sayfasına yeni bölüm + Sürüm Geçmişi kaydı
 (v0.22), `main`'e push, **Vercel deploy doğrulaması** (yereldeki `dist/assets/index-*.js`
 hash'i canlı `index.html` ile eşleşene kadar bekle).
+
+---
+
+## 🎨 FABLE — UX/Ürün Değerlendirmesi (2026-08-16) → OPUS'A
+
+> Kullanıcı isteği: ilk açılış mantığı, landing gerekliliği, kurum/öğrenci yönetimi
+> ergonomisi, görsel modernlik. Canlı uygulama Eda'nın hesabıyla gezildi (Panel,
+> Öğrenci Profili, Program, Kullanıcılar+davet modalı). **Opus bu listeyi önceliklendirip
+> Sonnet/agy arasında paylaştırsın; Fable kod yazmaz.**
+
+### A. Tespit edilen HATALAR (tarayıcıda doğrulandı)
+1. 🔴 **Şifre sıfırlama akışı hiç yok.** `LoginPage`'de "Şifremi unuttum" linki yok,
+   projede `resetPasswordForEmail` çağrısı yok. Personel şifresini unutursa tek çare
+   Mesut'un service-role ile elle müdahalesi. RBAC'lı çok kullanıcılı sistemde bu P0.
+2. 🔴 **Logo/marka ana sayfaya götürmüyor** — `.brand` düz `div`, link değil.
+   Kullanıcının "anasayfaya geçiş tuşu yok" şikayetinin kökü. `/panel`'e `<Link>` olmalı.
+3. 🟠 **Panel kartındaki %0 halkası anlamsız/etiketiz.** Hafta boş olduğunda da %0
+   gösteriyor — "görev tanımlı değil" ile "hiçbiri yapılmadı" ayrımı yok; halkanın
+   neyin yüzdesi olduğu kartta yazmıyor. 14 kartın 14'ü %0 → panel "her şey kötü" hissi veriyor.
+4. 🟠 **"Kritik yok" rozeti her kartta tekrar ediyor** — gürültü. Rozet yalnız kritik
+   varken görünmeli; sağlıklı kart sessiz kalmalı.
+5. 🟠 **Davet linki token'sız**: `/kayit?email=...` sadece kolaylık parametresi. Kişi
+   farklı e-postayla kaydolursa üyeliksiz "yetim" hesap oluşuyor (claim e-posta eşleşmesine
+   bakıyor). Davet satırına `token uuid` + linke token → hem güvenlik hem alan otomatik dolar.
+6. 🟡 **Program boş durumu çıplak**: koca beyaz kolonlar, içinde CTA yok
+   ("+ görev ekle" / "geçen haftayı kopyala" kolon içinden erişilemiyor).
+7. 🟡 `*` catch-all `/panel`'e atıyor; izni olmayan personelde RequirePermission
+   zinciri `/yardim`'a düşürüyor. Varsayılan rota "erişebildiği ilk ekran" olmalı.
+
+### B. Landing gerekli mi? — Kararım: ayrı pazarlama landing'i ŞİMDİLİK HAYIR
+Bu kapalı bir B2B aracı; müşteri kazanımı Instagram/WhatsApp'tan. Ama mevcut ilk
+açılış (`/` → çıplak login formu) da doğru değil, çünkü **tek kapı üç kitleye bakıyor**:
+koç/personel (e-posta+şifre), öğrenci (PIN), veli (PIN). Linki kaybeden öğrenci/veli
+login sayfasında çıkmaza giriyor — PIN'le girme yolu yok.
+**Öneri: login'i "karşılama sayfası"na dönüştür** (tek ekran, iki kart):
+- Sol: marka + kısa değer cümlesi (Netlik/Konsept logosu — agy'nin marka işiyle uyumlu).
+- Kart 1 "Koç / Personel": e-posta+şifre + "Şifremi unuttum" + "Davetiyen mi var? Kayıt ol".
+- Kart 2 "Öğrenci & Veli": erişim kodu (PIN) girişi → `/portal` akışına bağlanır.
+İleride istenirse `/tanitim` altında statik tanıtım sayfası ayrıca yapılır — şimdi değil.
+
+### C. Kurum değişimi görseli
+Çıplak `<select>` koyu lacivert sidebar'da sırıtıyor. Öneri: özel açılır bileşen —
+kurum avatarı/logosu + ad + o kurumdaki rol; seçimde kısa onay geri bildirimi
+("Concept Akademi'ye geçildi") ve marka alanının yumuşak güncellenmesi (agy'nin
+logo-değişim işi temel; bileşenleştirilsin). "Tüm Kurumlar" seçeneği yalnız çok
+kurumlu kullanıcıda görünsün; tek kurumlu personelde seçici hiç render edilmesin.
+Ek: "Tümü" görünümünde öğrenci kartlarına küçük kurum rozeti (hangi öğrenci nerede).
+
+### D. Kullanıcı oluşturma / şifre daha basit olabilir mi? — Evet, mimariyi bozmadan
+Mevcut akış (davet → link → kişi şifresini kendi belirler) mimari olarak DOĞRU
+(şifreyi davet eden asla görmez); basitleşecek yerler:
+1. Davet linkine **token** (yukarıda A5) → alanlar önceden dolu, tek adım kayıt.
+2. Kayıtta "şifre tekrar" alanı yerine tek alan + göster/gizle.
+3. Orta vade: personel için **magic link / e-posta OTP** girişi (Supabase yerleşik) —
+   şifre kavramı tamamen kalkar, "şifremi unuttum" derdi kökten biter. Değerlendirilsin.
+4. E-posta onayı açıksa davetli kişi mail beklemeden giremiyor — Supabase ayarı
+   netleştirilip Yardım'a yazılsın (bugün Eda'nın hesabı elle onaylandı).
+
+### E. Öğrenci bilgileri tek yerde mi? — Büyük ölçüde EVET, profil hub'ı iyi
+Profil: 4 sekme (Genel Bakış/Deneme Geçmişi/Konu Yeterliliği/Görevler) + studentId
+taşıyan hızlı düğmeler (Program/Deneme/Harita) — bağlam kaybolmuyor, doğrulandı. Eksikler:
+1. **Devamsızlık profilde yok** — 5. sekme ya da Genel Bakış'a özet kartı (son 30 gün).
+2. Panel kartından tek tıkla "Deneme Gir"/"Program" kısayolu yok (yalnız Profil linki).
+3. **Global öğrenci arama yok** (topbar'da her ekrandan erişilir arama; iki kurum +
+   arşivlilerle liste büyüyünce şart olacak).
+4. Veli telefonu/PIN yönetimi profil başlığında dağınık — "İletişim & Erişim" tek grup olsun.
+
+### F. Görsel modernlik (hızlı kazanımlar)
+- Boş durum standardı: her listede ikon + tek cümle + birincil CTA (bugün kimi ekran
+  düz metin, kimi bomboş).
+- Yükleme: spinner yerine iskelet (skeleton) kartlar — panel/list ekranlarında zıplama var.
+- Panel kartına halka etiketi ("Haftalık görev") + görev yoksa halka yerine "Plan yok" durumu.
+- Mikro geçişler (~150ms) modal ve sekme değişimlerine; sekme altı çizgisi kayarak geçsin.
+
+### Önerilen öncelik (Opus karar verir)
+- **P0 (küçük, hemen):** A1 şifre sıfırlama · A2 logo→/panel · A3+A4 panel kart düzeltmesi.
+- **P1:** B karşılama sayfası · C kurum seçici bileşeni · A5 davet token'ı · A6 program boş durumu.
+- **P2:** E1 devamsızlık sekmesi · E3 global arama · F iskelet/boş durum standardı · D3 magic-link değerlendirmesi.
