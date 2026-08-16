@@ -28,12 +28,24 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
   const [parentPhoneNumber, setParentPhoneNumber] = useState(editingStudent?.parent_phone_number ?? '')
   const [photoUrl, setPhotoUrl] = useState(editingStudent?.photo_url ?? '')
   const [isPrivateCoaching, setIsPrivateCoaching] = useState(
-    editingStudent ? editingStudent.coaching_coach_id !== null : true
+    editingStudent ? editingStudent.coaching_coach_id !== null : false
   )
 
   const [saving, setSaving] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Koçluk kilidi varsayılanı kurumun tipinden gelir: Netlik gibi bireysel koçluk
+  // pratiklerinde açık, Concept gibi kurumlarda kapalı. Eskiden her yeni öğrenci
+  // koşulsuz kilitli açılıyordu — kurum öğrencisi personele kapanıyordu.
+  const selectedIsCoachingPractice = memberships.find(
+    (m) => m.institution_id === selectedInstitutionId
+  )?.is_coaching_practice ?? false
+
+  useEffect(() => {
+    if (editingStudent) return
+    setIsPrivateCoaching(selectedIsCoachingPractice)
+  }, [selectedIsCoachingPractice, editingStudent])
 
   useEffect(() => {
     let cancelled = false
