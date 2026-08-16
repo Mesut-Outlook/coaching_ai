@@ -1909,3 +1909,33 @@ admin API'den onaylı açıldığı için bu tuzağa denk gelinmemişti.
 
 Kalıcı not `CLAUDE.md` → "Bilinmesi gereken tuzaklar" bölümüne işlendi (Tailwind'in kurulu
 olmaması ve var olmayan CSS token'ları da aynı bölüme eklendi).
+
+---
+
+## 🎨 OPUS — Arayüz turu (2026-08-16, akşam)
+
+Kullanıcı isteği: "öğrenci düzenle ekranı çok şeffaf", "sol menü açılır kapanır
+kilitlenebilir olsun", "menü rengi kuruma göre değişsin", "haftalık program tek ekrana
+sığsın". Hepsi yapıldı ve canlıda doğrulandı.
+
+| İş | Kök neden / sonuç |
+|---|---|
+| **Şeffaf modal** | `.modal-panel`'in kendi zemini yoktu, `card` sınıfına bağımlıydı — 9 modalın **6'sı** `card` olmadan kullanıyordu. Artık kendi zemini/kenarlığı/köşesi var + uzun içerikte kaydırılabilir. |
+| **Öğrenci modalı** | Alanlar Kimlik / İletişim / Hedef & Erişim bölümlerine ayrıldı, gövde kaydırılır + altlık sabit. "Özel koçluk öğrencisi" bir erişim kararı olduğu için sonucunu anlatan karta dönüştü. "Kaydedilizce…" yazım hatası düzeltildi. |
+| **Koçluk kilidi varsayılanı** | Yeni öğrenci **koşulsuz kilitli** açılıyordu; Concept'e eklenen her öğrenci doğrudan personele kapanıyordu. Artık kurumun `is_coaching_practice` bayrağından türüyor. |
+| **Katlanabilir sidebar** | Kilit düğmesi + localStorage tercihi. Kapalıyken fareyle üzerine gelince ÜSTE açılır, içerik zıplamaz. |
+| **Kuruma göre menü rengi** | Netlik indigo, Konsept teal, diğer kurumlar plum. Yanlış kurumda işlem yapma hatasını azaltmak için. |
+| **Haftalık program** | Yatay kaydırmalı flex şeritti (7 × 240px ≈ 1750px). Artık ızgara: 7 gün tek ekranda; dar ekranda 4/2/1 sütuna iniyor. |
+
+### ⚠️ Yakalanan tuzak: `position` değişirse `transition` çalışmaz
+Katlanma düğmesi ilk sürümde **görünürde hiçbir şey yapmıyordu** — menü ancak sayfa
+yenilenince daralıyordu. Sebep: element aynı anda `sticky` → `fixed` geçiyordu ve tarayıcı
+konum değişirken genişliği animasyona sokmuyor, eski değerde bırakıyordu. Çözüm: sidebar
+**her zaman** `fixed`, yerini `.main` üzerindeki `margin-left` tutuyor — konum hiç değişmiyor.
+
+### 🧹 Ölü CSS token temizliği (tamamlandı)
+`--surface-sunken` (3), `--brand` (5), `--indigo-300`, `--ink-muted`, `--accent` — hiçbiri
+`tokens.css`'te tanımlı değildi, yani sessizce hiç uygulanmıyordu. Hepsi geçerli
+karşılıklarıyla değiştirildi. **Artık `src/` içindeki tüm `var(--…)` çağrıları gerçek.**
+Ayrıca `global.css`'te çift tanımlı seçici kalmadı (`.empty-state`, `.topbar-right`,
+`.sidebar`, `.main` birleştirildi) — aynı seçiciyle ikinci blok birincisini sessizce eziyordu.
