@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, Fragment } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, ChevronRight, ChevronDown, Plus, Search, TrendingUp, Award,
-  CheckSquare, MoreVertical, MessageCircle, Smartphone,
+  CheckSquare, MoreVertical, MessageCircle, Smartphone, UserX,
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
@@ -16,9 +16,10 @@ import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
-import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
+import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject, AttendanceRecord } from '../types/database'
+import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../lib/attendance'
 
-type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks'
+type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks' | 'attendance'
 
 /**
  * Mobil portal erişim linkini WhatsApp ile gönderir (öğrenciye ya da veliye).
@@ -59,6 +60,7 @@ interface StudentData {
   topics: (Topic & { subjects: Subject | null })[]
   attendanceCount: number
   attendanceUnexcusedCount: number
+  attendanceRecords: AttendanceRecord[]
 }
 
 const subjectConfig: Record<string, { color: string; soru_sayisi: string }> = {
@@ -193,17 +195,21 @@ export default function OgrencilerPage() {
       // 7. Devamsızlık sayıları (tablo henüz oluşturulmadıysa sayfayı çökertme — sessizce 0 say)
       let attendanceCount = 0
       let attendanceUnexcusedCount = 0
+      let attendanceRecords: AttendanceRecord[] = []
       try {
         const { data: attendance, error: attendanceError } = await supabase
           .from('attendance_records')
-          .select('id, excuse_type')
+          .select('*')
           .eq('student_id', studentId)
+          .order('absence_date', { ascending: false })
         if (attendanceError) throw attendanceError
-        attendanceCount = attendance?.length ?? 0
-        attendanceUnexcusedCount = attendance?.filter((a) => a.excuse_type === 'yok').length ?? 0
+        attendanceRecords = attendance ?? []
+        attendanceCount = attendanceRecords.length
+        attendanceUnexcusedCount = attendanceRecords.filter((a) => a.excuse_type === 'yok').length
       } catch {
         attendanceCount = 0
         attendanceUnexcusedCount = 0
+        attendanceRecords = []
       }
 
       setStudentData({
@@ -215,6 +221,7 @@ export default function OgrencilerPage() {
         topics: (topics as any) || [],
         attendanceCount,
         attendanceUnexcusedCount,
+        attendanceRecords,
       })
     }
 
@@ -352,6 +359,7 @@ export default function OgrencilerPage() {
     return (
       <section className="screen">
         <PageHeader 
+          hideSearch
           title="Öğrenciler" 
           subtitle="Öğrenci listesini gör, arama yap ve profillerini incele."
           actions={
@@ -693,7 +701,7 @@ export default function OgrencilerPage() {
 
       {/* Tabs Menu */}
       <div style={{ display: 'flex', gap: 20, borderBottom: '1px solid var(--border)', marginBottom: 24 }}>
-        {(['overview', 'exams', 'subjects', 'tasks'] as const).map(tab => (
+        {(['overview', 'exams', 'subjects', 'tasks', 'attendance'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -712,6 +720,7 @@ export default function OgrencilerPage() {
             {tab === 'exams' && 'Deneme Geçmişi'}
             {tab === 'subjects' && 'Konu Yeterliliği'}
             {tab === 'tasks' && 'Görevler'}
+            {tab === 'attendance' && 'Devamsızlık'}
           </button>
         ))}
       </div>
@@ -977,6 +986,70 @@ export default function OgrencilerPage() {
       )}
 
       {/* TAB CONTENT: Weekly Tasks */}
+      {/* TAB CONTENT: Devamsızlık — profilde tek eksik ekrandı, koç öğrenciyi
+          değerlendirirken /devamsizlik'e gidip geri dönmek zorunda kalıyordu. */}
+      {activeTab === 'attendance' && (
+        <div className="card" style={{ padding: 22 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+            <h3 style={{ fontSize: 14 }}>Devamsızlık Geçmişi</h3>
+            <Link to={`/devamsizlik?studentId=${student.id}`} className="btn btn-ghost btn-sm">
+              Devamsızlık ekranına git
+            </Link>
+          </div>
+
+          {studentData.attendanceRecords.length === 0 ? (
+            <div className="empty-state">
+              <UserX size={22} className="empty-state-icon" />
+              <p className="empty-state-text">Bu öğrenci için devamsızlık kaydı yok.</p>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', gap: 22, marginBottom: 18 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Toplam</div>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>{studentData.attendanceCount}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Mazeretsiz</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--critical-text)' }}>
+                    {studentData.attendanceUnexcusedCount}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table className="table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr>
+                      <th>Tarih</th>
+                      <th>Oturum</th>
+                      <th>Durum</th>
+                      <th>Mazeret</th>
+                      <th>Not</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {studentData.attendanceRecords.map(r => (
+                      <tr key={r.id}>
+                        <td>{formatDateTr(r.absence_date)}</td>
+                        <td>{SESSION_LABELS[r.session_type]}</td>
+                        <td>{STATUS_LABELS[r.status]}</td>
+                        <td>
+                          <span className={`badge ${r.excuse_type === 'yok' ? 'badge-critical' : 'badge-subtle'}`}>
+                            {EXCUSE_LABELS[r.excuse_type]}
+                          </span>
+                        </td>
+                        <td style={{ color: 'var(--ink-soft)' }}>{r.excuse_note || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {activeTab === 'tasks' && (
         isCoachingLocked ? (
           <CoachingLockedState />

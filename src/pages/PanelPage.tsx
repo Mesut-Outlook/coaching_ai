@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Plus, ChevronRight, HelpCircle } from 'lucide-react'
+import { Search, Plus, ChevronRight, HelpCircle, Users } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { mondayOf, weekKey } from '../lib/weeks'
 import PageHeader from '../components/layout/PageHeader'
@@ -81,7 +81,7 @@ export default function PanelPage() {
   const [gradeFilter, setGradeFilter] = useState<'Tümü' | Student['grade']>('Tümü')
   const [showAddModal, setShowAddModal] = useState(false)
 
-  const { studentScope } = useAccess()
+  const { studentScope, can } = useAccess()
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -105,6 +105,7 @@ export default function PanelPage() {
   return (
     <section className="screen">
       <PageHeader
+        hideSearch
         title="Koç Paneli"
         subtitle={
           cards
@@ -172,12 +173,26 @@ export default function PanelPage() {
 
       {cards && cards.length === 0 && (
         <div className="card empty-state">
-          <h3>Henüz öğrenci yok</h3>
-          <p>İlk öğrenciyi ekleyerek haftalık takibe başla. Örnek veriyle denemek istersen Antigravity'nin seed script'ini çalıştırabilirsin (bkz. coordination.md).</p>
+          <Users size={26} className="empty-state-icon" />
+          <p className="empty-state-text">
+            Bu kurumda henüz öğrenci yok. İlk öğrenciyi ekleyerek haftalık takibe başla.
+          </p>
+          {can('students.create') && (
+            <button type="button" className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+              <Plus size={16} /> Öğrenci Ekle
+            </button>
+          )}
         </div>
       )}
 
       <div className="student-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(272px, 1fr))', gap: 18 }}>
+        {/* Yüklenirken boş ekran gösterip sonra kartları basmak sayfayı zıplatıyordu;
+            iskelet kartlar nihai düzeni baştan ayırıyor. */}
+        {cards === null &&
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={`iskelet-${i}`} className="skeleton skeleton-card" aria-hidden="true" />
+          ))}
+
         {visible.map(({ student, completion, criticalCount, recentNets }) => (
           <Link to={`/ogrenciler/${student.id}`} key={student.id} className="card" style={{ padding: '18px 18px 16px', display: 'flex', flexDirection: 'column', gap: 14, textDecoration: 'none', color: 'inherit' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
