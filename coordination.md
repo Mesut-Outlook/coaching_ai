@@ -1731,3 +1731,73 @@ taşıyan hızlı düğmeler (Program/Deneme/Harita) — bağlam kaybolmuyor, do
 - **P0 (küçük, hemen):** A1 şifre sıfırlama · A2 logo→/panel · A3+A4 panel kart düzeltmesi.
 - **P1:** B karşılama sayfası · C kurum seçici bileşeni · A5 davet token'ı · A6 program boş durumu.
 - **P2:** E1 devamsızlık sekmesi · E3 global arama · F iskelet/boş durum standardı · D3 magic-link değerlendirmesi.
+
+---
+
+## 🧭 OPUS — Fable değerlendirmesinin triyajı + iş dağılımı (2026-08-16)
+
+Fable'ın 7 bulgusunu tek tek doğruladım (kod + canlı DB). **Hepsi geçerli.** Aşağıda
+kabul edilenler, düzeltilen bir plan hatası, iki yeni bulgu ve sıralı iş listesi var.
+
+### ✅ Doğrulanan bulgular
+| # | Doğrulama |
+|---|---|
+| A1 şifre sıfırlama yok | `resetPasswordForEmail` projede hiç geçmiyor — teyit |
+| A2 logo link değil | `Sidebar.tsx:111` düz `div` — teyit |
+| A3 panel %0 halkası | `PanelPage.tsx:56` görev yoksa `completion = 0` — "plan yok" ile "hiç yapılmadı" aynı görünüyor, teyit |
+| A5 davet token'sız | link yalnız `?email=`, `claim_invitations` e-postayla eşleşiyor (`schema.sql:754`) — teyit |
+
+### 🔴 DÜZELTME — "14 öğrenciyi kurumlara ayır" görevi YANLIŞ VARSAYIMA dayanıyordu
+Önceki plan (2026-08-13) Eda'nın 14 öğrenciyi iki kuruma bölmesini istiyordu. Canlı veriye
+baktım: **14 öğrencinin hepsi Netlik'te, 13'ü koçluk işaretli.** Netlik zaten
+`is_coaching_practice = true`, yani Eda'nın bireysel koçluk pratiği; Concept Akademi ayrı
+bir kurum. Bu öğrenciler Eda'nın özel koçluk öğrencileriyse **doğru yerdeler, bölünmemeli.**
+- **Karar:** "öğrencileri böl" görevi **iptal**. Yerine iki iş:
+  1. Eda tek soruyu cevaplasın: koçluk işareti olmayan 1 öğrenci bilinçli mi?
+  2. P7 için Concept Akademi'ye **2 test öğrencisi** açılsın (gerçek veriyi bölmek yerine).
+- **Gerekçe:** izolasyon testi Concept'te öğrenci olmadan zaten anlamsız; gerçek öğrenciyi
+  taşımak veri riski, test öğrencisi risksiz ve sonrasında arşivlenebilir.
+
+### 🆕 Opus'un iki ek bulgusu (Fable'ın listesinde yoktu)
+- **G1 🔴 `/kayit` davetsiz kayıta açık.** Supabase `disable_signup = false`. Davetiyesi
+  olmayan biri de kaydolabiliyor; üyeliği olmadığı için veri göremiyor ama özel bir araçta
+  açık kayıt ucu istenmez. Kayıt akışı davet kontrolüne bağlanmalı (A5 token'ı bunu da çözer).
+- **G2 🟡 E-posta onayı AÇIK** (`mailer_autoconfirm = false`). Davet edilen kişi doğrulama
+  maili gelmeden giremez. A5'in güvenlik riskini düşürüyor (iyi haber) ama davet akışının
+  zorunlu bir adımı — Yardım sayfasına yazılmalı, aksi halde "davet çalışmıyor" sanılır.
+  (Eda'nın hesabı bu yüzden elle onaylı açıldı.)
+
+### 📋 Sıralı iş listesi — **implementasyon agy'de, Opus her paket sonunda kontrol eder**
+
+**F0 — Engelleyiciler (P7'yi açan işler, önce bunlar)**
+1. `agy` · Concept Akademi'ye 2 test öğrencisi + Concept Personel davetinin tamamlanması.
+2. `Opus` · P7 izolasyon testi (7 madde, tarayıcıdan) — F0.1 bitince.
+
+**F1 — P0 düzeltmeler (küçük, birbirinden bağımsız, paralel gidebilir)**
+3. `agy` · **A1 şifre sıfırlama**: `LoginPage`'e "Şifremi unuttum" + `/sifre-sifirla` sayfası
+   (`resetPasswordForEmail` → `updateUser`). Magic-link (D3) ayrı bir karar, bunu bloklamaz.
+4. `agy` · **A2** `.brand`'i `/panel`'e `<Link>` yap.
+5. `agy` · **A3+A4** panel kartı: görev yoksa halka yerine "Plan yok" durumu + halkaya
+   "Haftalık görev" etiketi; "Kritik yok" rozetini kaldır, rozet yalnız kritik varken çıksın.
+6. `agy` · **G2** Yardım'a "davet edilen kişi doğrulama maili almalı" notu.
+
+**F2 — Yapısal (sırayla, her biri Opus kontrolünden geçer)**
+7. `agy` · **A5+G1 davet token'ı**: `invitations.token uuid default gen_random_uuid()`,
+   link `?token=`, `/kayit` token'ı doğrulamadan kayıt açmasın. ⚠️ Şema değişikliği →
+   idempotent yaz, Docker'da doğrula, SQL'i kullanıcı çalıştırır.
+8. `agy` · **B karşılama sayfası** (iki kart: Koç/Personel · Öğrenci&Veli PIN) — Fable'ın
+   landing kararı: ayrı pazarlama sayfası YOK, giriş ekranı karşılamaya dönüşüyor.
+9. `agy` · **C kurum seçici bileşeni** (avatar + rol + geçiş geri bildirimi; tek kurumluda gizli).
+10. `agy` · **A6** program boş durumu + kolon içi CTA.
+
+**F3 — İyileştirme (öncelik sonrası)**
+11. E1 devamsızlık profil sekmesi · E3 global öğrenci arama · F iskelet yükleme/boş durum
+    standardı · D3 magic-link değerlendirmesi (karar Opus'ta, F1.3'ten sonra).
+
+### Kurallar (agy için)
+- Her paket sonunda `npm run build` + `test:types` + `test:permissions` yeşil olmalı.
+- Şemaya dokunan iş: idempotent + `alter table ... add column if not exists` + indeks/constraint
+  o `alter`'ın ALTINDA (CLAUDE.md tuzağı). SQL'i **kullanıcı** çalıştırır.
+- Yeni CSS sınıfı yazarken `tokens.css`'te **gerçekten var olan** token adını kullan —
+  `--surface-elevated` / `--ink-muted` YOK; doğrusu `--surface-alt` / `--ink-faint`.
+  Tanımsız sınıf ve tanımsız token sessizce hiçbir şey yapmıyor (bugün 8 sınıf bu yüzden ölüydü).
