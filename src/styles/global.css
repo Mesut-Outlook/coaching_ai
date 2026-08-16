@@ -71,11 +71,10 @@ a { color: inherit; }
      butonlar ekran dışına taşıp tıklanamaz hale geliyordu; artık alt satıra iniyor. */
   flex-wrap: wrap;
 }
-.topbar-right { flex-shrink: 0; }
 .topbar-static { position: static; backdrop-filter: none; background: none; border: none; padding: 0 0 18px; }
 .topbar-title { font-size: 21px; }
 .topbar-sub { color: var(--ink-soft); font-size: 13px; margin-top: 3px; }
-.topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
 .back-link {
   display: inline-flex; align-items: center; gap: 6px; color: var(--indigo-600); font-size: 12.5px; font-weight: 600;
   text-decoration: none; margin-bottom: 6px; border: none; background: none; padding: 0;
@@ -188,9 +187,13 @@ a { color: inherit; }
 .pill-olculmedi { background: var(--measured-bg); color: var(--measured-text); }
 .trend-up { color: var(--success); } .trend-down { color: var(--critical); } .trend-flat { color: var(--ink-faint); }
 
-.empty-state { padding: 48px 24px; text-align: center; color: var(--ink-soft); }
-.empty-state h3 { margin-bottom: 8px; }
-.empty-state p { font-size: 13px; max-width: 420px; margin: 0 auto; }
+/* Boş durum standardı. İki markup birlikte destekleniyor: eski sayfalar
+   <h3>+<p>, yeni sayfalar ikon + .empty-state-text + CTA kullanıyor.
+   Tek tanım — ikinci bir .empty-state bloğu eklenirse birincisini sessizce ezer. */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 44px 22px; text-align: center; color: var(--ink-soft); }
+.empty-state h3 { margin-bottom: 0; color: var(--ink); }
+.empty-state p, .empty-state-text { font-size: 13px; color: var(--ink-soft); max-width: 420px; line-height: 1.6; margin: 0; }
+.empty-state-icon { color: var(--ink-faint); }
 
 /* ==== Print (Haftalık Program → Yazdır/PDF) ==== */
 .print-only { display: none; }
@@ -249,9 +252,6 @@ a { color: inherit; }
 .day-empty-text { font-size: 12px; color: var(--ink-faint); }
 
 /* ==== Boş durum standardı ==== */
-.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 40px 20px; text-align: center; }
-.empty-state-icon { color: var(--ink-faint); }
-.empty-state-text { font-size: 13px; color: var(--ink-soft); max-width: 380px; line-height: 1.6; }
 
 /* ==== İskelet yükleme ==== */
 .skeleton { background: linear-gradient(90deg, var(--surface-alt) 25%, var(--border-soft) 50%, var(--surface-alt) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.3s ease-in-out infinite; border-radius: 8px; }
