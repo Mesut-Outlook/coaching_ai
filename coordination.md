@@ -1848,3 +1848,40 @@ Yazma testlerinde dönüş koduna değil, **verinin kendisine** bakılmalı.
 - **Concept Akademi:** kalan 11 öğrenci, kurum öğrencisi (`coaching_coach_id = null`),
   böylece Concept personeli konu/program/rapor ekranlarında çalışabiliyor.
 - Taşıma öncesi `npm run backup` alındı. Test öğrencisi ve test görevi temizlendi.
+
+---
+
+## 🧭 OPUS — F3 paketi tamamlandı + D3 magic-link kararı (2026-08-16)
+
+### Yapılanlar
+| # | İş | Ayrıntı |
+|---|---|---|
+| E1 | **Devamsızlık profil sekmesi** | Öğrenci profiline 5. sekme. Veri zaten çekiliyordu ama yalnız sayı olarak tutuluyordu; artık kayıtların kendisi de geliyor (tarih/oturum/durum/mazeret/not tablosu + toplam ve mazeretsiz sayaçları + `/devamsizlik`'e bağlam taşıyan bağlantı). Etiketler `lib/attendance`'tan yeniden kullanıldı, kopyalanmadı. |
+| E3 | **Global öğrenci arama** | `StudentSearch` bileşeni `PageHeader`'a gömüldü — her ekranda var. Klavye ile gezinme (↑↓/Enter/Esc), Türkçe-duyarlı küçültme (`toLocaleLowerCase('tr')`), `studentScope`'a saygılı (kurum/koçluk kapsamı dışına çıkmaz). Kendi araması olan Panel ve Öğrenciler listesinde `hideSearch` ile gizli — iki arama kutusu kalabalık yapıyordu. |
+| F | **İskelet yükleme + boş durum standardı** | Panel yüklenirken 6 iskelet kart (düzen baştan ayrılıyor, sayfa zıplamıyor); `prefers-reduced-motion` saygılı. Ortak `.empty-state` / `.skeleton` sınıfları eklendi; Panel'in boş durumu ikon + tek cümle + birincil CTA standardına çekildi (CTA `students.create` iznine bağlı). |
+
+### D3 — Magic link / e-posta OTP: **ŞİMDİLİK HAYIR** (Opus kararı)
+Fable "şifre kavramı tamamen kalksın" diye önermişti. Değerlendirdim, **şu an geçmiyor**:
+
+**Karşı gerekçeler**
+1. **Asıl sorun zaten çözüldü.** Magic link'in vaat ettiği fayda "şifremi unuttum derdi biter"di;
+   A1 ile kurtarma akışı geldi. Kalan kazanç marjinal.
+2. **E-posta teslimi kritik yol hâline gelir.** Bugün e-posta yalnız kayıt onayı ve şifre
+   sıfırlamada devrede — gecikirse iş durmaz. Magic link'te *her giriş* e-postaya bağlanır;
+   Supabase'in varsayılan SMTP'si oran sınırlıdır ve teslim garantisi vermez. Üretimde
+   kendi SMTP sağlayıcını bağlamadan bu riske girilmez.
+3. **Kullanım deseni uymuyor.** Koç/personel uygulamayı gün içinde defalarca açıyor;
+   her açılışta e-posta kutusuna gitmek şifreden daha yavaş. "Beni hatırla" zaten var.
+4. **Öğrenci/veli tarafı zaten şifresiz.** Şifre yorgunluğunun en ağır olacağı kitle
+   PIN'le giriyor; magic link onlara bir şey katmaz.
+
+**Yeniden değerlendirme koşulu:** kendi SMTP sağlayıcısı (Resend/Postmark vb.) bağlandıktan
+**sonra**, ve ancak personel sayısı artıp şifre destek yükü gözle görülür olursa. O noktada
+şifreyi kaldırmak yerine **ek** giriş yolu olarak sunulmalı.
+
+### Bilinen sınır (kabul edilmiş)
+`/kayit` artık geçerli token olmadan form göstermiyor, ama `supabase.auth.signUp` uç noktası
+API seviyesinde hâlâ açık (`disable_signup = false`). Bu yolla açılan hesabın **hiçbir üyeliği
+olmaz**, dolayısıyla veri göremez; ayrıca e-posta onayı zorunlu. Tam kapatmak Supabase
+ayarını `disable_signup = true` yapmayı gerektirir — ama o zaman davetliler de kaydolamaz.
+Doğru çözümü Edge Function ile davet-token'ı doğrulayan bir kayıt ucudur; **F4'e bırakıldı.**
