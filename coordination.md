@@ -1885,3 +1885,13 @@ API seviyesinde hâlâ açık (`disable_signup = false`). Bu yolla açılan hesa
 olmaz**, dolayısıyla veri göremez; ayrıca e-posta onayı zorunlu. Tam kapatmak Supabase
 ayarını `disable_signup = true` yapmayı gerektirir — ama o zaman davetliler de kaydolamaz.
 Doğru çözümü Edge Function ile davet-token'ı doğrulayan bir kayıt ucudur; **F4'e bırakıldı.**
+
+### ⚠️ Koordinasyon dersi (2026-08-16): aynı dizinde `git add -A` tehlikeli
+agy'nin `cf3c216` commit'i ("global student search, skeleton loading…") aslında agy'nin
+yazdığı kod değil: agy aynı çalışma dizininde `git add -A` çalıştırıp **Opus'un o sırada
+commit'lenmemiş F3 çalışmasını** kendi commit mesajıyla kayda geçirmiş. Dosyalar birebir
+aynı (`StudentSearch.tsx` dahil), Opus'un sonraki commit'inde yalnız `coordination.md` kaldı.
+
+İş kaybı olmadı ama geçmiş yanıltıcı hâle geldi. **Kural:** aynı dizinde iki oturum
+çalışıyorsa `git add -A` yerine dosya adlarını açıkça belirtin; commit'lemeden önce
+`git status`'a bakıp size ait olmayan değişiklik var mı kontrol edin.
