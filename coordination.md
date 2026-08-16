@@ -1801,3 +1801,50 @@ bir kurum. Bu öğrenciler Eda'nın özel koçluk öğrencileriyse **doğru yerd
 - Yeni CSS sınıfı yazarken `tokens.css`'te **gerçekten var olan** token adını kullan —
   `--surface-elevated` / `--ink-muted` YOK; doğrusu `--surface-alt` / `--ink-faint`.
   Tanımsız sınıf ve tanımsız token sessizce hiçbir şey yapmıyor (bugün 8 sınıf bu yüzden ölüydü).
+
+---
+
+## ✅ P7 İZOLASYON TESTİ — GEÇTİ (Opus, 2026-08-16)
+
+Test hesabı: **Concept Personel** (`ozdemirmesut+personel@gmail.com`), yalnız Concept
+Akademi'de `personel` rolü (17 izin). Testler tarayıcı tıklaması değil, hesabın **gerçek
+oturum token'ıyla doğrudan PostgREST çağrıları** olarak koşuldu — RLS'i olduğu gibi ölçer.
+
+| # | Kontrol | Sonuç |
+|---|---|---|
+| 1 | Görünen öğrenci | 12/12 Concept, Netlik sızıntısı yok ✅ |
+| 2 | Netlik öğrencisine id ile doğrudan erişim | 0 satır ✅ |
+| 3 | Koçluk kilitli öğrencinin programı/konuları/kararları | 0 satır ✅ |
+| 4 | Kilitsiz Concept öğrencisine görev ekleme | 201 ✅ |
+| 5 | Müfredat yazma (izni yok) | 403 ✅ |
+| 6 | Kendine kurum_yonetici atama | 400 ✅ |
+| 7 | Davetleri okuma (members.manage yok) | 0 satır ✅ |
+| 8 | Portal regresyonu (`portal_login`, anon) | ok=true, rol=ogrenci ✅ |
+
+**Davet token'ı canlıda doğrulandı:** bekleyen davette `invitation_by_token` anon'dan
+`{ok:true, email, institution_name, role_name}` dönüyor; kabul edilmiş davette ve
+geçersiz token'da `{ok:false}`. `invitations` tablosunun kendisi anon'a kapalı.
+
+### 🔴 Testin yakaladığı gerçek açık (düzeltildi)
+İlk koşumda **5. madde HTTP 201 döndü** — personel `curriculum.manage` izni olmadan
+`subjects`'e satır ekleyebildi. Kök neden: RBAC turunda politikalar yeniden adlandırıldı
+ama her blok yalnız kendi YENİ adını düşürüyordu; **RBAC öncesi 13 politika canlıda kaldı**
+ve RLS politikaları OR'landığı için tek başlarına izin vermeye devam etti. Etki müfredatla
+sınırlı değildi: `students`, `mock_exams`, `weekly_tasks`, `topic_measurements`,
+`coach_decisions`, `attendance_records`, `profiles`.
+
+**Bu sınıf hata boş DB'de yapılan Docker doğrulamasıyla YAKALANAMAZ** — eski politika orada
+hiç yaratılmaz. Yalnız canlıda, gerçek bir düşük yetkili oturumla ortaya çıkar.
+→ `schema.sql`'e 13 açık `drop policy if exists` eklendi. **Politika yeniden adlandırılırsa
+eski adı o bloğa eklemek zorunludur.**
+
+### Not: RLS "reddetti" demez, "0 satır" der
+5b'de `subjects` UPDATE'i HTTP **204** döndü — başarılı sanılabilir. Veriye bakınca hiçbir
+satırın değişmediği görüldü: RLS eşleşen satır bırakmadığı için 0 satır güncellendi.
+Yazma testlerinde dönüş koduna değil, **verinin kendisine** bakılmalı.
+
+### Veri modeli güncellendi (kullanıcı kararı, 2026-08-16)
+- **Netlik (koçluk pratiği):** Ece, Ece Cangert, Ela Duru — 3 öğrenci, koçluk işaretli.
+- **Concept Akademi:** kalan 11 öğrenci, kurum öğrencisi (`coaching_coach_id = null`),
+  böylece Concept personeli konu/program/rapor ekranlarında çalışabiliyor.
+- Taşıma öncesi `npm run backup` alındı. Test öğrencisi ve test görevi temizlendi.
