@@ -174,7 +174,8 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="form">
+        <form onSubmit={handleSubmit} className="modal-form">
+          <div className="modal-body">
           <div className="field">
             <label>Profil Fotoğrafı</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -190,7 +191,7 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
                     width: 48,
                     height: 48,
                     borderRadius: '50%',
-                    background: 'var(--surface-sunken)',
+                    background: 'var(--surface-alt)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -224,6 +225,8 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
               </div>
             </div>
           </div>
+
+          <div className="form-section-title">Kimlik</div>
 
           <div className="field">
             <label>Kurum</label>
@@ -271,6 +274,8 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
             </div>
           </div>
 
+          <div className="form-section-title">İletişim</div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div className="field">
               <label>Öğrenci Telefonu (opsiyonel)</label>
@@ -292,6 +297,8 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
             </div>
           </div>
 
+          <div className="form-section-title">Hedef &amp; Erişim</div>
+
           <div className="field">
             <label>Hedef Program (opsiyonel)</label>
             <input
@@ -302,18 +309,22 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
             />
           </div>
 
-          <div className="field" style={{ marginTop: 4 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={isPrivateCoaching}
-                onChange={(e) => setIsPrivateCoaching(e.target.checked)}
-                style={{ width: 16, height: 16 }}
-              />
-              <span style={{ fontSize: 13, fontWeight: 500 }}>
-                Özel koçluk öğrencisi (Koçluk verileri yalnızca bana görünür)
+          {/* Bu bir erişim kararı — sıradan bir alan gibi görünmemeli:
+              işaretlenirse konu/program/rapor verisi kurumun geri kalanına kapanır. */}
+          <label className={`toggle-card${isPrivateCoaching ? ' is-on' : ''}`}>
+            <input
+              type="checkbox"
+              checked={isPrivateCoaching}
+              onChange={(e) => setIsPrivateCoaching(e.target.checked)}
+            />
+            <span>
+              <span className="toggle-card-title">Özel koçluk öğrencisi</span>
+              <span className="toggle-card-desc">
+                Konu yeterliliği, haftalık program ve raporlar yalnızca sana görünür;
+                kurumdaki diğer kullanıcılar bu öğrencinin koçluk verisine erişemez.
               </span>
-            </label>
+            </span>
+          </label>
           </div>
 
           <div className="modal-actions">
@@ -321,7 +332,7 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
               İptal
             </button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Kaydedilizce…' : editingStudent ? 'Güncelle' : 'Kaydet'}
+              {saving ? 'Kaydediliyor…' : editingStudent ? 'Güncelle' : 'Kaydet'}
             </button>
           </div>
         </form>

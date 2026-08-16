@@ -14,10 +14,13 @@ import {
   UserCheck,
   Building,
   ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAccess } from '../../contexts/AccessContext'
 import type { PermissionKey } from '../../lib/permissions'
+import { useSidebar } from '../../contexts/useSidebar'
 
 interface NavItem {
   to: string
@@ -57,6 +60,7 @@ function initials(name: string) {
 export default function Sidebar() {
   const { profile, user, signOut } = useAuth()
   const { can, isSystemAdmin, memberships, activeInstitutionId, setActiveInstitution } = useAccess()
+  const { collapsed, locked, toggleLocked, setHovering } = useSidebar()
 
   const displayName = profile?.full_name ?? user?.email ?? 'Koç'
 
@@ -107,7 +111,24 @@ export default function Sidebar() {
   const showInstitutionSelector = isSystemAdmin || memberships.length > 1
 
   return (
-    <aside className="sidebar">
+    <aside
+      className={`sidebar${collapsed ? ' is-collapsed' : ''}${locked ? ' is-locked' : ''}`}
+      onMouseEnter={() => locked && setHovering(true)}
+      onMouseLeave={() => locked && setHovering(false)}
+    >
+      {/* Kilit düğmesi: kapalıyken menü dar kalır, fareyle üzerine gelince
+          geçici açılır. Tercih localStorage'da saklanır. */}
+      <button
+        type="button"
+        className="sidebar-toggle"
+        onClick={toggleLocked}
+        title={locked ? 'Menüyü açık sabitle' : 'Menüyü daralt'}
+        aria-label={locked ? 'Menüyü açık sabitle' : 'Menüyü daralt'}
+        aria-pressed={locked}
+      >
+        {locked ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+      </button>
+
       {/* Marka alanı ana sayfa düğmesidir: kullanıcının "anasayfaya dönüş tuşu yok"
           şikayeti buradandı — eskiden tıklanamayan bir div'di. */}
       <NavLink to="/panel" className="brand" title="Koç Paneli'ne dön">
@@ -157,9 +178,10 @@ export default function Sidebar() {
             key={to}
             to={to}
             className={({ isActive }) => `nav-item${isActive ? ' is-active' : ''}`}
+            title={label}
           >
             <Icon className="icon" />
-            {label}
+            <span className="nav-label">{label}</span>
           </NavLink>
         ))}
 
@@ -171,9 +193,10 @@ export default function Sidebar() {
                 key={to}
                 to={to}
                 className={({ isActive }) => `nav-item${isActive ? ' is-active' : ''}`}
+                title={label}
               >
                 <Icon className="icon" />
-                {label}
+                <span className="nav-label">{label}</span>
               </NavLink>
             ))}
           </div>
@@ -186,9 +209,10 @@ export default function Sidebar() {
             key={to}
             to={to}
             className={({ isActive }) => `nav-item${isActive ? ' is-active' : ''}`}
+            title={label}
           >
             <Icon className="icon" />
-            {label}
+            <span className="nav-label">{label}</span>
           </NavLink>
         ))}
       </div>

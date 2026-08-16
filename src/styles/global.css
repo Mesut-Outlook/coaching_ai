@@ -28,6 +28,8 @@ a { color: inherit; }
   width: 248px; flex-shrink: 0; background: var(--indigo-900); color: #D6D2F5;
   display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
   padding: 22px 16px;
+  /* katlanma için: konumlandırma bağlamı + genişlik geçişi */
+  transition: width .16s ease;
 }
 .brand { display: flex; align-items: center; gap: 11px; padding: 4px 8px 22px; border-bottom: 1px solid rgba(255,255,255,0.09); margin-bottom: 18px; text-decoration: none; border-radius: 10px; transition: opacity .12s ease; }
 .brand:hover { opacity: .85; }
@@ -99,7 +101,15 @@ a { color: inherit; }
   position: fixed; inset: 0; background: rgba(20, 17, 48, 0.45); backdrop-filter: blur(2px);
   display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px;
 }
-.modal-panel { width: 100%; max-width: 420px; padding: 22px; box-shadow: var(--shadow-pop); }
+/* Kendi zemini OLMALI: 9 modalın 6'sı bunu `card` olmadan kullanıyordu ve
+   arkasındaki sayfa modalın içinden görünüyordu. `card` ile birlikte
+   kullanıldığında da aynı değerler geçerli, çakışma yok. */
+.modal-panel {
+  width: 100%; max-width: 420px; padding: 22px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-pop);
+  max-height: calc(100vh - 40px); display: flex; flex-direction: column;
+}
 
 /* Yönetim ekranlarının kullandığı ama hiç tanımlanmamış sınıflar. Tanımsızken
    modal başlığı ile kapatma düğmesi alt alta düşüyor, alanlar birbirine
@@ -289,3 +299,54 @@ a { color: inherit; }
 .student-search-empty { padding: 14px 12px; font-size: 12.5px; color: var(--ink-soft); text-align: center; }
 
 @media (max-width: 900px) { .student-search { display: none; } }
+
+/* ==== Uzun modallar: sabit başlık/altlık + kaydırılabilir gövde ==== */
+.modal-form { display: flex; flex-direction: column; min-height: 0; flex: 1; gap: 0; }
+.modal-body { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; min-height: 0; padding-right: 4px; margin-right: -4px; }
+.modal-form .modal-actions { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border); }
+.form-section-title {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-faint); margin-top: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border-soft);
+}
+.form-section-title:first-child { margin-top: 0; }
+
+/* Erişim/gizlilik anahtarları: sıradan checkbox değil, sonucunu anlatan kart */
+.toggle-card { display: flex; align-items: flex-start; gap: 11px; padding: 12px 13px; border: 1px solid var(--border); border-radius: 11px; cursor: pointer; transition: border-color .12s ease, background .12s ease; }
+.toggle-card:hover { border-color: var(--indigo-500); }
+.toggle-card.is-on { border-color: var(--indigo-500); background: var(--indigo-025); }
+.toggle-card input { width: 16px; height: 16px; margin-top: 2px; flex: none; cursor: pointer; }
+.toggle-card-title { display: block; font-size: 13px; font-weight: 600; color: var(--ink); }
+.toggle-card-desc { display: block; font-size: 12px; color: var(--ink-soft); line-height: 1.55; margin-top: 3px; }
+
+/* ==== Katlanabilir / kilitlenebilir sidebar ==== */
+.sidebar-toggle {
+  position: absolute; top: 14px; right: 10px; z-index: 2;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; padding: 0; border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.07);
+  color: #C5C1E8; opacity: 0; transition: opacity .12s ease, background .12s ease;
+}
+.sidebar:hover .sidebar-toggle, .sidebar-toggle:focus-visible { opacity: 1; }
+.sidebar-toggle:hover { background: rgba(255,255,255,0.16); color: #fff; }
+
+/* Kilitliyken menü akıştan çıkar ve dar bir şerit bırakır; fareyle üzerine
+   gelince ÜSTE açılır — böylece sayfa içeriği sağa sola zıplamaz. */
+.sidebar.is-locked { position: fixed; left: 0; top: 0; width: 68px; z-index: 30; padding: 22px 12px; }
+.app:has(.sidebar.is-locked) .main { margin-left: 68px; }
+.sidebar.is-locked:not(.is-collapsed) { width: 248px; padding: 22px 16px; box-shadow: 8px 0 28px -12px rgba(20,17,48,.55); }
+
+/* Dar hâlde yalnız ikonlar kalır */
+.sidebar.is-collapsed .nav-label,
+.sidebar.is-collapsed .brand-title,
+.sidebar.is-collapsed .brand-sub,
+.sidebar.is-collapsed .nav-group-label,
+.sidebar.is-collapsed .inst-switch,
+.sidebar.is-collapsed .coach-name,
+.sidebar.is-collapsed .coach-role { display: none; }
+
+.sidebar.is-collapsed .brand { justify-content: center; padding: 4px 0 18px; gap: 0; }
+.sidebar.is-collapsed .nav-item { justify-content: center; padding: 10px 0; gap: 0; }
+.sidebar.is-collapsed .coach-chip { justify-content: center; padding: 8px 0; gap: 0; }
+.sidebar.is-collapsed .sidebar-toggle { position: static; margin: 0 auto 10px; opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) { .sidebar { transition: none; } }

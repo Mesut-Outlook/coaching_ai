@@ -187,7 +187,7 @@ export default function RollerPage() {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <h3 style={{ fontSize: 16, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Shield size={16} style={{ color: role.is_system ? 'var(--brand)' : 'var(--success-text)' }} />
+                    <Shield size={16} style={{ color: role.is_system ? 'var(--indigo-600)' : 'var(--success-text)' }} />
                     {role.name}
                   </h3>
                   {role.is_system ? (
@@ -201,7 +201,7 @@ export default function RollerPage() {
                   )}
                 </div>
 
-                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--ink-muted)', marginBottom: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--ink-faint)', marginBottom: 8 }}>
                   {role.permissions?.length || 0} Yetki Tanımlı:
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 100, overflowY: 'auto' }}>
@@ -306,7 +306,7 @@ export default function RollerPage() {
                           border: '1px solid var(--border)',
                           borderRadius: 8,
                           padding: 12,
-                          background: 'var(--surface-sunken)',
+                          background: 'var(--surface-alt)',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>

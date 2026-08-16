@@ -232,7 +232,7 @@ export default function KullanicilarPage() {
       {invitations.length > 0 && (
         <div className="card" style={{ padding: 20, marginBottom: 24 }}>
           <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Mail size={18} style={{ color: 'var(--brand)' }} /> Bekleyen Davetiyeler
+            <Mail size={18} style={{ color: 'var(--indigo-600)' }} /> Bekleyen Davetiyeler
           </h3>
 
           <div style={{ overflowX: 'auto' }}>
@@ -304,7 +304,7 @@ export default function KullanicilarPage() {
       {/* Üye Listesi */}
       <div className="card" style={{ padding: 20 }}>
         <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <UserCheck size={18} style={{ color: 'var(--brand)' }} /> Kurum Üyeleri
+          <UserCheck size={18} style={{ color: 'var(--indigo-600)' }} /> Kurum Üyeleri
         </h3>
 
         {loading ? (
@@ -334,7 +334,7 @@ export default function KullanicilarPage() {
                             width: 32,
                             height: 32,
                             borderRadius: '50%',
-                            background: 'var(--surface-sunken)',
+                            background: 'var(--surface-alt)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',

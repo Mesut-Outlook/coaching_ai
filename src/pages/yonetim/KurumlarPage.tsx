@@ -171,7 +171,7 @@ export default function KurumlarPage() {
             <div key={inst.id} className="card" style={{ padding: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <h3 style={{ fontSize: 16, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Building2 size={18} style={{ color: 'var(--brand)' }} />
+                  <Building2 size={18} style={{ color: 'var(--indigo-600)' }} />
                   {inst.name}
                 </h3>
                 <button
@@ -189,7 +189,7 @@ export default function KurumlarPage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <GraduationCap size={16} style={{ color: 'var(--brand)' }} />
+                  <GraduationCap size={16} style={{ color: 'var(--indigo-600)' }} />
                   <div>
                     <div style={{ fontSize: 16, fontWeight: 700 }}>{inst.studentCount}</div>
                     <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Kayıtlı Öğrenci</div>
