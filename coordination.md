@@ -42,7 +42,7 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 > **P7 için kalan ön koşullar** (agy, bunlar bitmeden izolasyon testi yanlış sonuç verir):
 > 1. Eda 14 öğrenciyi kurumlara ayırmalı + bireysel koçluk anahtarını doğru kurmalı
 >    (şu an hepsi Netlik'te ve hepsi işaretli — bkz. "Gerçek hesap eşlemesi ve kurum modeli").
-> 2. P7'nin istediği **"Concept Personel"** test hesabı henüz **yok**; `/yonetim/kullanicilar`
+> 2. P7'nin istediği **"Konsept Personel"** test hesabı henüz **yok**; `/yonetim/kullanicilar`
 >    üzerinden davet edilip kaydolması gerekiyor.
 
 **RBAC paket durumu (2026-08-13):**
@@ -55,7 +55,7 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 | P4 Yönetim ekranları | ✅ agy teslim etti |
 | P5 Davet + kayıt akışı | ✅ Tamamlandı — `/kayit` sayfası, `LoginPage` bağlantısı ve davet takibi eklendi |
 | P6 Koçluk kilidi arayüzü | ✅ Tamamlandı — `CoachingLockedState` bileşeni ile Konular, Program, Raporlar ve Öğrenciler sekmelerine kilit kuralı uygulandı |
-| P7 İzolasyon testi + belge + v0.22 | 🟡 **Açıldı, ama 2 ön koşul var** (öğrenci ayrımı + Concept Personel hesabı) — agy devraldı |
+| P7 İzolasyon testi + belge + v0.22 | 🟡 **Açıldı, ama 2 ön koşul var** (öğrenci ayrımı + Konsept Personel hesabı) — agy devraldı |
 
 ⚠️ P1–P4 çalışması **henüz commit edilmedi** (18 değişmiş + 8 yeni dosya, son commit `200529e`).
 
@@ -902,9 +902,9 @@ kodda hiç yok.
 
 İhtiyaç üç katmanlı:
 1. **Eda'nın özel koçluk öğrencileri** — bugünkü derin koçluk akışı korunur ve Eda'ya özel kalır.
-2. **Concept Akademi** — Eda'nın çalıştığı kurum; etüt merkezindeki tüm öğrencilerin
+2. **Konsept Akademi** — Eda'nın çalıştığı kurum; etüt merkezindeki tüm öğrencilerin
    devamsızlık ve diğer kayıtları da bu uygulamadan yürütülür.
-3. **Diğer kurs çalışanları** — kendi hesaplarıyla girdiklerinde yalnız Concept'e ait
+3. **Diğer kurs çalışanları** — kendi hesaplarıyla girdiklerinde yalnız Konsept'e ait
    öğrencileri ve rollerinin izin verdiği ekranları görürler.
 
 Üstüne: **sistem admini** (Mesut) her şeye erişir ve kullanıcı/rol/kurum yönetir;
@@ -914,8 +914,8 @@ kodda hiç yok.
 
 | Konu | Karar |
 |---|---|
-| Öğrenci modeli | **Tek kayıt, iki bağlam.** Bir öğrenci hem Concept öğrencisi hem Eda'nın özel koçluk öğrencisi olabilir. İki ayrı satır AÇILMAZ. |
-| Kurum | Her öğrenci tam olarak bir kuruma bağlı. Concept Akademi bir kurum; Eda'nın özel pratiği ayrı bir kurum. |
+| Öğrenci modeli | **Tek kayıt, iki bağlam.** Bir öğrenci hem Konsept öğrencisi hem Eda'nın özel koçluk öğrencisi olabilir. İki ayrı satır AÇILMAZ. |
+| Kurum | Her öğrenci tam olarak bir kuruma bağlı. Konsept Akademi bir kurum; Eda'nın özel pratiği ayrı bir kurum. |
 | Admin | Sistem admini (ozdemirmesut@gmail.com): tüm kurumlar, tüm öğrenciler, kullanıcı/rol/kurum yönetimi, Eda'nın yetkisini de değiştirebilir. |
 | Rol yönetimi | Roller **veri**, enum DEĞİL. Eda özel rol yaratır ve izin matrisinden yetki verir. Hazır şablon roller şemayla gelir. |
 | Personel kapsamı | Öğrenci listesi/profil, deneme girişi, konu/program/rapor, devamsızlık — hepsi izin anahtarıyla kapılı. |
@@ -935,15 +935,15 @@ kodda hiç yok.
 **Kurumlar:**
 - **Netlik** (slug `eda-kocluk`, adı seed'de `Netlik` olarak güncellendi) — Eda'nın özel
   koçluğu. **Yalnızca Eda + Mesut** görür/yönetir. Başka personel davet edilmez.
-- **Concept Akademi** (slug `concept`) — Eda'nın çalıştığı kurum. Eda buradaki **tüm**
+- **Konsept Akademi** (slug `concept`) — Eda'nın çalıştığı kurum. Eda buradaki **tüm**
   öğrencileri takip eder (özellikle devamsızlık). Diğer çalışanlar da davet edilir ve
   takip yapabilir.
 
-**Bireysel koçluk kilidi burada devreye girer:** Concept öğrencilerinden **bazılarına** Eda
+**Bireysel koçluk kilidi burada devreye girer:** Konsept öğrencilerinden **bazılarına** Eda
 ayrıca bireysel koçluk verir. O öğrencilerde `coaching_coach_id = Eda` → konu ölçümleri,
-koç kararları ve haftalık program **yalnız Eda'ya** açık; diğer Concept personeli öğrenciyi
+koç kararları ve haftalık program **yalnız Eda'ya** açık; diğer Konsept personeli öğrenciyi
 listede görür, devamsızlık/deneme girer, koçluk verisine erişemez. Bireysel koçluk
-verilmeyen Concept öğrencilerinde `coaching_coach_id = NULL` olmalı ki personel normal
+verilmeyen Konsept öğrencilerinde `coaching_coach_id = NULL` olmalı ki personel normal
 çalışabilsin. Arayüzde bu, `AddStudentModal`'daki "bireysel koçluk" anahtarı.
 
 **Şemaya eklenenler (Opus, 2026-08-13):** §7c — Eda'ya her iki kurumda `kurum_yonetici`
@@ -952,7 +952,7 @@ güncellemesi (yalnız hâlâ ilk seed adıysa, arayüzden verilen adı ezmez).
 
 #### 🔑 "Aynı öğrenci iki tarafta da" — çözüm: koçluk pratiği kurumu (Opus, 2026-08-13)
 
-Kullanıcı netleştirdi: **tüm öğrenciler Concept'te**, ancak Eda'dan bireysel koçluk alanlar
+Kullanıcı netleştirdi: **tüm öğrenciler Konsept'te**, ancak Eda'dan bireysel koçluk alanlar
 **ayrıca Netlik tarafından da takip edilecek** — yani aynı öğrenci iki tarafın da öğrencisi.
 
 `students.institution_id` tek bir kuruma bağlandığı için (tek FK, `not null`) bir öğrenci
@@ -963,8 +963,8 @@ kararıyla ("tek kayıt, iki bağlam") aynı.
 **Model:**
 | Durum | `institution_id` | `coaching_coach_id` |
 |---|---|---|
-| Concept öğrencisi, koçluk almıyor | Concept | `null` |
-| Concept öğrencisi, Eda'dan koçluk alıyor | Concept | Eda |
+| Konsept öğrencisi, koçluk almıyor | Concept | `null` |
+| Konsept öğrencisi, Eda'dan koçluk alıyor | Concept | Eda |
 | Dışarıdan gelen özel öğrenci | Netlik | Eda |
 
 **Netlik görünümü = `institution_id = Netlik` VEYA `coaching_coach_id = ben`** → son iki satır
@@ -991,9 +991,9 @@ kolonu + `my_access` güncellemesi için).
 
 #### 🔴 P1 KUSUR 4 — `coaching_coach_id` backfill'i her koşuda geri işaretliyordu
 `update students set coaching_coach_id = coach_id where coaching_coach_id is null` koşulsuzdu.
-Eda bir Concept öğrencisinin bireysel koçluk anahtarını arayüzden **kapattığında** alan
+Eda bir Konsept öğrencisinin bireysel koçluk anahtarını arayüzden **kapattığında** alan
 `null` olur; şema tekrar çalıştırıldığında bu satır onu **sessizce yeniden işaretler** ve
-öğrencinin konu/program verisini Concept personeline tekrar kapatırdı. Guard eklendi:
+öğrencinin konu/program verisini Konsept personeline tekrar kapatırdı. Guard eklendi:
 `and not exists (select 1 from students where coaching_coach_id is not null)` → yalnız
 gerçek ilk göçte bir kez çalışır.
 
@@ -1252,7 +1252,7 @@ create index if not exists students_coaching_coach_idx on students(coaching_coac
 ```sql
 insert into institutions (name, slug) values
   ('Eda Cangert Özel Koçluk', 'eda-kocluk'),
-  ('Concept Akademi', 'concept')
+  ('Konsept Akademi', 'concept')
 on conflict (slug) do nothing;
 
 update students set institution_id = (select id from institutions where slug = 'eda-kocluk')
@@ -1265,7 +1265,7 @@ update profiles set is_system_admin = true
 where id in (select id from auth.users where lower(email) = 'ozdemirmesut@gmail.com');
 ```
 > **Varsayım (kullanıcı onaylı):** mevcut öğrencilerin tamamı bugün Eda'nın özel koçluk
-> öğrencisi kabul edilip `eda-kocluk` kurumuna yazılıyor. Concept'e taşıma arayüzden yapılacak.
+> öğrencisi kabul edilip `eda-kocluk` kurumuna yazılıyor. Konsept'e taşıma arayüzden yapılacak.
 
 `profiles.is_system_admin` kendi kendine yükseltilemesin diye BEFORE UPDATE trigger'ı:
 çağıran sistem admini değilse alan `OLD` değerine sabitlenir.
@@ -1496,7 +1496,7 @@ anahtar elle silindiğinde `test:permissions` exit 1 veriyor.
 > **İstenen düzeltme:** modala **kurum seçici** ekle (`useAccess().memberships`'ten). Sebebi
 > sadece bu hata değil: öğrenci tam olarak bir kuruma ait ve Eda'nın iki kurumu var, dolayısıyla
 > "bu öğrenci hangi kuruma?" sorusunun arayüzde bir cevabı olmalı. Backfill notundaki
-> "mevcut öğrencileri Concept'e taşıma" işi de bu seçiciyle mümkün hale gelir.
+> "mevcut öğrencileri Konsept'e taşıma" işi de bu seçiciyle mümkün hale gelir.
 > - Yeni öğrencide: aktif kurum varsa ön-seçili gelsin, "Tümü" ise kullanıcı seçmek zorunda.
 > - Kurum çözülemiyorsa Türkçe hata ver ("Öğrencinin ekleneceği kurumu seçin."), `undefined`
 >   gönderme.
@@ -1548,7 +1548,7 @@ akışı korur, yalnız üretimi kapatır.
 filtre. Yeni **Yönetim** grubu: Kullanıcılar (`members.manage`), Roller (`roles.manage`),
 Kurumlar (yalnız admin). `:74`'te `profile?.role` yerine aktif kurumdaki gerçek rol adı.
 **Kurum seçici**: birden fazla üyeliği olanda (Eda) ve adminde sidebar üstünde
-"Tümü / Concept Akademi / Eda Cangert Özel Koçluk".
+"Tümü / Konsept Akademi / Eda Cangert Özel Koçluk".
 
 **`src/lib/students.ts` (YENİ)** — aynı öğrenci sorgusu 8 yerde kopyalanmış
 (`PanelPage.tsx:32`, `OgrencilerPage.tsx:104`, `DenemelerPage.tsx:59`, `KonularPage.tsx:40`,
@@ -1634,13 +1634,13 @@ Aynı öğrenci için öğrenci listesi, devamsızlık ve deneme girişi çalı�
 
 ### P7: İzolasyon testi, belgeleme, yayın [Devralındı / Yürütülüyor — agy]
 
-**İzolasyon testi (ZORUNLU).** Test hesabı: **Concept Personel** — yalnız Concept Akademi'de
+**İzolasyon testi (ZORUNLU).** Test hesabı: **Konsept Personel** — yalnız Konsept Akademi'de
 `personel` rolü. Doğrulanacaklar:
 1. `eda-kocluk` kurumundaki bir öğrenci listede **görünmüyor**; `/ogrenciler/<id>` elle
    yazılınca da açılmıyor.
-2. Concept'te koçluk koçu **olan** öğrencide: listede görünüyor, devamsızlık/deneme çalışıyor,
+2. Konsept'te koçluk koçu **olan** öğrencide: listede görünüyor, devamsızlık/deneme çalışıyor,
    konu/karar/program kilitli.
-3. Concept'te koçluk koçu **olmayan** öğrencide: konu/program/rapor normal çalışıyor.
+3. Konsept'te koçluk koçu **olmayan** öğrencide: konu/program/rapor normal çalışıyor.
 4. `members.manage` izni olmayan hesapta `/yonetim/*` rotaları yönlendiriyor.
 5. Personel `subjects`/`topics` yazamıyor (Müfredat salt-okunur).
 6. Personel kendi rolünden geniş rol atayamıyor.
@@ -1696,7 +1696,7 @@ login sayfasında çıkmaza giriyor — PIN'le girme yolu yok.
 ### C. Kurum değişimi görseli
 Çıplak `<select>` koyu lacivert sidebar'da sırıtıyor. Öneri: özel açılır bileşen —
 kurum avatarı/logosu + ad + o kurumdaki rol; seçimde kısa onay geri bildirimi
-("Concept Akademi'ye geçildi") ve marka alanının yumuşak güncellenmesi (agy'nin
+("Konsept Akademi'ye geçildi") ve marka alanının yumuşak güncellenmesi (agy'nin
 logo-değişim işi temel; bileşenleştirilsin). "Tüm Kurumlar" seçeneği yalnız çok
 kurumlu kullanıcıda görünsün; tek kurumlu personelde seçici hiç render edilmesin.
 Ek: "Tümü" görünümünde öğrenci kartlarına küçük kurum rozeti (hangi öğrenci nerede).
@@ -1750,12 +1750,12 @@ kabul edilenler, düzeltilen bir plan hatası, iki yeni bulgu ve sıralı iş li
 ### 🔴 DÜZELTME — "14 öğrenciyi kurumlara ayır" görevi YANLIŞ VARSAYIMA dayanıyordu
 Önceki plan (2026-08-13) Eda'nın 14 öğrenciyi iki kuruma bölmesini istiyordu. Canlı veriye
 baktım: **14 öğrencinin hepsi Netlik'te, 13'ü koçluk işaretli.** Netlik zaten
-`is_coaching_practice = true`, yani Eda'nın bireysel koçluk pratiği; Concept Akademi ayrı
+`is_coaching_practice = true`, yani Eda'nın bireysel koçluk pratiği; Konsept Akademi ayrı
 bir kurum. Bu öğrenciler Eda'nın özel koçluk öğrencileriyse **doğru yerdeler, bölünmemeli.**
 - **Karar:** "öğrencileri böl" görevi **iptal**. Yerine iki iş:
   1. Eda tek soruyu cevaplasın: koçluk işareti olmayan 1 öğrenci bilinçli mi?
-  2. P7 için Concept Akademi'ye **2 test öğrencisi** açılsın (gerçek veriyi bölmek yerine).
-- **Gerekçe:** izolasyon testi Concept'te öğrenci olmadan zaten anlamsız; gerçek öğrenciyi
+  2. P7 için Konsept Akademi'ye **2 test öğrencisi** açılsın (gerçek veriyi bölmek yerine).
+- **Gerekçe:** izolasyon testi Konsept'te öğrenci olmadan zaten anlamsız; gerçek öğrenciyi
   taşımak veri riski, test öğrencisi risksiz ve sonrasında arşivlenebilir.
 
 ### 🆕 Opus'un iki ek bulgusu (Fable'ın listesinde yoktu)
@@ -1770,7 +1770,7 @@ bir kurum. Bu öğrenciler Eda'nın özel koçluk öğrencileriyse **doğru yerd
 ### 📋 Sıralı iş listesi — **implementasyon agy'de, Opus her paket sonunda kontrol eder**
 
 **F0 — Engelleyiciler (P7'yi açan işler, önce bunlar)**
-1. `agy` · Concept Akademi'ye 2 test öğrencisi + Concept Personel davetinin tamamlanması.
+1. `agy` · Konsept Akademi'ye 2 test öğrencisi + Konsept Personel davetinin tamamlanması.
 2. `Opus` · P7 izolasyon testi (7 madde, tarayıcıdan) — F0.1 bitince.
 
 **F1 — P0 düzeltmeler (küçük, birbirinden bağımsız, paralel gidebilir)**
@@ -1806,16 +1806,16 @@ bir kurum. Bu öğrenciler Eda'nın özel koçluk öğrencileriyse **doğru yerd
 
 ## ✅ P7 İZOLASYON TESTİ — GEÇTİ (Opus, 2026-08-16)
 
-Test hesabı: **Concept Personel** (`ozdemirmesut+personel@gmail.com`), yalnız Concept
+Test hesabı: **Konsept Personel** (`ozdemirmesut+personel@gmail.com`), yalnız Konsept
 Akademi'de `personel` rolü (17 izin). Testler tarayıcı tıklaması değil, hesabın **gerçek
 oturum token'ıyla doğrudan PostgREST çağrıları** olarak koşuldu — RLS'i olduğu gibi ölçer.
 
 | # | Kontrol | Sonuç |
 |---|---|---|
-| 1 | Görünen öğrenci | 12/12 Concept, Netlik sızıntısı yok ✅ |
+| 1 | Görünen öğrenci | 12/12 Konsept, Netlik sızıntısı yok ✅ |
 | 2 | Netlik öğrencisine id ile doğrudan erişim | 0 satır ✅ |
 | 3 | Koçluk kilitli öğrencinin programı/konuları/kararları | 0 satır ✅ |
-| 4 | Kilitsiz Concept öğrencisine görev ekleme | 201 ✅ |
+| 4 | Kilitsiz Konsept öğrencisine görev ekleme | 201 ✅ |
 | 5 | Müfredat yazma (izni yok) | 403 ✅ |
 | 6 | Kendine kurum_yonetici atama | 400 ✅ |
 | 7 | Davetleri okuma (members.manage yok) | 0 satır ✅ |
@@ -1845,8 +1845,8 @@ Yazma testlerinde dönüş koduna değil, **verinin kendisine** bakılmalı.
 
 ### Veri modeli güncellendi (kullanıcı kararı, 2026-08-16)
 - **Netlik (koçluk pratiği):** Ece, Ece Cangert, Ela Duru — 3 öğrenci, koçluk işaretli.
-- **Concept Akademi:** kalan 11 öğrenci, kurum öğrencisi (`coaching_coach_id = null`),
-  böylece Concept personeli konu/program/rapor ekranlarında çalışabiliyor.
+- **Konsept Akademi:** kalan 11 öğrenci, kurum öğrencisi (`coaching_coach_id = null`),
+  böylece Konsept personeli konu/program/rapor ekranlarında çalışabiliyor.
 - Taşıma öncesi `npm run backup` alındı. Test öğrencisi ve test görevi temizlendi.
 
 ---
@@ -1904,7 +1904,7 @@ izin listesindeki adrese gider, listede yoksa sessizce **Site URL**'e düşer �
 
 Kullanıcı ayarı düzeltti (Site URL = canlı adres, Redirect URLs'e `…/**` eklendi) ve
 şifresini başarıyla sıfırladı. **Aynı ayar kayıt onayı e-postalarını da etkiliyordu** —
-yani gerçek bir davetli o ana kadar hiçbir şekilde kaydolamazdı; Eda ve Concept Personel
+yani gerçek bir davetli o ana kadar hiçbir şekilde kaydolamazdı; Eda ve Konsept Personel
 admin API'den onaylı açıldığı için bu tuzağa denk gelinmemişti.
 
 Kalıcı not `CLAUDE.md` → "Bilinmesi gereken tuzaklar" bölümüne işlendi (Tailwind'in kurulu

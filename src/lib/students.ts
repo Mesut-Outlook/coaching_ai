@@ -6,7 +6,7 @@ export interface FetchStudentsOptions {
   /**
    * Dolu olduğunda aktif kurum bir "bireysel koçluk pratiği"dir (Netlik):
    * liste, o kurumun öğrencileri **veya** bu koçun koçluk verdiği öğrenciler olur.
-   * Böylece Concept'te kayıtlı olup Eda'dan koçluk alan öğrenci de Netlik'te görünür.
+   * Böylece Konsept'te kayıtlı olup Eda'dan koçluk alan öğrenci de Netlik'te görünür.
    */
   coachingCoachId?: string | null
   activeOnly?: boolean

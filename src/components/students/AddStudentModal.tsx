@@ -36,7 +36,7 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
   const [error, setError] = useState<string | null>(null)
 
   // Koçluk kilidi varsayılanı kurumun tipinden gelir: Netlik gibi bireysel koçluk
-  // pratiklerinde açık, Concept gibi kurumlarda kapalı. Eskiden her yeni öğrenci
+  // pratiklerinde açık, Konsept gibi kurumlarda kapalı. Eskiden her yeni öğrenci
   // koşulsuz kilitli açılıyordu — kurum öğrencisi personele kapanıyordu.
   const selectedIsCoachingPractice = memberships.find(
     (m) => m.institution_id === selectedInstitutionId

@@ -10,7 +10,7 @@ create table if not exists institutions (
   slug text unique not null,
   -- true = bu kurum bir "bireysel koçluk pratiği" (Netlik). Öğrenci listesi kurumla
   -- DEĞİL, coaching_coach_id ile belirlenir: kendi kurumundaki öğrenciler + başka
-  -- kurumlarda (ör. Concept) koçluk verilen öğrenciler birlikte görünür.
+  -- kurumlarda (ör. Konsept) koçluk verilen öğrenciler birlikte görünür.
   is_coaching_practice boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -147,7 +147,7 @@ create unique index if not exists students_parent_access_code_idx on students(pa
 -- ---------------------------------------------------------------------------
 insert into institutions (name, slug) values
   ('Netlik', 'eda-kocluk'),
-  ('Concept Akademi', 'concept')
+  ('Konsept Akademi', 'concept')
 on conflict (slug) do nothing;
 
 -- Tek seferlik ad duzeltmesi: yalnizca hala ILK seed adiysa degistir. Boylece
@@ -155,13 +155,13 @@ on conflict (slug) do nothing;
 update institutions set name = 'Netlik'
 where slug = 'eda-kocluk' and name = 'Eda Cangert Özel Koçluk';
 
--- Netlik = bireysel koçluk pratiği. Concept ise normal kurum (öğrenciler kuruma bağlı).
+-- Netlik = bireysel koçluk pratiği. Konsept ise normal kurum (öğrenciler kuruma bağlı).
 update institutions set is_coaching_practice = true  where slug = 'eda-kocluk' and not is_coaching_practice;
 update institutions set is_coaching_practice = false where slug = 'concept'     and is_coaching_practice;
 
 update students set institution_id = (select id from institutions where slug = 'eda-kocluk') where institution_id is null;
 -- Bireysel koçluk işareti — YALNIZCA İLK GEÇİŞTE.
--- ⚠️ Koşulsuz "where coaching_coach_id is null" YAZMA: Eda bir Concept öğrencisinin
+-- ⚠️ Koşulsuz "where coaching_coach_id is null" YAZMA: Eda bir Konsept öğrencisinin
 -- bireysel koçluk anahtarını arayüzden kapattığında alan null olur; şema tekrar
 -- çalıştırıldığında bu satır onu SESSİZCE yeniden işaretler ve öğrencinin konu/
 -- program verisini Concept personeline tekrar kapatır. Aşağıdaki "not exists"
@@ -262,7 +262,7 @@ on conflict (institution_id, user_id) do nothing;
 -- ---------------------------------------------------------------------------
 -- 7c. Eda Cangert: HER İKİ kurumda da yönetici
 -- ---------------------------------------------------------------------------
--- Eda hem Netlik'i (kendi özel koçluğu) hem Concept Akademi'yi yönetir ve ikisine
+-- Eda hem Netlik'i (kendi özel koçluğu) hem Konsept Akademi'yi yönetir ve ikisine
 -- de kullanıcı davet edebilmelidir. §7b onu yalnızca öğrencilerinin bulunduğu
 -- kuruma üye yapar; eksik kalan kurum burada tamamlanır.
 -- `do nothing`: arayüzden sonradan değiştirilen/pasifleştirilen üyeliği geri almaz.

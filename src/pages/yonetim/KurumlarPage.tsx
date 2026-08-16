@@ -225,7 +225,7 @@ export default function KurumlarPage() {
                 <label>Kurum Adı</label>
                 <input
                   type="text"
-                  placeholder="Örn: Concept Akademi"
+                  placeholder="Örn: Konsept Akademi"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
