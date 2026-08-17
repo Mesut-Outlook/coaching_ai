@@ -37,6 +37,7 @@ export default function PortalAccessPage() {
 
   return (
     <div
+      className="portal-page"
       style={{
         minHeight: '100vh',
         backgroundColor: '#f8fafc',

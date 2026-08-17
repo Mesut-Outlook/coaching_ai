@@ -52,6 +52,13 @@ const UTILITY_NAV_ITEMS = [
   { to: '/yardim', label: 'Yardım', icon: HelpCircle },
 ]
 
+/** Kurum id'sini sabit bir palet dizinine (1..5) eşler. */
+function institutionColorIndex(id: string) {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  return (h % 5) + 1
+}
+
 function initials(name: string) {
   const parts = name.trim().split(/\s+/)
   return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase()
@@ -108,14 +115,20 @@ export default function Sidebar() {
     brandLogo = ''
   }
 
-  // Menü zemini kuruma göre değişir: hangi kurumda çalıştığın tek bakışta belli
-  // olsun (iki kurum arasında gidip gelirken en sık yapılan hata yanlış kurumda
-  // işlem yapmak). Bilinmeyen kurumlar adlarından türetilen sabit bir tona düşer.
-  const instTheme = isKonseptSelected
+  // Menü zemini aktif kuruma göre değişir: hangi kurumda çalıştığın tek bakışta
+  // belli olsun (kurumlar arası geçişte en sık yapılan hata yanlış kurumda işlem
+  // yapmak). "Tüm Kurumlar" da kendi nötr tonunu alır — birleşik görünümde
+  // olduğunu bilmek, bir kurumda olduğunu sanmaktan daha güvenli.
+  //
+  // Netlik/Konsept dışındaki kurumlar için renk, kurum id'sinden türetilir:
+  // aynı kurum her açılışta aynı rengi alır ve kurumlar birbirinden ayrışır.
+  const instTheme = !activeInstitutionId
+    ? 'tumu'
+    : isKonseptSelected
     ? 'konsept'
     : isNetlikSelected
     ? 'netlik'
-    : 'diger'
+    : `diger-${institutionColorIndex(activeInstitutionId)}`
 
   const showInstitutionSelector = isSystemAdmin || memberships.length > 1
 

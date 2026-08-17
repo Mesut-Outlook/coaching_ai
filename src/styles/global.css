@@ -62,7 +62,9 @@ a { color: inherit; }
 .sidebar-foot { border-top: 1px solid rgba(255,255,255,0.09); padding-top: 14px; margin-top: 10px; }
 .coach-chip { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; width: 100%; background: none; border: none; }
 .coach-avatar {
-  width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(155deg, #8F86E0, #5C52B8);
+  width: 34px; height: 34px; border-radius: 50%;
+  /* Kurum temasıyla birlikte değişir (bkz. .sidebar-* blokları) */
+  background: linear-gradient(155deg, var(--sidebar-accent, #8F86E0), var(--sidebar-bg, #5C52B8));
   color: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--font-disp); font-weight: 700; font-size: 12.5px; flex-shrink: 0;
 }
 .coach-name { color: #fff; font-size: 13px; font-weight: 600; line-height: 1.25; text-align: left; }
@@ -363,13 +365,17 @@ a { color: inherit; }
    Aktif kurum menünün rengiyle belli olur — iki kurum arasında gidip gelirken
    yanlış kurumda işlem yapma hatasını azaltır. Zemin hep koyu kalır ki mevcut
    açık renkli metin/ikon paleti okunur olsun. */
-.sidebar-netlik  { --sidebar-bg: #241F5C; }   /* indigo — Netlik */
-.sidebar-konsept { --sidebar-bg: #123A3A; }   /* teal   — Konsept */
-.sidebar-diger   { --sidebar-bg: #3A2145; }   /* plum   — diğer kurumlar */
+.sidebar-tumu    { --sidebar-bg: #22242E; --sidebar-accent: #8E93A8; }  /* nötr — birleşik görünüm */
+.sidebar-netlik  { --sidebar-bg: #241F5C; --sidebar-accent: #8F86E0; }  /* indigo */
+.sidebar-konsept { --sidebar-bg: #123A3A; --sidebar-accent: #4FB3A4; }  /* teal   */
 
-/* Kurum rengi seçicide ve aktif menü öğesinde de yankılansın */
-.sidebar-konsept .coach-avatar { background: linear-gradient(155deg, #4FB3A4, #1E6F66); }
-.sidebar-diger .coach-avatar { background: linear-gradient(155deg, #B98AD1, #6E3D86); }
+/* Netlik/Konsept dışındaki kurumlar: id'den türeyen sabit paletten biri */
+.sidebar-diger-1 { --sidebar-bg: #3A2145; --sidebar-accent: #B98AD1; }  /* plum   */
+.sidebar-diger-2 { --sidebar-bg: #14304A; --sidebar-accent: #6BA6D6; }  /* mavi   */
+.sidebar-diger-3 { --sidebar-bg: #4A2A18; --sidebar-accent: #D69A6B; }  /* amber  */
+.sidebar-diger-4 { --sidebar-bg: #1E3A24; --sidebar-accent: #77C48A; }  /* yeşil  */
+.sidebar-diger-5 { --sidebar-bg: #45182A; --sidebar-accent: #D6789C; }  /* bordo  */
+
 
 /* ==== Haftalık program panosu ====
    Eskiden yatay kaydırmalı flex şeritti (7 × 240px ≈ 1750px), yani her ekranda
@@ -390,3 +396,32 @@ a { color: inherit; }
 @media (max-width: 1400px) { .program-board { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 1000px) { .program-board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px)  { .program-board { grid-template-columns: 1fr; } }
+
+/* ==== Mobil portal (öğrenci & veli) ====
+   Bu ekranlar telefonda kullanılıyor; kurallar tek yerden veriliyor ki her
+   sayfada inline stil tekrarlanmasın. */
+
+/* iOS Safari, font-size'ı 16px'in ALTINDA olan bir alana odaklanınca sayfayı
+   kendiliğinden yakınlaştırır ve geri uzaklaştırmaz — deneme girişinde her
+   kutuya dokunuşta sayfa zıplıyordu. 16px bunu tamamen kapatır. */
+.portal-page input,
+.portal-page select,
+.portal-page textarea { font-size: 16px; }
+
+/* Dokunma hedefleri: parmakla rahat basılabilir olsun */
+.portal-page button,
+.portal-page .btn { min-height: 44px; }
+.portal-page input[type="checkbox"] { width: 22px; height: 22px; }
+
+/* Çentikli/gestür çubuklu telefonlarda içerik kenarlara yapışmasın */
+.portal-page { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+.portal-page > main { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+
+/* Uzun konu/deneme adları dar ekranda taşmasın */
+.portal-page { overflow-wrap: anywhere; }
+
+/* Dar telefonlarda yatay boşluğu geri kazan */
+@media (max-width: 420px) {
+  .portal-page > main { padding-left: 14px !important; padding-right: 14px !important; }
+  .portal-page header { padding-left: 14px !important; padding-right: 14px !important; }
+}

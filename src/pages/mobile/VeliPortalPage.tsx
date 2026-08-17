@@ -93,7 +93,7 @@ export default function VeliPortalPage() {
   const unexcusedAbsences = attendance.filter((a) => a.excuse_type === 'yok').length
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: 90 }}>
+    <div className="portal-page" style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: 90 }}>
       <div style={{ position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={roleTopBarStyle(theme)} />
         <header
