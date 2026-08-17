@@ -403,10 +403,12 @@ a { color: inherit; }
 
 /* iOS Safari, font-size'ı 16px'in ALTINDA olan bir alana odaklanınca sayfayı
    kendiliğinden yakınlaştırır ve geri uzaklaştırmaz — deneme girişinde her
-   kutuya dokunuşta sayfa zıplıyordu. 16px bunu tamamen kapatır. */
+   kutuya dokunuşta sayfa zıplıyordu. 16px bunu tamamen kapatır.
+   !important bilinçli: bu ekranlar stillerini satır içi veriyor ve satır içi
+   stil stylesheet'i ezer; bu bir tercih değil platform gereği. */
 .portal-page input,
 .portal-page select,
-.portal-page textarea { font-size: 16px; }
+.portal-page textarea { font-size: 16px !important; }
 
 /* Dokunma hedefleri: parmakla rahat basılabilir olsun */
 .portal-page button,

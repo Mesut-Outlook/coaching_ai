@@ -492,7 +492,10 @@ function AddExamModal({
     padding: 10,
     borderRadius: 8,
     border: '1px solid var(--border)',
-    fontSize: 14,
+    // 16px ŞART: iOS Safari daha küçük bir alana odaklanınca sayfayı
+    // kendiliğinden yakınlaştırıyor ve geri uzaklaştırmıyor. Deneme girişinde
+    // her kutuya dokunuşta ekran zıplıyordu.
+    fontSize: 16,
   } as const
 
   return (
