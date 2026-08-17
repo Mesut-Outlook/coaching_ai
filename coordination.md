@@ -1939,3 +1939,25 @@ konum değişirken genişliği animasyona sokmuyor, eski değerde bırakıyordu.
 karşılıklarıyla değiştirildi. **Artık `src/` içindeki tüm `var(--…)` çağrıları gerçek.**
 Ayrıca `global.css`'te çift tanımlı seçici kalmadı (`.empty-state`, `.topbar-right`,
 `.sidebar`, `.main` birleştirildi) — aynı seçiciyle ikinci blok birincisini sessizce eziyordu.
+
+### 📱 Mobil portal + kurum renkleri (2026-08-17)
+
+**Mobil portal — canlıda 390px genişlikte ölçülerek doğrulandı.**
+- 🔴 **iOS otomatik yakınlaştırma:** deneme giriş formundaki 12 kutunun hepsi 14px'ti.
+  iOS Safari 16px altındaki bir alana odaklanınca sayfayı kendiliğinden yakınlaştırıp
+  geri bırakmıyor — öğrenci her doğru/yanlış kutusuna dokunduğunda ekran zıplıyordu.
+  Hepsi 16px'e çekildi (ölçüldü: 12/12 = 16px).
+  > ⚠️ İlk denemede CSS kuralı işe yaramadı: bu ekranlar stillerini **satır içi**
+  > veriyor ve satır içi stil stylesheet'i ezer. Ortak stil nesnesi düzeltildi,
+  > kural ayrıca `!important` ile bağlayıcı yapıldı (platform gereği, tercih değil).
+- Dokunma hedefleri 44px'e çıkarıldı (ölçüldü: 44px), onay kutuları 22px.
+- Çentikli telefonlar için `env(safe-area-inset-*)`.
+- 420px altında yatay boşluk 20px → 14px.
+- **Yatay taşma denetimi: 0 taşan öğe** (hem ana ekran hem deneme modalı, 358px panelde).
+
+**Kurum renkleri genişletildi**
+- "Tüm Kurumlar" artık kendi nötr tonunu alıyor. Eskiden Netlik temasına düşüyordu:
+  birleşik görünümdeyken kullanıcı Netlik'teymiş gibi görüyordu — kurum karıştırma riski.
+- Netlik/Konsept dışındaki kurumlar **kurum id'sinden türeyen** 5 renkli paletten sabit
+  bir ton alıyor: her kurum farklı, aynı kurum her zaman aynı renk.
+- Kullanıcı avatarı da aktif kurumun tonunu yansıtıyor.
