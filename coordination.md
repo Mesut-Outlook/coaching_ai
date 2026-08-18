@@ -2014,3 +2014,34 @@ loglanıyor mu, erişim kodu maskeleniyor mu, bağlam çözülüyor mu, değişm
 eleniyor mu, `completed` gürültüsü atlanıyor mu, `app.actor` dikkate alınıyor mu.
 **10/10 geçti.** `verify:schema` şemanın uygulandığını gösterir; bu test davranışını gösterir —
 denetimde asıl risk sessiz yanlış kayıttır.
+
+### ✅ Denetim kaydı canlıda doğrulandı (2026-08-18)
+
+| Kontrol | Sonuç |
+|---|---|
+| Personelin değişikliği kaydediliyor (kim / hangi alan / eski→yeni) | ✅ |
+| Erişim kodları maskeleniyor (`***`) | ✅ |
+| Kurum + öğrenci bağlamı yazma anında çözülüyor | ✅ |
+| Değişmeyen güncelleme loglanmıyor | ✅ |
+| **Portal işlemi `ogrenci:<id>` olarak damgalanıyor** | ✅ (yamadan sonra) |
+| Service-role işlemleri `sistem` damgalı | ✅ |
+| Personel logu okuyamıyor | ✅ 0 satır |
+| **Kurum yöneticisi (Eda) logu okuyamıyor** | ✅ 0 satır |
+| Eda `audit_stats` çağıramıyor | ✅ reddedildi |
+| Eda `audit_purge` çağıramıyor | ✅ reddedildi |
+
+### ⚠️ Ders: schema.sql'in bir bölümü uygulanmadan geçebiliyor
+Kullanıcı `schema.sql`'i çalıştırdı ve **dosyanın sonundaki** audit bölümü uygulandı,
+ama **ortasındaki** iki portal fonksiyonu güncellenmedi (`pg_get_functiondef` ile teyit:
+`app.actor` yoktu, mükerrer imza da yoktu). Sebep ne olursa olsun sonuç şu:
+
+> **Şema koşusundan sonra "uygulandı" varsaymak yetmiyor — davranışı doğrulamak gerekiyor.**
+
+Bu tur bunu canlı testle yakaladı. Fonksiyon değişikliklerinde doğrulama sorgusu:
+```sql
+select p.oid::regprocedure, position('<yeni kod parçası>' in pg_get_functiondef(p.oid)) > 0
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.proname = '<fonksiyon>';
+```
+Hedefli yama dosyası: `supabase/patch_portal_actor.sql` (schema.sql'den programatik
+çıkarıldı, Docker'da iki kez temiz koştu).
