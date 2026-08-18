@@ -16,7 +16,8 @@
     "backup": "tsx scripts/backupData.ts",
     "restore": "tsx scripts/restoreData.ts",
     "generate:access-codes": "tsx scripts/generateAccessCodes.ts",
-    "test:audit": "bash scripts/verifyAudit.sh"
+    "test:audit": "bash scripts/verifyAudit.sh",
+    "dev:noauth": "vite --mode noauth --port 5199"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
