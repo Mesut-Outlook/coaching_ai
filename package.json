@@ -15,7 +15,8 @@
     "seed:universities": "tsx scripts/seedUniversityRankings.ts",
     "backup": "tsx scripts/backupData.ts",
     "restore": "tsx scripts/restoreData.ts",
-    "generate:access-codes": "tsx scripts/generateAccessCodes.ts"
+    "generate:access-codes": "tsx scripts/generateAccessCodes.ts",
+    "test:audit": "bash scripts/verifyAudit.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",

@@ -99,6 +99,8 @@ async function main() {
   const backupDir = path.join(process.cwd(), 'backups', today);
   fs.mkdirSync(backupDir, { recursive: true });
 
+  // university_rankings bilinçli olarak yok: script'ten yeniden üretilebilen
+  // 66 bin satırlık referans veri, yedeği gereksiz yere şişirir.
   const tablesToBackup = [
     'profiles',
     'subjects',
@@ -110,7 +112,16 @@ async function main() {
     'topic_measurements',
     'coach_decisions',
     'error_basket_items',
-    'attendance_records'
+    'attendance_records',
+    // RBAC turunda eklenen tablolar — listeye alınmamıştı, yani kurum/rol/üyelik
+    // yapısı hiç yedeklenmiyordu.
+    'institutions',
+    'roles',
+    'memberships',
+    'invitations',
+    // Denetim kaydı: gece yedeği aynı zamanda arşivdir. Temizlik yapıldığında
+    // silinen kayıtlar bu dosyalarda kalır.
+    'audit_log'
   ];
 
   const dbData: Record<string, any[]> = {};

@@ -1961,3 +1961,56 @@ Ayrıca `global.css`'te çift tanımlı seçici kalmadı (`.empty-state`, `.topb
 - Netlik/Konsept dışındaki kurumlar **kurum id'sinden türeyen** 5 renkli paletten sabit
   bir ton alıyor: her kurum farklı, aynı kurum her zaman aynı renk.
 - Kullanıcı avatarı da aktif kurumun tonunu yansıtıyor.
+
+---
+
+## 🔍 OPUS — Denetim Kaydı (Audit Log) (2026-08-18)
+
+Kullanıcı isteği: kim ne kayıt yaratmış/değiştirmiş görülebilsin; **yalnız sistem
+admini** görsün; dönemsel olarak temizlenebilsin ve/veya arşivlenebilsin.
+
+### Neden trigger, neden uygulama katmanı değil
+Bu projede yazma **üç kanaldan** geliyor: koç oturumu (`auth.uid()` dolu), portal
+RPC'leri (`security definer` + anon, `auth.uid()` NULL) ve service-role script'leri
+(seed/yedek/müdahale, yine NULL). Uygulama katmanında loglasak son ikisi hiç görünmezdi.
+Trigger üçünü de yakalar ve atlanamaz.
+
+**Köşe taşı `audit_actor_label()`**: `app.actor` ayarı → `auth.uid()` → `'sistem'`.
+Portal yazma RPC'leri (`portal_set_task_completed`, `portal_add_exam`) artık
+`set_config('app.actor', 'ogrenci:<id>', true)` ile kendini damgalıyor — aksi halde
+denetimin en değerli parçası (öğrenci aktivitesi) "sistem" görünürdü.
+Yeni bir yazma kanalı eklenirse **yalnız bu fonksiyon** değişir.
+
+### Tasarım kararları
+| Karar | Gerekçe |
+|---|---|
+| Tek `audit_log` tablosu, `old_row`/`new_row` jsonb | Tablo başına `_history` tablosu 14 ayrı şema bakımı demekti; fark okurken hesaplanıyor |
+| **Append-only** — insert/update/delete politikası YOK | Silinebilen log, log değildir. Silme yalnız `audit_purge()` ile |
+| Erişim kodları maskeleniyor (`***`) | Aksi halde admin, döndürülmüş olsa bile öğrencinin eski PIN'ini geçmişten okur |
+| `institution_id` + `student_id` **yazarken** çözülüyor | Silinen satırın kurumu sonradan bulunamaz; bulunamayan kurum RLS'i çürütür |
+| Değişmeyen UPDATE yazılmıyor | Arayüz her kaydetmede tüm alanları gönderiyor |
+| `weekly_tasks`: yalnız `completed` değişimi atlanıyor | Logun en büyük kalemi buydu (150 öğrencide 183 MB'ın 112 MB'ı). Bu istisnayla yıllık ~70 MB'a iniyor |
+| Trigger hatası iş akışını kesmiyor | Koçun öğrenci kaydedememesi, log tutulamamasından kötü |
+| Ayrı izin anahtarı YOK | Yalnız sistem admini gördüğü için `is_system_admin()` yeterli — 23. anahtar gerekmedi |
+
+### Boyut (ölçülerek)
+Mevcut kullanım **~27 MB / 500 MB** (bunun ~27 MB'ı `university_rankings`; gerçek
+veri 0,16 MB). Denetim kaydı: **bugünkü 14 öğrenci ölçeğinde yılda ~17 MB**,
+50 öğrencide ~61 MB, 150 öğrencide ~183 MB (weekly_tasks istisnasıyla ~70 MB).
+
+### Temizlik & arşiv
+- `audit_purge(p_before)` — sistem admini, tarihten öncesini siler. **Silme işleminin
+  kendisi loglanır ve o kayıt asla silinmez** (`table_name = '_temizlik'`): "log silinmiş mi"
+  sorusunun cevabı her zaman logda kalır.
+- `audit_stats()` — toplam kayıt / son 30 gün / kapladığı yer; arayüzde üstte gösteriliyor.
+- Arayüzden **Arşivle (JSON)** ile indirilebiliyor; ayrıca `npm run backup` listesine eklendi,
+  yani gece yedeği aynı zamanda arşiv.
+- ⚠️ Yedek script'i RBAC tablolarını (institutions/roles/memberships/invitations) hiç
+  yedeklemiyormuş — bu turda listeye eklendi.
+
+### Doğrulama
+`npm run test:audit` (YENİ) — Docker'da 10 davranışsal test: insert/update/delete
+loglanıyor mu, erişim kodu maskeleniyor mu, bağlam çözülüyor mu, değişmeyen güncelleme
+eleniyor mu, `completed` gürültüsü atlanıyor mu, `app.actor` dikkate alınıyor mu.
+**10/10 geçti.** `verify:schema` şemanın uygulandığını gösterir; bu test davranışını gösterir —
+denetimde asıl risk sessiz yanlış kayıttır.

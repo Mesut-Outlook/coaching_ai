@@ -113,6 +113,7 @@ export type _tableNames = Expect<
     | 'weekly_tasks'
     | 'university_rankings'
     | 'attendance_records'
+    | 'audit_log'
   >
 >
 

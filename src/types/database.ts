@@ -70,6 +70,22 @@ export type Invitation = {
   created_at: string
 }
 
+/** Denetim kaydı. Trigger yazar, yalnız sistem admini okur. */
+export type AuditLogEntry = {
+  id: number
+  occurred_at: string
+  actor_id: string | null
+  actor_label: string
+  actor_name: string | null
+  institution_id: string | null
+  student_id: string | null
+  table_name: string
+  row_id: string
+  action: 'insert' | 'update' | 'delete'
+  old_row: Json | null
+  new_row: Json | null
+}
+
 export type Student = {
   id: string
   coach_id: string
@@ -246,11 +262,14 @@ export type Database = {
       weekly_tasks: TableDef<WeeklyTask>
       university_rankings: TableDef<UniversityRanking>
       attendance_records: TableDef<AttendanceRecord>
+      audit_log: TableDef<AuditLogEntry>
     }
     Views: Record<string, never>
     Functions: {
       my_access: { Args: Record<string, never>; Returns: Json }
       invitation_by_token: { Args: { p_token: string }; Returns: Json }
+      audit_purge: { Args: { p_before: string }; Returns: Json }
+      audit_stats: { Args: Record<string, never>; Returns: Json }
       portal_login: { Args: { p_code: string }; Returns: Json }
       portal_dashboard: { Args: { p_code: string }; Returns: Json }
       portal_set_task_completed: {

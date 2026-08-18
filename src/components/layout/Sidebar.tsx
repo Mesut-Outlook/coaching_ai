@@ -14,6 +14,7 @@ import {
   UserCheck,
   Building,
   ChevronDown,
+  ScrollText,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react'
@@ -46,6 +47,7 @@ const MANAGEMENT_NAV_ITEMS: NavItem[] = [
   { to: '/yonetim/kullanicilar', label: 'Kullanıcılar', icon: UserCheck, permission: 'members.manage' },
   { to: '/yonetim/roller', label: 'Roller', icon: Shield, permission: 'roles.manage' },
   { to: '/yonetim/kurumlar', label: 'Kurumlar', icon: Building, adminOnly: true },
+  { to: '/yonetim/kayitlar', label: 'Denetim Kayıtları', icon: ScrollText, adminOnly: true },
 ]
 
 const UTILITY_NAV_ITEMS = [

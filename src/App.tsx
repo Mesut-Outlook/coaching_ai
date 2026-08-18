@@ -19,6 +19,7 @@ import YardimPage from './pages/YardimPage'
 import KullanicilarPage from './pages/yonetim/KullanicilarPage'
 import RollerPage from './pages/yonetim/RollerPage'
 import KurumlarPage from './pages/yonetim/KurumlarPage'
+import KayitlarPage from './pages/yonetim/KayitlarPage'
 import PortalAccessPage from './pages/mobile/PortalAccessPage'
 import SifreSifirlaPage from './pages/SifreSifirlaPage'
 import OgrenciPortalPage from './pages/mobile/OgrenciPortalPage'
@@ -141,6 +142,7 @@ export default function App() {
                 }
               />
               <Route path="/yonetim/kurumlar" element={<KurumlarPage />} />
+              <Route path="/yonetim/kayitlar" element={<KayitlarPage />} />
               <Route path="/yardim" element={<YardimPage />} />
               {/* Eski adres korunuyor: Sürüm Geçmişi artık Yardım içinde bir sekme */}
               <Route path="/surum-gecmisi" element={<Navigate to="/yardim?sekme=surum" replace />} />

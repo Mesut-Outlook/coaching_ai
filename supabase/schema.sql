@@ -1261,6 +1261,10 @@ begin
     return json_build_object('ok', false, 'error', 'Veli görev durumunu değiştiremez.');
   end if;
 
+  -- Denetim aktörü: bu fonksiyon security definer + anon ile çalışıyor, yani
+  -- auth.uid() null. İşaretlemeyi yapanın öğrenci olduğunu buradan bildiriyoruz.
+  perform set_config('app.actor', 'ogrenci:' || v_student_id, true);
+
   update weekly_tasks set completed = coalesce(p_completed, false)
   where id = p_task_id and student_id = v_student_id;
   get diagnostics v_rows = row_count;
@@ -1301,6 +1305,10 @@ begin
   if v_role <> 'ogrenci' then
     return json_build_object('ok', false, 'error', 'Veli deneme sonucu giremez.');
   end if;
+
+  -- Bkz. portal_set_task_completed: aktör damgası olmadan öğrencinin girdiği
+  -- deneme logda 'sistem' görünür.
+  perform set_config('app.actor', 'ogrenci:' || v_student_id, true);
   if coalesce(btrim(p_name), '') = '' then
     return json_build_object('ok', false, 'error', 'Sınav adı gerekli.');
   end if;
@@ -1335,3 +1343,233 @@ begin
 end;
 $$;
 grant execute on function portal_add_exam(text, text, text, text, date, jsonb) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 16. Denetim Kaydı (Audit Log)
+-- ---------------------------------------------------------------------------
+-- Kim, ne zaman, hangi kaydı oluşturdu/değiştirdi/sildi.
+-- Uygulama katmanında değil TRIGGER ile tutulur: yazma üç ayrı kanaldan geliyor
+-- (koç oturumu, portal RPC'leri, service-role script'leri) ve trigger üçünü de
+-- yakalar, atlanamaz.
+--
+-- Görünürlük: YALNIZ sistem admini. Bu yüzden ayrı bir izin anahtarı yok.
+
+create table if not exists audit_log (
+  id bigserial primary key,
+  occurred_at timestamptz not null default now(),
+  actor_id uuid,                 -- auth.users; sistem/portal işlemlerinde null
+  actor_label text not null,     -- 'kullanici' | 'ogrenci:<uuid>' | 'veli:<uuid>' | 'sistem'
+  actor_name text,               -- anlık kopya: kullanıcı sonradan silinse de ad kalsın
+  institution_id uuid,
+  student_id uuid,
+  table_name text not null,
+  row_id text not null,
+  action text not null check (action in ('insert','update','delete')),
+  old_row jsonb,
+  new_row jsonb
+);
+
+create index if not exists audit_log_occurred_idx on audit_log(occurred_at desc);
+create index if not exists audit_log_table_idx on audit_log(table_name);
+create index if not exists audit_log_actor_idx on audit_log(actor_id);
+create index if not exists audit_log_student_idx on audit_log(student_id);
+create index if not exists audit_log_institution_idx on audit_log(institution_id);
+
+-- Aktör çözümleyici: tek kaynak. Yeni bir yazma kanalı eklenirse yalnız burası değişir.
+-- Öncelik: açıkça set edilmiş app.actor -> oturum kullanıcısı -> sistem.
+create or replace function audit_actor_label()
+returns text
+language sql
+stable
+set search_path = public, pg_temp
+as $$
+  select coalesce(
+    nullif(current_setting('app.actor', true), ''),
+    case when auth.uid() is not null then 'kullanici' else 'sistem' end
+  );
+$$;
+
+-- Erişim kodları birer kimlik bilgisidir: logda saklanırsa admin, döndürülmüş
+-- olsa bile öğrencinin eski PIN'ini geçmişten okuyabilir.
+create or replace function audit_redact(p jsonb)
+returns jsonb
+language sql
+immutable
+as $$
+  select case
+    when p is null then null
+    else p
+      || case when p ? 'student_access_code' then jsonb_build_object('student_access_code', '***') else '{}'::jsonb end
+      || case when p ? 'parent_access_code'  then jsonb_build_object('parent_access_code',  '***') else '{}'::jsonb end
+  end;
+$$;
+
+create or replace function audit_row()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_old jsonb;
+  v_new jsonb;
+  v_rec jsonb;
+  v_student uuid;
+  v_inst uuid;
+  v_row_id text;
+begin
+  -- Gerçekten değişmediyse yazma: arayüz her kaydetmede tüm alanları gönderiyor.
+  if TG_OP = 'UPDATE' and to_jsonb(OLD) = to_jsonb(NEW) then
+    return NEW;
+  end if;
+
+  -- weekly_tasks'ta yalnız 'completed' değiştiyse atla. Öğrenci portalda her gün
+  -- onlarca kutu işaretliyor; denetim değeri düşük, logun en büyük kalemi bu olur.
+  if TG_TABLE_NAME = 'weekly_tasks' and TG_OP = 'UPDATE'
+     and (to_jsonb(OLD) - 'completed') = (to_jsonb(NEW) - 'completed') then
+    return NEW;
+  end if;
+
+  begin
+    v_old := case when TG_OP in ('UPDATE','DELETE') then to_jsonb(OLD) end;
+    v_new := case when TG_OP in ('INSERT','UPDATE') then to_jsonb(NEW) end;
+
+    if TG_TABLE_NAME = 'students' then
+      v_old := audit_redact(v_old);
+      v_new := audit_redact(v_new);
+    end if;
+
+    v_rec := coalesce(v_new, v_old);
+    v_row_id := coalesce(v_rec->>'id', '?');
+
+    -- Bağlam yazarken çözülür: silinen satırın kurumu sonradan bulunamaz,
+    -- bulunamayan kurum ise RLS'i çürütür.
+    if TG_TABLE_NAME = 'students' then
+      v_student := (v_rec->>'id')::uuid;
+      v_inst := nullif(v_rec->>'institution_id','')::uuid;
+    elsif TG_TABLE_NAME in ('weekly_tasks','topic_measurements','coach_decisions','attendance_records','mock_exams') then
+      v_student := nullif(v_rec->>'student_id','')::uuid;
+      select s.institution_id into v_inst from students s where s.id = v_student;
+    elsif TG_TABLE_NAME in ('mock_exam_sections','error_basket_items') then
+      select e.student_id, s.institution_id into v_student, v_inst
+      from mock_exams e left join students s on s.id = e.student_id
+      where e.id = nullif(v_rec->>'mock_exam_id','')::uuid;
+    elsif TG_TABLE_NAME in ('memberships','invitations','roles') then
+      v_inst := nullif(v_rec->>'institution_id','')::uuid;
+    elsif TG_TABLE_NAME = 'institutions' then
+      v_inst := (v_rec->>'id')::uuid;
+    end if;
+
+    insert into audit_log (
+      actor_id, actor_label, actor_name, institution_id, student_id,
+      table_name, row_id, action, old_row, new_row
+    ) values (
+      auth.uid(),
+      audit_actor_label(),
+      (select p.full_name from profiles p where p.id = auth.uid()),
+      v_inst, v_student,
+      TG_TABLE_NAME, v_row_id, lower(TG_OP), v_old, v_new
+    );
+  exception when others then
+    -- Denetim hatası iş akışını KESMEMELİ: koçun öğrenci kaydedememesi,
+    -- log tutulamamasından daha kötü. En azından hatayı kaydetmeye çalış.
+    begin
+      insert into audit_log (actor_label, table_name, row_id, action, new_row)
+      values ('sistem', TG_TABLE_NAME, coalesce(v_row_id,'?'), lower(TG_OP),
+              jsonb_build_object('audit_error', SQLERRM));
+    exception when others then null;
+    end;
+  end;
+
+  if TG_OP = 'DELETE' then return OLD; end if;
+  return NEW;
+end;
+$$;
+
+-- İzlenen tablolar. university_rankings (66 bin satırlık referans veri) ve
+-- permission_catalog (seed) bilinçli olarak dışarıda.
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'students','weekly_tasks','topic_measurements','coach_decisions',
+    'attendance_records','mock_exams','mock_exam_sections','error_basket_items',
+    'memberships','invitations','roles','institutions','subjects','topics'
+  ]
+  loop
+    execute format('drop trigger if exists trg_audit_%1$s on %1$I', t);
+    execute format(
+      'create trigger trg_audit_%1$s after insert or update or delete on %1$I
+       for each row execute function audit_row()', t);
+  end loop;
+end $$;
+
+alter table audit_log enable row level security;
+
+-- Yalnız okuma, yalnız sistem admini. insert/update/delete politikası YOK:
+-- kayıtları trigger (security definer) yazar, kimse elle değiştiremez/silemez.
+-- Silme yalnız audit_purge() üzerinden ve o da kendini loglar.
+drop policy if exists "audit_log: yalnız sistem admini okur" on audit_log;
+create policy "audit_log: yalnız sistem admini okur" on audit_log for select using (
+  (select is_system_admin())
+);
+
+revoke all on function audit_actor_label() from public, anon;
+grant execute on function audit_actor_label() to authenticated;
+
+-- Dönemsel temizlik. Silme işleminin KENDİSİ loglanır ve o kayıt asla silinmez —
+-- "log silinmiş mi" sorusunun cevabı her zaman logda kalır.
+create or replace function audit_purge(p_before timestamptz)
+returns json
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare v_count bigint;
+begin
+  if not is_system_admin() then
+    return json_build_object('ok', false, 'error', 'Bu işlem yalnız sistem yöneticisine açıktır.');
+  end if;
+
+  delete from audit_log
+  where occurred_at < p_before and table_name <> '_temizlik';
+  get diagnostics v_count = row_count;
+
+  insert into audit_log (actor_id, actor_label, actor_name, table_name, row_id, action, new_row)
+  values (
+    auth.uid(), 'kullanici',
+    (select p.full_name from profiles p where p.id = auth.uid()),
+    '_temizlik', to_char(p_before, 'YYYY-MM-DD'), 'delete',
+    jsonb_build_object('silinen_kayit', v_count, 'bu_tarihten_once', p_before)
+  );
+
+  return json_build_object('ok', true, 'silinen', v_count);
+end;
+$$;
+revoke all on function audit_purge(timestamptz) from public, anon;
+grant execute on function audit_purge(timestamptz) to authenticated;
+
+-- Arayüzün "ne kadar yer kaplıyor, ne zaman temizlemeliyim" sorusuna cevabı.
+create or replace function audit_stats()
+returns json
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not is_system_admin() then
+    return json_build_object('ok', false, 'error', 'Bu işlem yalnız sistem yöneticisine açıktır.');
+  end if;
+
+  return json_build_object(
+    'ok', true,
+    'toplam_kayit', (select count(*) from audit_log),
+    'en_eski', (select min(occurred_at) from audit_log),
+    'en_yeni', (select max(occurred_at) from audit_log),
+    'boyut_bayt', pg_total_relation_size('audit_log'),
+    'son_30_gun', (select count(*) from audit_log where occurred_at > now() - interval '30 days')
+  );
+end;
+$$;
+revoke all on function audit_stats() from public, anon;
+grant execute on function audit_stats() to authenticated;
