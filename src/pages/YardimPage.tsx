@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ArrowRight, Smartphone, ShieldCheck,
+  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ArrowRight, Smartphone, ShieldCheck, ScrollText,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import VersionHistory from '../components/help/VersionHistory'
@@ -111,6 +111,14 @@ const GUIDE: GuideItem[] = [
       { src: '/yardim/portal-ogrenci-deneme.webp', caption: 'Öğrenci deneme girişi — bölüm bölüm doğru ve yanlış girilir, boş sayısı ve netler anında hesaplanır. Kaydedilen deneme, Deneme Girişi ekranında tüm bölüm dökümüyle karşına gelir.' },
       { src: '/yardim/portal-veli-ozet.webp', caption: 'Veli portalı — haftalık tamamlama oranı, son deneme neti, devamsızlık durumu ve hedef bölüm. Veli salt-okunur görür; hiçbir şeyi değiştiremez, ayrı bir kodla girer.' },
     ],
+  },
+{
+    to: '/yonetim/kayitlar',
+    label: 'Denetim Kayıtları',
+    icon: ScrollText,
+    step: 'Yönetim · Yalnız Sistem Yöneticisi',
+    body: 'Sistemde kim hangi kaydı oluşturdu, değiştirdi ya da sildi — hepsi burada. Bir satıra tıklayınca değişikliğin alan bazlı dökümü açılır: hangi alan, önceki değer, yeni değer. Kayıt türüne (öğrenci, deneme, rol, üyelik…) ve işleme (oluşturma/değiştirme/silme) göre filtreleyebilirsin. Kayıtlar üç kanaldan da toplanır: koç ve personelin panelden yaptıkları adlarıyla, öğrencinin mobil portalda yaptıkları "Öğrenci (portal)" olarak, otomatik script\'ler (gece yedeği vb.) "Sistem" olarak görünür. Öğrenci ve veli erişim kodları kayda maskelenerek yazılır, yani geçmişten kimsenin PIN\'i okunamaz. Üstteki kutucuklar toplam kayıt sayısını, son 30 gündeki hareketi ve kapladığı yeri gösterir. Yer büyüdüğünde "Arşivle (JSON)" ile indirip bir tarihten öncesini "Temizle" ile silebilirsin — silme işleminin kendisi de kaydedilir ve o kayıt asla silinmez, yani "log temizlenmiş mi" sorusunun cevabı her zaman durur. Kayıtlar ayrıca her gece otomatik yedeğe dahil edilir.',
+    usage: 'Bir verinin neden değiştiğini anlamak, bir hatanın ne zaman ve kim tarafından yapıldığını bulmak ya da yer açmak için eski kayıtları arşivleyip temizlemek istediğinde. Bu ekranı yalnız sen görürsün — kurum yöneticileri dahil kimse erişemez.',
   },
 ]
 

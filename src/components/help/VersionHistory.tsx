@@ -15,6 +15,29 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '18 Ağustos 2026',
+    entries: [
+      {
+        version: 'v0.23',
+        title: 'Denetim Kayıtları, şifre sıfırlama ve arayüz turu',
+        items: [
+          'Denetim Kayıtları (/yonetim/kayitlar): Sistemdeki her oluşturma, değişiklik ve silme kaydediliyor. Bir satıra tıklayınca alan bazlı "önce → sonra" dökümü açılıyor. Yalnız sistem yöneticisi görür; kurum yöneticileri dahil kimse erişemez.',
+          'Kayıtlar üç kanaldan da toplanıyor: panelden yapılanlar kullanıcı adıyla, mobil portalda öğrencinin yaptıkları "Öğrenci (portal)" olarak, otomatik script\'ler "Sistem" olarak. Erişim kodları kayda maskelenerek yazılıyor.',
+          'Kayıt yönetimi: üstteki kutucuklarda toplam kayıt, son 30 gün ve kapladığı yer görünüyor. "Arşivle (JSON)" ile indirilebiliyor, bir tarihten öncesi temizlenebiliyor. Temizliğin kendisi de kaydediliyor ve o kayıt asla silinmiyor.',
+          'Şifremi unuttum: Giriş ekranından şifre sıfırlama bağlantısı istenebiliyor, gelen bağlantıyla yeni şifre belirleniyor. Daha önce şifresini unutan kullanıcı için hiçbir kurtarma yolu yoktu.',
+          'Karşılama ekranı: Giriş sayfası ikiye ayrıldı — "Koç / Personel" e-posta ve şifreyle, "Öğrenci & Veli" erişim koduyla. Portal bağlantısını kaybeden öğrenci artık çıkmaza girmiyor.',
+          'Davet bağlantıları artık davete özel gizli bir anahtar taşıyor; bağlantısı olmayan kimse kayıt olamıyor ve kayıt ekranı hangi kuruma hangi rolle davet edildiğini gösteriyor.',
+          'Sol menü katlanabilir ve kilitlenebilir hale geldi; kapalıyken üzerine gelince açılıyor. Menü rengi aktif kuruma göre değişiyor, böylece hangi kurumda çalıştığın tek bakışta belli oluyor.',
+          'Haftalık Program\'ın 7 günü artık tek ekrana sığıyor — sağa kaydırma gerekmiyor. Boş günlerde doğrudan "Görev ekle" çıkıyor.',
+          'Panel kartlarında görev planlanmamış öğrencide %0 yerine "Plan yok" yazıyor; ikisi aynı şey değildi. Her kartta tekrar eden "Kritik yok" rozeti kaldırıldı.',
+          'Mobil portal telefona uygun hale getirildi: deneme girişindeki kutulara dokununca sayfanın kendiliğinden yakınlaşması giderildi, dokunma hedefleri büyütüldü, çentikli telefonlarda kenar boşlukları düzeltildi.',
+          'Düzeltme: Öğrenci Ekle/Düzenle başta olmak üzere modal pencereler şeffaf görünüyordu, arkadaki sayfa içlerinden okunuyordu.',
+          'Düzeltme: Yeni öğrenci her zaman "özel koçluk" işaretli açılıyordu; kurum öğrencileri bu yüzden kuruma kapalı doğuyordu. Artık kurumun türüne göre belirleniyor.',
+        ],
+      },
+    ],
+  },
+  {
     date: '13 Ağustos 2026',
     entries: [
       {
