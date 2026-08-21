@@ -2114,8 +2114,8 @@ sayıya çevirme derdi yok. LGS 8 dersleri `{"8. Sınıf"}`, YKS dersleri `{}` (
 | **P1** | Şema + tipler + `lib/curriculum.ts` | Sonnet | ✅ CANLIDA |
 | **P2** | `scripts/seedLgsCurriculum.ts` — idempotent yükleme | Sonnet | ✅ CANLIDA (2 kez koştu, ikincisi 0 ekledi) |
 | **P3** | Arayüz: Müfredat sekmeleri, sınıfa göre konu filtresi, Alan gizleme | Sonnet | ✅ CANLIDA (`08f3560`) |
-| **P4** | LGS deneme girişi (6 bölüm / 90 soru / katsayılı LGS puanı) + `exam_type` genişletme | agy | ⏳ (P3 sonrası) |
-| **P5** | Yardım sayfası + Sürüm Geçmişi (v0.24) | agy | ⏳ (P3 sonrası) |
+| **P4** | LGS deneme girişi (6 bölüm / 90 soru / **ağırlıklı net**, LGS puanı DEĞİL) | ~~agy~~ → Sonnet | ✅ CANLIDA (`694146f`) |
+| **P5** | Yardım sayfası + Sürüm Geçmişi (v0.24) | ~~agy~~ → Sonnet | ✅ CANLIDA (`694146f`) |
 
 ### ⚠️ P2 için kritik uyarı
 `scripts/seedSupabase.ts` **kullanılmayacak, taklit de edilmeyecek**: o script `subjects`
@@ -2162,3 +2162,48 @@ Canlı durum: **LGS 6 ders / 47 konu** (hepsi `grades={8. Sınıf}`, katsayılı
 - **P5 (agy):** Yardım sayfası + Sürüm Geçmişi (v0.24).
 - **Bekleyen veri:** 7. sınıf LGS müfredatı (kullanıcı verecek). Yapı hazır —
   `grades` alanına `7. Sınıf` yazılarak şema değişmeden eklenecek.
+
+### ✅ P4 + P5 CANLIYA ÇIKTI (2026-08-21, commit `694146f`, bundle `index-BIsSaoWD.js`)
+
+**⚠️ agy bu iki paketi hiç başlatmadı** (ne commit, ne dal, ne stash, ne çalışma ağacında
+dosya; canlıda `exam_type='LGS'` hâlâ reddediliyordu). Kullanıcı "agy bitirdi sanırım"
+dediğinde durum somut olarak kontrol edildi ve işler Sonnet'e devredildi.
+**Ders: agy'ye verilen iş, teslim edildiği iddia edilse bile, repo + canlı üzerinden
+doğrulanmadan bitmiş sayılmayacak.**
+
+#### P4'te çıkan mimari sorun ve çözümü
+`mock_exam_sections.net` bir **generated column** ve formülü YKS'e gömülüydü
+(`correct - wrong/4.0`). LGS'te **3 yanlış 1 doğruyu götürür** → net yanlış çıkardı.
+Generated column ALTER edilemez. Çözüm:
+- `wrong_penalty numeric not null default 4 check (> 0)` kolonu eklendi,
+- `net` = `correct_count - wrong_count / wrong_penalty` olarak **drop + add** ile yeniden kuruldu,
+- idempotentlik `pg_get_expr(adbin, adrelid)` guard'ıyla: ifade zaten `wrong_penalty`
+  içeriyorsa hiçbir şey yapılmıyor.
+
+**Doğrulama (Opus bağımsız koştu):** stub → eski şema → gerçek deneme satırı (30D/8Y) →
+yeni şema x2. Mevcut satırın neti **28 → 28** korundu, `wrong_penalty=4` backfill oldu,
+LGS satırı (15D/3Y) **net 14**, iki koşu arasında `net` ifadesi **byte-aynı**.
+**Canlı doğrulama:** `exam_type='LGS'` kabul, geçersiz tür `23514` ile red,
+4 deneme / 16 bölüm satırı korundu, netler doğru (32D 6Y → 30.5).
+
+#### Kalıcı tasarım kararı: LGS puanı ÜRETİLMİYOR
+Gerçek 500'lük LGS puanı, o yıl sınava giren herkesin sonucunu (ortalama/standart sapma)
+gerektirir — bizde yok. Uydurma puan yerine ders katsayılarıyla **ağırlıklı net**
+gösteriliyor ve arayüzde "LGS puanı değildir" diye açıkça etiketleniyor.
+`weightedNet()` (`src/lib/examSections.ts`) — buna asla "puan" denmeyecek.
+
+#### Güvenlik notu
+Yanlış cezası istemciden alınmıyor: `portal_add_exam` RPC'si `p_exam_type`'a bakıp
+`v_penalty`'yi **sunucuda** türetiyor. Öğrenci portalından net şişirilemez.
+
+#### Yol boyunca kapanan ek kusurlar
+- Öğrenci profilinde LGS denemeleri **hiçbir grafiğe düşmüyordu** (grafikler yalnız
+  TYT/AYT filtreliyordu) → LGS net gelişim grafiği + ortalama net eklendi.
+- Deneme rozeti `TYT ? A : B` ikili koşuluyla çiziliyordu → LGS, AYT rengi alıyordu; üçe ayrıldı.
+- LGS öğrencisinin profil başlığında **boş bir mor rozet** çiziliyordu (`track` null).
+
+### Sırada ne var
+- **7. sınıf LGS müfredatı** — kullanıcı listeyi verecek. Yapı hazır: `subjects.grades`
+  alanına `7. Sınıf` yazılır, şema DEĞİŞMEZ. Yükleme `npm run seed:lgs` deseniyle.
+- LGS deneme paylaşımı (WhatsApp metni) LGS'e göre gözden geçirilebilir — `src/lib/examShare.ts`
+  bu turda dokunuldu ama gerçek bir LGS denemesiyle uçtan uca denenmedi.
