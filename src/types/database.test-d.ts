@@ -15,6 +15,7 @@ import type {
   AbsenceStatus,
   AttendanceRecord,
   CoachDecision,
+  Curriculum,
   Database,
   ErrorBasketItem,
   ErrorType,
@@ -170,6 +171,7 @@ export type _grade = Expect<
   >
 >
 export type _track = Expect<Equals<Track, 'SAY' | 'EA' | 'SÖZ'>>
+export type _curriculum = Expect<Equals<Curriculum, 'YKS' | 'LGS'>>
 export type _source = Expect<Equals<MeasurementSource, 'konu_testi' | 'deneme'>>
 export type _state = Expect<Equals<MasteryState, 'kritik' | 'gelisiyor' | 'yeterli'>>
 export type _examType = Expect<Equals<ExamType, 'TYT' | 'AYT'>>
@@ -185,7 +187,8 @@ export type _notifyTarget = Expect<Equals<NotifyTarget, 'ogrenci' | 'veli' | 'ik
 export type _scoreType = Expect<Equals<ScoreType, 'SAY' | 'EA' | 'SÖZ' | 'DİL' | 'TYT'>>
 
 export type _studentGradeField = Expect<Equals<Student['grade'], Grade>>
-export type _studentTrackField = Expect<Equals<Student['track'], Track>>
+// LGS öğrencisinde Alan (SAY/EA/SÖZ) kavramı yok → nullable.
+export type _studentTrackField = Expect<Equals<Student['track'], Track | null>>
 export type _decisionStateField = Expect<Equals<CoachDecision['state'], MasteryState>>
 export type _measurementSourceField = Expect<Equals<TopicMeasurement['source'], MeasurementSource>>
 export type _examTypeField = Expect<Equals<MockExam['exam_type'], ExamType>>
@@ -207,6 +210,9 @@ export type _studentNullables = Expect<
     string | null
   >
 >
+export type _subjectCurriculumField = Expect<Equals<Subject['curriculum'], Curriculum>>
+export type _subjectGradesField = Expect<Equals<Subject['grades'], Grade[]>>
+export type _subjectKatsayi = Expect<Equals<Subject['katsayi'], number | null>>
 export type _studentTargetNet = Expect<Equals<Student['target_net_value'], number | null>>
 export type _taskTopicId = Expect<Equals<WeeklyTask['topic_id'], number | null>>
 export type _taskCustomLabel = Expect<Equals<WeeklyTask['custom_label'], string | null>>

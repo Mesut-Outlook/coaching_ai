@@ -4,7 +4,7 @@ import {
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
-import type { Subject, Topic } from '../types/database'
+import type { Curriculum, Subject, Topic } from '../types/database'
 
 const DEFAULT_COLOR = '#4C43A8'
 
@@ -16,10 +16,16 @@ export default function MufredatPage() {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({})
   const [showInactive, setShowInactive] = useState(false)
 
+  // Müfredat sekmesi: her ders tam olarak bir müfredata ait (subjects.curriculum).
+  // Sekme değiştirmek yalnız listeyi süzer, "Yeni Ders" formu da aktif sekmenin
+  // curriculum'uyla insert eder.
+  const [tab, setTab] = useState<Curriculum>('YKS')
+
   const [newSubjectOpen, setNewSubjectOpen] = useState(false)
   const [newSubjectName, setNewSubjectName] = useState('')
   const [newSubjectColor, setNewSubjectColor] = useState(DEFAULT_COLOR)
   const [newSubjectSoru, setNewSubjectSoru] = useState('')
+  const [newSubjectKatsayi, setNewSubjectKatsayi] = useState('')
 
   const [newTopicSubjectId, setNewTopicSubjectId] = useState<number | null>(null)
   const [newTopicName, setNewTopicName] = useState('')
@@ -65,7 +71,8 @@ export default function MufredatPage() {
     return map
   }, [topics])
 
-  const visibleSubjects = showInactive ? subjects : subjects.filter((s) => s.is_active)
+  const tabSubjects = subjects.filter((s) => s.curriculum === tab)
+  const visibleSubjects = showInactive ? tabSubjects : tabSubjects.filter((s) => s.is_active)
 
   function toggleExpand(id: number) {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
@@ -73,7 +80,10 @@ export default function MufredatPage() {
 
   async function addSubject() {
     if (!newSubjectName.trim()) return
-    const maxOrder = subjects.reduce((m, s) => Math.max(m, s.sort_order), -1)
+    // sort_order yalnız aktif sekmenin dersleri arasında hesaplanır — YKS (1..14) ve
+    // LGS (1..6) ayrı sıralama uzayları, tüm derslere göre hesaplarsak yeni LGS dersi
+    // YKS'nin en sonundan (örn. 15) devam eder ve LGS listesinde sıralaması anlamsızlaşır.
+    const maxOrder = subjects.filter((s) => s.curriculum === tab).reduce((m, s) => Math.max(m, s.sort_order), -1)
     const { data, error: err } = await supabase
       .from('subjects')
       .insert({
@@ -82,6 +92,12 @@ export default function MufredatPage() {
         soru_sayisi: newSubjectSoru.trim() || '—',
         sort_order: maxOrder + 1,
         is_active: true,
+        curriculum: tab,
+        // LGS dersleri şimdilik yalnız 8. sınıfa özel ekleniyor; YKS dersleri tüm YKS
+        // sınıflarına açık (boş dizi = filtre yok). 7. sınıf müfredatı geldiğinde bu
+        // varsayılan değişebilir ama şema değişmez.
+        grades: tab === 'LGS' ? ['8. Sınıf'] : [],
+        katsayi: tab === 'LGS' && newSubjectKatsayi.trim() ? Number(newSubjectKatsayi) : null,
       })
       .select()
       .single()
@@ -90,6 +106,7 @@ export default function MufredatPage() {
     setNewSubjectName('')
     setNewSubjectColor(DEFAULT_COLOR)
     setNewSubjectSoru('')
+    setNewSubjectKatsayi('')
     setNewSubjectOpen(false)
   }
 
@@ -137,7 +154,10 @@ export default function MufredatPage() {
   }
 
   async function moveSubject(subject: Subject, direction: -1 | 1) {
-    const sorted = [...subjects].sort((a, b) => a.sort_order - b.sort_order)
+    // Yalnız aynı sekmenin (curriculum) dersleri arasında komşuluk kur — YKS ve LGS'nin
+    // sort_order'ları iç içe geçtiği için tüm dersler üzerinden sıralarsak ↑/↓ ekranda
+    // görünmeyen karşı müfredattan bir dersle sessizce yer değiştirebilir.
+    const sorted = subjects.filter((s) => s.curriculum === subject.curriculum).sort((a, b) => a.sort_order - b.sort_order)
     const idx = sorted.findIndex((s) => s.id === subject.id)
     const swapIdx = idx + direction
     if (swapIdx < 0 || swapIdx >= sorted.length) return
@@ -193,6 +213,27 @@ export default function MufredatPage() {
         </div>
       )}
 
+      <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
+        {(['YKS', 'LGS'] as const).map((c) => {
+          const count = subjects.filter((s) => s.curriculum === c).length
+          return (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setTab(c)}
+              style={{
+                padding: '10px 4px', background: 'none', border: 'none',
+                borderBottom: tab === c ? '2px solid var(--indigo-600)' : '2px solid transparent',
+                color: tab === c ? 'var(--indigo-600)' : 'var(--ink-soft)',
+                fontWeight: tab === c ? 700 : 500, fontSize: 13.5, cursor: 'pointer',
+              }}
+            >
+              {c} <span style={{ fontSize: 11, color: 'var(--ink-faint)', fontWeight: 500 }}>({count})</span>
+            </button>
+          )
+        })}
+      </div>
+
       {newSubjectOpen && (
         <div className="card" style={{ padding: 16, marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div className="field" style={{ flex: 2, minWidth: 160 }}>
@@ -207,6 +248,12 @@ export default function MufredatPage() {
             <label>Soru Sayısı</label>
             <input type="text" value={newSubjectSoru} onChange={(e) => setNewSubjectSoru(e.target.value)} placeholder="örn. 5 soru" />
           </div>
+          {tab === 'LGS' && (
+            <div className="field" style={{ minWidth: 100 }}>
+              <label>Katsayı</label>
+              <input type="number" step="0.1" value={newSubjectKatsayi} onChange={(e) => setNewSubjectKatsayi(e.target.value)} placeholder="örn. 4" />
+            </div>
+          )}
           <button type="button" className="btn btn-primary" onClick={addSubject}>
             <Check size={14} /> Ekle
           </button>
@@ -257,6 +304,16 @@ export default function MufredatPage() {
 
                   <span className="subject-soru" style={{ fontSize: 11, color: 'var(--ink-faint)' }}>{subject.soru_sayisi}</span>
                   <span style={{ fontSize: 11, color: 'var(--ink-faint)' }}>{subjectTopics.length} konu</span>
+                  {subject.grades.length > 0 && (
+                    <span style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                      {subject.grades.map((g) => (
+                        <span key={g} className="badge badge-neutral">{g}</span>
+                      ))}
+                    </span>
+                  )}
+                  {tab === 'LGS' && subject.katsayi !== null && (
+                    <span className="badge badge-primary">Katsayı {subject.katsayi}</span>
+                  )}
 
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setEditingSubjectId(subject.id); setEditValue(subject.name) }} title="Adını düzenle">
                     <Pencil size={13} />
@@ -339,8 +396,12 @@ export default function MufredatPage() {
 
       {!loading && visibleSubjects.length === 0 && (
         <div className="card empty-state">
-          <h3>Henüz ders yok</h3>
-          <p>"Yeni Ders" ile müfredatı oluşturmaya başla, ya da Antigravity'nin seed script'i ile resmi TYT listesini otomatik yükle.</p>
+          <h3>{tab} müfredatında henüz ders yok</h3>
+          <p>
+            {tab === 'YKS'
+              ? '"Yeni Ders" ile müfredatı oluşturmaya başla, ya da Antigravity\'nin seed script\'i ile resmi TYT listesini otomatik yükle.'
+              : '"Yeni Ders" ile elle ekleyebilir ya da LGS müfredat seed script\'inin çalıştırılmasını bekleyebilirsin.'}
+          </p>
         </div>
       )}
     </section>

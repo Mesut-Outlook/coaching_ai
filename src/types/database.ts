@@ -20,6 +20,7 @@ export const GRADES: readonly Grade[] = [
   'Mezun',
 ]
 export type Track = 'SAY' | 'EA' | 'SÖZ'
+export type Curriculum = 'YKS' | 'LGS'
 export type MeasurementSource = 'konu_testi' | 'deneme'
 export type MasteryState = 'kritik' | 'gelisiyor' | 'yeterli'
 export type ExamType = 'TYT' | 'AYT'
@@ -111,7 +112,8 @@ export type Student = {
   coaching_coach_id?: string | null
   full_name: string
   grade: Grade
-  track: Track
+  /** LGS öğrencisinde Alan kavramı yok → null. */
+  track: Track | null
   target_program: string | null
   target_ranking: string | null
   target_net_label: string | null
@@ -132,6 +134,11 @@ export type Subject = {
   soru_sayisi: string
   sort_order: number
   is_active: boolean
+  curriculum: Curriculum
+  /** Ders bu sınıflara özel; boş dizi = ilgili müfredatın tüm sınıfları. */
+  grades: Grade[]
+  /** LGS puan katsayısı; YKS derslerinde null. */
+  katsayi: number | null
 }
 
 export type Topic = {

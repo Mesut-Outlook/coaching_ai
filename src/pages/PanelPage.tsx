@@ -10,7 +10,7 @@ import AddStudentModal from '../components/students/AddStudentModal'
 import { fetchStudents } from '../lib/students'
 import { useAccess, type StudentScope } from '../contexts/AccessContext'
 import { GRADES } from '../types/database'
-import type { Student } from '../types/database'
+import type { Student, Track } from '../types/database'
 
 interface StudentCardData {
   student: Student
@@ -20,7 +20,7 @@ interface StudentCardData {
   recentNets: number[]
 }
 
-const TRACK_CHIP_CLASS: Record<Student['track'], string> = {
+const TRACK_CHIP_CLASS: Record<Track, string> = {
   SAY: 'chip-say',
   EA: 'chip-ea',
   SÖZ: 'chip-soz',
@@ -78,7 +78,7 @@ export default function PanelPage() {
   const [cards, setCards] = useState<StudentCardData[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [trackFilter, setTrackFilter] = useState<'Tümü' | Student['track']>('Tümü')
+  const [trackFilter, setTrackFilter] = useState<'Tümü' | Track>('Tümü')
   const [gradeFilter, setGradeFilter] = useState<'Tümü' | Student['grade']>('Tümü')
   const [showAddModal, setShowAddModal] = useState(false)
 
@@ -250,9 +250,15 @@ export default function PanelPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px solid var(--border-soft)' }}>
-              <span className={`chip ${TRACK_CHIP_CLASS[student.track]}`}>{student.track}</span>
-              <span style={{ fontSize: 11.5, color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            <div style={{ display: 'flex', alignItems: 'center', paddingTop: 12, borderTop: '1px solid var(--border-soft)' }}>
+              {/* LGS öğrencisinde Alan yok (track null) — chip hiç basılmıyor. Eskiden
+                  bu satır justifyContent:'space-between' ile ikiye bölünüyordu; rozet
+                  basılmayınca tek çocuk kalıp "Profil ›" sola yapışıyordu. marginLeft:'auto'
+                  sağda kalmasını rozetin varlığından bağımsız garanti eder. */}
+              {student.track && (
+                <span className={`chip ${TRACK_CHIP_CLASS[student.track]}`}>{student.track}</span>
+              )}
+              <span style={{ marginLeft: 'auto', fontSize: 11.5, color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 Profil <ChevronRight size={14} />
               </span>
             </div>

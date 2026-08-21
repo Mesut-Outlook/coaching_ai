@@ -189,6 +189,17 @@ function parseSchema(sql: string): Map<string, SqlColumn[]> {
     if (col && !columns.some((c) => c.name === col.name)) columns.push(col)
   }
 
+  // Sonradan gevşetilen NOT NULL: inline tanım "not null" yazsa da, tablo zaten
+  // varsa `create table if not exists` atlanır ve gerçek DB'de yalnız bu ALTER
+  // geçerli olur (örn. students.track — LGS öğrencisinde Alan kavramı yok).
+  const dropNotNullRe =
+    /alter\s+table\s+([a-z_][\w.]*)\s+alter\s+column\s+([a-z_]\w*)\s+drop\s+not\s+null\s*;/gi
+  while ((m = dropNotNullRe.exec(clean)) !== null) {
+    const columns = tables.get(m[1])
+    const col = columns?.find((c) => c.name === m![2])
+    if (col) col.notNull = false
+  }
+
   return tables
 }
 

@@ -1,10 +1,11 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { X, Upload, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAccess } from '../../contexts/AccessContext'
 import { GRADES } from '../../types/database'
-import type { Student } from '../../types/database'
+import type { Student, Track } from '../../types/database'
+import { gradeCurriculum } from '../../lib/curriculum'
 
 interface AddStudentModalProps {
   onClose: () => void
@@ -23,7 +24,26 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
 
   const [fullName, setFullName] = useState(editingStudent?.full_name ?? '')
   const [grade, setGrade] = useState<Student['grade']>(editingStudent?.grade ?? '12. Sınıf')
-  const [track, setTrack] = useState<Student['track']>(editingStudent?.track ?? 'SAY')
+  // LGS sınıflarında (7./8.) Alan kavramı yok → track null. YKS sınıflarında zorunlu.
+  const isLgs = gradeCurriculum(grade) === 'LGS'
+  const [track, setTrack] = useState<Track | null>(
+    editingStudent ? editingStudent.track : (isLgs ? null : 'SAY')
+  )
+  // Sınıf LGS↔YKS arasında değişince Alan'ı hatırlamak için: LGS'e geçince en son
+  // seçili olan Alan burada saklanır, YKS'e dönünce geri getirilir (yoksa 'SAY').
+  const lastTrackRef = useRef<Track>(editingStudent?.track ?? 'SAY')
+  useEffect(() => {
+    if (isLgs) {
+      if (track !== null) {
+        lastTrackRef.current = track
+        setTrack(null)
+      }
+    } else if (track === null) {
+      setTrack(lastTrackRef.current)
+    }
+    // Yalnızca sınıfın müfredatı değiştiğinde tetiklenmeli — track'in kendisi değil.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLgs])
   const [targetProgram, setTargetProgram] = useState(editingStudent?.target_program ?? '')
   const [phoneNumber, setPhoneNumber] = useState(editingStudent?.phone_number ?? '')
   const [parentPhoneNumber, setParentPhoneNumber] = useState(editingStudent?.parent_phone_number ?? '')
@@ -135,7 +155,7 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
       coaching_coach_id: isPrivateCoaching ? user.id : null,
       full_name: fullName.trim(),
       grade,
-      track,
+      track: isLgs ? null : track,
       target_program: targetProgram.trim() || null,
       phone_number: phoneNumber.trim() || null,
       parent_phone_number: parentPhoneNumber.trim() || null,
@@ -269,7 +289,7 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isLgs ? '1fr' : '1fr 1fr', gap: 12 }}>
             <div className="field">
               <label>Sınıf</label>
               <select value={grade} onChange={(e) => setGrade(e.target.value as Student['grade'])}>
@@ -280,14 +300,17 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
                 ))}
               </select>
             </div>
-            <div className="field">
-              <label>Alan</label>
-              <select value={track} onChange={(e) => setTrack(e.target.value as Student['track'])}>
-                <option value="SAY">SAY</option>
-                <option value="EA">EA</option>
-                <option value="SÖZ">SÖZ</option>
-              </select>
-            </div>
+            {/* LGS'de (7./8. sınıf) Alan kavramı yok — alan zaten track=null gidiyor. */}
+            {!isLgs && (
+              <div className="field">
+                <label>Alan</label>
+                <select value={track ?? 'SAY'} onChange={(e) => setTrack(e.target.value as Track)}>
+                  <option value="SAY">SAY</option>
+                  <option value="EA">EA</option>
+                  <option value="SÖZ">SÖZ</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="form-section-title">İletişim</div>

@@ -145,6 +145,11 @@ alter table students
   add constraint students_grade_check
   check (grade in ('7. Sınıf', '8. Sınıf', '9. Sınıf', '10. Sınıf', '11. Sınıf', '12. Sınıf', 'Mezun'));
 
+-- Müfredat YKS/LGS ayrımı: LGS öğrencisinde Alan (SAY/EA/SÖZ) kavramı yok, bu yüzden
+-- track nullable olmalı. CHECK kısıtı olduğu gibi kalabilir — Postgres'te NULL için
+-- CHECK zaten UNKNOWN döner (satırı reddetmez), sadece NOT NULL'ı düşürmek yeterli.
+alter table students alter column track drop not null;
+
 create index if not exists students_institution_id_idx on students(institution_id);
 create index if not exists students_coaching_coach_idx on students(coaching_coach_id);
 create unique index if not exists students_student_access_code_idx on students(student_access_code) where student_access_code is not null;
@@ -293,7 +298,10 @@ create table if not exists subjects (
   color text not null,
   soru_sayisi text not null,
   sort_order int not null default 0,
-  is_active boolean not null default true
+  is_active boolean not null default true,
+  curriculum text not null default 'YKS' check (curriculum in ('YKS', 'LGS')),
+  grades text[] not null default '{}',
+  katsayi numeric
 );
 
 create table if not exists topics (
@@ -308,6 +316,20 @@ create index if not exists topics_subject_id_idx on topics(subject_id);
 
 alter table subjects add column if not exists is_active boolean not null default true;
 alter table topics add column if not exists is_active boolean not null default true;
+
+-- Müfredat YKS/LGS ayrımı: mevcut tabloda inline tanım işlemez ("create table if not
+-- exists" atlanır), bu yüzden yeni kolonlar ayrıca eklenir. Mevcut 14 ders default
+-- 'YKS' ile zaten doğru değere düşer, ekstra update gerekmez.
+alter table subjects add column if not exists curriculum text not null default 'YKS' check (curriculum in ('YKS', 'LGS'));
+alter table subjects add column if not exists grades text[] not null default '{}';
+alter table subjects add column if not exists katsayi numeric;
+
+-- `unique (name)` → `unique (curriculum, name)`: aynı ders adı farklı müfredatlarda
+-- (örn. "Matematik") tekrar edebilir. Yeniden çalıştırılabilir olsun diye önce eski
+-- kısıtı düşür, sonra yenisini kur — bu satırlar yukarıdaki alter'ların ALTINDA olmalı.
+alter table subjects drop constraint if exists subjects_name_key;
+alter table subjects drop constraint if exists subjects_curriculum_name_key;
+alter table subjects add constraint subjects_curriculum_name_key unique (curriculum, name);
 
 -- ---------------------------------------------------------------------------
 -- 9. Ölçümler, Kararlar, Denemeler, Program, Devamsızlık

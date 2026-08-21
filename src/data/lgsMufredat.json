@@ -1,0 +1,109 @@
+{
+  "curriculum": "LGS",
+  "kaynak": "2026-2027 LGS (Liselere Geçiş Sistemi) Müfredatı",
+  "siniflar": ["8. Sınıf"],
+  "not": "PDF metni Türkçe karakterler olmadan üretilmişti; adlar burada düzeltilmiş yazımla tutulur.",
+  "dersler": [
+    {
+      "name": "Türkçe",
+      "color": "#4f46e5",
+      "soru_sayisi": "20",
+      "katsayi": 4,
+      "sort_order": 1,
+      "konular": [
+        "Sözcükte Anlam (Gerçek, Mecaz, Terim, Eş/Zıt Anlamlı)",
+        "Cümlede Anlam (Öznellik, Nesnellik, Neden-Sonuç, Amaç-Sonuç)",
+        "Paragrafta Anlam (Ana fikir, Yardımcı fikirler, Yapısı, Anlatım Biçimleri)",
+        "Fiilimsiler (İsim-fiil, Sıfat-fiil, Zarf-fiil)",
+        "Cümlenin Ögeleri (Temel ve Yardımcı ögeler)",
+        "Anlatım Bozuklukları",
+        "Yazım Kuralları ve Noktalama İşaretleri",
+        "Sözel Mantık ve Muhakeme / Görsel Okuma"
+      ]
+    },
+    {
+      "name": "Matematik",
+      "color": "#7c3aed",
+      "soru_sayisi": "20",
+      "katsayi": 4,
+      "sort_order": 2,
+      "konular": [
+        "Çarpanlar ve Katlar (EBOB - EKOK)",
+        "Üslü İfadeler (Temel kurallar, Bilimsel gösterim)",
+        "Kareköklü İfadeler (Toplama, Çıkarma, Çarpma, Bölme, Tahmin)",
+        "Veri Analizi (Çizgi, Sütun ve Daire Grafikleri)",
+        "Basit Olayların Olma Olasılığı",
+        "Cebirsel İfadeler ve Özdeşlikler",
+        "Doğrusal Denklemler (Eğim, Birinci Dereceden Denklemler)",
+        "Eşitsizlikler",
+        "Üçgenler (Kenarortay, Açıortay, Yükseklik, Pisagor Teoremi)",
+        "Dönüşüm Geometrisi (Öteleme, Yansıma)",
+        "Geometrik Cisimler (Prizma, Silindir, Piramit, Koni)"
+      ]
+    },
+    {
+      "name": "Fen Bilimleri",
+      "color": "#16a34a",
+      "soru_sayisi": "20",
+      "katsayi": 4,
+      "sort_order": 3,
+      "konular": [
+        "Mevsimler ve İklim (Mevsimlerin Oluşumu, İklim ve Hava Hareketleri)",
+        "DNA ve Genetik Kod (DNA, Kalıtım, Mutasyon, Modifikasyon, Adaptasyon, Biyoteknoloji)",
+        "Basınç (Katı, Sıvı ve Gaz Basıncı)",
+        "Madde ve Endüstri (Periyodik Sistem, Fiziksel/Kimyasal Değişimler, Kimyasal Tepkimeler, Asitler ve Bazlar)",
+        "Basit Makineler (Kaldıraç, Makara, Palanga, Eğik Düzlem, Çıkrık)",
+        "Enerji Dönüşümleri ve Çevre Bilimi (Besin Zinciri, Fotosentez, Solunum, Madde Döngüleri)",
+        "Elektrik Yükleri ve Elektrik Enerjisi"
+      ]
+    },
+    {
+      "name": "T.C. İnkılap Tarihi ve Atatürkçülük",
+      "color": "#d97706",
+      "soru_sayisi": "10",
+      "katsayi": 1,
+      "sort_order": 4,
+      "konular": [
+        "Bir Kahraman Doğuyor (Atatürk'ün Hayatı ve Yetişme Dönemi)",
+        "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar",
+        "Millî Bir Destan: Ya İstiklal Ya Ölüm!",
+        "Atatürkçülük ve Çağdaşlaşan Türkiye (Atatürk İlkeleri, İnkılaplar)",
+        "Demokratikleşme Çabaları / Atatürk Dönemi Türk Dış Politikası",
+        "Atatürk'ün Ölümü ve Sonrası"
+      ]
+    },
+    {
+      "name": "Din Kültürü ve Ahlak Bilgisi",
+      "color": "#e11d48",
+      "soru_sayisi": "10",
+      "katsayi": 1,
+      "sort_order": 5,
+      "konular": [
+        "Kader İnancı (Kader, Kaza, İnsanın İradesi, Ayet el-Kürsi)",
+        "Zekât ve Sadaka (Paylaşma, Dayanışma, Mâûn Suresi)",
+        "Din ve Hayat (Dinin Temel Gayesi, Temel Haklar)",
+        "Hz. Muhammed'in (s.a.v.) Örnekliği",
+        "Kur'an-ı Kerim ve Özellikleri"
+      ]
+    },
+    {
+      "name": "Yabancı Dil (İngilizce)",
+      "color": "#0891b2",
+      "soru_sayisi": "10",
+      "katsayi": 1,
+      "sort_order": 6,
+      "konular": [
+        "Unit 1: Friendship",
+        "Unit 2: Teen Life",
+        "Unit 3: In The Kitchen",
+        "Unit 4: On The Phone",
+        "Unit 5: The Internet",
+        "Unit 6: Adventures",
+        "Unit 7: Tourism",
+        "Unit 8: Chores",
+        "Unit 9: Science",
+        "Unit 10: Natural Forces"
+      ]
+    }
+  ]
+}

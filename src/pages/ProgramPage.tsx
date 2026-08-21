@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange, DAYS } from '../lib/weeks'
+import { subjectAppliesTo } from '../lib/curriculum'
 import { openWhatsAppChat } from '../lib/whatsapp'
 
 export default function ProgramPage() {
@@ -353,14 +354,17 @@ export default function ProgramPage() {
     }
   }
 
-  // Unique subjects, derived from the joined topics list
+  // Unique subjects, derived from the joined topics list — seçili öğrencinin sınıfına
+  // uymayan dersler (subjectAppliesTo) görev atama formundan hiç görünmez.
   const subjectsList = useMemo(() => {
     const bySubjectId = new Map<number, Subject>()
     topics.forEach((t) => {
       if (t.subjects && !bySubjectId.has(t.subject_id)) bySubjectId.set(t.subject_id, t.subjects)
     })
-    return Array.from(bySubjectId.values()).sort((a, b) => a.sort_order - b.sort_order)
-  }, [topics])
+    const all = Array.from(bySubjectId.values())
+    const filtered = selectedStudent ? all.filter((s) => subjectAppliesTo(s, selectedStudent.grade)) : all
+    return filtered.sort((a, b) => a.sort_order - b.sort_order)
+  }, [topics, selectedStudent])
 
   // Topics belonging to the currently selected subject in the add-task form
   const topicsForSubject = useMemo(() => {
@@ -458,6 +462,12 @@ export default function ProgramPage() {
           {error && (
             <div className="card" style={{ padding: 12, background: 'var(--critical-bg)', color: 'var(--critical-text)', border: 'none', fontSize: 13 }}>
               {error}
+            </div>
+          )}
+
+          {selectedStudent && subjectsList.length === 0 && (
+            <div className="card" style={{ padding: 12, background: 'var(--warning-bg)', color: 'var(--warning-text)', border: 'none', fontSize: 12.5 }}>
+              Bu sınıf için müfredat henüz yüklenmemiş — ders/konu seçemezsiniz, yalnızca özel görev (serbest metin) ekleyebilirsiniz.
             </div>
           )}
 

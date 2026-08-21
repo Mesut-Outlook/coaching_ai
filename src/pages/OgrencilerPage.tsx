@@ -18,6 +18,7 @@ import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject, AttendanceRecord } from '../types/database'
 import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../lib/attendance'
+import { subjectAppliesTo } from '../lib/curriculum'
 
 type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks' | 'attendance'
 
@@ -61,19 +62,6 @@ interface StudentData {
   attendanceCount: number
   attendanceUnexcusedCount: number
   attendanceRecords: AttendanceRecord[]
-}
-
-const subjectConfig: Record<string, { color: string; soru_sayisi: string }> = {
-  'Türkçe': { color: '#4f46e5', soru_sayisi: '40' },
-  'Matematik': { color: '#7c3aed', soru_sayisi: '30' },
-  'Geometri': { color: '#9333ea', soru_sayisi: '10' },
-  'Fizik': { color: '#2563eb', soru_sayisi: '7' },
-  'Kimya': { color: '#0d9488', soru_sayisi: '7' },
-  'Biyoloji': { color: '#16a34a', soru_sayisi: '6' },
-  'Tarih': { color: '#d97706', soru_sayisi: '5' },
-  'Coğrafya': { color: '#059669', soru_sayisi: '5' },
-  'Felsefe': { color: '#0891b2', soru_sayisi: '5' },
-  'Din Kültürü': { color: '#e11d48', soru_sayisi: '5' },
 }
 
 export default function OgrencilerPage() {
@@ -932,55 +920,73 @@ export default function OgrencilerPage() {
             Aşağıdaki listeden konulardaki hedeflenen yeterlilik durumunu manuel olarak değiştirebilir (Koç Kararı Override) ve durumu güncelleyebilirsiniz.
           </p>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Filter by Subject Category */}
-            {Object.keys(subjectConfig).map(subjectName => {
-              const subjectTopics = topics.filter(t => t.subjects?.name === subjectName)
-              if (subjectTopics.length === 0) return null
-              
-              const config = subjectConfig[subjectName]
-              
+          {(() => {
+            // Öğrencinin sınıfına uymayan dersler (YKS↔LGS) burada hiç görünmez —
+            // subjectAppliesTo tek kaynak. topic.subjects null gelirse (sahipsiz konu) atlanır.
+            const visibleTopics = topics.filter(t => t.subjects && subjectAppliesTo(t.subjects, student.grade))
+            const subjectsById = new Map<number, Subject>()
+            visibleTopics.forEach(t => {
+              if (t.subjects && !subjectsById.has(t.subject_id)) subjectsById.set(t.subject_id, t.subjects)
+            })
+            const orderedSubjects = Array.from(subjectsById.values()).sort((a, b) => a.sort_order - b.sort_order)
+
+            if (orderedSubjects.length === 0) {
               return (
-                <div key={subjectName} style={{ border: '1px solid var(--border-soft)', borderRadius: 12, padding: 16 }}>
-                  <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--ink)', marginBottom: 12 }}>
-                    <span style={{ width: 12, height: 12, borderRadius: '50%', background: config.color }}></span>
-                    {subjectName} ({subjectTopics.length} Konu)
-                  </h4>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
-                    {subjectTopics.map(topic => {
-                      const decision = decisions.find(d => d.topic_id === topic.id)
-                      const state = decision?.state || 'olculmedi'
-                      
-                      return (
-                        <div key={topic.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--surface-alt)', border: '1px solid var(--border-soft)', borderRadius: 8 }}>
-                          <span style={{ fontSize: 12.5, fontWeight: 500 }} title={topic.name}>{topic.name}</span>
-                          <select 
-                            value={state} 
-                            onChange={(e) => handleUpdateMastery(topic.id, e.target.value as any)}
-                            style={{ 
-                              padding: '2px 8px', 
-                              borderRadius: 6, 
-                              fontSize: 11, 
-                              border: '1px solid var(--border)', 
-                              background: state === 'yeterli' ? 'var(--success-bg)' : state === 'gelisiyor' ? 'var(--warning-bg)' : state === 'kritik' ? 'var(--critical-bg)' : 'var(--measured-bg)',
-                              color: state === 'yeterli' ? 'var(--success-text)' : state === 'gelisiyor' ? 'var(--warning-text)' : state === 'kritik' ? 'var(--critical-text)' : 'var(--measured-text)',
-                              fontWeight: 700
-                            }}
-                          >
-                            <option value="olculmedi">Ölçülmedi</option>
-                            <option value="yeterli">Yeterli</option>
-                            <option value="gelisiyor">Gelişiyor</option>
-                            <option value="kritik">Kritik</option>
-                          </select>
-                        </div>
-                      )
-                    })}
-                  </div>
+                <div className="empty-state" style={{ padding: '30px 10px' }}>
+                  <h3>Müfredat henüz yüklenmemiş</h3>
+                  <p>Bu sınıf için müfredat henüz yüklenmemiş.</p>
                 </div>
               )
-            })}
-          </div>
+            }
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {orderedSubjects.map(subject => {
+                  const subjectTopics = visibleTopics.filter(t => t.subject_id === subject.id)
+
+                  return (
+                    <div key={subject.id} style={{ border: '1px solid var(--border-soft)', borderRadius: 12, padding: 16 }}>
+                      <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--ink)', marginBottom: 12 }}>
+                        <span style={{ width: 12, height: 12, borderRadius: '50%', background: subject.color }}></span>
+                        {subject.name} ({subjectTopics.length} Konu)
+                      </h4>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+                        {subjectTopics.map(topic => {
+                          const decision = decisions.find(d => d.topic_id === topic.id)
+                          const state = decision?.state || 'olculmedi'
+
+                          return (
+                            <div key={topic.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--surface-alt)', border: '1px solid var(--border-soft)', borderRadius: 8 }}>
+                              <span style={{ fontSize: 12.5, fontWeight: 500 }} title={topic.name}>{topic.name}</span>
+                              <select
+                                value={state}
+                                onChange={(e) => handleUpdateMastery(topic.id, e.target.value as any)}
+                                style={{
+                                  padding: '2px 8px',
+                                  borderRadius: 6,
+                                  fontSize: 11,
+                                  border: '1px solid var(--border)',
+                                  background: state === 'yeterli' ? 'var(--success-bg)' : state === 'gelisiyor' ? 'var(--warning-bg)' : state === 'kritik' ? 'var(--critical-bg)' : 'var(--measured-bg)',
+                                  color: state === 'yeterli' ? 'var(--success-text)' : state === 'gelisiyor' ? 'var(--warning-text)' : state === 'kritik' ? 'var(--critical-text)' : 'var(--measured-text)',
+                                  fontWeight: 700
+                                }}
+                              >
+                                <option value="olculmedi">Ölçülmedi</option>
+                                <option value="yeterli">Yeterli</option>
+                                <option value="gelisiyor">Gelişiyor</option>
+                                <option value="kritik">Kritik</option>
+                              </select>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
         </div>
         )
       )}

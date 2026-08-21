@@ -2074,3 +2074,57 @@ takıldı (yani grade check GEÇTİ), `6. Sınıf` ise `23514 students_grade_che
 Mevcut 30 öğrenci (25×`12. Sınıf`, 5×`Mezun`) korundu, prob satırı kalmadı.
 
 **Kalan:** frontend değişikliklerinin commit + push edilmesi (push = otomatik Vercel deploy).
+
+---
+
+## 📚 AKTİF BÜYÜK İŞ: Müfredat YKS / LGS ayrımı (Opus planladı, 2026-08-21)
+
+**Amaç:** Müfredat iki başlığa ayrılır. Bugüne kadar yüklü olan 14 ders = **YKS**
+(9, 10, 11, 12. sınıf + Mezun sorumlu). **7 ve 8. sınıf** yalnız **LGS** müfredatından
+sorumlu. LGS 8. sınıf verisi hazır: `src/data/lgsMufredat.json` (6 ders, 47 konu, 90 soru).
+
+### Kullanıcı kararları (2026-08-21)
+| Konu | Karar |
+|---|---|
+| LGS öğrencisinde Alan (SAY/EA/SÖZ) | **Gizlenir, boş kalır** → `students.track` nullable olur |
+| Sınıf ayrımı | **Ders bazında sınıf etiketi** (`subjects.grades`) — 7. sınıf müfredatı sonra gelince şema değişmeyecek |
+| LGS deneme girişi | **Ayrı paket, müfredattan sonra** (P4) |
+
+### Veri modeli (Opus kararı)
+```
+subjects
+  + curriculum text not null default 'YKS' check (curriculum in ('YKS','LGS'))
+  + grades     text[] not null default '{}'   -- Grade etiketleri; BOŞ = o müfredatın tüm sınıfları
+  + katsayi    numeric                        -- LGS puan katsayısı (YKS'de null)
+  unique (name) → unique (curriculum, name)
+students
+  track → nullable (LGS öğrencisinde boş)
+```
+`grades` neden `text[]` ve Grade etiketleri: `Grade` union'ıyla birebir eşleşir, "Mezun"u
+sayıya çevirme derdi yok. LGS 8 dersleri `{"8. Sınıf"}`, YKS dersleri `{}` (tüm YKS sınıfları).
+
+**Görünürlük kuralı (tek yerde, `src/lib/curriculum.ts`):**
+`gradeCurriculum(grade)` → 7/8 ⇒ `'LGS'`, diğerleri ⇒ `'YKS'`.
+`subjectAppliesTo(subject, grade)` → `subject.curriculum === gradeCurriculum(grade)` **ve**
+(`subject.grades` boş **veya** `grade` içinde). Her ekran bu tek fonksiyonu çağırır.
+
+### Paketler
+| # | İş | Kim | Durum |
+|---|---|---|---|
+| **P1** | Şema + tipler + `lib/curriculum.ts` | Sonnet | ✅ Opus kontrolünden geçti — şema koşusu bekliyor |
+| **P2** | `scripts/seedLgsCurriculum.ts` — idempotent yükleme | Sonnet | ✅ yazıldı, ÇALIŞTIRILMADI (kullanıcı onayı + şema koşusu bekliyor) |
+| **P3** | Arayüz: Müfredat sekmeleri, sınıfa göre konu filtresi, Alan gizleme | Sonnet | 🔄 devam ediyor |
+| **P4** | LGS deneme girişi (6 bölüm / 90 soru / katsayılı LGS puanı) + `exam_type` genişletme | agy | ⏳ (P3 sonrası) |
+| **P5** | Yardım sayfası + Sürüm Geçmişi (v0.24) | agy | ⏳ (P3 sonrası) |
+
+### ⚠️ P2 için kritik uyarı
+`scripts/seedSupabase.ts` **kullanılmayacak, taklit de edilmeyecek**: o script `subjects`
+tablosunu komple siliyor ve cascade ile öğrenci ölçüm/karar verisini götürüyor.
+P2 script'i **hiç delete etmez** — yalnız `curriculum+name` üzerinden upsert eder,
+tekrar tekrar çalışsa da yalnız eksikleri ekler.
+
+### ⚠️ P1 için kritik uyarı
+`create table if not exists subjects (...)` mevcut tabloda **atlanır**. Yeni kolonlar
+ayrıca `alter table … add column if not exists` ile eklenmeli; unique kısıt değişimi
+`drop constraint if exists` → `add constraint` şeklinde ve **alter satırlarının altında**
+olmalı. Doğrulama: Docker'da stub → **eski şema** → örnek veri → **yeni şema iki kez**.

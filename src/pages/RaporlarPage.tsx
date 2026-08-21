@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange } from '../lib/weeks'
+import { subjectAppliesTo } from '../lib/curriculum'
 
 export default function RaporlarPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -171,6 +172,13 @@ export default function RaporlarPage() {
     }
   }
 
+  // Görev atama formundaki "Konu Seçin" listesi: seçili öğrencinin sınıfına uymayan
+  // dersler (subjectAppliesTo) hiç görünmez — YKS öğrencisine LGS konusu, tersi de olmaz.
+  const assignableTopics = useMemo(() => {
+    if (!selectedStudent) return topics
+    return topics.filter((t) => t.subjects && subjectAppliesTo(t.subjects, selectedStudent.grade))
+  }, [topics, selectedStudent])
+
   // Handle deleting a future task
   const handleDeleteFutureTask = async (taskId: string) => {
     if (!isSupabaseConfigured) return
@@ -307,10 +315,15 @@ export default function RaporlarPage() {
                     <label style={{ fontSize: 10.5 }}>Konu Seçin</label>
                     <select value={selectedTopicId} onChange={e => setSelectedTopicId(e.target.value)} style={{ padding: 6, fontSize: 12 }}>
                       <option value="custom">Özel Görev (Serbest Metin)</option>
-                      {topics.map(t => (
+                      {assignableTopics.map(t => (
                         <option key={t.id} value={t.id}>{t.subjects?.name}: {t.name}</option>
                       ))}
                     </select>
+                    {assignableTopics.length === 0 && (
+                      <p style={{ fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 4 }}>
+                        Bu sınıf için müfredat henüz yüklenmemiş — yalnızca özel görev ekleyebilirsiniz.
+                      </p>
+                    )}
                   </div>
 
                   {selectedTopicId === 'custom' && (

@@ -347,7 +347,9 @@ export default function TercihPage() {
     setSelectedStudentId(id)
     const student = students.find((s) => s.id === id)
     if (student) {
-      const mapped = TRACK_TO_SCORE[student.track]
+      // LGS öğrencisinde Alan (track) yok — bu ekran YKS tercih sihirbazı olduğu için o
+      // durumda skor türü eşleşmesi atlanır.
+      const mapped = student.track ? TRACK_TO_SCORE[student.track] : undefined
       if (mapped) setScoreType(mapped)
       if (student.target_net_value == null && student.target_ranking) {
         const num = student.target_ranking.replace(/[^\d]/g, '')

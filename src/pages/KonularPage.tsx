@@ -9,6 +9,7 @@ import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, Subject, Topic, CoachDecision, TopicMeasurement } from '../types/database'
+import { subjectAppliesTo } from '../lib/curriculum'
 
 export default function KonularPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -116,21 +117,32 @@ export default function KonularPage() {
 
   const openEditDrawer = (topicId: number) => setEditingTopicId(topicId)
 
-  // Group topics by subject and filter by search query
+  // Group topics by subject and filter by search query.
+  // Seçili öğrencinin sınıfına uymayan dersler (YKS öğrencisine LGS dersi ya da tersi)
+  // hiç listelenmez — subjectAppliesTo tek kaynak.
   const filteredData = useMemo(() => {
-    return subjects.map(subject => {
-      const subjectTopics = topics.filter(t => t.subject_id === subject.id)
-      const filteredTopics = subjectTopics.filter(t => 
-        t.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      return {
-        subject,
-        topics: filteredTopics,
-        totalCount: subjectTopics.length,
-        filteredCount: filteredTopics.length
-      }
-    }).filter(group => group.filteredCount > 0)
-  }, [subjects, topics, searchQuery])
+    return subjects
+      .filter(subject => !selectedStudent || subjectAppliesTo(subject, selectedStudent.grade))
+      .map(subject => {
+        const subjectTopics = topics.filter(t => t.subject_id === subject.id)
+        const filteredTopics = subjectTopics.filter(t =>
+          t.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        return {
+          subject,
+          topics: filteredTopics,
+          totalCount: subjectTopics.length,
+          filteredCount: filteredTopics.length
+        }
+      }).filter(group => group.filteredCount > 0)
+  }, [subjects, topics, searchQuery, selectedStudent])
+
+  // Süzme sonrası hiç ders kalmadıysa: aramadan mı yoksa bu sınıf için müfredat hiç
+  // yüklenmemiş olmasından mı olduğunu ayırt et (LGS 7. sınıf gibi).
+  const curriculumHasNoSubjects = useMemo(
+    () => Boolean(selectedStudent) && !subjects.some(s => subjectAppliesTo(s, selectedStudent!.grade)),
+    [subjects, selectedStudent],
+  )
 
   // Get topic info helpers
   const getTopicStatus = (topicId: number) => {
@@ -204,8 +216,12 @@ export default function KonularPage() {
               <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Yükleniyor…</div>
             ) : filteredData.length === 0 ? (
               <div className="card empty-state">
-                <h3>Konu bulunamadı</h3>
-                <p>Arama kriterlerinize uyan bir konu veya ders bulunmuyor.</p>
+                <h3>{curriculumHasNoSubjects ? 'Müfredat henüz yüklenmemiş' : 'Konu bulunamadı'}</h3>
+                <p>
+                  {curriculumHasNoSubjects
+                    ? 'Bu sınıf için müfredat henüz yüklenmemiş.'
+                    : 'Arama kriterlerinize uyan bir konu veya ders bulunmuyor.'}
+                </p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
