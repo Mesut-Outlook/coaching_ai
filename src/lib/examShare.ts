@@ -1,4 +1,5 @@
 import type { MockExamSection, MockExam } from '../types/database'
+import { weightedNet } from './examSections'
 
 // Deneme sonucunun WhatsApp mesajı. WhatsApp kalın metni *yıldız* ile gösterir.
 // Devamsızlık bildirimleriyle aynı ton: öğrenciye doğrudan, veliye bilgilendirme.
@@ -37,8 +38,15 @@ export function buildExamResultMessage(
     s => `• ${s.section_name}: ${s.correct_count}D · ${s.wrong_count}Y · ${s.blank_count}B → *${fmtNet(Number(s.net))} net*`
   )
 
+  // LGS'te gerçek puan (500'lük) hesaplanamaz — ders katsayılarıyla tartılmış NET
+  // eklenir, asla "puan" denmez.
+  const weightedLine =
+    exam.exam_type === 'LGS' && lines.length > 0
+      ? `\n*Ağırlıklı Net: ${fmtNet(weightedNet(sections))}*`
+      : ''
+
   const body = lines.length > 0
-    ? `\n*Bölüm Netleri*\n${lines.join('\n')}\n\nToplam: ${totalCorrect}D · ${totalWrong}Y · ${totalBlank}B\n*TOPLAM NET: ${fmtNet(totalNet)}*`
+    ? `\n*Bölüm Netleri*\n${lines.join('\n')}\n\nToplam: ${totalCorrect}D · ${totalWrong}Y · ${totalBlank}B\n*TOPLAM NET: ${fmtNet(totalNet)}*${weightedLine}`
     : '\n_Bu deneme için bölüm skorları girilmemiş._'
 
   const footer =

@@ -1,8 +1,13 @@
 import type { MockExamSection } from '../../types/database'
 
-// Tablonun ihtiyacı olan alanlar. `id` istenmiyor — mobil portal RPC'si bölümleri
-// id'siz döndürüyor (bkz. src/lib/portal.ts), bölüm adı deneme içinde zaten tekil.
-export type ExamSectionRow = Omit<MockExamSection, 'id' | 'mock_exam_id'>
+// Tablonun ihtiyacı olan alanlar — bilinçli olarak Pick (Omit değil): mobil portal
+// RPC'si (bkz. src/lib/portal.ts → PortalExamSection) `id`/`mock_exam_id` yanında
+// `wrong_penalty`'yi de hiç döndürmüyor, tabloda zaten gösterilmiyor. Omit kullansaydık
+// MockExamSection'a eklenen her yeni kolon burayı da genişletmemizi zorunlu kılardı.
+export type ExamSectionRow = Pick<
+  MockExamSection,
+  'section_name' | 'max_questions' | 'correct_count' | 'wrong_count' | 'blank_count' | 'net'
+>
 
 // Bir denemenin bölüm skorlarını okunur bir tablo olarak gösterir.
 // Deneme Girişi geçmiş listesi, Tüm Deneme Geçmişi tablosu, öğrenci profilindeki

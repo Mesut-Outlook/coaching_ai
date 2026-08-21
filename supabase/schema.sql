@@ -365,11 +365,16 @@ create table if not exists mock_exams (
   student_id uuid not null references students(id) on delete cascade,
   name text not null,
   publisher text,
-  exam_type text not null check (exam_type in ('TYT', 'AYT')) default 'TYT',
+  exam_type text not null check (exam_type in ('TYT', 'AYT', 'LGS')) default 'TYT',
   exam_date date not null,
   created_at timestamptz not null default now()
 );
 create index if not exists mock_exams_student_id_idx on mock_exams(student_id);
+
+-- LGS deneme türü: yukarıdaki inline check mevcut bir tabloda güncellenmez
+-- ("create table if not exists" atlanır) — kısıtı düşürüp yeniden kuruyoruz.
+alter table mock_exams drop constraint if exists mock_exams_exam_type_check;
+alter table mock_exams add constraint mock_exams_exam_type_check check (exam_type in ('TYT', 'AYT', 'LGS'));
 
 create table if not exists mock_exam_sections (
   id uuid primary key default gen_random_uuid(),
@@ -379,9 +384,33 @@ create table if not exists mock_exam_sections (
   correct_count int not null default 0,
   wrong_count int not null default 0,
   blank_count int not null default 0,
-  net numeric generated always as (correct_count - wrong_count / 4.0) stored
+  wrong_penalty numeric not null default 4 check (wrong_penalty > 0),
+  net numeric generated always as (correct_count - wrong_count / wrong_penalty) stored
 );
 create index if not exists mock_exam_sections_exam_id_idx on mock_exam_sections(mock_exam_id);
+
+-- LGS'te yanlışın doğruyu götürme oranı YKS'den farklı (3 yanlış = 1 doğru, YKS'de 4).
+-- Net bir generated column olduğu için ALTER edilemez; mevcut tabloda yukarıdaki
+-- inline tanım atlanır, bu yüzden kolonu önce ekleyip sonra `net`'i yeniden kuruyoruz.
+-- ⚠️ İdempotentlik: yalnız generation ifadesi henüz `wrong_penalty` içermiyorsa
+-- drop+add yapılır — aksi halde şema her koşuda `net` kolonunu gereksiz yere düşürüp
+-- yeniden oluşturur (veri kaybı yok, `net` türetilmiş, ama gereksiz iş).
+alter table mock_exam_sections add column if not exists wrong_penalty numeric not null default 4 check (wrong_penalty > 0);
+
+do $$
+declare
+  v_expr text;
+begin
+  select pg_get_expr(d.adbin, d.adrelid) into v_expr
+  from pg_attrdef d
+  join pg_attribute a on a.attrelid = d.adrelid and a.attnum = d.adnum
+  where d.adrelid = 'mock_exam_sections'::regclass and a.attname = 'net';
+
+  if v_expr is null or v_expr not like '%wrong_penalty%' then
+    alter table mock_exam_sections drop column if exists net;
+    alter table mock_exam_sections add column net numeric generated always as (correct_count - wrong_count / wrong_penalty) stored;
+  end if;
+end $$;
 
 create table if not exists error_basket_items (
   id uuid primary key default gen_random_uuid(),
@@ -1325,6 +1354,9 @@ declare
   v_role text;
   v_exam_id uuid;
   v_bad int;
+  -- Yanlış cezası istemciden alınmaz (güvenilmez girdi olur) — sınav türünden
+  -- sunucuda türetilir: LGS'te 3 yanlış, YKS'de (TYT/AYT) 4 yanlış 1 doğruyu götürür.
+  v_penalty numeric;
 begin
   select r.student_id, r.portal_role into v_student_id, v_role
   from portal_resolve_code(p_code) r;
@@ -1342,12 +1374,13 @@ begin
   if coalesce(btrim(p_name), '') = '' then
     return json_build_object('ok', false, 'error', 'Sınav adı gerekli.');
   end if;
-  if p_exam_type not in ('TYT', 'AYT') then
-    return json_build_object('ok', false, 'error', 'Sınav türü TYT veya AYT olmalı.');
+  if p_exam_type not in ('TYT', 'AYT', 'LGS') then
+    return json_build_object('ok', false, 'error', 'Sınav türü TYT, AYT veya LGS olmalı.');
   end if;
   if p_exam_date is null or p_exam_date > current_date then
     return json_build_object('ok', false, 'error', 'Sınav tarihi bugünden ileri olamaz.');
   end if;
+  v_penalty := case when p_exam_type = 'LGS' then 3 else 4 end;
 
   select count(*) into v_bad
   from jsonb_to_recordset(coalesce(p_sections, '[]'::jsonb))
@@ -1363,9 +1396,9 @@ begin
   values (v_student_id, btrim(p_name), nullif(btrim(coalesce(p_publisher, '')), ''), p_exam_type, p_exam_date)
   returning id into v_exam_id;
 
-  insert into mock_exam_sections (mock_exam_id, section_name, max_questions, correct_count, wrong_count, blank_count)
+  insert into mock_exam_sections (mock_exam_id, section_name, max_questions, correct_count, wrong_count, blank_count, wrong_penalty)
   select v_exam_id, x.section_name, x.max_questions,
-         coalesce(x.correct_count,0), coalesce(x.wrong_count,0), coalesce(x.blank_count,0)
+         coalesce(x.correct_count,0), coalesce(x.wrong_count,0), coalesce(x.blank_count,0), v_penalty
   from jsonb_to_recordset(coalesce(p_sections, '[]'::jsonb))
     as x(section_name text, max_questions int, correct_count int, wrong_count int, blank_count int);
 

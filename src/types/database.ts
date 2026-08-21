@@ -23,7 +23,7 @@ export type Track = 'SAY' | 'EA' | 'SÖZ'
 export type Curriculum = 'YKS' | 'LGS'
 export type MeasurementSource = 'konu_testi' | 'deneme'
 export type MasteryState = 'kritik' | 'gelisiyor' | 'yeterli'
-export type ExamType = 'TYT' | 'AYT'
+export type ExamType = 'TYT' | 'AYT' | 'LGS'
 export type ErrorType = 'bilgi_eksikligi' | 'islem_hatasi' | 'dikkat_hatasi' | 'sure_yetmedi'
 export type InvitationStatus = 'bekliyor' | 'kabul' | 'iptal'
 
@@ -191,6 +191,8 @@ export type MockExamSection = {
   correct_count: number
   wrong_count: number
   blank_count: number
+  /** Yanlışın doğruyu götürme oranı — YKS'de 4, LGS'de 3. `net` bunun üzerinden türetilir. */
+  wrong_penalty: number
   net: number
 }
 

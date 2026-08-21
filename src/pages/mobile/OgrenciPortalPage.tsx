@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { CheckCircle2, Circle, Plus, AlertTriangle } from 'lucide-react'
 import MobileBottomNav from '../../components/mobile/MobileBottomNav'
 import ExamSectionsTable from '../../components/exams/ExamSectionsTable'
-import { getExamSections } from '../../lib/examSections'
+import { getExamSections, sectionNet, weightedNet } from '../../lib/examSections'
+import { gradeCurriculum } from '../../lib/curriculum'
 import { PORTAL_THEME, roleBadgeStyle, roleTopBarStyle } from '../../lib/portalTheme'
+import type { ExamType } from '../../types/database'
 import {
   clearPortalSession,
   getPortalSession,
@@ -161,7 +163,7 @@ export default function OgrenciPortalPage() {
               👋 {student.full_name}
             </h2>
             <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
-              {student.grade} · {student.track}
+              {student.grade}{student.track ? ` · ${student.track}` : ''}
             </div>
           </div>
           <div style={roleBadgeStyle(theme)}>{theme.label}</div>
@@ -392,6 +394,7 @@ export default function OgrenciPortalPage() {
 
       {showExamModal && (
         <AddExamModal
+          grade={student.grade}
           track={student.track}
           onClose={() => setShowExamModal(false)}
           onSaved={() => {
@@ -411,17 +414,21 @@ export default function OgrenciPortalPage() {
 // böylece öğrencinin girdiği deneme koç tarafında da netleriyle görünür.
 // ---------------------------------------------------------------------------
 function AddExamModal({
+  grade,
   track,
   onClose,
   onSaved,
 }: {
+  grade: PortalDashboard['student']['grade']
   track: PortalDashboard['student']['track']
   onClose: () => void
   onSaved: () => void
 }) {
+  // Görünürlüğün tek kaynağı src/lib/curriculum.ts: 7./8. sınıf LGS, geri kalanı YKS.
+  const curriculum = gradeCurriculum(grade)
   const [name, setName] = useState('')
   const [publisher, setPublisher] = useState('')
-  const [examType, setExamType] = useState<'TYT' | 'AYT'>('TYT')
+  const [examType, setExamType] = useState<ExamType>(curriculum === 'LGS' ? 'LGS' : 'TYT')
   const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0])
   const [scores, setScores] = useState<Record<string, { correct: number; wrong: number }>>({})
   const [saving, setSaving] = useState(false)
@@ -442,8 +449,20 @@ function AddExamModal({
 
   const totalNet = sections.reduce((acc, s) => {
     const { correct, wrong } = scoreOf(s.name)
-    return acc + (correct - wrong / 4)
+    return acc + sectionNet(correct, wrong, examType)
   }, 0)
+
+  // LGS'te gerçek puan (500'lük) hesaplanamaz (istatistik gerektirir) — ders
+  // katsayılarıyla tartılmış NET gösterilir, asla "puan" denmez.
+  const weightedNetTotal =
+    examType === 'LGS'
+      ? weightedNet(
+          sections.map((s) => {
+            const { correct, wrong } = scoreOf(s.name)
+            return { section_name: s.name, net: sectionNet(correct, wrong, examType) }
+          })
+        )
+      : null
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -518,9 +537,15 @@ function AddExamModal({
           <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={{ fontSize: 12, fontWeight: 600 }}>Sınav Türü</label>
-              <select value={examType} onChange={(e) => setExamType(e.target.value as 'TYT' | 'AYT')} style={input}>
-                <option value="TYT">TYT</option>
-                <option value="AYT">AYT</option>
+              <select value={examType} onChange={(e) => setExamType(e.target.value as ExamType)} style={input}>
+                {curriculum === 'LGS' ? (
+                  <option value="LGS">LGS</option>
+                ) : (
+                  <>
+                    <option value="TYT">TYT</option>
+                    <option value="AYT">AYT</option>
+                  </>
+                )}
               </select>
             </div>
             <div style={{ flex: 1 }}>
@@ -548,13 +573,13 @@ function AddExamModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
             {sections.map((s) => {
               const { correct, wrong } = scoreOf(s.name)
-              const net = correct - wrong / 4
+              const net = sectionNet(correct, wrong, examType)
               return (
                 <div key={s.name} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                     <span style={{ fontSize: 13, fontWeight: 700 }}>{s.name}</span>
                     <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
-                      {s.max} soru · net <strong style={{ color: 'var(--indigo-600)' }}>{Math.round(net * 100) / 100}</strong>
+                      {s.max} soru{s.katsayi ? ` · katsayı ${s.katsayi}` : ''} · net <strong style={{ color: 'var(--indigo-600)' }}>{Math.round(net * 100) / 100}</strong>
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -592,12 +617,20 @@ function AddExamModal({
             })}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', backgroundColor: PORTAL_THEME.ogrenci.tint, borderRadius: 10, marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', backgroundColor: PORTAL_THEME.ogrenci.tint, borderRadius: 10, marginBottom: weightedNetTotal !== null ? 8 : 14 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>Toplam Net</span>
             <span style={{ fontSize: 18, fontWeight: 800, color: PORTAL_THEME.ogrenci.accentStrong }}>
               {Math.round(totalNet * 100) / 100}
             </span>
           </div>
+          {weightedNetTotal !== null && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 14 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-soft)' }}>Ağırlıklı Net (LGS puanı değildir)</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--ink)' }}>
+                {Math.round(weightedNetTotal * 100) / 100}
+              </span>
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="button" onClick={onClose} className="btn btn-secondary" style={{ flex: 1 }} disabled={saving}>

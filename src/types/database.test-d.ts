@@ -174,7 +174,7 @@ export type _track = Expect<Equals<Track, 'SAY' | 'EA' | 'SÖZ'>>
 export type _curriculum = Expect<Equals<Curriculum, 'YKS' | 'LGS'>>
 export type _source = Expect<Equals<MeasurementSource, 'konu_testi' | 'deneme'>>
 export type _state = Expect<Equals<MasteryState, 'kritik' | 'gelisiyor' | 'yeterli'>>
-export type _examType = Expect<Equals<ExamType, 'TYT' | 'AYT'>>
+export type _examType = Expect<Equals<ExamType, 'TYT' | 'AYT' | 'LGS'>>
 export type _errorType = Expect<
   Equals<ErrorType, 'bilgi_eksikligi' | 'islem_hatasi' | 'dikkat_hatasi' | 'sure_yetmedi'>
 >
@@ -226,12 +226,15 @@ export type _rankingNullables = Expect<
 >
 
 export type _sectionNet = Expect<Equals<MockExamSection['net'], number>>
+// LGS'te yanlış cezası 3, YKS'de 4 — DB'de generated `net` bunun üzerinden hesaplanıyor.
+export type _sectionWrongPenalty = Expect<Equals<MockExamSection['wrong_penalty'], number>>
 export type _sectionCounts = Expect<
   Equals<
     | MockExamSection['correct_count']
     | MockExamSection['wrong_count']
     | MockExamSection['blank_count']
-    | MockExamSection['max_questions'],
+    | MockExamSection['max_questions']
+    | MockExamSection['wrong_penalty'],
     number
   >
 >

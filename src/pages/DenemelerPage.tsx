@@ -7,8 +7,9 @@ import { useAccess } from '../contexts/AccessContext'
 import PageHeader from '../components/layout/PageHeader'
 import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import ExamShareButtons from '../components/exams/ExamShareButtons'
-import type { Student, MockExam, MockExamSection } from '../types/database'
-import { getExamSections } from '../lib/examSections'
+import type { Student, MockExam, MockExamSection, ExamType } from '../types/database'
+import { getExamSections, sectionNet, weightedNet, wrongPenaltyFor } from '../lib/examSections'
+import { gradeCurriculum } from '../lib/curriculum'
 
 export default function DenemelerPage() {
   const { studentScope } = useAccess()
@@ -25,7 +26,7 @@ export default function DenemelerPage() {
   // Form State
   const [examName, setExamName] = useState('')
   const [publisher, setPublisher] = useState('')
-  const [examType, setExamType] = useState<'TYT' | 'AYT'>('TYT')
+  const [examType, setExamType] = useState<ExamType>('TYT')
   const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0])
   const [scores, setScores] = useState<Record<string, { correct: number; wrong: number }>>({})
 
@@ -43,18 +44,50 @@ export default function DenemelerPage() {
     sectionsList: MockExamSection[] 
   })[]>([])
   const [listSearch, setListSearch] = useState('')
-  const [listTypeFilter, setListTypeFilter] = useState<'ALL' | 'TYT' | 'AYT'>('ALL')
+  const [listTypeFilter, setListTypeFilter] = useState<'ALL' | 'TYT' | 'AYT' | 'LGS'>('ALL')
 
   // Find selected student
   const currentStudent = useMemo(() => {
     return students.find(s => s.id === selectedStudentId)
   }, [students, selectedStudentId])
 
+  // Seçili öğrencinin müfredatı — hangi sınav türlerinin görünür olacağının tek kaynağı.
+  const studentCurriculum = currentStudent ? gradeCurriculum(currentStudent.grade) : null
+
+  // Öğrenci değişince sınav türünü öğrencinin müfredatıyla uyumlu hale getir
+  // (LGS öğrencisinde yalnız LGS, YKS öğrencisinde TYT/AYT — asla ikisi karışık görünmez).
+  useEffect(() => {
+    if (!studentCurriculum) return
+    setExamType(prev => {
+      if (studentCurriculum === 'LGS') return 'LGS'
+      return prev === 'LGS' ? 'TYT' : prev
+    })
+  }, [studentCurriculum])
+
   // Get active exam sections layout
   const activeSections = useMemo(
-    () => getExamSections(examType, currentStudent?.track || 'SAY'),
+    () => getExamSections(examType, currentStudent?.track ?? null),
     [examType, currentStudent]
   )
+
+  // Anlık önizleme: bölüm netleri + toplam net + (yalnız LGS) katsayılı ağırlıklı net.
+  const totalNetPreview = useMemo(
+    () =>
+      activeSections.reduce((sum, sec) => {
+        const score = scores[sec.name] || { correct: 0, wrong: 0 }
+        return sum + sectionNet(score.correct, score.wrong, examType)
+      }, 0),
+    [activeSections, scores, examType]
+  )
+  const weightedNetPreview = useMemo(() => {
+    if (examType !== 'LGS') return null
+    return weightedNet(
+      activeSections.map(sec => {
+        const score = scores[sec.name] || { correct: 0, wrong: 0 }
+        return { section_name: sec.name, net: sectionNet(score.correct, score.wrong, examType) }
+      })
+    )
+  }, [activeSections, scores, examType])
 
   // Load students list
   useEffect(() => {
@@ -212,6 +245,11 @@ export default function DenemelerPage() {
       
       if (examError) throw examError
 
+      // ⚠️ wrong_penalty yalnız LGS'te gönderilir (default 4 zaten TYT/AYT için doğru).
+      // Aynı insert çağrısındaki TÜM satırlar bu alanı ya hep taşımalı ya hiç taşımamalı —
+      // supabase-js toplu insert'te anahtarları birleştirip eksik olanlara null yazıyor,
+      // karışık gönderim `not null` hatası verir. Tek bir denemenin bölümleri hep aynı
+      // examType'a ait olduğu için burada zaten homojen.
       const sectionsToInsert = activeSections.map(sec => {
         const score = scores[sec.name] || { correct: 0, wrong: 0 }
         const blank = sec.max - (score.correct + score.wrong)
@@ -221,7 +259,8 @@ export default function DenemelerPage() {
           max_questions: sec.max,
           correct_count: score.correct,
           wrong_count: score.wrong,
-          blank_count: Math.max(0, blank)
+          blank_count: Math.max(0, blank),
+          ...(examType === 'LGS' ? { wrong_penalty: wrongPenaltyFor(examType) } : {})
         }
       })
 
@@ -348,9 +387,15 @@ export default function DenemelerPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div className="field">
                   <label>Sınav Türü</label>
-                  <select value={examType} onChange={e => setExamType(e.target.value as any)}>
-                    <option value="TYT">TYT</option>
-                    <option value="AYT">AYT</option>
+                  <select value={examType} onChange={e => setExamType(e.target.value as ExamType)}>
+                    {studentCurriculum === 'LGS' ? (
+                      <option value="LGS">LGS</option>
+                    ) : (
+                      <>
+                        <option value="TYT">TYT</option>
+                        <option value="AYT">AYT</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 <div className="field">
@@ -366,38 +411,59 @@ export default function DenemelerPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {activeSections.map(sec => {
                     const score = scores[sec.name] || { correct: 0, wrong: 0 }
+                    const liveNet = sectionNet(score.correct, score.wrong, examType)
                     return (
                       <div key={sec.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'var(--surface-alt)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-soft)' }}>
                         <div style={{ minWidth: 100 }}>
                           <span style={{ fontSize: 13, fontWeight: 600 }}>{sec.name}</span>
-                          <div style={{ fontSize: 10, color: 'var(--ink-faint)', marginTop: 1 }}>Maks: {sec.max} soru</div>
+                          <div style={{ fontSize: 10, color: 'var(--ink-faint)', marginTop: 1 }}>
+                            Maks: {sec.max} soru{sec.katsayi ? ` · katsayı ${sec.katsayi}` : ''}
+                          </div>
                         </div>
-                        
+
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <input 
-                            type="number" 
-                            min="0" 
-                            max={sec.max} 
+                          <input
+                            type="number"
+                            min="0"
+                            max={sec.max}
                             placeholder="D"
-                            value={score.correct || ''} 
+                            value={score.correct || ''}
                             onChange={e => handleScoreChange(sec.name, 'correct', parseInt(e.target.value) || 0)}
                             style={{ width: 60, padding: 6, textAlign: 'center', fontSize: 12.5 }}
                           />
                           <span style={{ fontSize: 12, color: 'var(--ink-faint)' }}>/</span>
-                          <input 
-                            type="number" 
-                            min="0" 
-                            max={sec.max - score.correct} 
+                          <input
+                            type="number"
+                            min="0"
+                            max={sec.max - score.correct}
                             placeholder="Y"
-                            value={score.wrong || ''} 
+                            value={score.wrong || ''}
                             onChange={e => handleScoreChange(sec.name, 'wrong', parseInt(e.target.value) || 0)}
                             style={{ width: 60, padding: 6, textAlign: 'center', fontSize: 12.5 }}
                           />
+                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--indigo-600)', minWidth: 42, textAlign: 'right' }}>
+                            {Math.round(liveNet * 100) / 100}
+                          </span>
                         </div>
                       </div>
                     )
                   })}
                 </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, padding: '8px 12px', borderRadius: 8, background: 'var(--indigo-050)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>Toplam Net</span>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--indigo-600)' }}>
+                    {Math.round(totalNetPreview * 100) / 100}
+                  </span>
+                </div>
+                {examType === 'LGS' && weightedNetPreview !== null && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, padding: '8px 12px', borderRadius: 8, background: 'var(--surface-alt)', border: '1px solid var(--border-soft)' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-soft)' }}>Ağırlıklı Net (LGS puanı değildir)</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--ink)' }}>
+                      {Math.round(weightedNetPreview * 100) / 100}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {error && (
@@ -516,6 +582,7 @@ export default function DenemelerPage() {
                 <option value="ALL">Tüm Sınav Türleri</option>
                 <option value="TYT">TYT</option>
                 <option value="AYT">AYT</option>
+                <option value="LGS">LGS</option>
               </select>
             </div>
           </div>
@@ -569,7 +636,7 @@ export default function DenemelerPage() {
                       <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>{e.publisher || '—'}</td>
                       <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>{e.exam_date}</td>
                       <td style={{ padding: '12px 14px' }}>
-                        <span className={`chip ${e.exam_type === 'TYT' ? 'chip-say' : 'chip-ea'}`} style={{ padding: '1px 6px', fontSize: 10.5 }}>
+                        <span className={`chip ${e.exam_type === 'TYT' ? 'chip-say' : e.exam_type === 'AYT' ? 'chip-ea' : 'chip-soz'}`} style={{ padding: '1px 6px', fontSize: 10.5 }}>
                           {e.exam_type}
                         </span>
                       </td>

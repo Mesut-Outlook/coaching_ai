@@ -18,7 +18,8 @@ import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject, AttendanceRecord } from '../types/database'
 import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../lib/attendance'
-import { subjectAppliesTo } from '../lib/curriculum'
+import { subjectAppliesTo, gradeCurriculum } from '../lib/curriculum'
+import { weightedNet } from '../lib/examSections'
 
 type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks' | 'attendance'
 
@@ -283,12 +284,25 @@ export default function OgrencilerPage() {
 
     const tytExams = examNets.filter(e => e.exam.exam_type === 'TYT').slice(0, 5).reverse()
     const aytExams = examNets.filter(e => e.exam.exam_type === 'AYT').slice(0, 5).reverse()
+    const lgsExams = examNets.filter(e => e.exam.exam_type === 'LGS').slice(0, 5).reverse()
 
-    const averageTytNet = tytExams.length 
-      ? Math.round((tytExams.reduce((sum, e) => sum + e.totalNet, 0) / tytExams.length) * 10) / 10 
+    const averageTytNet = tytExams.length
+      ? Math.round((tytExams.reduce((sum, e) => sum + e.totalNet, 0) / tytExams.length) * 10) / 10
       : 0
-    const averageAytNet = aytExams.length 
-      ? Math.round((aytExams.reduce((sum, e) => sum + e.totalNet, 0) / aytExams.length) * 10) / 10 
+    const averageAytNet = aytExams.length
+      ? Math.round((aytExams.reduce((sum, e) => sum + e.totalNet, 0) / aytExams.length) * 10) / 10
+      : 0
+    const averageLgsNet = lgsExams.length
+      ? Math.round((lgsExams.reduce((sum, e) => sum + e.totalNet, 0) / lgsExams.length) * 10) / 10
+      : 0
+    // LGS'te gerçek puan (500'lük) hesaplanamaz — ders katsayılarıyla tartılmış NET
+    // gösterilir, asla "puan" denmez (bkz. lib/examSections.ts weightedNet).
+    const averageLgsWeightedNet = lgsExams.length
+      ? Math.round(
+          (lgsExams.reduce((sum, e) => sum + weightedNet(sections.filter(s => s.mock_exam_id === e.exam.id)), 0) /
+            lgsExams.length) *
+            10
+        ) / 10
       : 0
 
     const taskCompletion = tasks.length
@@ -301,8 +315,11 @@ export default function OgrencilerPage() {
       examNets,
       tytExams,
       aytExams,
+      lgsExams,
       averageTytNet,
       averageAytNet,
+      averageLgsNet,
+      averageLgsWeightedNet,
       taskCompletion,
       criticalCount: criticalTopics.length,
       criticalTopics
@@ -561,6 +578,8 @@ export default function OgrencilerPage() {
   }
 
   const { student, exams, sections, tasks, decisions, topics } = studentData
+  // Görünürlüğün tek kaynağı src/lib/curriculum.ts: 7./8. sınıf LGS, geri kalanı YKS.
+  const studentCurriculum = gradeCurriculum(student.grade)
 
   return (
     <section className="screen">
@@ -579,9 +598,12 @@ export default function OgrencilerPage() {
           <div>
             <h1 style={{ fontSize: 24, margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
               {student.full_name}
-              <span className={`chip ${student.track === 'SAY' ? 'chip-say' : student.track === 'EA' ? 'chip-ea' : 'chip-soz'}`} style={{ fontSize: 11, padding: '2px 8px' }}>
-                {student.track}
-              </span>
+              {/* LGS öğrencisinde Alan (SAY/EA/SÖZ) kavramı yok → track null, rozet hiç basılmaz. */}
+              {student.track && (
+                <span className={`chip ${student.track === 'SAY' ? 'chip-say' : student.track === 'EA' ? 'chip-ea' : 'chip-soz'}`} style={{ fontSize: 11, padding: '2px 8px' }}>
+                  {student.track}
+                </span>
+              )}
             </h1>
             <p style={{ color: 'var(--ink-soft)', fontSize: 13, marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', margin: 0 }}>
               <span>{student.grade} öğrencisi</span>
@@ -738,11 +760,22 @@ export default function OgrencilerPage() {
                 <TrendingUp size={20} />
               </div>
               <div>
-                <div style={{ fontSize: 11, color: 'var(--ink-faint)', textTransform: 'uppercase' }}>Ortalama Net (TYT / AYT)</div>
-                <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4 }}>
-                  {stats.averageTytNet} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>TYT</span> / {stats.averageAytNet} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>AYT</span>
+                <div style={{ fontSize: 11, color: 'var(--ink-faint)', textTransform: 'uppercase' }}>
+                  Ortalama Net {studentCurriculum === 'LGS' ? '(LGS)' : '(TYT / AYT)'}
                 </div>
-                <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 }}>Son 5 deneme ortalaması</div>
+                <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4 }}>
+                  {studentCurriculum === 'LGS' ? (
+                    <>{stats.averageLgsNet} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>LGS</span></>
+                  ) : (
+                    <>{stats.averageTytNet} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>TYT</span> / {stats.averageAytNet} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>AYT</span></>
+                  )}
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 }}>
+                  Son 5 deneme ortalaması
+                  {studentCurriculum === 'LGS' && stats.lgsExams.length > 0 && (
+                    <> · Ağırlıklı net: <strong>{stats.averageLgsWeightedNet}</strong> (LGS puanı değildir)</>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -758,50 +791,78 @@ export default function OgrencilerPage() {
           </div>
 
           {/* Graphic and Recent Exams Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
-            {/* TYT Net Progress */}
-            <div className="card" style={{ padding: 20 }}>
-              <h3 style={{ fontSize: 14, marginBottom: 16 }}>TYT Net Gelişimi</h3>
-              {stats.tytExams.length === 0 ? (
-                <div style={{ padding: 30, textAlign: 'center', color: 'var(--ink-faint)' }}>Veri bulunamadı</div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ height: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
-                    {stats.tytExams.map((e) => (
-                      <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--indigo-600)' }}>{e.totalNet}</span>
-                        <div style={{ width: 14, height: `${(e.totalNet / 120) * 80}px`, background: 'linear-gradient(to top, var(--indigo-500), var(--indigo-500))', borderRadius: '4px 4px 0 0' }}></div>
-                        <span style={{ fontSize: 9.5, color: 'var(--ink-faint)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 60 }} title={e.exam.name}>
-                          {e.exam.publisher || 'Deneme'}
-                        </span>
-                      </div>
-                    ))}
+          {/* LGS öğrencisinde yalnız LGS grafiği (tek sütun); YKS öğrencisinde bugünkü TYT/AYT
+              ikilisi aynen kalır — LGS kutusu YKS öğrencisinde hiç basılmaz. */}
+          <div style={{ display: 'grid', gridTemplateColumns: studentCurriculum === 'LGS' ? '1fr' : '1fr 1fr', gap: 24, alignItems: 'start' }}>
+            {studentCurriculum === 'LGS' ? (
+              /* LGS Net Progress */
+              <div className="card" style={{ padding: 20 }}>
+                <h3 style={{ fontSize: 14, marginBottom: 16 }}>LGS Net Gelişimi</h3>
+                {stats.lgsExams.length === 0 ? (
+                  <div style={{ padding: 30, textAlign: 'center', color: 'var(--ink-faint)' }}>Veri bulunamadı</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ height: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
+                      {stats.lgsExams.map((e) => (
+                        <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--plum-text)' }}>{e.totalNet}</span>
+                          <div style={{ width: 14, height: `${(e.totalNet / 90) * 80}px`, background: 'linear-gradient(to top, var(--plum), #dda8e8)', borderRadius: '4px 4px 0 0' }}></div>
+                          <span style={{ fontSize: 9.5, color: 'var(--ink-faint)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 60 }} title={e.exam.name}>
+                            {e.exam.publisher || 'Deneme'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* TYT Net Progress */}
+                <div className="card" style={{ padding: 20 }}>
+                  <h3 style={{ fontSize: 14, marginBottom: 16 }}>TYT Net Gelişimi</h3>
+                  {stats.tytExams.length === 0 ? (
+                    <div style={{ padding: 30, textAlign: 'center', color: 'var(--ink-faint)' }}>Veri bulunamadı</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ height: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
+                        {stats.tytExams.map((e) => (
+                          <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--indigo-600)' }}>{e.totalNet}</span>
+                            <div style={{ width: 14, height: `${(e.totalNet / 120) * 80}px`, background: 'linear-gradient(to top, var(--indigo-500), var(--indigo-500))', borderRadius: '4px 4px 0 0' }}></div>
+                            <span style={{ fontSize: 9.5, color: 'var(--ink-faint)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 60 }} title={e.exam.name}>
+                              {e.exam.publisher || 'Deneme'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* AYT Net Progress */}
-            <div className="card" style={{ padding: 20 }}>
-              <h3 style={{ fontSize: 14, marginBottom: 16 }}>AYT Net Gelişimi</h3>
-              {stats.aytExams.length === 0 ? (
-                <div style={{ padding: 30, textAlign: 'center', color: 'var(--ink-faint)' }}>Veri bulunamadı</div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ height: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
-                    {stats.aytExams.map((e) => (
-                      <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal-text)' }}>{e.totalNet}</span>
-                        <div style={{ width: 14, height: `${(e.totalNet / 80) * 80}px`, background: 'linear-gradient(to top, var(--teal), #7fd8e8)', borderRadius: '4px 4px 0 0' }}></div>
-                        <span style={{ fontSize: 9.5, color: 'var(--ink-faint)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 60 }} title={e.exam.name}>
-                          {e.exam.publisher || 'Deneme'}
-                        </span>
+                {/* AYT Net Progress */}
+                <div className="card" style={{ padding: 20 }}>
+                  <h3 style={{ fontSize: 14, marginBottom: 16 }}>AYT Net Gelişimi</h3>
+                  {stats.aytExams.length === 0 ? (
+                    <div style={{ padding: 30, textAlign: 'center', color: 'var(--ink-faint)' }}>Veri bulunamadı</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ height: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
+                        {stats.aytExams.map((e) => (
+                          <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal-text)' }}>{e.totalNet}</span>
+                            <div style={{ width: 14, height: `${(e.totalNet / 80) * 80}px`, background: 'linear-gradient(to top, var(--teal), #7fd8e8)', borderRadius: '4px 4px 0 0' }}></div>
+                            <span style={{ fontSize: 9.5, color: 'var(--ink-faint)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 60 }} title={e.exam.name}>
+                              {e.exam.publisher || 'Deneme'}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
 
           {/* Critical Topics Card */}
@@ -872,7 +933,7 @@ export default function OgrencilerPage() {
                           <td style={{ padding: '12px', fontWeight: 600 }}>{exam.name}</td>
                           <td style={{ padding: '12px', color: 'var(--ink-soft)' }}>{exam.exam_date}</td>
                           <td style={{ padding: '12px' }}>
-                            <span className={`chip ${exam.exam_type === 'TYT' ? 'chip-say' : 'chip-ea'}`} style={{ padding: '1px 6px', fontSize: 10.5 }}>
+                            <span className={`chip ${exam.exam_type === 'TYT' ? 'chip-say' : exam.exam_type === 'AYT' ? 'chip-ea' : 'chip-soz'}`} style={{ padding: '1px 6px', fontSize: 10.5 }}>
                               {exam.exam_type}
                             </span>
                           </td>

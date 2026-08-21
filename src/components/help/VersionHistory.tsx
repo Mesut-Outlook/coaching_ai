@@ -15,6 +15,23 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '21 Ağustos 2026',
+    entries: [
+      {
+        version: 'v0.24',
+        title: 'Müfredat YKS / LGS ayrımı + 7-8. sınıf desteği',
+        items: [
+          'Öğrenci sınıf aralığı genişledi: artık 7. Sınıf\'tan 12. Sınıf\'a kadar ve Mezun seçilebiliyor — önceden yalnızca 12. Sınıf ve Mezun vardı.',
+          'Müfredat ekranı YKS ve LGS olmak üzere iki sekmeye ayrıldı; her sekme kendi derslerini gösteriyor ve ders sayısı sekme başlığında yazıyor. Bugüne kadarki 14 ders (187 konu) YKS oldu — 9, 10, 11, 12. Sınıf ve mezunlar sorumlu. LGS müfredatı yüklendi: 6 ders, 47 konu, 90 soru (Türkçe, Matematik, Fen Bilimleri, T.C. İnkılap Tarihi ve Atatürkçülük, Din Kültürü ve Ahlak Bilgisi, Yabancı Dil) — şimdilik 8. Sınıfa tanımlı, 7. Sınıf müfredatı geldiğinde aynı yere eklenecek.',
+          '7. ve 8. Sınıf öğrencisi artık yalnızca LGS müfredatını görüyor, 9. Sınıf ve üzeri yalnızca YKS\'i — bu ayrım Konu Yeterlilik Haritası, Haftalık Program, Haftalık Görüşme ve öğrenci profilindeki Konu Yeterliliği sekmesinin hepsinde geçerli.',
+          'LGS\'te alan (SAY/EA/SÖZ) kavramı olmadığı için 7. ya da 8. Sınıf seçilince öğrenci ekleme formunda Alan sorusu kayboluyor, panel kartında da alan rozeti basılmıyor.',
+          '8. Sınıf öğrencisine deneme girerken artık LGS bölümleri çıkıyor (6 bölüm, 90 soru) ve net LGS kuralına göre hesaplanıyor: 3 yanlış 1 doğruyu götürüyor (YKS\'de 4). Derslerin katsayısı farklı olduğu için katsayılı "ağırlıklı net" ayrıca gösteriliyor. Bu, gerçek 500 puanlık LGS puanı değil — o puan yalnızca merkezî sınav istatistikleriyle hesaplanabildiği için uygulama puan üretmiyor, yalnızca ağırlıklı neti gösteriyor.',
+          'Düzeltme: öğrenci profilindeki "Konu Yeterliliği" sekmesi 14 dersten yalnızca 4\'ünü (Tarih, Coğrafya, Felsefe, Din Kültürü) gösteriyordu, ders adları eski bir listeyle eşleştirildiği için geri kalan 10 ders sessizce eksik kalıyordu. Artık bütün dersler görünüyor.',
+        ],
+      },
+    ],
+  },
+  {
     date: '18 Ağustos 2026',
     entries: [
       {

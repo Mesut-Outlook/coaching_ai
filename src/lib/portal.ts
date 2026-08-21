@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Database, Grade, Json, Track } from '../types/database'
+import type { Database, ExamType, Grade, Json, Track } from '../types/database'
 
 /**
  * Mobil portal (öğrenci/veli) veri katmanı.
@@ -17,7 +17,8 @@ export type PortalStudent = {
   id: string
   full_name: string
   grade: Grade
-  track: Track
+  /** LGS öğrencisinde Alan (SAY/EA/SÖZ) kavramı yok → null (bkz. lib/curriculum.ts). */
+  track: Track | null
   target_program: string | null
   target_ranking: string | null
   photo_url: string | null
@@ -47,7 +48,7 @@ export type PortalExam = {
   id: string
   name: string
   publisher: string | null
-  exam_type: 'TYT' | 'AYT'
+  exam_type: ExamType
   exam_date: string
   total_net: number
   sections: PortalExamSection[]
@@ -152,7 +153,7 @@ export async function portalSetTaskCompleted(
 export type PortalExamInput = {
   name: string
   publisher: string | null
-  exam_type: 'TYT' | 'AYT'
+  exam_type: ExamType
   exam_date: string
   sections: {
     section_name: string
