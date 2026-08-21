@@ -3,6 +3,7 @@ import { X, Upload, Loader2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAccess } from '../../contexts/AccessContext'
+import { GRADES } from '../../types/database'
 import type { Student } from '../../types/database'
 
 interface AddStudentModalProps {
@@ -272,8 +273,11 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
             <div className="field">
               <label>Sınıf</label>
               <select value={grade} onChange={(e) => setGrade(e.target.value as Student['grade'])}>
-                <option value="12. Sınıf">12. Sınıf</option>
-                <option value="Mezun">Mezun</option>
+                {GRADES.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="field">

@@ -108,7 +108,7 @@ create table if not exists students (
   institution_id uuid references institutions(id) on delete restrict,
   coaching_coach_id uuid references auth.users(id) on delete set null,
   full_name text not null,
-  grade text not null check (grade in ('12. Sınıf', 'Mezun')),
+  grade text not null check (grade in ('7. Sınıf', '8. Sınıf', '9. Sınıf', '10. Sınıf', '11. Sınıf', '12. Sınıf', 'Mezun')),
   track text not null check (track in ('SAY', 'EA', 'SÖZ')),
   target_program text,
   target_ranking text,
@@ -136,6 +136,14 @@ alter table students add column if not exists institution_id uuid references ins
 alter table students add column if not exists coaching_coach_id uuid references auth.users(id) on delete set null;
 alter table students add column if not exists student_access_code text;
 alter table students add column if not exists parent_access_code text;
+
+-- Sınıf aralığı 7 → 12 (+ Mezun). ⚠️ Yukarıdaki "create table if not exists"
+-- mevcut bir tabloda atlandığı için CHECK kısıtı orada güncellenmez; kısıtı burada
+-- düşürüp yeniden kuruyoruz. Yeniden çalıştırılabilir olsun diye önce drop.
+alter table students drop constraint if exists students_grade_check;
+alter table students
+  add constraint students_grade_check
+  check (grade in ('7. Sınıf', '8. Sınıf', '9. Sınıf', '10. Sınıf', '11. Sınıf', '12. Sınıf', 'Mezun'));
 
 create index if not exists students_institution_id_idx on students(institution_id);
 create index if not exists students_coaching_coach_idx on students(coaching_coach_id);

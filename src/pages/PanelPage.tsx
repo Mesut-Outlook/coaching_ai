@@ -9,6 +9,7 @@ import Sparkline from '../components/charts/Sparkline'
 import AddStudentModal from '../components/students/AddStudentModal'
 import { fetchStudents } from '../lib/students'
 import { useAccess, type StudentScope } from '../contexts/AccessContext'
+import { GRADES } from '../types/database'
 import type { Student } from '../types/database'
 
 interface StudentCardData {
@@ -159,8 +160,9 @@ export default function PanelPage() {
           </div>
           <select value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value as typeof gradeFilter)} style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', fontSize: 13 }}>
             <option>Tümü</option>
-            <option>12. Sınıf</option>
-            <option>Mezun</option>
+            {GRADES.map((g) => (
+              <option key={g}>{g}</option>
+            ))}
           </select>
           <select value={trackFilter} onChange={(e) => setTrackFilter(e.target.value as typeof trackFilter)} style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', fontSize: 13 }}>
             <option>Tümü</option>

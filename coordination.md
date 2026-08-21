@@ -2045,3 +2045,32 @@ where n.nspname='public' and p.proname = '<fonksiyon>';
 ```
 Hedefli yama dosyası: `supabase/patch_portal_actor.sql` (schema.sql'den programatik
 çıkarıldı, Docker'da iki kez temiz koştu).
+
+---
+
+## 🎓 Sınıf aralığı 7 → 12 (Opus, 2026-08-21) — BİTTİ, CANLIDA DOĞRULANDI
+
+Öğrenci sınıf bilgisi artık **7. Sınıf → 12. Sınıf + Mezun** (önceden yalnız 12/Mezun).
+
+| Dosya | Değişiklik |
+|---|---|
+| `src/types/database.ts` | `Grade` union genişledi + tek kaynak `GRADES` sabiti eklendi |
+| `src/types/database.test-d.ts` | `_grade` tip testi güncellendi |
+| `supabase/schema.sql` | inline `check` genişledi **+** mevcut DB için `drop constraint if exists students_grade_check` → yeniden `add constraint` (alter bloğunun altında) |
+| `src/components/students/AddStudentModal.tsx` | Sınıf `<select>` artık `GRADES.map` (sabit iki option değil) |
+| `src/pages/PanelPage.tsx` | Sınıf filtresi de `GRADES.map` |
+
+⚠️ **Neden ayrı `alter table … drop/add constraint`:** `create table if not exists` mevcut
+tabloda tamamen atlanır → inline `check`'i değiştirmek gerçek DB'de HİÇBİR ŞEY yapmaz.
+
+**Doğrulama:** Docker'da stub → **eski şema** → örnek öğrenci satırı (`12. Sınıf`) →
+**yeni şema iki kez**. Sonuç: kısıt 7 değere genişledi, eski satır korundu,
+`7. Sınıf` insert geçti, `6. Sınıf` reddedildi. `npm run build`, `npm run test:types`,
+`npm run lint` (yeni uyarı yok) temiz.
+
+**Canlı doğrulama (2026-08-21):** kullanıcı şemayı çalıştırdı. Service-role ile *satır
+yazmadan* prob: kasten geçersiz `coach_id` ile insert → `7./9. Sınıf` FK hatasına (23503)
+takıldı (yani grade check GEÇTİ), `6. Sınıf` ise `23514 students_grade_check` ile reddedildi.
+Mevcut 30 öğrenci (25×`12. Sınıf`, 5×`Mezun`) korundu, prob satırı kalmadı.
+
+**Kalan:** frontend değişikliklerinin commit + push edilmesi (push = otomatik Vercel deploy).

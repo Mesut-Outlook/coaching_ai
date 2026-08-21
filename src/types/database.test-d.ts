@@ -163,7 +163,12 @@ export type _updSubjects = Expect<Equals<OptionalKeys<Update<'subjects'>>, keyof
 // --------------------------------------------------------------------------
 
 export type _invitationStatus = Expect<Equals<InvitationStatus, 'bekliyor' | 'kabul' | 'iptal'>>
-export type _grade = Expect<Equals<Grade, '12. Sınıf' | 'Mezun'>>
+export type _grade = Expect<
+  Equals<
+    Grade,
+    '7. Sınıf' | '8. Sınıf' | '9. Sınıf' | '10. Sınıf' | '11. Sınıf' | '12. Sınıf' | 'Mezun'
+  >
+>
 export type _track = Expect<Equals<Track, 'SAY' | 'EA' | 'SÖZ'>>
 export type _source = Expect<Equals<MeasurementSource, 'konu_testi' | 'deneme'>>
 export type _state = Expect<Equals<MasteryState, 'kritik' | 'gelisiyor' | 'yeterli'>>

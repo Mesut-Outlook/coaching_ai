@@ -1,6 +1,24 @@
 // supabase/schema.sql ile birebir eşleşir. Şema değiştiğinde burayı da güncelle.
 
-export type Grade = '12. Sınıf' | 'Mezun'
+export type Grade =
+  | '7. Sınıf'
+  | '8. Sınıf'
+  | '9. Sınıf'
+  | '10. Sınıf'
+  | '11. Sınıf'
+  | '12. Sınıf'
+  | 'Mezun'
+
+/** Sınıf seçimlerinde kullanılan sıralı liste (7 → 12 → Mezun). */
+export const GRADES: readonly Grade[] = [
+  '7. Sınıf',
+  '8. Sınıf',
+  '9. Sınıf',
+  '10. Sınıf',
+  '11. Sınıf',
+  '12. Sınıf',
+  'Mezun',
+]
 export type Track = 'SAY' | 'EA' | 'SÖZ'
 export type MeasurementSource = 'konu_testi' | 'deneme'
 export type MasteryState = 'kritik' | 'gelisiyor' | 'yeterli'
