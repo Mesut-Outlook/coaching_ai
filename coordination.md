@@ -12,9 +12,36 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 
 ---
 
-## 📍 Güncel Durum (2026-08-13)
+## 📍 Güncel Durum (2026-08-21)
 
-**Bu dosya 1400+ satır ve kronolojik. Aşağısı geçmiş kaydıdır — güncel durum burada.**
+**Bu dosya 2200+ satır ve kronolojik. Aşağısı geçmiş kaydıdır — güncel durum burada.**
+
+> ✅ **SON TUR TAMAMLANDI: Müfredat YKS/LGS ayrımı (P1→P6) — hepsi CANLIDA.**
+> Detaylar dosyanın **en sonunda**. Özet:
+>
+> | Paket | Ne | Commit |
+> |---|---|---|
+> | Sınıf aralığı | 7. Sınıf → 12. Sınıf + Mezun | `39888ef` |
+> | P1-P3 | Müfredat YKS/LGS ayrımı + LGS 8. sınıf verisi | `08f3560` |
+> | P4-P5 | LGS deneme girişi + Yardım v0.24 | `694146f` |
+> | P6 | 7. sınıf müfredatı + konu bazında sınıf etiketi | `354b6ff` |
+>
+> **Canlı müfredat:** LGS 7 ders (7. sınıf 55 konu · 8. sınıf 47 konu) · YKS 14 ders / 187 konu.
+> **Toplam:** 21 ders / 289 konu.
+>
+> **🔑 Bilinmesi gereken üç şey:**
+> 1. Görünürlük mantığı **tek kaynak** — `src/lib/curriculum.ts` (`gradeCurriculum`,
+>    `subjectAppliesTo`, `topicAppliesTo`). Ekranlarda kopya filtre YAZMA.
+> 2. Süzme **konu seviyesinde**: LGS'te aynı ders hem 7 hem 8'e ait olabilir, konular ayrışır.
+>    Etiketsiz bir LGS konusu **iki sınıfa birden** görünür — yeni konu eklerken sınıf seç.
+> 3. **LGS puanı üretilmiyor.** Katsayılı "ağırlıklı net" gösteriliyor; koda ya da arayüze
+>    asla "LGS puanı" yazma (merkezî sınav istatistiği olmadan hesaplanamaz).
+>
+> **Açık kalan:** LGS deneme sonucunun WhatsApp paylaşım metni gerçek bir LGS denemesiyle
+> uçtan uca denenmedi (`src/lib/examShare.ts`).
+
+<details>
+<summary>Önceki tur: RBAC (2026-08-13) — kapandı</summary>
 
 > 🏛️ **AKTİF BÜYÜK İŞ: Çok Kurumlu Yapı + Rol/Yetki Sistemi (RBAC)** — dosyanın **en sonunda**.
 > Opus planladı, **implementasyonu agy yapar**, Opus her paket sonunda kontrol eder.
@@ -28,6 +55,8 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 > ✅ **P1 KAPANDI ve CANLIYA UYGULANDI (Opus, 2026-08-13).**
 > Opus kontrol kapısında **4 kusur** bulundu, hepsi düzeltildi, kullanıcı şemayı çalıştırdı ve
 > sonuç canlı sorgularla doğrulandı. Detaylar dosyanın sonundaki "P1 KONTROL KAPISI"nda.
+
+</details>
 >
 > | # | Kusur | Belirti |
 > |---|---|---|

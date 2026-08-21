@@ -1,6 +1,8 @@
-# Netlik — YKS Koçluk Paneli
+# Netlik — YKS & LGS Koçluk Paneli
 
-Eda Cangert'in YKS (üniversite giriş sınavı) koçluk merkezi için koç paneli. Öğrenci takibi, deneme sonuçları, konu bazlı yeterlilik, haftalık çalışma programı, devamsızlık ve tercih listesi hazırlamayı tek yerde yönetir. Öğrenci ve veli için ayrı bir mobil portalı vardır.
+Eda Cangert'in koçluk merkezi için koç paneli. Öğrenci takibi, deneme sonuçları, konu bazlı yeterlilik, haftalık çalışma programı, devamsızlık ve tercih listesi hazırlamayı tek yerde yönetir. Öğrenci ve veli için ayrı bir mobil portalı vardır.
+
+**İki müfredat, tek panel.** Öğrencinin sınıfı hangi müfredattan sorumlu olduğunu belirler: **7 ve 8. sınıf → LGS**, **9-12. sınıf ve mezunlar → YKS**. Ders ve konu listeleri, deneme bölümleri ve net hesabı buna göre değişir; koçun ayrıca bir şey seçmesi gerekmez.
 
 **Canlı:** https://netlik-koc-paneli.vercel.app
 
@@ -12,12 +14,12 @@ Eda Cangert'in YKS (üniversite giriş sınavı) koçluk merkezi için koç pane
 |---|---|---|
 | Koç Paneli | `/panel` | Tüm öğrenciler tek bakışta — kritik konu sayısı, son deneme netleri, haftalık tamamlama oranı |
 | Öğrenciler | `/ogrenciler` | Öğrenci listesi/profili — ekleme, düzenleme, arşivleme, profil fotoğrafı, öğrenci + veli telefonu, mobil erişim linki gönderme |
-| Deneme Girişi | `/denemeler` | Deneme sonucu girişi (net otomatik hesaplanır), açılır bölüm tablosu, tüm deneme geçmişi, sonucu WhatsApp ile gönderme |
-| Konu Yeterlilik Haritası | `/konular` | Konu bazlı durum takibi, konu testi girişi, konu/ders ortalaması, "Koç Kararı" onayı |
+| Deneme Girişi | `/denemeler` | Deneme sonucu girişi (net otomatik hesaplanır), açılır bölüm tablosu, tüm deneme geçmişi, sonucu WhatsApp ile gönderme. Sınav türü öğrencinin sınıfına kilitli: LGS öğrencisi yalnız LGS, YKS öğrencisi yalnız TYT/AYT girer |
+| Konu Yeterlilik Haritası | `/konular` | Konu bazlı durum takibi, konu testi girişi, konu/ders ortalaması, "Koç Kararı" onayı. Yalnız öğrencinin sınıfına ait dersler ve konular listelenir |
 | Haftalık Program | `/program` | Gün gün görev planlama (sürükle-bırak), tek sayfa yazdırma/PDF, WhatsApp ile gönderme |
 | Devamsızlık | `/devamsizlik` | Devamsızlık kaydı (oturum türü, mazeret), öğrenci özeti, "Takip gerekli" rozeti, WhatsApp bildirimi |
 | Haftalık Görüşme | `/raporlar` | Haftalık birebir görüşme özeti ve gelecek hafta planlaması |
-| Müfredat | `/mufredat` | Ders/konu listesi yönetimi (TYT + AYT), yıldan yıla değişebilen müfredat için |
+| Müfredat | `/mufredat` | Ders/konu listesi yönetimi — **YKS** ve **LGS** sekmeleri. Yıldan yıla değişebilen müfredat için |
 | Tercih Sihirbazı | `/tercih` | YÖK Atlas verisiyle (~66.400 program) bölüm arama, 11 filtre, ulaşılabilirlik durumu |
 | Yardım | `/yardim` | Uygulama içi kullanım rehberi + **Sürüm Geçmişi** sekmesi (`?sekme=surum`) |
 
@@ -63,12 +65,14 @@ Supabase tarafında yapılması gerekenler (bir kere):
 | `npm run backup` | Tüm öğrenci verisini + profil fotoğraflarını `backups/YYYY-MM-DD/`'ye indirir. `SUPABASE_SERVICE_ROLE_KEY` gerektirir. |
 | `npm run restore` | Yedeği geri yükler (FK bağımlılık sırasına göre). |
 | `npm run generate:access-codes` | Kodu olmayan öğrencilere mobil portal erişim kodu üretir. |
+| `npm run seed:lgs` | LGS **8. sınıf** müfredatını yükler (`src/data/lgsMufredat.json`). Hiçbir şey silmez, satır satır upsert eder — tekrar tekrar çalıştırılabilir. |
+| `npm run seed:lgs7` | LGS **7. sınıf** müfredatını yükler (`src/data/lgsMufredat7.json`) ve mevcut LGS konularını geriye dönük `8. Sınıf` olarak damgalar. Aynı şekilde silme yapmaz. |
 | `npm run seed:universities` | YÖK Atlas verisini `university_rankings` tablosuna yükler (`src/data/universityRankings.json` gerekir). |
 | `npm run seed` | ⚠️ **Dikkatli kullan** — `subjects`/`topics` tablosunu tamamen silip `src/tytSubjects.json`'daki **eski** listeyle yeniden doldurur (cascade ile bağlı öğrenci verisini de siler). Çalıştırmadan önce `coordination.md`'ye bak. |
 
 ## Yedekleme
 
-`npm run backup` 12 tablodan 11'ini (`university_rankings` hariç — script'ten yeniden üretilebilen referans veri) ve `student-photos` bucket'ını tarih damgalı klasöre indirir. `.github/workflows/backup.yml` her gece otomatik çalışır.
+`npm run backup` 18 tablodan 16'sını ve `student-photos` bucket'ını tarih damgalı klasöre indirir. Kapsam dışı ikisi script'ten yeniden üretilebilen referans veridir: `university_rankings` ve `permission_catalog`. `.github/workflows/backup.yml` her gece otomatik çalışır.
 
 ⚠️ **Yedekler gerçek öğrenci ve veli adı/telefonu içerir.** `backups/` klasörü `.gitignore`'dadır; otomatik yedeğin gönderildiği depo **private** olmalıdır. Gerekli GitHub secret'ları: `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, (opsiyonel) `BACKUP_REPO_TOKEN` + `BACKUP_REPO_URL`.
 
