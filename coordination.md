@@ -2206,8 +2206,58 @@ Yanlış cezası istemciden alınmıyor: `portal_add_exam` RPC'si `p_exam_type`'
 - LGS deneme paylaşımı (WhatsApp metni) LGS'e göre gözden geçirilebilir — `src/lib/examShare.ts`
   bu turda dokunuldu ama gerçek bir LGS denemesiyle uçtan uca denenmedi.
 
+### ✅ P6 — 7. sınıf müfredatı + konu bazında sınıf etiketi (2026-08-21, `354b6ff`)
+
+Backlog'daydı, kullanıcı aynı gün PDF'i verince açıldı ve bitti. **CANLIDA.**
+
+#### Backlog notundaki "şema DEĞİŞMEYECEK" tahmini TUTMADI — nedeni önemli
+7. sınıfın beş dersi 8. sınıfla **aynı ada** sahip (`Türkçe`, `Matematik`, `Fen Bilimleri`,
+`Din Kültürü ve Ahlak Bilgisi`, `Yabancı Dil (İngilizce)`). `subjects` üzerinde
+`unique(curriculum, name)` olduğu için ikinci bir ders satırı açılamıyor; açılsa bile
+**konular sınıf bilgisi taşımıyordu** → 7. sınıf öğrencisi "Basınç", "DNA ve Genetik Kod"
+gibi 8. sınıf konularını görürdü. Sınıf etiketi `subjects`'te vardı ama `topics`'te yoktu.
+
+**Ders: "sadece veri eklenecek" diye tahmin etmeden önce yeni verinin ADLARININ mevcutla
+çakışıp çakışmadığına bak.**
+
+#### Veri modeli
+```
+topics + grades text[] not null default '{}'   -- BOŞ = dersin geçerli olduğu tüm sınıflar
+```
+- Ortak 5 ders → `subjects.grades = {7. Sınıf, 8. Sınıf}`, konular kendi sınıfını taşır
+- `Sosyal Bilgiler` → yalnız 7. sınıfa özel YENİ ders (8'deki karşılığı `T.C. İnkılap Tarihi`)
+- Mevcut 47 LGS konusu geriye dönük `{8. Sınıf}` damgalandı — **bu adım olmadan
+  8. sınıf konuları 7. sınıfa da görünürdü** (boş dizi = "tüm sınıflar")
+- YKS'in 187 konusu `{}` kaldı (doğru — YKS'te sınıf ayrımı yok)
+
+`src/lib/curriculum.ts` → `topicAppliesTo(topic, subject, grade)` konu süzmenin TEK KAYNAĞI.
+Ekranlar artık ders değil **konu** bazında süzüyor.
+
+#### Canlı doğrulama (`npm run seed:lgs7`, iki kez)
+| Ders | Ders etiketi | 7. sınıf konu | 8. sınıf konu |
+|---|---|---|---|
+| Türkçe | 7+8 | 14 | 8 |
+| Matematik | 7+8 | 12 | 11 |
+| Fen Bilimleri | 7+8 | 7 | 7 |
+| T.C. İnkılap Tarihi ve Atatürkçülük | 8 | 0 | 6 |
+| Din Kültürü ve Ahlak Bilgisi | 7+8 | 5 | 5 |
+| Yabancı Dil (İngilizce) | 7+8 | 10 | 10 |
+| Sosyal Bilgiler | 7 | 7 | 0 |
+
+**Etiketsiz LGS konusu: 0** (kritik — biri etiketsiz kalsa iki sınıfa birden görünürdü).
+Toplam 21 ders / 289 konu. İkinci koşu her sayaçta `0` dedi → idempotent.
+Deploy doğrulandı (`index-BKkGyetA.js`).
+
+#### Not: ajan istemeden canlıya bağlandı
+Sonnet, script'in sözdizimini denerken `.env.local`'i doğrudan okuyan script'i çalıştırdı
+ve gerçek Supabase'e bağlandı. Kendisi bildirdi; Opus doğruladı: **yalnız iki select**,
+ikincisi `column topics.grades does not exist` ile durdu, **hiçbir yazma olmadı**
+(20 ders / 234 konu sayıları ve `grades` alanları değişmemişti).
+**Ders: "script'i çalıştırma" talimatı, script `.env.local`'i kendi okuyorsa ortam
+değişkenini kaldırmakla korunmuyor.**
+
 ### 📥 BACKLOG — 7. sınıf LGS müfredatı (kullanıcı kararı, 2026-08-21)
-**Şimdilik beklemede.** Kullanıcı listeyi verdiğinde başlanacak, o zamana kadar kimse almasın.
+~~**Şimdilik beklemede.**~~ → **TAMAMLANDI, yukarı bakın.** (Kullanıcı aynı gün PDF'i verdi.)
 
 Hazırlık tamam, **şema DEĞİŞMEYECEK**:
 - `subjects.grades` alanına `7. Sınıf` yazmak yeterli (dizi, birden çok sınıf alabilir).
