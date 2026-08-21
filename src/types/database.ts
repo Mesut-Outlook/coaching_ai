@@ -147,6 +147,8 @@ export type Topic = {
   name: string
   sort_order: number
   is_active: boolean
+  /** Konu bu sınıflara özel; boş dizi = dersin uygulandığı tüm sınıflar (bkz. curriculum.ts). */
+  grades: Grade[]
 }
 
 export type TopicMeasurement = {

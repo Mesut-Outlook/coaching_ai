@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange, DAYS } from '../lib/weeks'
-import { subjectAppliesTo } from '../lib/curriculum'
+import { subjectAppliesTo, topicAppliesTo } from '../lib/curriculum'
 import { openWhatsAppChat } from '../lib/whatsapp'
 
 export default function ProgramPage() {
@@ -366,19 +366,24 @@ export default function ProgramPage() {
     return filtered.sort((a, b) => a.sort_order - b.sort_order)
   }, [topics, selectedStudent])
 
-  // Topics belonging to the currently selected subject in the add-task form
+  // Topics belonging to the currently selected subject in the add-task form.
+  // topicAppliesTo (subject + grade) tek kaynak — sınıfa uymayan konular listelenmez.
   const topicsForSubject = useMemo(() => {
     if (selectedSubjectId === 'custom') return []
     const subjectId = parseInt(selectedSubjectId)
-    return topics.filter((t) => t.subject_id === subjectId).sort((a, b) => a.sort_order - b.sort_order)
-  }, [topics, selectedSubjectId])
+    return topics
+      .filter((t) => t.subject_id === subjectId && t.subjects && (!selectedStudent || topicAppliesTo(t, t.subjects, selectedStudent.grade)))
+      .sort((a, b) => a.sort_order - b.sort_order)
+  }, [topics, selectedSubjectId, selectedStudent])
 
   // Topics belonging to the currently selected subject in the edit-task form
   const editTopicsForSubject = useMemo(() => {
     if (editSubjectId === 'custom') return []
     const subjectId = parseInt(editSubjectId)
-    return topics.filter((t) => t.subject_id === subjectId).sort((a, b) => a.sort_order - b.sort_order)
-  }, [topics, editSubjectId])
+    return topics
+      .filter((t) => t.subject_id === subjectId && t.subjects && (!selectedStudent || topicAppliesTo(t, t.subjects, selectedStudent.grade)))
+      .sort((a, b) => a.sort_order - b.sort_order)
+  }, [topics, editSubjectId, selectedStudent])
 
   return (
     <section className="screen">

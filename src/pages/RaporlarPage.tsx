@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange } from '../lib/weeks'
-import { subjectAppliesTo } from '../lib/curriculum'
+import { topicAppliesTo } from '../lib/curriculum'
 
 export default function RaporlarPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -173,10 +173,11 @@ export default function RaporlarPage() {
   }
 
   // Görev atama formundaki "Konu Seçin" listesi: seçili öğrencinin sınıfına uymayan
-  // dersler (subjectAppliesTo) hiç görünmez — YKS öğrencisine LGS konusu, tersi de olmaz.
+  // dersler VE konular (topicAppliesTo) hiç görünmez — YKS öğrencisine LGS konusu,
+  // tersi de olmaz; bir ders iki sınıfa birden açıksa da sınıfa özel konuları süzülür.
   const assignableTopics = useMemo(() => {
     if (!selectedStudent) return topics
-    return topics.filter((t) => t.subjects && subjectAppliesTo(t.subjects, selectedStudent.grade))
+    return topics.filter((t) => t.subjects && topicAppliesTo(t, t.subjects, selectedStudent.grade))
   }, [topics, selectedStudent])
 
   // Handle deleting a future task

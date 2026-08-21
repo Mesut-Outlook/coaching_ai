@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "seed": "tsx scripts/seedSupabase.ts",
     "seed:lgs": "tsx scripts/seedLgsCurriculum.ts",
+    "seed:lgs7": "tsx scripts/seedLgsCurriculum7.ts",
     "seed:universities": "tsx scripts/seedUniversityRankings.ts",
     "backup": "tsx scripts/backupData.ts",
     "restore": "tsx scripts/restoreData.ts",

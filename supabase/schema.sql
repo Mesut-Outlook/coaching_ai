@@ -310,12 +310,19 @@ create table if not exists topics (
   name text not null,
   sort_order int not null default 0,
   is_active boolean not null default true,
+  grades text[] not null default '{}',
   unique (subject_id, name)
 );
 create index if not exists topics_subject_id_idx on topics(subject_id);
 
 alter table subjects add column if not exists is_active boolean not null default true;
 alter table topics add column if not exists is_active boolean not null default true;
+
+-- Konu bazında sınıf etiketi (P6, 2026-08-21): bir dersin konuları birden çok sınıfa
+-- ait olabilir (örn. LGS "Türkçe" hem 7 hem 8. sınıfta var ama konular farklı).
+-- BOŞ = dersin geçerli olduğu tüm sınıflar (mevcut YKS ve 8. sınıf LGS konuları için
+-- geçerli varsayılan — geriye dönük damgalama scripts/seedLgsCurriculum7.ts'in işi).
+alter table topics add column if not exists grades text[] not null default '{}';
 
 -- Müfredat YKS/LGS ayrımı: mevcut tabloda inline tanım işlemez ("create table if not
 -- exists" atlanır), bu yüzden yeni kolonlar ayrıca eklenir. Mevcut 14 ders default

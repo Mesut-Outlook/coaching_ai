@@ -4,7 +4,7 @@ import {
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
-import type { Curriculum, Subject, Topic } from '../types/database'
+import type { Curriculum, Grade, Subject, Topic } from '../types/database'
 
 const DEFAULT_COLOR = '#4C43A8'
 
@@ -29,6 +29,9 @@ export default function MufredatPage() {
 
   const [newTopicSubjectId, setNewTopicSubjectId] = useState<number | null>(null)
   const [newTopicName, setNewTopicName] = useState('')
+  // Yeni konunun sınıf etiketi: ders tek sınıfa özelse (ya da YKS ise, grades=[]) sabit —
+  // yalnız ders hem 7 hem 8. sınıfa açıksa (LGS ortak dersler) seçim gösterilir.
+  const [newTopicGrades, setNewTopicGrades] = useState<Grade[]>([])
 
   const [editingSubjectId, setEditingSubjectId] = useState<number | null>(null)
   const [editingTopicId, setEditingTopicId] = useState<number | null>(null)
@@ -110,19 +113,20 @@ export default function MufredatPage() {
     setNewSubjectOpen(false)
   }
 
-  async function addTopic(subjectId: number) {
+  async function addTopic(subjectId: number, grades: Grade[]) {
     if (!newTopicName.trim()) return
     const existing = topicsBySubject.get(subjectId) ?? []
     const maxOrder = existing.reduce((m, t) => Math.max(m, t.sort_order), -1)
     const { data, error: err } = await supabase
       .from('topics')
-      .insert({ subject_id: subjectId, name: newTopicName.trim(), sort_order: maxOrder + 1, is_active: true })
+      .insert({ subject_id: subjectId, name: newTopicName.trim(), sort_order: maxOrder + 1, is_active: true, grades })
       .select()
       .single()
     if (err) return alert('Konu eklenemedi: ' + err.message)
     setTopics((prev) => [...prev, data])
     setNewTopicName('')
     setNewTopicSubjectId(null)
+    setNewTopicGrades([])
   }
 
   async function toggleSubjectActive(subject: Subject) {
@@ -343,7 +347,16 @@ export default function MufredatPage() {
                             style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--indigo-500)', borderRadius: 6, fontSize: 13 }}
                           />
                         ) : (
-                          <span style={{ flex: 1, fontSize: 13 }}>{topic.name}</span>
+                          <span style={{ flex: 1, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {topic.name}
+                            {topic.grades.length > 0 && (
+                              <span style={{ display: 'flex', gap: 4 }}>
+                                {topic.grades.map((g) => (
+                                  <span key={g} className="badge badge-neutral" style={{ fontSize: 9.5 }}>{g}</span>
+                                ))}
+                              </span>
+                            )}
+                          </span>
                         )}
                         <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setEditingTopicId(topic.id); setEditValue(topic.name) }} title="Adını düzenle">
                           <Pencil size={12} />
@@ -361,29 +374,51 @@ export default function MufredatPage() {
                     ))}
 
                     {newTopicSubjectId === subject.id ? (
-                      <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}>
-                        <input
-                          autoFocus
-                          type="text"
-                          value={newTopicName}
-                          onChange={(e) => setNewTopicName(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && addTopic(subject.id)}
-                          placeholder="Yeni konu adı…"
-                          style={{ flex: 1, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5 }}
-                        />
-                        <button type="button" className="btn btn-primary btn-sm" onClick={() => addTopic(subject.id)}>
-                          <Check size={12} /> Ekle
-                        </button>
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setNewTopicSubjectId(null); setNewTopicName('') }}>
-                          <X size={12} />
-                        </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                        {/* Ders hem 7 hem 8. sınıfa açıksa (ortak LGS dersleri) yeni konunun
+                            hangi sınıfa ait olduğu seçilir; tek sınıflı derslerde (YKS veya
+                            İnkılap Tarihi / Sosyal Bilgiler gibi) seçim gösterilmez, dersin
+                            kendi grades'i sabit kullanılır. */}
+                        {subject.grades.length > 1 && (
+                          <div style={{ display: 'flex', gap: 12, fontSize: 12 }}>
+                            {subject.grades.map((g) => (
+                              <label key={g} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={newTopicGrades.includes(g)}
+                                  onChange={(e) =>
+                                    setNewTopicGrades((prev) => (e.target.checked ? [...prev, g] : prev.filter((x) => x !== g)))
+                                  }
+                                />
+                                {g}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <input
+                            autoFocus
+                            type="text"
+                            value={newTopicName}
+                            onChange={(e) => setNewTopicName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && addTopic(subject.id, newTopicGrades)}
+                            placeholder="Yeni konu adı…"
+                            style={{ flex: 1, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5 }}
+                          />
+                          <button type="button" className="btn btn-primary btn-sm" onClick={() => addTopic(subject.id, newTopicGrades)}>
+                            <Check size={12} /> Ekle
+                          </button>
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setNewTopicSubjectId(null); setNewTopicName(''); setNewTopicGrades([]) }}>
+                            <X size={12} />
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm"
                         style={{ marginTop: 10 }}
-                        onClick={() => { setNewTopicSubjectId(subject.id); setNewTopicName('') }}
+                        onClick={() => { setNewTopicSubjectId(subject.id); setNewTopicName(''); setNewTopicGrades(subject.grades) }}
                       >
                         <Plus size={12} /> Konu Ekle
                       </button>

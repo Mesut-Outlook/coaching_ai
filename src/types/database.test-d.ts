@@ -213,6 +213,7 @@ export type _studentNullables = Expect<
 export type _subjectCurriculumField = Expect<Equals<Subject['curriculum'], Curriculum>>
 export type _subjectGradesField = Expect<Equals<Subject['grades'], Grade[]>>
 export type _subjectKatsayi = Expect<Equals<Subject['katsayi'], number | null>>
+export type _topicGradesField = Expect<Equals<Topic['grades'], Grade[]>>
 export type _studentTargetNet = Expect<Equals<Student['target_net_value'], number | null>>
 export type _taskTopicId = Expect<Equals<WeeklyTask['topic_id'], number | null>>
 export type _taskCustomLabel = Expect<Equals<WeeklyTask['custom_label'], string | null>>

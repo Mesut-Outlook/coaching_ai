@@ -9,7 +9,7 @@ import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, Subject, Topic, CoachDecision, TopicMeasurement } from '../types/database'
-import { subjectAppliesTo } from '../lib/curriculum'
+import { subjectAppliesTo, topicAppliesTo } from '../lib/curriculum'
 
 export default function KonularPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -119,18 +119,23 @@ export default function KonularPage() {
 
   // Group topics by subject and filter by search query.
   // Seçili öğrencinin sınıfına uymayan dersler (YKS öğrencisine LGS dersi ya da tersi)
-  // hiç listelenmez — subjectAppliesTo tek kaynak.
+  // hiç listelenmez — subjectAppliesTo tek kaynak. Ders uysa bile, o dersin sınıfa
+  // özel olmayan konuları (topicAppliesTo) süzülür — örn. hem 7 hem 8. sınıfa açık bir
+  // LGS dersinin yalnız 8. sınıfa özel konusu 7. sınıf öğrencisine görünmemeli.
   const filteredData = useMemo(() => {
     return subjects
       .filter(subject => !selectedStudent || subjectAppliesTo(subject, selectedStudent.grade))
       .map(subject => {
-        const subjectTopics = topics.filter(t => t.subject_id === subject.id)
+        const subjectTopics = topics.filter(
+          t => t.subject_id === subject.id && (!selectedStudent || topicAppliesTo(t, subject, selectedStudent.grade)),
+        )
         const filteredTopics = subjectTopics.filter(t =>
           t.name.toLowerCase().includes(searchQuery.toLowerCase())
         )
         return {
           subject,
           topics: filteredTopics,
+          allTopics: subjectTopics,
           totalCount: subjectTopics.length,
           filteredCount: filteredTopics.length
         }
@@ -163,9 +168,8 @@ export default function KonularPage() {
     return Math.round(Number(meas[0].accuracy_pct))
   }
 
-  const getSubjectAverageAccuracy = (subjectId: number) => {
-    const subjectTopicIds = topics.filter(t => t.subject_id === subjectId).map(t => t.id)
-    const subjectMeas = measurements.filter(m => subjectTopicIds.includes(m.topic_id))
+  const getSubjectAverageAccuracy = (topicIds: number[]) => {
+    const subjectMeas = measurements.filter(m => topicIds.includes(m.topic_id))
     if (subjectMeas.length === 0) return null
     const total = subjectMeas.reduce((sum, m) => sum + Number(m.accuracy_pct), 0)
     return Math.round(total / subjectMeas.length)
@@ -225,11 +229,11 @@ export default function KonularPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {filteredData.map(({ subject, topics: groupTopics, totalCount }) => {
+                {filteredData.map(({ subject, topics: groupTopics, allTopics, totalCount }) => {
                   const isExpanded = !!expandedSubjects[subject.id]
-                  
-                  // Calculate statuses count for this subject
-                  const subjectTopicIds = topics.filter(t => t.subject_id === subject.id).map(t => t.id)
+
+                  // Calculate statuses count for this subject (sınıfa uymayan konular hariç)
+                  const subjectTopicIds = allTopics.map(t => t.id)
                   const subjectDecisions = decisions.filter(d => subjectTopicIds.includes(d.topic_id))
                   
                   const countKritik = subjectDecisions.filter(d => d.state === 'kritik').length
@@ -259,7 +263,7 @@ export default function KonularPage() {
                           <span style={{ width: 14, height: 14, borderRadius: '50%', background: subject.color }}></span>
                           <h3 style={{ fontSize: 14.5 }}>{subject.name}</h3>
                           <span style={{ fontSize: 11, color: 'var(--ink-faint)' }}>
-                            ({totalCount} Konu{getSubjectAverageAccuracy(subject.id) !== null ? ` · Ort: %${getSubjectAverageAccuracy(subject.id)}` : ''})
+                            ({totalCount} Konu{getSubjectAverageAccuracy(subjectTopicIds) !== null ? ` · Ort: %${getSubjectAverageAccuracy(subjectTopicIds)}` : ''})
                           </span>
                         </div>
 

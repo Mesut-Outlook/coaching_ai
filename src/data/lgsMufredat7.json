@@ -1,0 +1,102 @@
+{
+  "curriculum": "LGS",
+  "kaynak": "2026-2027 MEB Müfredatı — 7. Sınıf Tüm Dersler Detaylı Konu ve Ünite Dağılım Kataloğu (Eda Cangert Koçluk)",
+  "siniflar": ["7. Sınıf"],
+  "not": "Ders adları 8. sınıf LGS dersleriyle büyük ölçüde AYNI. Bu yüzden konular aynı ders satırına, konu bazında '7. Sınıf' etiketiyle eklenir. Sosyal Bilgiler yalnız 7. sınıfa özel yeni bir derstir.",
+  "dersler": [
+    {
+      "name": "Türkçe",
+      "yeni_ders": false,
+      "konular": [
+        "Sözcükte Anlam (Gerçek, Mecaz, Terim, Eş/Zıt Anlam)",
+        "Cümlede Anlam (Neden-Sonuç, Amaç-Sonuç, Koşul, Öznel/Nesnel)",
+        "Paragrafta Anlam (Ana Fikir, Yardımcı Fikir, Yapı)",
+        "Metin Türleri",
+        "Söz Sanatları",
+        "Fiiller (İş, Oluş, Durum)",
+        "Fiilde Kip ve Kişi",
+        "Fiillerde Anlam Kayması",
+        "Fiilde Yapı (Basit, Türemiş, Birleşik Fiiller)",
+        "Ek Fiil (Ek Eylem) ve İşlevleri",
+        "Zarflar (Belirteçler)",
+        "Anlatım Bozuklukları (Gereksiz Sözcük, Yanlış Anlamda Kullanım, Çelişen Sözcükler)",
+        "Yazım Kuralları (Büyük Harfler, Sayıların Yazımı, \"de/ki/mi\" Yazımı)",
+        "Noktalama İşaretleri"
+      ]
+    },
+    {
+      "name": "Matematik",
+      "yeni_ders": false,
+      "konular": [
+        "Tam Sayılarla İşlemler (Dört İşlem, Kuvvetler, Problem Çözme)",
+        "Rasyonel Sayılar (Tanımı, Gösterimi, Sayı Doğrusunda Gösterme)",
+        "Rasyonel Sayılarla İşlemler (Dört İşlem, Kare ve Küp, Problemler)",
+        "Cebirsel İfadeler (İşlemler, Örüntüler)",
+        "Eşitlik ve Denklem (Birinci Dereceden Bir Bilinmeyenli Denklemler, Denklem Kurma Problemleri)",
+        "Oran ve Orantı (Doğru ve Ters Orantı, Orantı Sabiti, Problemler)",
+        "Yüzdeler (Yüzde Hesapları, Bir Çokluğu Artırma/Azaltma, Yüzde Problemleri)",
+        "Doğrular ve Açılar",
+        "Çokgenler (Düzgün Çokgenler, Köşegenler, İç/Dış Açı Toplamı)",
+        "Çember ve Daire (Çevre, Yay Uzunluğu, Daire Diliminin Alanı)",
+        "Veri İşleme (Çizgi ve Daire Grafiği, Ortalama, Ortanca, Tepe Değer)",
+        "Cisimlerin Farklı Yönlerden Görünümleri"
+      ]
+    },
+    {
+      "name": "Fen Bilimleri",
+      "yeni_ders": false,
+      "konular": [
+        "Güneş Sistemi ve Ötesi (Uzay Araştırmaları, Rasathaneler, Teleskoplar, Gök Cisimleri, Yıldızlar, Galaksiler)",
+        "Hücre ve Bölünmeler (Hücrenin Yapısı, Bitki ve Hayvan Hücresi, Mitoz, Mayoz)",
+        "Kuvvet ve Enerji (Kütle ve Ağırlık İlişkisi, Fiziksel Anlamda İş, Potansiyel ve Kinetik Enerji, Enerji Dönüşümleri, Sürtünme Kuvveti)",
+        "Saf Madde ve Karışımlar (Tanecikli Yapı, Atom, Element, Bileşik, Homojen/Heterojen Karışımlar, Çözünme, Ayırma Yöntemleri)",
+        "Işığın Madde ile Etkileşimi (Soğurulma, Aynalar - Düz/Çukur/Tümsek, Işığın Kırılması ve Mercekler)",
+        "Canlılarda Üreme, Büyüme ve Gelişme (İnsanda Üreme, Bitki ve Hayvanlarda Üreme, Gelişme Evreleri)",
+        "Elektrik Devreleri (Seri ve Paralel Bağlama, Akım ve Gerilim İlişkisi)"
+      ]
+    },
+    {
+      "name": "Sosyal Bilgiler",
+      "yeni_ders": true,
+      "color": "#d97706",
+      "soru_sayisi": "—",
+      "katsayi": null,
+      "konular": [
+        "Birey ve Toplum (İletişim ve İnsan İlişkileri, Olumlu İletişim Yolları, Medya ve İletişim Özgürlüğü)",
+        "Kültür ve Miras (Osmanlı'nın Kuruluşu, Yükselme Dönemi, Fetihler, İpek ve Baharat Yolu, Avrupa'daki Gelişmeler)",
+        "İnsanlar, Yerler ve Çevreler (Nüfus Dağılışı, Nüfusu Etkileyen Faktörler, Göçün Neden ve Sonuçları)",
+        "Bilim, Teknoloji ve Toplum (Zaman İçinde Bilim, Yazının İcadı, Türk-İslam Bilim İnsanları, Matbaa ve Sanayi İnkılabı)",
+        "Üretim, Dağıtım ve Tüketim (Toprağın Önemi, Üretimde Yeni Fikirler, Meslek Seçimi, Vakıflar ve Sosyal Dayanışma)",
+        "Etkin Vatandaşlık (Demokrasinin Serüveni, Türkiye Cumhuriyeti'nde Demokrasi, Anayasal Haklar)",
+        "Küresel Bağlantılar (Ülkeler Arası Köprüler, Uluslararası Kuruluşlar, Küresel Sorunlara Çözümler)"
+      ]
+    },
+    {
+      "name": "Din Kültürü ve Ahlak Bilgisi",
+      "yeni_ders": false,
+      "konular": [
+        "Melek ve Ahiret İnancı",
+        "Hac ve Kurban",
+        "Ahlaki Davranışlar",
+        "Allah'ın Kulu ve Elçisi: Hz. Muhammed",
+        "İslam Düşüncesinde Yorumlar"
+      ]
+    },
+    {
+      "name": "Yabancı Dil (İngilizce)",
+      "yeni_ders": false,
+      "konular": [
+        "Unit 1: Appearance and Personality",
+        "Unit 2: Sports",
+        "Unit 3: Biographies",
+        "Unit 4: Wild Animals",
+        "Unit 5: Television",
+        "Unit 6: Celebrations",
+        "Unit 7: Dreams",
+        "Unit 8: Public Buildings",
+        "Unit 9: Environment",
+        "Unit 10: Planets"
+      ]
+    }
+  ]
+}

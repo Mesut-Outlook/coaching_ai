@@ -2,7 +2,7 @@
 // dersin bir sınıfa uygulanıp uygulanmadığı TEK KAYNAK burada karar veriliyor.
 // Konu/ders listeleyen her ekran (Müfredat, Konu Yeterlilik Haritası, Haftalık
 // Program, Deneme Girişi vb.) bu iki fonksiyonu çağırmalı — mantığı kopyalamamalı.
-import type { Curriculum, Grade, Subject } from '../types/database'
+import type { Curriculum, Grade, Subject, Topic } from '../types/database'
 
 /** Bir sınıfın tabi olduğu müfredat: 7./8. sınıf LGS, geri kalanı (+ Mezun) YKS. */
 export function gradeCurriculum(grade: Grade): Curriculum {
@@ -20,4 +20,24 @@ export function subjectAppliesTo(
 ): boolean {
   if (subject.curriculum !== gradeCurriculum(grade)) return false
   return subject.grades.length === 0 || subject.grades.includes(grade)
+}
+
+/**
+ * Bir konunun verilen sınıfa uygulanıp uygulanmadığı — konu listeleyen HER ekran
+ * (Müfredat, Konu Yeterlilik Haritası, Haftalık Program, Deneme Girişi vb.) bu tek
+ * fonksiyonu çağırmalı, mantığı kopyalamamalı.
+ *
+ * Kural: önce dersin kendisi bu sınıfa uygulanmalı (`subjectAppliesTo`) — uygulanmıyorsa
+ * konunun grades'i ne olursa olsun konu görünmez. Ders uyuyorsa, konu ya tüm sınıflara
+ * açıktır (`topic.grades` boş dizi — örn. mevcut YKS konuları ve tek sınıflı LGS dersleri)
+ * ya da sınıf `topic.grades` içinde olmalı (örn. hem 7 hem 8. sınıfa açık bir LGS dersinin
+ * 7. sınıfa özel konusu 8. sınıf öğrencisine görünmemeli).
+ */
+export function topicAppliesTo(
+  topic: Pick<Topic, 'grades'>,
+  subject: Pick<Subject, 'curriculum' | 'grades'>,
+  grade: Grade,
+): boolean {
+  if (!subjectAppliesTo(subject, grade)) return false
+  return topic.grades.length === 0 || topic.grades.includes(grade)
 }

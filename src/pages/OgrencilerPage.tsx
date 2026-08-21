@@ -18,7 +18,7 @@ import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject, AttendanceRecord } from '../types/database'
 import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../lib/attendance'
-import { subjectAppliesTo, gradeCurriculum } from '../lib/curriculum'
+import { topicAppliesTo, gradeCurriculum } from '../lib/curriculum'
 import { weightedNet } from '../lib/examSections'
 
 type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks' | 'attendance'
@@ -982,9 +982,9 @@ export default function OgrencilerPage() {
           </p>
           
           {(() => {
-            // Öğrencinin sınıfına uymayan dersler (YKS↔LGS) burada hiç görünmez —
-            // subjectAppliesTo tek kaynak. topic.subjects null gelirse (sahipsiz konu) atlanır.
-            const visibleTopics = topics.filter(t => t.subjects && subjectAppliesTo(t.subjects, student.grade))
+            // Öğrencinin sınıfına uymayan dersler (YKS↔LGS) VE konular burada hiç görünmez —
+            // topicAppliesTo tek kaynak. topic.subjects null gelirse (sahipsiz konu) atlanır.
+            const visibleTopics = topics.filter(t => t.subjects && topicAppliesTo(t, t.subjects, student.grade))
             const subjectsById = new Map<number, Subject>()
             visibleTopics.forEach(t => {
               if (t.subjects && !subjectsById.has(t.subject_id)) subjectsById.set(t.subject_id, t.subjects)
