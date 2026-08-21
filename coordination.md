@@ -2203,7 +2203,19 @@ Yanlış cezası istemciden alınmıyor: `portal_add_exam` RPC'si `p_exam_type`'
 - LGS öğrencisinin profil başlığında **boş bir mor rozet** çiziliyordu (`track` null).
 
 ### Sırada ne var
-- **7. sınıf LGS müfredatı** — kullanıcı listeyi verecek. Yapı hazır: `subjects.grades`
-  alanına `7. Sınıf` yazılır, şema DEĞİŞMEZ. Yükleme `npm run seed:lgs` deseniyle.
 - LGS deneme paylaşımı (WhatsApp metni) LGS'e göre gözden geçirilebilir — `src/lib/examShare.ts`
   bu turda dokunuldu ama gerçek bir LGS denemesiyle uçtan uca denenmedi.
+
+### 📥 BACKLOG — 7. sınıf LGS müfredatı (kullanıcı kararı, 2026-08-21)
+**Şimdilik beklemede.** Kullanıcı listeyi verdiğinde başlanacak, o zamana kadar kimse almasın.
+
+Hazırlık tamam, **şema DEĞİŞMEYECEK**:
+- `subjects.grades` alanına `7. Sınıf` yazmak yeterli (dizi, birden çok sınıf alabilir).
+- Bir ders hem 7 hem 8'e aitse `{"7. Sınıf","8. Sınıf"}`; yalnız 7'ye aitse `{"7. Sınıf"}`.
+- Yükleme `scripts/seedLgsCurriculum.ts` deseniyle — **hiçbir şey silmeyen**, `(curriculum, name)`
+  üzerinden upsert eden idempotent script. Yeni bir JSON dosyası (`src/data/lgsMufredat7.json`)
+  ya da mevcut JSON'a sınıf bilgisi eklenerek çözülebilir.
+- `gradeCurriculum()` zaten 7. sınıfı LGS'e yolluyor; arayüzde ek iş YOK.
+
+**Bugünkü durum:** 7. sınıf öğrencisi eklenirse müfredat ekranlarında
+"Bu sınıf için müfredat henüz yüklenmemiş." boş durumunu görür — çökmez, yanlış veri göstermez.
