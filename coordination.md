@@ -2111,9 +2111,9 @@ sayıya çevirme derdi yok. LGS 8 dersleri `{"8. Sınıf"}`, YKS dersleri `{}` (
 ### Paketler
 | # | İş | Kim | Durum |
 |---|---|---|---|
-| **P1** | Şema + tipler + `lib/curriculum.ts` | Sonnet | ✅ Opus kontrolünden geçti — şema koşusu bekliyor |
-| **P2** | `scripts/seedLgsCurriculum.ts` — idempotent yükleme | Sonnet | ✅ yazıldı, ÇALIŞTIRILMADI (kullanıcı onayı + şema koşusu bekliyor) |
-| **P3** | Arayüz: Müfredat sekmeleri, sınıfa göre konu filtresi, Alan gizleme | Sonnet | 🔄 devam ediyor |
+| **P1** | Şema + tipler + `lib/curriculum.ts` | Sonnet | ✅ CANLIDA |
+| **P2** | `scripts/seedLgsCurriculum.ts` — idempotent yükleme | Sonnet | ✅ CANLIDA (2 kez koştu, ikincisi 0 ekledi) |
+| **P3** | Arayüz: Müfredat sekmeleri, sınıfa göre konu filtresi, Alan gizleme | Sonnet | ✅ CANLIDA (`08f3560`) |
 | **P4** | LGS deneme girişi (6 bölüm / 90 soru / katsayılı LGS puanı) + `exam_type` genişletme | agy | ⏳ (P3 sonrası) |
 | **P5** | Yardım sayfası + Sürüm Geçmişi (v0.24) | agy | ⏳ (P3 sonrası) |
 
@@ -2128,3 +2128,37 @@ tekrar tekrar çalışsa da yalnız eksikleri ekler.
 ayrıca `alter table … add column if not exists` ile eklenmeli; unique kısıt değişimi
 `drop constraint if exists` → `add constraint` şeklinde ve **alter satırlarının altında**
 olmalı. Doğrulama: Docker'da stub → **eski şema** → örnek veri → **yeni şema iki kez**.
+
+### ✅ P1-P3 CANLIYA ÇIKTI (2026-08-21, commit `08f3560`)
+
+**Kullanıcı şemayı çalıştırdı, müfredatı onayladı, `npm run seed:lgs` iki kez koştu.**
+
+Canlı durum: **LGS 6 ders / 47 konu** (hepsi `grades={8. Sınıf}`, katsayılı) ·
+**YKS 14 ders / 187 konu** (`grades={}`, katsayı null — hiçbirine dokunulmadı).
+İkinci seed koşusu `0 eklendi, 6/47 zaten vardı` dedi → idempotentlik canlıda kanıtlandı.
+30 öğrenci ve 3 koç kararı yerinde. Deploy doğrulandı (`index-DZJOlFWU.js`).
+
+**Şema prob testleri (satır yazmadan):** `track=null` not-null'ı geçiyor ·
+`unique(curriculum,name)` tekrarı `23505` ile reddediyor · geçersiz curriculum
+`23514 subjects_curriculum_check` ile reddediliyor.
+
+### 🐞 Yol boyunca yakalanan iki gerçek kusur
+1. **Öğrenci profili / Konu Yeterliliği sekmesi 14 dersten yalnız 4'ünü gösteriyormuş.**
+   `subjectConfig` diye koda gömülü 10 isimlik bir eşleştirme listesi vardı (`'Türkçe'`,
+   `'Matematik'`…) ama canlı adlar `TYT Türkçe`, `TYT Matematik`. Yalnız prefixsiz dördü
+   (Tarih, Coğrafya, Felsefe, Din Kültürü) tutuyordu. Artık gerçek `subject_id` üzerinden
+   gruplanıyor. **LGS'ten bağımsız, bugüne kadar sessizce eksik çalışan bir hataydı.**
+2. **Sekme ayrımı sıralamayı bozuyordu** (Opus kontrol kapısında yakalandı, canlıya
+   çıkmadan düzeldi): YKS (1..14) ve LGS (1..6) sort_order uzayları çakıştığı için
+   `moveSubject` ↑/↓ bir LGS dersini ekranda görünmeyen bir YKS dersiyle takas
+   edebiliyordu; `addSubject` de yeni LGS dersine 15 veriyordu. İkisi de artık
+   aktif sekmenin içinde hesaplanıyor.
+
+### Sıradaki
+- **P4 (agy):** LGS deneme girişi — 6 bölüm / 90 soru / katsayılı LGS puanı.
+  `mock_exams.exam_type` check'i `'TYT','AYT'` → `'LGS'` de eklenecek,
+  `src/lib/examSections.ts` LGS şablonu, `portal_add_exam` RPC'si.
+  ⚠️ Şu an bir 8. sınıf öğrencisine deneme girilirse TYT bölümleri çıkıyor — yanlış veri.
+- **P5 (agy):** Yardım sayfası + Sürüm Geçmişi (v0.24).
+- **Bekleyen veri:** 7. sınıf LGS müfredatı (kullanıcı verecek). Yapı hazır —
+  `grades` alanına `7. Sınıf` yazılarak şema değişmeden eklenecek.
