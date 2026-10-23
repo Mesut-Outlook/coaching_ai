@@ -2333,5 +2333,23 @@ Kaynak görev: `~/Downloads/ek-yerlestirme-claude-code-gorev.md`. Eski 2026-09-2
   - 2023: Sıra = 43, Puan = 554.84947, Kontenjan = 7
   Tüm kriterler eksiksiz sağlandı. ✅
 
-### 📥 agy — E6: Ek Yerleştirme tam PDF parser (sonraki oturum)
-Ayrıntılar `docs/ek-yerlestirme.md` → "Tam içe aktarma planı" (E5'te yazılacak).
+### 📥 agy — E6: Ek Yerleştirme tam PDF parser [✅ TAMAMLANDI VE CANLIDA DOĞRULANDI]
+**Durum: TAMAMLANDI.** (2026-10-23)
+- [x] `scripts/parseEkKilavuz.py` yazıldı. Poppler `pdftotext -bbox` ile dinamik kolon sınırları, dikey satır kümeleme ve çok satırlı ad/başlık birleştirme mimarisi kuruldu.
+- [x] 472 sayfalık 2026 kılavuz PDF'i 28 saniyede tam parse edildi.
+- [x] Çıktı: `data/ek-yerlestirme/2026.json` (11 MB; 16.715 program, 195 koşul, 2.398 tekil vakıf ücret kaydı).
+- [x] Doğrulama raporu: `data/ek-yerlestirme/2026-rapor.md`:
+  - Tablo 3 (Ön Lisans): 8.407 program (beklenen tam sayı: 8.407)
+  - Tablo 4 (Lisans): 8.308 program (beklenen tam sayı: 8.308)
+  - Toplam Program: 16.715 (beklenen tam sayı: 16.715)
+  - Mükerrer program kodu: 0 (tüm 16.715 kod tekil)
+  - Puan türleri: TYT 8407, SAY 3312, EA 2955, SÖZ 1491, DİL 550 (kılavuzla %100 birebir)
+  - Tüm program koşul kodları (195 koşul) eksiksiz tanımlı
+  - YÖK Atlas (`university_rankings`) ile 11.158 taban puan çapraz kontrolü: 11.158 / 11.158 (%100) kuruşu kuruşuna tam eşleşme!
+  - 26 satırlık örnek veri regresyon testi: 202910799 hariç 25/25 birebir (202910799 PDF'te dolmadığı için puansız, örnek verideki puan üst satır kopyasıydı; PDF görüntüsüyle doğrulandı).
+- [x] `npm run seed:ek -- --yil 2026 --dosya data/ek-yerlestirme/2026.json` çalıştırıldı.
+- [x] **Canlı DB Kabul Doğrulaması:**
+  - `ek_yerlestirme_programlari`: **16.715 satır**
+  - `ek_yerlestirme_kosullari`: **195 satır**
+  - `vakif_ogrenim_ucretleri`: **2.744 satır** (örnek veri + kılavuz birleşimi)
+  - RLS ve veri bütünlüğü doğrulandı. ✅

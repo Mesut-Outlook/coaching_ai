@@ -190,7 +190,7 @@ async function main() {
     metin: k.metin,
   }))
 
-  const ucretler = dosya.ucretler.map((u) => ({
+  const ucretlerHam = dosya.ucretler.map((u) => ({
     yil: u.yil,
     universite: u.universite,
     duzey: u.duzey ?? null,
@@ -198,6 +198,14 @@ async function main() {
     ucret: u.ucret ?? null,
     aciklama: u.not ?? null,
   }))
+
+  // Postgres unique(yil, universite, duzey, program) kuralı için parti içi tekilleştirme
+  const ucretMap = new Map<string, (typeof ucretlerHam)[number]>()
+  for (const u of ucretlerHam) {
+    const key = `${u.yil}__${u.universite}__${u.duzey}__${u.program}`
+    ucretMap.set(key, u)
+  }
+  const ucretler = Array.from(ucretMap.values())
 
   async function yazParti<T>(
     tablo: 'ek_yerlestirme_programlari' | 'ek_yerlestirme_kosullari' | 'vakif_ogrenim_ucretleri',
