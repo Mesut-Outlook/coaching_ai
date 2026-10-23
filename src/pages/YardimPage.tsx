@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ArrowRight, Smartphone, ShieldCheck, ScrollText,
+  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ListPlus, ArrowRight, Smartphone, ShieldCheck, ScrollText,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import VersionHistory from '../components/help/VersionHistory'
@@ -89,6 +89,14 @@ const GUIDE: GuideItem[] = [
     step: 'Tercih Dönemi · Gerektiğinde',
     body: 'YÖK Atlas 2025 taban puan ve başarı sırası verisiyle bölüm arama motoru. Puan türü, üniversite, program, şehir (çoklu), ön lisans/lisans, üniversite türü, ücret/burs, öğretim türü, program kodu ve başarı sırası aralığına göre filtreler; sonuçları başarı sırasına göre sıralar ve ÖSYM program kodlarıyla listeler. Bir öğrenci seçersen puan türü otomatik dolar; tahmini sıralamayı girince her program için Ulaşılabilir / Riskli / Zor durumunu gösterir.',
     usage: 'Öğrenciye tercih listesi hazırlarken — "sadece Tıp/Mühendislik, sadece İstanbul-Ankara-İzmir, şu sıralamaya uygun" gibi kriterlerle bölüm ararken.',
+  },
+  {
+    to: '/ek-yerlestirme',
+    label: 'Ek Yerleştirme',
+    icon: ListPlus,
+    step: 'Ek Yerleştirme Dönemi · Gerektiğinde',
+    body: 'ÖSYM Ek Yerleştirme Kılavuzu\'ndaki boş kontenjanlar. (1) Üstten kılavuz yılını seç; tablo, puan türü, il, üniversite türü, burs/indirim ve program/üniversite adıyla filtrele — "Sadece kontenjanı olanlar" ve "En küçük puanı boş olanlar" kutuları da var. (2) Bir satıra tıklayınca sağda genel / şehit-gazi yakını / 34 yaş üstü kadın kontenjanları, en küçük puanlar ve koşul metinleri açılır; en küçük puan "Dolmadı" ise puanı olan herkes tercih edebilir. Vakıf programlarında yıllık ücret ad üzerinden yaklaşık eşleşir, kesin değildir. (3) Öğrenciyi seç, programları "Listeye ekle" ile ekle (en fazla 24), sürükleyerek ya da ok butonlarıyla sırala, kalem başına not yaz ve Kaydet\'e bas. (4) Öğrencinin TYT/SAY/EA/SÖZ/DİL puanlarını girersen, puanı bir programın en küçük puanının altında kalan satırlarda kırmızı uyarı çıkar; puanlar yalnız bu tarayıcıda saklanır. (5) Yazdır, ÖSYM\'ye girilecek program kodlarını sıra numarasıyla tek sayfalık liste olarak basar.',
+    usage: 'Merkezî yerleştirmede hiçbir programa yerleşemeyen bir öğrenci için ek tercih listesi hazırlarken.',
   },
   {
     to: '/yonetim/kullanicilar',

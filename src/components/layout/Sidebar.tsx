@@ -9,6 +9,7 @@ import {
   BarChart2,
   BookOpen,
   Compass,
+  ListPlus,
   HelpCircle,
   Shield,
   UserCheck,
@@ -41,6 +42,7 @@ const MAIN_NAV_ITEMS: NavItem[] = [
   { to: '/raporlar', label: 'Raporlar', icon: BarChart2, permission: 'reports.view' },
   { to: '/mufredat', label: 'Müfredat', icon: BookOpen, permission: 'curriculum.manage' },
   { to: '/tercih', label: 'Tercih Sihirbazı', icon: Compass, permission: 'tercih.view' },
+  { to: '/ek-yerlestirme', label: 'Ek Yerleştirme', icon: ListPlus, permission: 'tercih.view' },
 ]
 
 const MANAGEMENT_NAV_ITEMS: NavItem[] = [

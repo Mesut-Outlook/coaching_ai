@@ -261,6 +261,59 @@ export type AttendanceRecord = {
   created_at: string
 }
 
+// Ek Yerleştirme modülü (bkz. supabase/schema.sql). Referans tablolar yalnız service role yazar.
+export type EkYerlestirmeProgrami = {
+  id: number
+  yil: number
+  tablo: 'onlisans' | 'lisans'
+  universite: string
+  universite_turu: 'devlet' | 'vakif' | 'kktc' | 'yurtdisi'
+  il: string | null
+  fakulte: string | null
+  program_kodu: number
+  program_adi: string
+  ogrenim_suresi: number | null
+  puan_turu: 'TYT' | 'SAY' | 'EA' | 'SÖZ' | 'DİL'
+  genel_ek_kont: number
+  sgy_ek_kont: number
+  k34_ek_kont: number
+  kosul_kodlari: number[]
+  en_kucuk_gk: number | null
+  en_kucuk_sgy: number | null
+  en_kucuk_34y: number | null
+  burs_indirim: string | null
+  kaynak_sayfa: number | null
+  created_at: string
+}
+
+export type EkYerlestirmeKosulu = {
+  yil: number
+  kosul_no: number
+  kisim: 1 | 2
+  metin: string
+}
+
+export type VakifOgrenimUcreti = {
+  id: number
+  yil: number
+  universite: string
+  duzey: string | null
+  program: string
+  ucret: number | null
+  aciklama: string | null
+}
+
+export type OgrenciTercihListesi = {
+  id: number
+  student_id: string
+  yil: number
+  donem: 'asil' | 'ek'
+  program_kodu: number
+  sira: number
+  notlar: string | null
+  created_at: string
+}
+
 // Supabase JS v2 generic client tipi için minimal Database şeması.
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
 
@@ -292,6 +345,10 @@ export type Database = {
       university_rankings: TableDef<UniversityRanking>
       attendance_records: TableDef<AttendanceRecord>
       audit_log: TableDef<AuditLogEntry>
+      ek_yerlestirme_programlari: TableDef<EkYerlestirmeProgrami>
+      ek_yerlestirme_kosullari: TableDef<EkYerlestirmeKosulu>
+      vakif_ogrenim_ucretleri: TableDef<VakifOgrenimUcreti>
+      ogrenci_tercih_listeleri: TableDef<OgrenciTercihListesi>
     }
     Views: Record<string, never>
     Functions: {
@@ -299,6 +356,10 @@ export type Database = {
       invitation_by_token: { Args: { p_token: string }; Returns: Json }
       audit_purge: { Args: { p_before: string }; Returns: Json }
       audit_stats: { Args: Record<string, never>; Returns: Json }
+      tercih_listesi_kaydet: {
+        Args: { p_student_id: string; p_yil: number; p_donem: 'asil' | 'ek'; p_items: Json }
+        Returns: undefined
+      }
       portal_login: { Args: { p_code: string }; Returns: Json }
       portal_dashboard: { Args: { p_code: string }; Returns: Json }
       portal_set_task_completed: {

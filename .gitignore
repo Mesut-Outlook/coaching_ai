@@ -40,3 +40,6 @@ backups/
 /*[Şş]ifre*
 /*password*
 /*secret*
+
+# Supabase CLI geçici dosyaları (link edilen proje ref, sürüm önbelleği)
+supabase/.temp/

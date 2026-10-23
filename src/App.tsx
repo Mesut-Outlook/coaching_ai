@@ -14,6 +14,7 @@ import ProgramPage from './pages/ProgramPage'
 import RaporlarPage from './pages/RaporlarPage'
 import MufredatPage from './pages/MufredatPage'
 import TercihPage from './pages/TercihPage'
+import EkYerlestirmePage from './pages/EkYerlestirmePage'
 import DevamsizlikPage from './pages/DevamsizlikPage'
 import YardimPage from './pages/YardimPage'
 import KullanicilarPage from './pages/yonetim/KullanicilarPage'
@@ -122,6 +123,14 @@ export default function App() {
                 element={
                   <RequirePermission perm="tercih.view">
                     <TercihPage />
+                  </RequirePermission>
+                }
+              />
+              <Route
+                path="/ek-yerlestirme"
+                element={
+                  <RequirePermission perm="tercih.view">
+                    <EkYerlestirmePage />
                   </RequirePermission>
                 }
               />

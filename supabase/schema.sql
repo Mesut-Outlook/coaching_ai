@@ -1517,7 +1517,7 @@ begin
     if TG_TABLE_NAME = 'students' then
       v_student := (v_rec->>'id')::uuid;
       v_inst := nullif(v_rec->>'institution_id','')::uuid;
-    elsif TG_TABLE_NAME in ('weekly_tasks','topic_measurements','coach_decisions','attendance_records','mock_exams') then
+    elsif TG_TABLE_NAME in ('weekly_tasks','topic_measurements','coach_decisions','attendance_records','mock_exams','ogrenci_tercih_listeleri') then
       v_student := nullif(v_rec->>'student_id','')::uuid;
       select s.institution_id into v_inst from students s where s.id = v_student;
     elsif TG_TABLE_NAME in ('mock_exam_sections','error_basket_items') then
@@ -1556,6 +1556,120 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------------
+-- Ek Yerleştirme modülü
+-- Referans tablolar (program/koşul/ücret) yalnız service role tarafından yazılır
+-- (seed:ek); university_rankings'e BİLİNÇLİ olarak FK yok — o seed tabloyu silip doldurur.
+-- ---------------------------------------------------------------------------
+create table if not exists ek_yerlestirme_programlari (
+  id bigserial primary key,
+  yil int not null,
+  tablo text not null check (tablo in ('onlisans', 'lisans')),
+  universite text not null,
+  universite_turu text not null check (universite_turu in ('devlet', 'vakif', 'kktc', 'yurtdisi')),
+  il text,
+  fakulte text,
+  program_kodu bigint not null,
+  program_adi text not null,
+  ogrenim_suresi int,
+  puan_turu text not null check (puan_turu in ('TYT', 'SAY', 'EA', 'SÖZ', 'DİL')),
+  genel_ek_kont int not null default 0,
+  sgy_ek_kont int not null default 0,
+  k34_ek_kont int not null default 0,
+  kosul_kodlari int[] not null default '{}',
+  en_kucuk_gk numeric,
+  en_kucuk_sgy numeric,
+  en_kucuk_34y numeric,
+  burs_indirim text,
+  kaynak_sayfa int,
+  created_at timestamptz not null default now(),
+  unique (yil, program_kodu)
+);
+
+create table if not exists ek_yerlestirme_kosullari (
+  yil int not null,
+  kosul_no int not null,
+  kisim smallint not null check (kisim in (1, 2)),
+  metin text not null,
+  primary key (yil, kosul_no)
+);
+
+create table if not exists vakif_ogrenim_ucretleri (
+  id bigserial primary key,
+  yil int not null,
+  universite text not null,
+  duzey text,
+  program text not null,
+  ucret numeric,
+  aciklama text,
+  unique nulls not distinct (yil, universite, duzey, program)
+);
+
+create table if not exists ogrenci_tercih_listeleri (
+  id bigserial primary key,
+  student_id uuid not null references students(id) on delete cascade,
+  yil int not null,
+  donem text not null check (donem in ('asil', 'ek')),
+  program_kodu bigint not null,
+  sira int not null check (sira between 1 and 24),
+  notlar text,
+  created_at timestamptz not null default now(),
+  unique (student_id, yil, donem, sira),
+  unique (student_id, yil, donem, program_kodu)
+);
+create index if not exists ogrenci_tercih_listeleri_student_idx on ogrenci_tercih_listeleri(student_id);
+
+alter table ek_yerlestirme_programlari enable row level security;
+alter table ek_yerlestirme_kosullari enable row level security;
+alter table vakif_ogrenim_ucretleri enable row level security;
+alter table ogrenci_tercih_listeleri enable row level security;
+
+drop policy if exists "ek_yerlestirme_programlari: giriş yapan okur" on ek_yerlestirme_programlari;
+create policy "ek_yerlestirme_programlari: giriş yapan okur" on ek_yerlestirme_programlari
+  for select to authenticated using (true);
+drop policy if exists "ek_yerlestirme_kosullari: giriş yapan okur" on ek_yerlestirme_kosullari;
+create policy "ek_yerlestirme_kosullari: giriş yapan okur" on ek_yerlestirme_kosullari
+  for select to authenticated using (true);
+drop policy if exists "vakif_ogrenim_ucretleri: giriş yapan okur" on vakif_ogrenim_ucretleri;
+create policy "vakif_ogrenim_ucretleri: giriş yapan okur" on vakif_ogrenim_ucretleri
+  for select to authenticated using (true);
+
+drop policy if exists "ogrenci_tercih_listeleri: okuma yetkisi" on ogrenci_tercih_listeleri;
+create policy "ogrenci_tercih_listeleri: okuma yetkisi" on ogrenci_tercih_listeleri for select using (
+  (select student_permission(student_id, 'tercih.view'))
+);
+drop policy if exists "ogrenci_tercih_listeleri: yönetim yetkisi" on ogrenci_tercih_listeleri;
+create policy "ogrenci_tercih_listeleri: yönetim yetkisi" on ogrenci_tercih_listeleri for all using (
+  (select student_permission(student_id, 'tercih.view'))
+) with check (
+  (select student_permission(student_id, 'tercih.view'))
+);
+
+-- Listeyi tek transaction'da değiştirir (sil + ekle). SECURITY INVOKER: RLS çağıranın
+-- yetkisiyle işler. Sırayı değiştirmek unique(sira) ihlali yaratmasın diye önce silinir.
+create or replace function tercih_listesi_kaydet(
+  p_student_id uuid, p_yil int, p_donem text, p_items jsonb
+) returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if jsonb_array_length(p_items) > 24 then
+    raise exception 'Tercih listesi en fazla 24 program içerebilir.';
+  end if;
+
+  delete from ogrenci_tercih_listeleri
+  where student_id = p_student_id and yil = p_yil and donem = p_donem;
+
+  insert into ogrenci_tercih_listeleri (student_id, yil, donem, program_kodu, sira, notlar)
+  select p_student_id, p_yil, p_donem, x.program_kodu, x.sira, x.notlar
+  from jsonb_to_recordset(p_items) as x(program_kodu bigint, sira int, notlar text);
+end;
+$$;
+revoke all on function tercih_listesi_kaydet(uuid, int, text, jsonb) from public, anon, authenticated;
+grant execute on function tercih_listesi_kaydet(uuid, int, text, jsonb) to authenticated;
+
 -- İzlenen tablolar. university_rankings (66 bin satırlık referans veri) ve
 -- permission_catalog (seed) bilinçli olarak dışarıda.
 do $$
@@ -1564,7 +1678,8 @@ begin
   foreach t in array array[
     'students','weekly_tasks','topic_measurements','coach_decisions',
     'attendance_records','mock_exams','mock_exam_sections','error_basket_items',
-    'memberships','invitations','roles','institutions','subjects','topics'
+    'memberships','invitations','roles','institutions','subjects','topics',
+    'ogrenci_tercih_listeleri'
   ]
   loop
     execute format('drop trigger if exists trg_audit_%1$s on %1$I', t);

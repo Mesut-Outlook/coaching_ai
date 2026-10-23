@@ -15,6 +15,10 @@ import type {
   AbsenceStatus,
   AttendanceRecord,
   CoachDecision,
+  EkYerlestirmeKosulu,
+  EkYerlestirmeProgrami,
+  OgrenciTercihListesi,
+  VakifOgrenimUcreti,
   Curriculum,
   Database,
   ErrorBasketItem,
@@ -89,6 +93,10 @@ export type _rowErrorBasketItems = Expect<Equals<Row<'error_basket_items'>, Erro
 export type _rowWeeklyTasks = Expect<Equals<Row<'weekly_tasks'>, WeeklyTask>>
 export type _rowUniversityRankings = Expect<Equals<Row<'university_rankings'>, UniversityRanking>>
 export type _rowAttendanceRecords = Expect<Equals<Row<'attendance_records'>, AttendanceRecord>>
+export type _rowEkProgram = Expect<Equals<Row<'ek_yerlestirme_programlari'>, EkYerlestirmeProgrami>>
+export type _rowEkKosul = Expect<Equals<Row<'ek_yerlestirme_kosullari'>, EkYerlestirmeKosulu>>
+export type _rowVakifUcret = Expect<Equals<Row<'vakif_ogrenim_ucretleri'>, VakifOgrenimUcreti>>
+export type _rowTercihListesi = Expect<Equals<Row<'ogrenci_tercih_listeleri'>, OgrenciTercihListesi>>
 
 /**
  * Tablo listesi tam — bir tablo sessizce düşerse (veya adı değişirse) burada patlar.
@@ -115,6 +123,10 @@ export type _tableNames = Expect<
     | 'university_rankings'
     | 'attendance_records'
     | 'audit_log'
+    | 'ek_yerlestirme_programlari'
+    | 'ek_yerlestirme_kosullari'
+    | 'vakif_ogrenim_ucretleri'
+    | 'ogrenci_tercih_listeleri'
   >
 >
 

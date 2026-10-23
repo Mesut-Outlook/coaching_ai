@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Trash2, ChevronDown, SlidersHorizontal, GraduationCap, Printer, Send, MessageSquare, X } from 'lucide-react'
+import { Search, Trash2, ChevronDown, SlidersHorizontal, GraduationCap, Printer, Send, MessageSquare } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import PageHeader from '../components/layout/PageHeader'
+import { ChipMultiSelect } from '../components/common/ChipMultiSelect'
+import { uniqSorted, turkishRegex, foldTr } from '../lib/turkishSearch'
 import type { Student, UniversityRanking, ScoreType } from '../types/database'
 
-// YÖK Atlas verisinde en son TAM yıl 2025 (YKS-2026 yerleşme sıralamaları henüz yok).
-const REFERENCE_YEARS = [2025, 2024, 2023]
+// YÖK Atlas verisinde en son TAM yıl 2026.
+const REFERENCE_YEARS = [2026, 2025, 2024]
 const SCORE_TYPES: ScoreType[] = ['SAY', 'EA', 'SÖZ', 'DİL', 'TYT']
 const RESULT_LIMIT = 300
 
@@ -28,39 +30,6 @@ const EMPTY_FACETS: FacetOptions = {
   degreeLevels: [],
   feeTypes: [],
   educationTypes: [],
-}
-
-function uniqSorted(values: (string | null)[]): string[] {
-  return Array.from(new Set(values.filter((v): v is string => !!v))).sort((a, b) =>
-    a.localeCompare(b, 'tr'),
-  )
-}
-
-// --- Türkçe karakter duyarsız arama ---
-// "tip" yazınca "Tıp" bulunsun. Sunucu tarafı: her harfi Türkçe varyantlarını
-// içeren regex sınıfına çevirip PostgREST imatch (~*) ile ara. İstemci: ASCII'ye katla.
-function escapeRegex(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-const TR_CLASS: Record<string, string> = {
-  i: '[iıİI]', 'ı': '[iıİI]',
-  s: '[sşSŞ]', 'ş': '[sşSŞ]',
-  c: '[cçCÇ]', 'ç': '[cçCÇ]',
-  g: '[gğGĞ]', 'ğ': '[gğGĞ]',
-  u: '[uüUÜ]', 'ü': '[uüUÜ]',
-  o: '[oöOÖ]', 'ö': '[oöOÖ]',
-}
-function turkishRegex(term: string): string {
-  return Array.from(term.trim())
-    .map((ch) => TR_CLASS[ch.toLocaleLowerCase('tr')] ?? escapeRegex(ch))
-    .join('')
-}
-function foldTr(s: string): string {
-  return s
-    .toLocaleLowerCase('tr')
-    .replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ç/g, 'c')
-    .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o')
-    .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u')
 }
 
 // Öğrencinin tahmini sıralamasına göre bir programın ulaşılabilirliği.
@@ -88,84 +57,12 @@ function statusBand(label: StatusLabel, r: number): [number, number] {
   return [0, r / RISK_FACTOR] // Zor
 }
 
-// Ortak çip + otomatik-tamamlama seçici (Program, Üniversite, Şehir aynı deseni kullanır).
-function ChipMultiSelect({
-  label, placeholder, selected, onAdd, onRemove,
-  query, setQuery, open, setOpen, suggestions, loading,
-}: {
-  label: string
-  placeholder: string
-  selected: string[]
-  onAdd: (v: string) => void
-  onRemove: (v: string) => void
-  query: string
-  setQuery: (v: string) => void
-  open: boolean
-  setOpen: (v: boolean) => void
-  suggestions: string[]
-  loading?: boolean
-}) {
-  return (
-    <div className="field" style={{ position: 'relative' }}>
-      <label>{label}{selected.length > 0 ? ` (${selected.length})` : ''}</label>
-      <div
-        onClick={() => setOpen(true)}
-        style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minHeight: 40, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 9, background: 'var(--surface)', cursor: 'text' }}
-      >
-        {selected.map((v) => (
-          <span key={v} className="chip chip-say" style={{ gap: 4 }}>
-            {v}
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onRemove(v) }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'inline-flex', color: 'inherit' }}
-              title="Kaldır"
-            >
-              <X size={12} />
-            </button>
-          </span>
-        ))}
-        <input
-          type="text"
-          placeholder={selected.length ? 'Başka ekle…' : placeholder}
-          value={query}
-          onFocus={() => setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 150)}
-          onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
-          style={{ flex: 1, minWidth: 90, border: 'none', outline: 'none', background: 'transparent', color: 'var(--ink)', fontSize: 13.5, padding: '2px 0' }}
-        />
-      </div>
-      {open && (
-        <div className="card" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 25, marginTop: 4, padding: 6, maxHeight: 260, overflowY: 'auto', boxShadow: 'var(--shadow-card)' }}>
-          {loading && <div style={{ padding: 8, color: 'var(--ink-soft)', fontSize: 13 }}>Aranıyor…</div>}
-          {!loading && suggestions.length === 0 && (
-            <div style={{ padding: 8, color: 'var(--ink-soft)', fontSize: 13 }}>
-              {query.trim() ? 'Eşleşen yok' : 'Yazmaya başlayın…'}
-            </div>
-          )}
-          {!loading && suggestions.map((s) => (
-            <button
-              key={s}
-              type="button"
-              className="btn btn-ghost btn-sm"
-              style={{ width: '100%', justifyContent: 'flex-start', textAlign: 'left', border: 'none', fontWeight: 500 }}
-              onMouseDown={(e) => { e.preventDefault(); onAdd(s) }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 export default function TercihPage() {
   const [facets, setFacets] = useState<FacetOptions>(EMPTY_FACETS)
   const [students, setStudents] = useState<Student[]>([])
 
   // Filtreler (referanstaki 11 alan)
-  const [year, setYear] = useState(2025)
+  const [year, setYear] = useState(2026)
   const [scoreType, setScoreType] = useState('')
   // Üniversite: otomatik-tamamlamalı çoklu seçim (Türkçe-duyarsız)
   const [selectedUniversities, setSelectedUniversities] = useState<string[]>([])
@@ -216,13 +113,13 @@ export default function TercihPage() {
       const { count } = await supabase
         .from('university_rankings')
         .select('*', { count: 'exact', head: true })
-        .eq('year', 2025)
+        .eq('year', 2026)
       const pages = Math.max(1, Math.ceil((count ?? 0) / PAGE))
       const reqs = Array.from({ length: pages }, (_, i) =>
         supabase
           .from('university_rankings')
           .select('city, university_type, degree_level, fee_type, education_type')
-          .eq('year', 2025)
+          .eq('year', 2026)
           .range(i * PAGE, i * PAGE + PAGE - 1),
       )
       const results = await Promise.all(reqs)
@@ -500,7 +397,7 @@ export default function TercihPage() {
 
       <PageHeader
         title="Tercih Sihirbazı"
-        subtitle="YÖK Atlas 2025 taban puan ve başarı sırası verisiyle bölüm arama ve tercih listesi oluşturma"
+        subtitle="YÖK Atlas 2026 taban puan ve başarı sırası verisiyle bölüm arama ve tercih listesi oluşturma"
       />
 
       {!isSupabaseConfigured && (

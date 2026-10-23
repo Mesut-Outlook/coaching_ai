@@ -107,6 +107,7 @@ Uygulama **canlıda ve kullanımda**: https://netlik-koc-paneli.vercel.app
 - **Tercih listesini öğrenciye kaydetme** (DB'de saklama) — opsiyonel, yapılmadı.
 - **Müfredat "Sistem Entegrasyon Promptu"** (konu bağımlılık matrisi, 40 haftalık sarmal program) — kullanıcı onayı bekliyor, büyük ayrı özellik.
 - **GitHub Actions yedeği** secret'lar eklenmezse her gece başarısız olur; repo private değilse artifact'lar öğrenci PII'si sızdırır.
+- **Supabase CLI + MCP + direnv kurulumu** — Aşama 0 keşfi bitti, kurulum **duraklatıldı** (kullanıcı, 2026-09-22). Plan ve bulgular dosyanın **en sonunda**: "BACKLOG — Supabase CLI + MCP (read-only) + direnv kurulumu".
 
 ### Yeni iş alan herkesin bilmesi gerekenler
 `CLAUDE.md` → "Teslimden önce çalıştırılacaklar" ve "Bilinmesi gereken tuzaklar" bölümleri.
@@ -2298,3 +2299,97 @@ Hazırlık tamam, **şema DEĞİŞMEYECEK**:
 
 **Bugünkü durum:** 7. sınıf öğrencisi eklenirse müfredat ekranlarında
 "Bu sınıf için müfredat henüz yüklenmemiş." boş durumunu görür — çökmez, yanlış veri göstermez.
+
+---
+
+## 📥 BACKLOG — Supabase CLI + MCP (read-only) + direnv kurulumu (kullanıcı isteği, 2026-09-22)
+
+**Durum: Aşama 0 (keşif) TAMAMLANDI → kullanıcı "daha sonra devam edeceğiz" dedi. Hiçbir dosya değiştirilmedi, hiçbir araç kurulmadı.**
+
+Amaç: şema yönetimini `supabase migration` + `supabase db push` akışına taşımak, okuma/denetim
+için read-only Supabase MCP bağlamak, sırları `direnv`/`.envrc` ile yönetmek.
+
+### Kullanıcının süreç kuralı (bu iş boyunca geçerli)
+Her adımda önce **ne yapılacağı + hangi dosyalara dokunulacağı** söylenir, sonra **onay beklenir**.
+Onaysız dosya değişikliği / komut / DB yazması YOK. Sırlar sohbete yazdırılmaz, benden istenmez;
+dosyalara yalnız **placeholder** konur, değerleri kullanıcı elle girer. Hata çıkarsa kendi başına
+düzeltme yok: hata + olası neden + öneri sunulur, onay beklenir.
+
+### Aşama 0 bulguları (tekrar araştırmaya gerek yok)
+- **Sır sızıntısı YOK.** Tüm git geçmişi JWT / `sbp_` desenleriyle tarandı; tek eşleşme
+  `.env.example` içindeki 13 karakterlik `eyJhbGciOi...` **placeholder**'ı.
+- `service_role` yalnızca `scripts/*.ts` (8 dosya) ve `.github/workflows/backup.yml` içinde;
+  `VITE_` öneki taşımıyor. `src/` ve derlenmiş `dist/` temiz. ✅
+- `.gitignore`'daki `.env*` deseni `.env`, `.env.local` **ve** `.envrc`'yi kapsıyor.
+  Eksik olan tek satır: `supabase/.temp/`. (`.env.example` + `.env.noauth` takipli ama ikisi de sırsız.)
+- Makinede: **Docker 29.8.1 var** (`db pull` için gerekli). `supabase` CLI, `direnv`, `gh` **yok**.
+  Kabuk zsh (fish yapılandırması da mevcut), npm + Node 22.
+- `supabase/` klasörü **CLI projesi değil**: `config.toml` ve `migrations/` yok; içinde
+  `schema.sql` (1645 satır, idempotent), `rollback_rbac.sql`, `patch_portal_actor.sql`, `test/`.
+- Canlı şema: 18 tablo, 18'inde RLS açık, 43 policy, 25 SECURITY DEFINER fonksiyon, `student-photos` bucket.
+
+### Karara bağlanacak üç şey — ✅ KARARLAŞTI (kullanıcı, 2026-09-22): üçünde de öneri seçildi
+→ CLI: `paru -S supabase-bin` · schema.sql: dondur, migration tek kaynak · tipler: ayrı `database.generated.ts` + fark raporu.
+1. **CLI kurulumu:** `paru -S supabase-bin` (önerilen — repoya ve Vercel build'ine dokunmaz)
+   mi, `npm i -D supabase` (sürüm package.json'da sabitlenir) mi?
+2. **`schema.sql`'in kaderi:** `supabase db pull` baseline migration üretince iki kaynak
+   (schema.sql + migrations) kayma riski doğurur. Öneri: migration'lar tek kaynak olur,
+   `schema.sql` "arşiv, artık düzenlenmez" notuyla dondurulur, `scripts/checkSchemaSync.ts`
+   migration'lara çevrilir. Bu, CLAUDE.md'deki **"şemayı kullanıcı SQL Editor'de uygular"**
+   kuralını da değiştirir — o bölüm ancak kurulum bitince güncellenmeli.
+3. **Tip üretimi:** `supabase gen types` çıktısı **elle yazılmış `src/types/database.ts`'in
+   üzerine YAZILMAMALI** (`checkSchemaSync.ts` + `database.test-d.ts` ona bağlı, satır tipleri
+   `type` olmak zorunda). Ayrı `src/types/database.generated.ts` üretilip fark raporlanmalı.
+
+### Devam edilince izlenecek adımlar
+1. `.gitignore` → `supabase/.temp/` (+ açıklık için `.envrc`).
+2. `direnv` kurulumu (sudo, kullanıcı çalıştırır) + zsh/fish hook; `.envrc` **placeholder** ile:
+   `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` (+ `db pull`/`link` için `SUPABASE_DB_PASSWORD`).
+   Değerleri kullanıcı girer, `direnv allow` yapar. ⚠️ Ajanın komut kabuğu direnv hook'unu
+   tetiklemez → doğrulama ve komutlar `direnv exec . <komut>` ile koşulmalı.
+3. `.mcp.json` (project scope, http, `read_only=true`, `${VAR}` referansları — sırsız, commit'lenebilir).
+   ⚠️ MCP'nin yüklenmesi için **`claude` oturumu, direnv yüklü bir kabukta proje klasöründen
+   yeniden başlatılmalı**; sonra `/mcp` ile doğrulanır.
+4. `supabase init` (yalnız `config.toml` ekler) → `supabase link --project-ref …`.
+5. `supabase db pull` → baseline migration özeti + `schema.sql` ile fark raporu.
+   ⚠️ Bu komut **uzaktaki migration geçmiş tablosunu güncellemeyi teklif eder** = canlıya küçük
+   bir yazma. O anda ayrıca onay alınmalı.
+6. MCP ile okuma testi: tablo listesi + security/performance advisor uyarıları — raporla, **düzeltme**.
+7. Tip üretimi (yukarıdaki 3. karara göre ayrı dosyaya).
+8. Client/env incelemesi raporu (ön bulgu: kritik sorun görünmüyor).
+9. CLAUDE.md'ye kalıcı "Veritabanı çalışma kuralları (Supabase)" bölümü — migration zorunluluğu,
+   MCP'nin read-only olması, her DB değişikliğinde uyarı bloğu + `db push --dry-run` + onay,
+   yıkıcı işlemlerde ekstra uyarı, her tabloda RLS, service_role asla istemcide,
+   advisor düzeltmeleri konu konu ayrı migration. **Kurulum bitmeden bu kurallar yazılmadı**
+   (henüz yürürlükte olmayan bir akışı kural diye yazmak yanıltıcı olurdu).
+10. Kapanış: kurulum özeti, açık riskler, önerilen ilk düzeltmeler.
+
+---
+
+## 🚧 EK YERLEŞTİRME MODÜLÜ (kullanıcı onayı, 2026-10-23) — Opus planı
+
+Kaynak görev: `~/Downloads/ek-yerlestirme-claude-code-gorev.md`. Eski 2026-09-22 planı (`placement_rounds`) bununla **değiştirildi**; ondan alınanlar: PDF→JSON→seed hattı, seed yalnız o yılı yazar, il bilgisi `university_rankings`'ten salt-okur join.
+
+**Değişmezler:** `university_rankings`, `/tercih`, `TercihPage` davranışı ve `seed:universities` değişmez. Yeni tablolar `university_rankings`'e **FK kurmaz** (o seed tabloyu silip doldurduğu için).
+
+**Şema (E1):**
+- `ek_yerlestirme_programlari`: yil, tablo (onlisans|lisans), universite, universite_turu (devlet|vakif|kktc|yurtdisi), il, fakulte, program_kodu bigint, program_adi, ogrenim_suresi, puan_turu, genel/sgy/k34 ek kontenjan (int not null default 0; PDF'te boş = 0), kosul_kodlari int[], en_kucuk_gk/sgy/34y numeric **null** (boş = merkezde dolmadı), burs_indirim, kaynak_sayfa; unique (yil, program_kodu).
+- `ek_yerlestirme_kosullari`: (yil, kosul_no) pk, kisim 1|2, metin.
+- `vakif_ogrenim_ucretleri`: yil, universite, duzey, program, ucret, not. Kodu yok → ad üzerinden YAKLAŞIK eşleşme, UI'da öyle etiketlenir.
+- `ogrenci_tercih_listeleri`: student_id (cascade), yil, donem ('asil'|'ek'), program_kodu, sira 1..24, notlar; unique (student_id, yil, donem, sira) + (…, program_kodu). Kayıt `tercih_listesi_kaydet(student, yil, donem, items jsonb)` (security invoker, tek transaction'da sil+ekle). RLS `student_permission(student_id,'tercih.view')`. Audit listesine eklenir.
+- Program, koşul ve ücret tabloları: authenticated okur, yazma yalnız service role.
+
+**Durum (2026-10-23):** ✅ E1 · E2 · E3 · E4 · E5 tamam, Opus kontrolünden geçti (build + test:types + lint 30→30 + verify:schema + test:audit + Docker eski→yeni→yeni). **Commit'lenmedi.** Kullanıcıyı bekleyen: (1) `supabase/schema.sql`'i SQL Editor'de çalıştır, (2) `npm run seed:ek -- --yil 2026 --dosya data/ek-yerlestirme/2026-ornek.json`, (3) `/ek-yerlestirme`'yi tarayıcıda uçtan uca dene. Bilinen küçük eksik: yıl/öğrenci değişince kaydedilmemiş liste için uyarı yok.
+
+**Paketler:** E1 şema+tipler (Sonnet alt ajan) · E2 örnek veri + `seed:ek` (Haiku) · E3 `ChipMultiSelect` + Türkçe arama ortak dosyaya, davranış değişmez (Haiku) · E4 `/ek-yerlestirme` sayfası + menü (Sonnet) · E5 `docs/ek-yerlestirme.md` (Opus) · **E6 tam PDF parser (agy, sonraki oturum)** · **T1 YÖK Atlas 2026 güncellemesi (agy)**. Her paketten sonra Opus kontrolü: build + test:types + lint.
+
+### 📥 agy — T1: YÖK Atlas 2026 verisi + yıl-kayması guard'ı
+**Durum: hazır, alınabilir.** 2026-10-23 kontrolü: API'de Koç Tıp İng. Burslu (203910699) için etiketsiz alanlarda **65 sıra / 552.86** var (= 2026 yerleştirmesi). `basariSirasi1` = 43 / 550.89 (= 2025). `yil` alanı hâlâ 2026 (kılavuz yılı).
+- ⚠️ `scripts/fetchFromYokAtlasApi.py` bu haliyle koşarsa 2026 verisini **2025** diye yazar ve bütün yıllar −1 kayar. Etiketsiz alanın yılı `yil`'den TÜRETİLEMEZ: Temmuz'da yil−1, Ekim'de yil.
+- Yapılacak: script `--son-yil 2026` parametresi alsın; etiketsiz→son-yil, suffix1/2/3→son-yil−1/−2/−3.
+- **Çapa guard'ı:** yazmadan önce 203910699 ve 2–3 başka programın suffix1 değerlerini mevcut `src/data/universityRankings.json`'daki (son-yil−1) kaydıyla karşılaştır. Tutmazsa **hata verip dur**.
+- Sonra çek → `npm run seed:universities` (kullanıcı onayıyla, canlıya yazar). `/tercih`'in varsayılan yılı 2025 → 2026 olmalı (TercihPage'de yıl sabiti var mı kontrol et).
+- Kabul: DB'de 203910699 için 2026 = 65 / 552.86 ve 2025 = 43 / 550.89; build + lint.
+
+### 📥 agy — E6: Ek Yerleştirme tam PDF parser (sonraki oturum)
+Ayrıntılar `docs/ek-yerlestirme.md` → "Tam içe aktarma planı" (E5'te yazılacak).
