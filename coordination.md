@@ -107,7 +107,6 @@ Uygulama **canlıda ve kullanımda**: https://netlik-koc-paneli.vercel.app
 - **Tercih listesini öğrenciye kaydetme** (DB'de saklama) — opsiyonel, yapılmadı.
 - **Müfredat "Sistem Entegrasyon Promptu"** (konu bağımlılık matrisi, 40 haftalık sarmal program) — kullanıcı onayı bekliyor, büyük ayrı özellik.
 - **GitHub Actions yedeği** secret'lar eklenmezse her gece başarısız olur; repo private değilse artifact'lar öğrenci PII'si sızdırır.
-- **Supabase CLI + MCP + direnv kurulumu** — Aşama 0 keşfi bitti, kurulum **duraklatıldı** (kullanıcı, 2026-09-22). Plan ve bulgular dosyanın **en sonunda**: "BACKLOG — Supabase CLI + MCP (read-only) + direnv kurulumu".
 
 ### Yeni iş alan herkesin bilmesi gerekenler
 `CLAUDE.md` → "Teslimden önce çalıştırılacaklar" ve "Bilinmesi gereken tuzaklar" bölümleri.
@@ -2299,70 +2298,6 @@ Hazırlık tamam, **şema DEĞİŞMEYECEK**:
 
 **Bugünkü durum:** 7. sınıf öğrencisi eklenirse müfredat ekranlarında
 "Bu sınıf için müfredat henüz yüklenmemiş." boş durumunu görür — çökmez, yanlış veri göstermez.
-
----
-
-## 📥 BACKLOG — Supabase CLI + MCP (read-only) + direnv kurulumu (kullanıcı isteği, 2026-09-22)
-
-**Durum: Aşama 0 (keşif) TAMAMLANDI → kullanıcı "daha sonra devam edeceğiz" dedi. Hiçbir dosya değiştirilmedi, hiçbir araç kurulmadı.**
-
-Amaç: şema yönetimini `supabase migration` + `supabase db push` akışına taşımak, okuma/denetim
-için read-only Supabase MCP bağlamak, sırları `direnv`/`.envrc` ile yönetmek.
-
-### Kullanıcının süreç kuralı (bu iş boyunca geçerli)
-Her adımda önce **ne yapılacağı + hangi dosyalara dokunulacağı** söylenir, sonra **onay beklenir**.
-Onaysız dosya değişikliği / komut / DB yazması YOK. Sırlar sohbete yazdırılmaz, benden istenmez;
-dosyalara yalnız **placeholder** konur, değerleri kullanıcı elle girer. Hata çıkarsa kendi başına
-düzeltme yok: hata + olası neden + öneri sunulur, onay beklenir.
-
-### Aşama 0 bulguları (tekrar araştırmaya gerek yok)
-- **Sır sızıntısı YOK.** Tüm git geçmişi JWT / `sbp_` desenleriyle tarandı; tek eşleşme
-  `.env.example` içindeki 13 karakterlik `eyJhbGciOi...` **placeholder**'ı.
-- `service_role` yalnızca `scripts/*.ts` (8 dosya) ve `.github/workflows/backup.yml` içinde;
-  `VITE_` öneki taşımıyor. `src/` ve derlenmiş `dist/` temiz. ✅
-- `.gitignore`'daki `.env*` deseni `.env`, `.env.local` **ve** `.envrc`'yi kapsıyor.
-  Eksik olan tek satır: `supabase/.temp/`. (`.env.example` + `.env.noauth` takipli ama ikisi de sırsız.)
-- Makinede: **Docker 29.8.1 var** (`db pull` için gerekli). `supabase` CLI, `direnv`, `gh` **yok**.
-  Kabuk zsh (fish yapılandırması da mevcut), npm + Node 22.
-- `supabase/` klasörü **CLI projesi değil**: `config.toml` ve `migrations/` yok; içinde
-  `schema.sql` (1645 satır, idempotent), `rollback_rbac.sql`, `patch_portal_actor.sql`, `test/`.
-- Canlı şema: 18 tablo, 18'inde RLS açık, 43 policy, 25 SECURITY DEFINER fonksiyon, `student-photos` bucket.
-
-### Karara bağlanacak üç şey — ✅ KARARLAŞTI (kullanıcı, 2026-09-22): üçünde de öneri seçildi
-→ CLI: `paru -S supabase-bin` · schema.sql: dondur, migration tek kaynak · tipler: ayrı `database.generated.ts` + fark raporu.
-1. **CLI kurulumu:** `paru -S supabase-bin` (önerilen — repoya ve Vercel build'ine dokunmaz)
-   mi, `npm i -D supabase` (sürüm package.json'da sabitlenir) mi?
-2. **`schema.sql`'in kaderi:** `supabase db pull` baseline migration üretince iki kaynak
-   (schema.sql + migrations) kayma riski doğurur. Öneri: migration'lar tek kaynak olur,
-   `schema.sql` "arşiv, artık düzenlenmez" notuyla dondurulur, `scripts/checkSchemaSync.ts`
-   migration'lara çevrilir. Bu, CLAUDE.md'deki **"şemayı kullanıcı SQL Editor'de uygular"**
-   kuralını da değiştirir — o bölüm ancak kurulum bitince güncellenmeli.
-3. **Tip üretimi:** `supabase gen types` çıktısı **elle yazılmış `src/types/database.ts`'in
-   üzerine YAZILMAMALI** (`checkSchemaSync.ts` + `database.test-d.ts` ona bağlı, satır tipleri
-   `type` olmak zorunda). Ayrı `src/types/database.generated.ts` üretilip fark raporlanmalı.
-
-### Devam edilince izlenecek adımlar
-1. `.gitignore` → `supabase/.temp/` (+ açıklık için `.envrc`).
-2. `direnv` kurulumu (sudo, kullanıcı çalıştırır) + zsh/fish hook; `.envrc` **placeholder** ile:
-   `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` (+ `db pull`/`link` için `SUPABASE_DB_PASSWORD`).
-   Değerleri kullanıcı girer, `direnv allow` yapar. ⚠️ Ajanın komut kabuğu direnv hook'unu
-   tetiklemez → doğrulama ve komutlar `direnv exec . <komut>` ile koşulmalı.
-3. `.mcp.json` (project scope, http, `read_only=true`, `${VAR}` referansları — sırsız, commit'lenebilir).
-   ⚠️ MCP'nin yüklenmesi için **`claude` oturumu, direnv yüklü bir kabukta proje klasöründen
-   yeniden başlatılmalı**; sonra `/mcp` ile doğrulanır.
-4. `supabase init` (yalnız `config.toml` ekler) → `supabase link --project-ref …`.
-5. `supabase db pull` → baseline migration özeti + `schema.sql` ile fark raporu.
-   ⚠️ Bu komut **uzaktaki migration geçmiş tablosunu güncellemeyi teklif eder** = canlıya küçük
-   bir yazma. O anda ayrıca onay alınmalı.
-6. MCP ile okuma testi: tablo listesi + security/performance advisor uyarıları — raporla, **düzeltme**.
-7. Tip üretimi (yukarıdaki 3. karara göre ayrı dosyaya).
-8. Client/env incelemesi raporu (ön bulgu: kritik sorun görünmüyor).
-9. CLAUDE.md'ye kalıcı "Veritabanı çalışma kuralları (Supabase)" bölümü — migration zorunluluğu,
-   MCP'nin read-only olması, her DB değişikliğinde uyarı bloğu + `db push --dry-run` + onay,
-   yıkıcı işlemlerde ekstra uyarı, her tabloda RLS, service_role asla istemcide,
-   advisor düzeltmeleri konu konu ayrı migration. **Kurulum bitmeden bu kurallar yazılmadı**
-   (henüz yürürlükte olmayan bir akışı kural diye yazmak yanıltıcı olurdu).
-10. Kapanış: kurulum özeti, açık riskler, önerilen ilk düzeltmeler.
 
 ---
 
