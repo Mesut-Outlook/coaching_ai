@@ -2383,13 +2383,20 @@ Kaynak görev: `~/Downloads/ek-yerlestirme-claude-code-gorev.md`. Eski 2026-09-2
 
 **Paketler:** E1 şema+tipler (Sonnet alt ajan) · E2 örnek veri + `seed:ek` (Haiku) · E3 `ChipMultiSelect` + Türkçe arama ortak dosyaya, davranış değişmez (Haiku) · E4 `/ek-yerlestirme` sayfası + menü (Sonnet) · E5 `docs/ek-yerlestirme.md` (Opus) · **E6 tam PDF parser (agy, sonraki oturum)** · **T1 YÖK Atlas 2026 güncellemesi (agy)**. Her paketten sonra Opus kontrolü: build + test:types + lint.
 
-### 📥 agy — T1: YÖK Atlas 2026 verisi + yıl-kayması guard'ı
-**Durum: hazır, alınabilir.** 2026-10-23 kontrolü: API'de Koç Tıp İng. Burslu (203910699) için etiketsiz alanlarda **65 sıra / 552.86** var (= 2026 yerleştirmesi). `basariSirasi1` = 43 / 550.89 (= 2025). `yil` alanı hâlâ 2026 (kılavuz yılı).
-- ⚠️ `scripts/fetchFromYokAtlasApi.py` bu haliyle koşarsa 2026 verisini **2025** diye yazar ve bütün yıllar −1 kayar. Etiketsiz alanın yılı `yil`'den TÜRETİLEMEZ: Temmuz'da yil−1, Ekim'de yil.
-- Yapılacak: script `--son-yil 2026` parametresi alsın; etiketsiz→son-yil, suffix1/2/3→son-yil−1/−2/−3.
-- **Çapa guard'ı:** yazmadan önce 203910699 ve 2–3 başka programın suffix1 değerlerini mevcut `src/data/universityRankings.json`'daki (son-yil−1) kaydıyla karşılaştır. Tutmazsa **hata verip dur**.
-- Sonra çek → `npm run seed:universities` (kullanıcı onayıyla, canlıya yazar). `/tercih`'in varsayılan yılı 2025 → 2026 olmalı (TercihPage'de yıl sabiti var mı kontrol et).
-- Kabul: DB'de 203910699 için 2026 = 65 / 552.86 ve 2025 = 43 / 550.89; build + lint.
+### 📥 agy — T1: YÖK Atlas 2026 verisi + yıl-kayması guard'ı [✅ TAMAMLANDI VE CANLIDA DOĞRULANDI]
+**Durum: TAMAMLANDI.** (2026-10-23)
+- [x] `scripts/fetchFromYokAtlasApi.py` script'ine `--son-yil` parametresi eklendi (varsayılan 2026); etiketsiz→son-yil, suffix1/2/3→son-yil−1/−2/−3 eşlendi.
+- [x] **Çapa guard'ı (Anchor guard):** Koç Tıp (203910699), Medipol Tıp (203110477) ve Koç Bilgisayar (203910363) suffix1 değerleri mevcut `src/data/universityRankings.json`'daki 2025 verisiyle karşılaştırıldı, birebir doğrulandı.
+- [x] Veri çekildi: 21.493 programdan 68.883 normalize çok yıllı kayıt üretildi (`2026`: 18.251, `2025`: 17.294, `2024`: 16.895, `2023`: 16.443). 2026 başarı sırası doluluk oranı %100.
+- [x] `src/pages/TercihPage.tsx` varsayılan yılı `2026`, `REFERENCE_YEARS` `[2026, 2025, 2024]` olarak güncellendi; facet sorguları ve başlık 2026 yapıldı.
+- [x] `npm run lint` (0 error), `npm run test:types` ve `npm run build` hatasız geçti.
+- [x] `npm run seed:universities` çalıştırıldı ve canlı Supabase `university_rankings` tablosuna 68.883 kayıt aktarıldı.
+- [x] **Canlı kabul testi:** Canlı DB'de `203910699` (Koç Tıp) sorgulandı:
+  - 2026: Sıra = 65, Puan = 552.85674, Kontenjan = 11
+  - 2025: Sıra = 43, Puan = 550.89027, Kontenjan = 6
+  - 2024: Sıra = 24, Puan = 555.4201, Kontenjan = 6
+  - 2023: Sıra = 43, Puan = 554.84947, Kontenjan = 7
+  Tüm kriterler eksiksiz sağlandı. ✅
 
 ### 📥 agy — E6: Ek Yerleştirme tam PDF parser (sonraki oturum)
 Ayrıntılar `docs/ek-yerlestirme.md` → "Tam içe aktarma planı" (E5'te yazılacak).
