@@ -61,6 +61,11 @@ type EkDosya = {
 
 const PARTI = 500
 
+// Program adındaki ilk parantezli ek: (Burslu), (%50 İndirimli), (Ücretli), (Ücretsiz). Yoksa null.
+function bursIndirim(ad: string): string | null {
+  return ad.match(/\((Burslu|%\d+ İndirimli|Ücretli|Ücretsiz)\)/)?.[1] ?? null
+}
+
 function argOku(ad: string): string | undefined {
   const i = process.argv.indexOf(ad)
   return i >= 0 ? process.argv[i + 1] : undefined
@@ -173,7 +178,7 @@ async function main() {
       en_kucuk_gk: p.en_kucuk_gk ?? null,
       en_kucuk_sgy: p.en_kucuk_sgy ?? null,
       en_kucuk_34y: p.en_kucuk_34y ?? null,
-      burs_indirim: null,
+      burs_indirim: bursIndirim(p.program_adi),
       kaynak_sayfa: p.kaynak_sayfa ?? null,
     }
   })
