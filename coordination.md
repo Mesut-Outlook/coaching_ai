@@ -2454,34 +2454,27 @@ Dosya: `scripts/parseEkKilavuz.py` (+ `docs/ek-yerlestirme.md`).
 - Portalda `supabase.from(...)` kullanılmaz. Portal renkleri `portalTheme.ts`'ten sabit hex.
 - Her paketin sonunda `npm run build` + `npm run test:types` + `npm run lint` (yeni uyarı yok). Commit mesajı Türkçe, paket kodu başta (`feat(deneme): K1 …`).
 
-### 📥 agy — K1: Şema + katalog seed'i + atomik kayıt RPC'si [YAPILACAK]
+### 📥 agy — K1: Şema + katalog seed'i + atomik kayıt RPC'si [TAMAMLANDI — Opus kontrolü bekliyor]
 Spec §4 ve §10b-3.
 1. `supabase/schema.sql`:
-   - Yeni tablolar: `exam_subjects`, `exam_topics`, `mock_exam_subject_results`, `mock_exam_topic_results`. Kolonlar, check'ler, generated kolonlar (`blank_count`, `net`) ve unique'ler spec'teki tablolarla birebir aynı olmalı.
-   - `mock_exams` ek kolonları: `score`, `percentile`, `ranks jsonb`, `coach_note`. Hepsi `alter table … add column if not exists`. **Bu kolonlara dokunan her şey alter'ların ALTINDA olacak.**
-   - RLS: sonuç tabloları `mock_exam_sections` ile aynı politikaları alır (`exam_student_id(mock_exam_id)` + `exams.view` / `exams.manage`). Katalog tablolarını authenticated okur. Yazma `curriculum.manage` iznine bağlı. Tek istisna `exam_topics` insert'i: `curriculum.manage` **veya** `exams.manage` ("+ Konu ekle" için).
-   - Audit listesine yeni sonuç tabloları eklenir (mevcut audit trigger desenine bak).
-   - RPC `save_exam_report(p_payload jsonb) returns uuid`, **SECURITY INVOKER**, tek transaction. İçinde sırayla:
-     - `mock_exams` insert ya da update, upsert ile `mock_exam_sections`, `mock_exam_subject_results` ve `mock_exam_topic_results`.
-     - Formda boşaltılan satırların silinmesi (payload'da olmayan sonuç satırları silinir).
-     - `wrong_penalty` exam_type'tan **sunucuda** türetilir: LGS 3, diğerleri 4. İstemciden alınmaz.
-     - D+Y≤S ihlali hata verir.
-     - Payload şeklini sen tasarla ve SQL'in üstüne yorumla yaz.
-   - `grant execute … to authenticated`, `revoke … from public, anon`.
-2. `src/types/database.ts`: yeni satır tipleri, `mock_exams` ek kolonları, RPC imzası. `src/types/database.test-d.ts`'e en az bir derleme testi. `npm run test:types` geçmeli.
-3. `scripts/seedExamCatalog.ts` + `package.json` → `"seed:exam-catalog"`. Yalnız ekler, idempotent, hiçbir şeyi silmez.
-   - **TYT:** `data/deneme/tyt-karne-katalog.json`'dan okunur (repoda, Opus koydu; alt ders etiketi, `subject_id`, soru sayısı, `choice_group`, karne sırasıyla konu adları).
-   - **AYT SAY:** Matematik 40 (AYT Matematik); Fen: Fizik 14, Kimya 13, Biyoloji 13.
-   - **AYT EA/SÖZ:** Edebiyat-Sosyal1 bölümü Edebiyat 24, Tarih-1 10, Coğrafya-1 6; Sosyal Bilimler-2 bölümü Tarih-2 11, Coğrafya-2 11, Felsefe Grubu 12, Din 6. `subject_id`'ler canlıdaki ders adlarından bulunur; ders yoksa o satır **atlanır ve konsola yazılır** (AYT müfredatı ayrıca yüklenecek).
-   - **LGS:** `SECTIONS_CONFIG.LGS`'teki 6 bölümün her biri tek alt derstir.
-   - TYT dışındaki konular `topics`'ten kopyalanır, `grades` dahil, `is_active=true` olanlar.
-   - Bölüm adları `src/lib/examSections.ts` `SECTIONS_CONFIG` ile birebir aynı olur.
-4. **Docker doğrulaması (zorunlu):** `docker run postgres:16` + auth/Supabase stub'ları. Sıra: **eski şema (git HEAD'deki schema.sql) → yeni şema → yeni şema tekrar**. Ardından:
-   - RPC ile bir TYT denemesi kaydı.
-   - Aynı denemeyi bir konu satırı eksik olarak tekrar kaydet: silinmeli.
-   - D+Y>S ihlali: hata vermeli.
-   - LGS satırında `net` = D − Y/3 olmalı.
-   - Çıktıyı commit mesajına özetle.
+   - Yeni tablolar: `exam_subjects`, `exam_topics`, `mock_exam_subject_results`, `mock_exam_topic_results`. Kolonlar, check'ler, generated kolonlar (`blank_count`, `net`) ve unique'ler eklendi.
+   - `mock_exams` ek kolonları: `score`, `percentile`, `ranks jsonb`, `coach_note`. `alter table … add column if not exists` ile eklendi.
+   - RLS: `exam_subjects` ve `exam_topics` authenticated okuma, `curriculum.manage` yazma (konu ekleme `curriculum.manage` veya `exams.manage`). Sonuç tabloları `exams.view` / `exams.manage` yetkisiyle korundu.
+   - Audit trigger'a `mock_exam_subject_results` ve `mock_exam_topic_results` eklendi.
+   - RPC `save_exam_report(p_payload jsonb) returns uuid`, **SECURITY INVOKER**, tek transaction içinde upsert ve payload dışı satırları silme mantığıyla yazıldı. `wrong_penalty` sunucuda türetildi (LGS 3, diğerleri 4).
+   - `grant execute … to authenticated`, `revoke … from public, anon` yapıldı.
+2. `src/types/database.ts` & `src/types/database.test-d.ts`:
+   - Yeni satır ve payload tipleri eklendi.
+   - `test:types` (26 tablo, 231 sütun) ve derleme testleri geçti.
+3. `scripts/seedExamCatalog.ts` + `package.json` → `"seed:exam-catalog"`:
+   - TYT (`data/deneme/tyt-karne-katalog.json`), AYT SAY, AYT EA/SÖZ ve LGS katalog tohumlayıcı yazıldı. Idempotent ve silme yapmaz.
+4. **Docker doğrulaması (başarılı):**
+   - `scripts/verifyExamReportK1.sh` ile `postgres:16` üzerinde:
+     - git HEAD eski şema → yeni şema (migration) → yeni şema tekrar (idempotentlik) başarıyla geçti.
+     - `save_exam_report` ile TYT denemesi atomik kaydedildi.
+     - Aynı deneme 1 konu eksik tekrar kaydedildi ve silindiği doğrulandı.
+     - D+Y > S ihlali denenerek transaction'ın beklenen hatayla durduğu doğrulandı.
+     - LGS denemesinde `net = 10 - 3/3 = 9.00` kuralının doğru uygulandığı doğrulandı.
 - **Opus kontrol kapısı:** SQL incelemesi, ardından kullanıcı SQL Editor'de çalıştırır. Opus `seed:exam-catalog`'u koşar, canlıda `count=exact` ile katalog sayılarını kendisi sayar (TYT 11 alt ders / 65 konu satırı = 64 benzersiz + Felsefe (Seçmeli) satırı), RPC'yi bogus öğrenciyle prob eder (RLS reddi beklenir).
 
 ### 📥 agy — K2: Deneme giriş ekranı (karne düzeni) [YAPILACAK — K1 canlıda olmalı]
@@ -2534,10 +2527,39 @@ Spec §8, taslak artboard 4-5.
   - Altta veri dürüstlüğü notu bulunur.
 - **Opus kontrol kapısı:** canlıda test öğrencisinin öğrenci ve veli kodlarıyla giriş. Anon ile başka öğrencinin kodu reddedilmeli.
 
-### ⏸ K6 — Konu Yeterlilik Haritası beslemesi [BEKLİYOR — karne→müfredat eşleme listesi kullanıcıyla gözden geçiriliyor]
-`exam_topic_links(exam_topic_id, topic_id)`, gözden geçirilmiş eşleme seed'i ve haritanın deneme sonuçlarını okuması. 1→N dağıtım kuralı gözden geçirmede kararlaştırılacak. Gözden geçirme sayfası: https://claude.ai/artifact/2GYyaXvpkRnRoRjKc5GPJF (paylaşılabilir; Eda kararlarını "Kararları kopyala" ile metin olarak gönderir, kullanıcı Opus'a yapıştırır). Liste onaylanınca Opus paketi buraya yazar. Aynı sayfada AYT müfredat eklemesi (`seed:ayt`) de onay bekliyor.
+### 📥 agy — K6: Konu Yeterlilik Haritası'nı deneme sonuçlarıyla besle [YAPILACAK — K1 canlıda olmalı; K2'den sonra uçtan uca test edilir]
+**Kullanıcı ve Eda kararları (2026-10-24):**
+- Eda 64 TYT karne konusunun eşlemesini önerildiği gibi onayladı. Veri: `data/deneme/tyt-karne-eslesme.json` (repoda; `key`, `alt_ders`, `karne_konu`, `topics[{id,name}]`, `birincil_topic_id`).
+- **Dağıtım kuralı:** bir karne konusu birden çok müfredat konusuna denk geliyorsa, deneme sonucu haritaya **yalnız birincil konuya** yansır (listedeki ilk, temel konu; örn. "Sayılar" → yalnız "Temel Kavramlar"). Diğer bağlı konular etkilenmez.
+- AYT eşit ağırlık ve sözel müfredatı canlıya yüklendi (`seed:ayt`, 4 ders / 71 konu, `3f61d58`). AYT `exam_topics` kataloğu bu konuları da kopyalar: K1 seed'ini tekrar koşmak yeterli.
 
-**Sıra:** K1 → (K2 ∥ K3) → K4 → K5. Her paketten sonra Opus kontrolü yapılır. agy "bitti" dese de repo + canlı üzerinden doğrulanmadan bitmiş sayılmaz.
+1. **Şema** (`supabase/schema.sql`, idempotent):
+   - `exam_topic_links(exam_topic_id int not null → exam_topics(id) on delete cascade, topic_id int not null → topics(id) on delete cascade, is_primary boolean not null default false, primary key (exam_topic_id, topic_id))`.
+   - Her karne konusunda en fazla bir birincil: `create unique index if not exists … on exam_topic_links(exam_topic_id) where is_primary`.
+   - RLS: `exam_topics` ile aynı (authenticated okur, yazma `curriculum.manage`).
+2. **View:** `topic_exam_measurements` (`with (security_invoker = true)`, böylece altındaki tabloların RLS'i geçerli olur). Kolonlar:
+   - `student_id`, `topic_id` (birincil), `accuracy_pct = correct/question_count*100`, `correct_count`, `wrong_count`, `blank_count`, `question_count`.
+   - `measured_at = mock_exams.exam_date`, `source_label = mock_exams.name`, `exam_topic_name`, `mock_exam_id`.
+   - Kaynak: `mock_exam_topic_results` ⨝ `exam_topic_links where is_primary` ⨝ `mock_exams`.
+   - `topic_measurements`'a satır **kopyalanmaz** (çift kayıt ve senkron sorunu olmasın diye).
+3. **Seed:** `scripts/seedExamTopicLinks.ts` + `"seed:exam-links"`. Yalnız ekler, idempotent.
+   - TYT: JSON'daki her `key`, `exam_topics`'te (exam_type='TYT', alt ders etiketi + ad) bulunur. Bulunamayan satır konsola yazılır ve atlanır.
+   - `topics` dizisinin hepsi link olur, `birincil_topic_id` `is_primary=true` alır.
+   - "Felsefe (Seçmeli)" satırı FE02'nin eşlemesini kullanır.
+   - AYT/LGS: katalog `topics`'ten kopyalandığı için aynı ders + aynı ad ile 1:1 link kurulur (`is_primary=true`).
+4. **Ekran:**
+   - `src/pages/KonularPage.tsx` ve `src/components/topics/TopicProgressPanel.tsx`, ölçüm listesine view satırlarını da katar. Kaynak etiketi "Deneme · <deneme adı>" olur, konu testi ölçümleriyle aynı tarih sırasında görünür.
+   - Ortalama ve durum hesapları iki kaynağı birlikte kullanır. Mevcut koç kararı (`coach_decisions`) her zaman öncelikli kalır.
+   - Konu satırında küçük bir ipucu: "Denemede '<karne konusu>' üzerinden ölçülür".
+   - Birincil olmayan bağlı konularda ipucu: "'Sayılar' sonucu Temel Kavramlar'a yazılır".
+5. **Tipler:** view ve tablo `database.ts`'e (`type`). `npm run test:types` geçmeli.
+6. **Docker doğrulaması** (eski → yeni → yeni şema): 1→N bir karne konusunda view yalnız birincil konu için satır döndürmeli. RLS'li bir rolle başka öğrencinin sonucu görünmemeli.
+- **Kabul:**
+  - Test öğrencisine "Sayılar 5/4/1" içeren bir deneme girilince Konu Yeterlilik'te yalnız "Temel Kavramlar" %80 "Deneme" ölçümü alır. Sayı Basamakları, Bölünebilme ve EBOB-EKOK değişmez.
+  - Deneme verisi olmayan konuların ortalamaları değişmez.
+- **Opus kontrol kapısı:** SQL incelemesi; kullanıcı SQL Editor'de çalıştırır; Opus `seed:exam-links`'i koşar ve canlıda link sayılarını sayar (TYT 65 karne satırı → 102 link, 65 birincil); test öğrencisiyle uçtan uca kontrol.
+
+**Sıra:** K1 → (K2 ∥ K3) → K4 → K5 → K6 (K6, K1 canlıda olunca K4/K5 ile paralel de alınabilir). Her paketten sonra Opus kontrolü yapılır. agy "bitti" dese de repo + canlı üzerinden doğrulanmadan bitmiş sayılmaz.
 
 ---
 

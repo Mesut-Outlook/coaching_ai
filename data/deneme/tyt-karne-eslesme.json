@@ -1,6 +1,6 @@
 {
   "kaynak": "Konsept TYT karnesi; Eda 2026-10-24 tüm 64 eşlemeyi önerildiği gibi onayladı (D).",
-  "not": "topic id = canlı topics.id; karne konusu exam_topics (exam_type=TYT, alt ders etiketi + ad) ile eşlenir. Felsefe (Seçmeli) satırı FE02 ile aynı eşlemeyi kullanır.",
+  "not": "topic id = canlı topics.id; karne konusu exam_topics (exam_type=TYT, alt ders etiketi + ad) ile eşlenir. Felsefe (Seçmeli) satırı FE02 ile aynı eşlemeyi kullanır. birincil_topic_id: kullanıcı kararı (2026-10-24) — 1→N eşlemede deneme sonucu Konu Yeterlilik Haritası'na YALNIZ birincil (listedeki ilk, temel) konuya yansır.",
   "eslesme": [
     {
       "key": "BI01",
@@ -12,7 +12,8 @@
           "id": 129,
           "name": "Yaşam Bilimi Biyoloji"
         }
-      ]
+      ],
+      "birincil_topic_id": 129
     },
     {
       "key": "BI02",
@@ -24,7 +25,8 @@
           "id": 130,
           "name": "Hücre"
         }
-      ]
+      ],
+      "birincil_topic_id": 130
     },
     {
       "key": "BI03",
@@ -36,7 +38,8 @@
           "id": 131,
           "name": "Canlıların Dünyası (Sınıflandırma)"
         }
-      ]
+      ],
+      "birincil_topic_id": 131
     },
     {
       "key": "BI04",
@@ -48,7 +51,8 @@
           "id": 132,
           "name": "Hücre Bölünmeleri"
         }
-      ]
+      ],
+      "birincil_topic_id": 132
     },
     {
       "key": "BI05",
@@ -60,7 +64,8 @@
           "id": 133,
           "name": "Kalıtımın Temel İlkeleri"
         }
-      ]
+      ],
+      "birincil_topic_id": 133
     },
     {
       "key": "BI06",
@@ -72,7 +77,8 @@
           "id": 134,
           "name": "Ekosistem Biyolojisi"
         }
-      ]
+      ],
+      "birincil_topic_id": 134
     },
     {
       "key": "CO01",
@@ -108,7 +114,8 @@
           "id": 103,
           "name": "İç Kuvvetler / Dış Kuvvetler"
         }
-      ]
+      ],
+      "birincil_topic_id": 96
     },
     {
       "key": "CO02",
@@ -124,7 +131,8 @@
           "id": 106,
           "name": "Türkiye'nin Yer Şekilleri"
         }
-      ]
+      ],
+      "birincil_topic_id": 104
     },
     {
       "key": "CO03",
@@ -144,7 +152,8 @@
           "id": 109,
           "name": "Uluslararası Ulaşım Hatları"
         }
-      ]
+      ],
+      "birincil_topic_id": 105
     },
     {
       "key": "CO04",
@@ -156,7 +165,8 @@
           "id": 108,
           "name": "Bölgeler ve Ülkeler"
         }
-      ]
+      ],
+      "birincil_topic_id": 108
     },
     {
       "key": "CO05",
@@ -172,7 +182,8 @@
           "id": 111,
           "name": "Doğal Afetler"
         }
-      ]
+      ],
+      "birincil_topic_id": 110
     },
     {
       "key": "DI01",
@@ -184,7 +195,8 @@
           "id": 137,
           "name": "Hz. Muhammed'in Hayatı"
         }
-      ]
+      ],
+      "birincil_topic_id": 137
     },
     {
       "key": "DI02",
@@ -196,7 +208,8 @@
           "id": 135,
           "name": "İnsan ve Din (İnanç)"
         }
-      ]
+      ],
+      "birincil_topic_id": 135
     },
     {
       "key": "DI03",
@@ -212,7 +225,8 @@
           "id": 138,
           "name": "Vahiy ve Akıl"
         }
-      ]
+      ],
+      "birincil_topic_id": 135
     },
     {
       "key": "DI04",
@@ -224,7 +238,8 @@
           "id": 139,
           "name": "İslam Düşüncesi ve Yorumu"
         }
-      ]
+      ],
+      "birincil_topic_id": 139
     },
     {
       "key": "FE01",
@@ -236,7 +251,8 @@
           "id": 291,
           "name": "MÖ 6. Yüzyıl - MS 2. Yüzyıl Felsefesi"
         }
-      ]
+      ],
+      "birincil_topic_id": 291
     },
     {
       "key": "FE02",
@@ -272,7 +288,8 @@
           "id": 119,
           "name": "Din Felsefesi"
         }
-      ]
+      ],
+      "birincil_topic_id": 113
     },
     {
       "key": "FZ01",
@@ -284,7 +301,8 @@
           "id": 86,
           "name": "Madde ve Özellikleri"
         }
-      ]
+      ],
+      "birincil_topic_id": 86
     },
     {
       "key": "FZ02",
@@ -296,7 +314,8 @@
           "id": 90,
           "name": "Basınç ve Kaldırma Kuvveti"
         }
-      ]
+      ],
+      "birincil_topic_id": 90
     },
     {
       "key": "FZ03",
@@ -308,7 +327,8 @@
           "id": 89,
           "name": "Isı ve Sıcaklık"
         }
-      ]
+      ],
+      "birincil_topic_id": 89
     },
     {
       "key": "FZ04",
@@ -320,7 +340,8 @@
           "id": 88,
           "name": "Enerji"
         }
-      ]
+      ],
+      "birincil_topic_id": 88
     },
     {
       "key": "FZ05",
@@ -332,7 +353,8 @@
           "id": 92,
           "name": "Elektrik ve Manyetizma"
         }
-      ]
+      ],
+      "birincil_topic_id": 92
     },
     {
       "key": "FZ06",
@@ -344,7 +366,8 @@
           "id": 93,
           "name": "Dalgalar"
         }
-      ]
+      ],
+      "birincil_topic_id": 93
     },
     {
       "key": "FZ07",
@@ -356,7 +379,8 @@
           "id": 94,
           "name": "Optik"
         }
-      ]
+      ],
+      "birincil_topic_id": 94
     },
     {
       "key": "GE01",
@@ -372,7 +396,8 @@
           "id": 146,
           "name": "Üçgenler (Açı, Benzerlik, Alan, Dik Üçgen)"
         }
-      ]
+      ],
+      "birincil_topic_id": 145
     },
     {
       "key": "GE02",
@@ -384,7 +409,8 @@
           "id": 146,
           "name": "Üçgenler (Açı, Benzerlik, Alan, Dik Üçgen)"
         }
-      ]
+      ],
+      "birincil_topic_id": 146
     },
     {
       "key": "GE03",
@@ -396,7 +422,8 @@
           "id": 146,
           "name": "Üçgenler (Açı, Benzerlik, Alan, Dik Üçgen)"
         }
-      ]
+      ],
+      "birincil_topic_id": 146
     },
     {
       "key": "GE04",
@@ -408,7 +435,8 @@
           "id": 146,
           "name": "Üçgenler (Açı, Benzerlik, Alan, Dik Üçgen)"
         }
-      ]
+      ],
+      "birincil_topic_id": 146
     },
     {
       "key": "GE05",
@@ -424,7 +452,8 @@
           "id": 52,
           "name": "Dörtgenler (Paralelkenar, Dikdörtgen, Kare vb.)"
         }
-      ]
+      ],
+      "birincil_topic_id": 51
     },
     {
       "key": "GE06",
@@ -436,7 +465,8 @@
           "id": 63,
           "name": "Katı Cisimler"
         }
-      ]
+      ],
+      "birincil_topic_id": 63
     },
     {
       "key": "KI01",
@@ -448,7 +478,8 @@
           "id": 121,
           "name": "Atom ve Periyodik Sistem"
         }
-      ]
+      ],
+      "birincil_topic_id": 121
     },
     {
       "key": "KI02",
@@ -460,7 +491,8 @@
           "id": 122,
           "name": "Kimyasal Türler Arası Etkileşimler"
         }
-      ]
+      ],
+      "birincil_topic_id": 122
     },
     {
       "key": "KI03",
@@ -472,7 +504,8 @@
           "id": 123,
           "name": "Maddenin Halleri"
         }
-      ]
+      ],
+      "birincil_topic_id": 123
     },
     {
       "key": "KI04",
@@ -488,7 +521,8 @@
           "id": 149,
           "name": "Kimyasal Hesaplamalar"
         }
-      ]
+      ],
+      "birincil_topic_id": 125
     },
     {
       "key": "KI05",
@@ -500,7 +534,8 @@
           "id": 126,
           "name": "Karışımlar"
         }
-      ]
+      ],
+      "birincil_topic_id": 126
     },
     {
       "key": "KI06",
@@ -512,7 +547,8 @@
           "id": 127,
           "name": "Asitler, Bazlar ve Tuzlar"
         }
-      ]
+      ],
+      "birincil_topic_id": 127
     },
     {
       "key": "KI07",
@@ -524,7 +560,8 @@
           "id": 128,
           "name": "Kimya Her Yerde"
         }
-      ]
+      ],
+      "birincil_topic_id": 128
     },
     {
       "key": "MA01",
@@ -536,7 +573,8 @@
           "id": 22,
           "name": "Rasyonel Sayılar"
         }
-      ]
+      ],
+      "birincil_topic_id": 22
     },
     {
       "key": "MA02",
@@ -552,7 +590,8 @@
           "id": 26,
           "name": "Köklü Sayılar"
         }
-      ]
+      ],
+      "birincil_topic_id": 25
     },
     {
       "key": "MA03",
@@ -576,7 +615,8 @@
           "id": 21,
           "name": "EBOB-EKOK"
         }
-      ]
+      ],
+      "birincil_topic_id": 18
     },
     {
       "key": "MA04",
@@ -592,7 +632,8 @@
           "id": 23,
           "name": "Basit Eşitsizlikler"
         }
-      ]
+      ],
+      "birincil_topic_id": 29
     },
     {
       "key": "MA05",
@@ -604,7 +645,8 @@
           "id": 24,
           "name": "Mutlak Değer"
         }
-      ]
+      ],
+      "birincil_topic_id": 24
     },
     {
       "key": "MA06",
@@ -616,7 +658,8 @@
           "id": 31,
           "name": "Kümeler ve Kartezyen Çarpım"
         }
-      ]
+      ],
+      "birincil_topic_id": 31
     },
     {
       "key": "MA07",
@@ -628,7 +671,8 @@
           "id": 41,
           "name": "Mantık"
         }
-      ]
+      ],
+      "birincil_topic_id": 41
     },
     {
       "key": "MA08",
@@ -640,7 +684,8 @@
           "id": 32,
           "name": "Fonksiyonlar"
         }
-      ]
+      ],
+      "birincil_topic_id": 32
     },
     {
       "key": "MA09",
@@ -656,7 +701,8 @@
           "id": 28,
           "name": "Oran-Orantı"
         }
-      ]
+      ],
+      "birincil_topic_id": 30
     },
     {
       "key": "MA10",
@@ -668,7 +714,8 @@
           "id": 143,
           "name": "Veri ve İstatistik"
         }
-      ]
+      ],
+      "birincil_topic_id": 143
     },
     {
       "key": "MA11",
@@ -684,7 +731,8 @@
           "id": 35,
           "name": "Binom Açılımı"
         }
-      ]
+      ],
+      "birincil_topic_id": 144
     },
     {
       "key": "MA12",
@@ -696,7 +744,8 @@
           "id": 36,
           "name": "Olasılık"
         }
-      ]
+      ],
+      "birincil_topic_id": 36
     },
     {
       "key": "TA01",
@@ -716,7 +765,8 @@
           "id": 69,
           "name": "Türklerin İslamiyeti Kabulü"
         }
-      ]
+      ],
+      "birincil_topic_id": 66
     },
     {
       "key": "TA02",
@@ -728,7 +778,8 @@
           "id": 67,
           "name": "İslam Tarihi ve Uygarlığı"
         }
-      ]
+      ],
+      "birincil_topic_id": 67
     },
     {
       "key": "TA03",
@@ -740,7 +791,8 @@
           "id": 78,
           "name": "20. Yüzyıl Başlarında Osmanlı Devleti"
         }
-      ]
+      ],
+      "birincil_topic_id": 78
     },
     {
       "key": "TA04",
@@ -756,7 +808,8 @@
           "id": 83,
           "name": "Atatürkçülük ve Atatürk İlkeleri"
         }
-      ]
+      ],
+      "birincil_topic_id": 82
     },
     {
       "key": "TA05",
@@ -772,7 +825,8 @@
           "id": 81,
           "name": "Kurtuluş Savaşında Cepheler"
         }
-      ]
+      ],
+      "birincil_topic_id": 80
     },
     {
       "key": "TR01",
@@ -784,7 +838,8 @@
           "id": 1,
           "name": "Sözcük Anlamı"
         }
-      ]
+      ],
+      "birincil_topic_id": 1
     },
     {
       "key": "TR02",
@@ -796,7 +851,8 @@
           "id": 2,
           "name": "Cümle Anlamı"
         }
-      ]
+      ],
+      "birincil_topic_id": 2
     },
     {
       "key": "TR03",
@@ -808,7 +864,8 @@
           "id": 5,
           "name": "Ses Bilgisi"
         }
-      ]
+      ],
+      "birincil_topic_id": 5
     },
     {
       "key": "TR04",
@@ -820,7 +877,8 @@
           "id": 8,
           "name": "Sözcükte Yapı"
         }
-      ]
+      ],
+      "birincil_topic_id": 8
     },
     {
       "key": "TR05",
@@ -832,7 +890,8 @@
           "id": 15,
           "name": "Cümle Ögeleri"
         }
-      ]
+      ],
+      "birincil_topic_id": 15
     },
     {
       "key": "TR06",
@@ -844,7 +903,8 @@
           "id": 7,
           "name": "Noktalama İşaretleri"
         }
-      ]
+      ],
+      "birincil_topic_id": 7
     },
     {
       "key": "TR07",
@@ -856,7 +916,8 @@
           "id": 6,
           "name": "Yazım Kuralları"
         }
-      ]
+      ],
+      "birincil_topic_id": 6
     },
     {
       "key": "TR08",
@@ -868,7 +929,8 @@
           "id": 3,
           "name": "Paragraf"
         }
-      ]
+      ],
+      "birincil_topic_id": 3
     },
     {
       "key": "TR09",
@@ -880,7 +942,8 @@
           "id": 3,
           "name": "Paragraf"
         }
-      ]
+      ],
+      "birincil_topic_id": 3
     },
     {
       "key": "TR10",
@@ -892,7 +955,8 @@
           "id": 3,
           "name": "Paragraf"
         }
-      ]
+      ],
+      "birincil_topic_id": 3
     }
   ]
 }
