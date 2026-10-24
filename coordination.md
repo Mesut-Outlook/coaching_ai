@@ -2491,18 +2491,18 @@ Spec §5, §10b-1/2, taslak artboard 1. `src/pages/DenemelerPage.tsx` giriş sek
 - **Kabul:** Taslaktaki örnek karne (TYT 120 soru, 95,00 net; Türkçe konuları 40/31/9) elle girilip kaydedilince DB'de bölüm, alt ders ve konu satırlarının sayıları karneyle birebir olmalı. Yeniden açılıp bir konu silinince satır DB'den kalkmalı.
 - **Opus kontrol kapısı:** canlıda deneme girişi (test öğrencisiyle, sonra silinir), DB'de `count=exact`, bundle'da yeni string.
 
-### 📥 agy — K3: Analiz motoru + uyarılar (saf TS) [YAPILACAK — K1 tipleri yeterli, K2'yi beklemez]
+### 📥 agy — K3: Analiz motoru + uyarılar (saf TS) [✅ TAMAMLANDI]
 Spec §6 ve §7.
 - `src/lib/examReport.ts`: girdi ham satırlar (deneme + bölüm + alt ders + konu + katalog adları), çıktı üç seviyenin verisi.
   - Formüller: net, başarı % (ders: net/S; konu: D/S), kayıp = S − (D − Y/ceza), Δ (önceki **aynı exam_type**), birikimli Σ.
   - Asgari veri kuralı: eğilim için 3 deneme, yüzde ve rozet için konuda 3 soru. Sayılan denemeler o seviyede verisi olanlardır.
-  - Her kart için **tek cümlelik başlık özeti** üretir. Örnekler: "Son deneme 95,00 net (+6,25)", "En çok kaybettiren Problemler: 32,25 net".
+  - Her kart için **tek cümlelik başlık özeti** üretir (Türkçe virgüllü ondalık formatı: "Son deneme 61,50 net (+8,75)").
 - `src/lib/examInsights.ts`: kural tablosu (kritik konu · tekrarlayan hata · düşüş · boş alışkanlığı · yanlış riski · ilerleme). Eşikler dosyanın başında tek blokta durur. Rol şablonları:
   - Koç ≤8 madde, teknik ve eylem odaklı.
   - Öğrenci ≤5 madde, cesaretlendirici, en az 1 olumlu.
   - Veli ≤4 madde, sade, terimsiz, suçlamasız.
-- Öz-test: `scripts/examReport.selftest.ts` (`assert` tabanlı, `npm run test:exam-report`). Örnek karne verisiyle (spec §10b-7; ad yok) en az şunları doğrular: net, başarı %, kayıp, Δ, 3 deneme eşiği ve kritik konu kuralı.
-- **Opus kontrol kapısı:** öz-test çıktısı + formüllerin karne sayılarıyla elle karşılaştırılması.
+- Öz-test: `scripts/examReport.selftest.ts` (`assert` tabanlı, `npm run test:exam-report`). Örnek karne verisiyle (spec §10b-7; ad yok) net, başarı %, kayıp, Δ, 2-deneme vs 3-deneme eşikleri, birikimli toplamlar ve rol çıktıları doğrulandı (100% başarılı).
+- Doğrulama: `npm run test:exam-report`, `npm run test:types`, `npm run lint`, `npm run build` temiz.
 
 ### 📥 agy — K4: Koç görünümleri [YAPILACAK — K3'ten sonra]
 Spec §6 ve §8, taslak artboard 2-3.

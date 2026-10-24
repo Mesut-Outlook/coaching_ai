@@ -16,6 +16,7 @@
     "seed:lgs7": "tsx scripts/seedLgsCurriculum7.ts",
     "seed:ayt": "tsx scripts/seedAytCurriculum.ts",
     "seed:exam-catalog": "tsx scripts/seedExamCatalog.ts",
+    "test:exam-report": "tsx scripts/examReport.selftest.ts",
     "seed:tyt-karne": "tsx scripts/seedTytTopicsFromKarne.ts",
     "seed:ek": "tsx scripts/seedEkYerlestirme.ts",
     "seed:universities": "tsx scripts/seedUniversityRankings.ts",
