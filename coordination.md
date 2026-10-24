@@ -12,12 +12,30 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 
 ---
 
-## 📍 Güncel Durum (2026-08-21)
+## 📍 Güncel Durum (2026-10-24)
 
-**Bu dosya 2200+ satır ve kronolojik. Aşağısı geçmiş kaydıdır — güncel durum burada.**
+**Bu dosya 2600+ satır ve kronolojik. Aşağısı geçmiş kaydıdır — güncel durum burada.**
 
-> ✅ **SON TUR TAMAMLANDI: Müfredat YKS/LGS ayrımı (P1→P6) — hepsi CANLIDA.**
+> ✅ **SON TUR TAMAMLANDI: Deneme Karnesi & Analiz Modülü (K1→K6) — hepsi CANLIDA ve TAMAMLANDI.**
 > Detaylar dosyanın **en sonunda**. Özet:
+>
+> | Paket | Ne | Commit |
+> |---|---|---|
+> | **K1** | Şema + Katalog Seed'i + Atomik Kayıt RPC'si (`save_exam_report`) | Canlıda uygulandı & doğrulandı (28 ders, 369 konu) |
+> | **K2** | Karne düzeninde deneme giriş ekranı + düzenleme modu (`ExamReportForm`) | `8c35597` |
+> | **K3** | 3 Seviyeli Analiz Motoru + Rol Bazlı Uyarılar (`examReport.ts`, `examInsights.ts`) | `7a3558c` |
+> | **K4** | Koç görünümleri + SVG Grafikler + Sonuçlar & Koç Özeti sekmesi | `d722c26` |
+> | **K5** | Öğrenci ve Veli Portallarına Deneme Analizi sekmesi (`portal_exam_report`) | `0a7b9d8` |
+> | **K6** | Konu Yeterlilik Haritası deneme beslemesi (`exam_topic_links`, 406 bağlantı) | `ac4d873` |
+>
+> **Canlı Veri:** 28 sınav alt dersi, 369 karne konusu, 406 konu eşleşme bağlantısı canlı DB'de tohumlandı ve doğrulandı.
+> **Test & Kalite:** `npm run test:types`, `npm run lint`, `npm run build`, `npm run test:exam-report` hepsi %100 temiz (0 hata).
+
+<details>
+<summary>Önceki tur: Müfredat YKS/LGS ayrımı (2026-08-21) — kapandı</summary>
+
+> ✅ **Müfredat YKS/LGS ayrımı (P1→P6) — hepsi CANLIDA.**
+> Özet:
 >
 > | Paket | Ne | Commit |
 > |---|---|---|
@@ -28,17 +46,8 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 >
 > **Canlı müfredat:** LGS 7 ders (7. sınıf 55 konu · 8. sınıf 47 konu) · YKS 14 ders / 187 konu.
 > **Toplam:** 21 ders / 289 konu.
->
-> **🔑 Bilinmesi gereken üç şey:**
-> 1. Görünürlük mantığı **tek kaynak** — `src/lib/curriculum.ts` (`gradeCurriculum`,
->    `subjectAppliesTo`, `topicAppliesTo`). Ekranlarda kopya filtre YAZMA.
-> 2. Süzme **konu seviyesinde**: LGS'te aynı ders hem 7 hem 8'e ait olabilir, konular ayrışır.
->    Etiketsiz bir LGS konusu **iki sınıfa birden** görünür — yeni konu eklerken sınıf seç.
-> 3. **LGS puanı üretilmiyor.** Katsayılı "ağırlıklı net" gösteriliyor; koda ya da arayüze
->    asla "LGS puanı" yazma (merkezî sınav istatistiği olmadan hesaplanamaz).
->
-> **Açık kalan:** LGS deneme sonucunun WhatsApp paylaşım metni gerçek bir LGS denemesiyle
-> uçtan uca denenmedi (`src/lib/examShare.ts`).
+
+</details>
 
 <details>
 <summary>Önceki tur: RBAC (2026-08-13) — kapandı</summary>
