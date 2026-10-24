@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ListPlus, ArrowRight, Smartphone, ShieldCheck, ScrollText,
+  LayoutGrid, Users, ClipboardList, Layers, Calendar, UserX, BarChart2, BookOpen, Compass, ListPlus, ArrowRight, Smartphone, ShieldCheck, ScrollText, TrendingUp,
 } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import VersionHistory from '../components/help/VersionHistory'
@@ -36,11 +36,19 @@ const GUIDE: GuideItem[] = [
   },
   {
     to: '/denemeler',
-    label: 'Deneme Girişi',
+    label: 'Deneme Girişi & Karnesi',
     icon: ClipboardList,
     step: '3 · Sonuçları Kaydet',
-    body: 'Sınav adı, yayıncı, tarih ve bölüm bazlı doğru/yanlış sayılarını girersin; net hesaplaması (Doğru − Yanlış ÷ 4) otomatik yapılır. Sağ tarafta geçmiş denemeler listelenir; bir denemeye tıklarsan altında bölüm tablosu açılır (Bölüm · Doğru · Yanlış · Boş · Soru · Net ve Toplam satırı). "Tüm Deneme Geçmişi" sekmesinde tüm öğrencilerin denemeleri tek tabloda aranabilir ve aynı şekilde tıklanıp detaylandırılabilir. Açılan tablonun altındaki "Sonucu WhatsApp ile gönder" ile deneme sonucunu bölüm dökümü ve toplam netiyle birlikte öğrenciye, veliye ya da her ikisine iletebilirsin. 8. Sınıf bir öğrenciye deneme girerken artık LGS bölümleri çıkıyor (Türkçe, Matematik, Fen Bilimleri, T.C. İnkılap Tarihi ve Atatürkçülük, Din Kültürü ve Ahlak Bilgisi, Yabancı Dil — toplam 90 soru) ve net hesaplaması LGS kuralına göre yapılır: 3 yanlış 1 doğruyu götürür (YKS\'de bu 4\'tür). Derslerin katsayısı farklı olduğu için toplamda ayrıca katsayılı "ağırlıklı net" gösterilir. Not: bu, gerçek 500 puanlık LGS puanı DEĞİLDİR — o puan yalnızca o yıl sınava giren herkesin sonucuyla (merkezî istatistiklerle) hesaplanabilir, uygulama böyle bir veri olmadan puan üretmez, yalnızca ağırlıklı neti gösterir.',
+    body: 'Sınav adı, yayıncı, tarih, alt ders ve konu detaylarını karne düzeninde girersin; net hesaplaması (YKS: Doğru − Yanlış ÷ 4, LGS: Doğru − Yanlış ÷ 3) ve canlı özet balonları anında hesaplanır. İsteğe bağlı olarak yayının açıkladığı puan, yüzdelik dilim ve sıralamalar girilebilir. "Sonuçlar & Koç Özeti" sekmesinde kurum genelinde son 7 günde girilen denemeleri ve en çok net kaybedilen alanları görebilirsin. "Tüm Deneme Geçmişi" sekmesinde geçmiş denemeler listelenir ve "Düzenle" düğmesiyle herhangi bir denemenin konuları güncellenebilir.',
     usage: 'Öğrenci her yeni deneme sonucunu paylaştığında — girdikten hemen sonra sonucu WhatsApp ile öğrenciye/veliye gönderebilirsin.',
+  },
+  {
+    to: '/ogrenciler',
+    label: 'Deneme Analizi (3 Seviye)',
+    icon: TrendingUp,
+    step: 'Analiz & Görüşme',
+    body: 'Öğrenci profilindeki "Deneme Analizi" sekmesi deneme verilerini üç seviyede inceler: (1) Genel: net çizgisi, ortalama, net değişimi (Δ) ve görüşmede konuşulacak koç içgörüleri; (2) Ders: en çok net kaybettiren dersler ve tüm denemelerin ders ısı tablosu; (3) Konu: en çok net kaybettiren ilk 10 konu, ders filtreli konu ısı tablosu, birikimli soru/doğru/yanlış toplamları ve gelişim eğilimleri. Grafik ve tablo arasında tek tıkla geçiş yapılabilir.',
+    usage: 'Öğrenciyle haftalık görüşmede veya veli bilgilendirmesinde deneme gelişimini ve eksik konuları netleştirmek istediğinde.',
   },
   {
     to: '/konular',

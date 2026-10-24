@@ -2506,21 +2506,29 @@ Spec §6 ve §7.
 - Öz-test: `scripts/examReport.selftest.ts` (`assert` tabanlı, `npm run test:exam-report`). Örnek karne verisiyle (spec §10b-7; ad yok) net, başarı %, kayıp, Δ, 2-deneme vs 3-deneme eşikleri, birikimli toplamlar ve rol çıktıları doğrulandı (100% başarılı).
 - Doğrulama: `npm run test:exam-report`, `npm run test:types`, `npm run lint`, `npm run build` temiz.
 
-### 📥 agy — K4: Koç görünümleri [YAPILACAK — K3'ten sonra]
+### 📥 agy — K4: Koç görünümleri [✅ TAMAMLANDI]
 Spec §6 ve §8, taslak artboard 2-3.
-- Öğrenci Profili'nde (`/ogrenciler/:studentId`) yeni **"Deneme Analizi"** sekmesi. İçinde Genel / Ders / Konu seviye seçici ve TYT/AYT/LGS seçici (yalnız verisi olanlar).
-  - Genel: başlık kartı, net çizgisi + ortalama, Δ listesi, "Görüşmede konuşulacaklar".
-  - Ders: ısı tablosu (net + %), Sparkline, Δ ve "son denemede ne kadar net gitti" çubukları.
-  - Konu: alt ders çipleri, konu × deneme ısı tablosu ("–" = girilmedi), Σ sütunları, rozet, "nerede net kaybediyor" ilk 10 ve konu ayrıntı grafiği.
-  - Her grafikte Grafik/Tablo geçişi ve "ⓘ nasıl hesaplandı" bulunur.
-- Grafikler elle SVG ile çizilir, yeni kütüphane eklenmez. `src/components/charts/` altında `Sparkline` tarzında yazılır. Renkler **prop olarak bir palet nesnesinden** gelir (K5 portalda yeniden kullanacak).
-- Denemeler sayfası "Sonuçlar" sekmesi (koç genel bakışı):
-  - Öğrenci başına son deneme, net ve Δ rozeti.
-  - 3 sayı kartı: son 7 günde girilen deneme · konusu girilmemiş deneme · ortalama net değişimi.
-  - "Nerede puan kaybediyorlar?" listesi (öğrenci filtresiyle).
-- Deneme satırı açılınca salt-okunur karne görünümü gelir (K2 düzeni, renkli).
-- Yardım sayfasına (`/yardim`) "Deneme Analizi" bölümü ve Sürüm Geçmişi'ne yeni sürüm satırı eklenir.
-- **Opus kontrol kapısı:** canlıda gerçek veriyle üç seviye. Sayılar karneyle karşılaştırılır.
+- `src/components/charts/`:
+  - `chartPalette.ts`: CSS token tabanlı koç paleti + sabit hex portal paletleri (`PORTAL_STUDENT_PALETTE`, `PORTAL_PARENT_PALETTE`).
+  - `ExamLineChart.tsx`: Saf SVG net çizgisi + kesikli ortalama çizgisi + veri noktaları + hover tooltip + asgari veri (3 deneme) kuralı dürüst kutusu.
+  - `LossBarChart.tsx`: Yatay kayıp net çubukları (büyükten küçüğe sıralı, bar + kayıp net etiketi).
+  - `StackedBarChart.tsx`: D/Y/B yığılı çubuk grafiği (Doğru yeşil / Yanlış kırmızı / Boş gri).
+- Öğrenci Profili'nde (`/ogrenciler/:studentId`):
+  - Yeni **"Deneme Analizi"** sekmesi eklendi (`StudentExamAnalysisView.tsx`).
+  - Genel, Ders ve Konu seviye seçicileri + sınav türü seçicisi (yalnız verisi olanlar).
+  - Genel seviyesi: Başlık kartı ("Son deneme 61,50 net (+8,75)"), canlı balonlar, Δ rozeti, varsa puan/yüzdelik/sıralar/koç notu; Grafik ↔ Tablo geçişi; "Görüşmede konuşulacaklar" (Koç içgörüleri).
+  - Ders seviyesi: Son denemede en çok net kaybettiren dersler yatay çubukları; bölüm soru dağılımı (D/Y/B yığılı); tüm denemelerin ders ısı tablosu (renkli başarı bantları, ortalama net ve son net).
+  - Konu seviyesi: En çok net kaybettiren ilk 10 konu; alt ders çipleriyle filtreleme; konu × deneme ısı tablosu (D/S ve %, "–" = girilmedi); birikimli ΣS, ΣD, ΣY, ΣB, Σ% sütunları; Sparkline eğilimi ve durum rozeti (Yeterli / Gelişiyor / Kritik / Ölçülmedi).
+  - "Nasıl hesaplandı ⓘ" metodoloji bilgi kutusu.
+- Denemeler Sayfası (`/denemeler`):
+  - Yeni **"Sonuçlar & Koç Özeti"** sekmesi eklendi (`CoachExamsOverviewTab.tsx`).
+  - 3 sayı kartı: Son 7 günde girilen deneme sayısı · Konusu girilmemiş deneme sayısı · Ortalama net değişimi.
+  - Öğrenci bazında son deneme kartları, son net ve Δ rozetleri, profil analizine hızlı link.
+  - "Nerede net kaybediyorlar?" listesi: Tüm öğrencilerin denemelerindeki en çok net kaybettiren alanlar (öğrenci filtresiyle).
+- Yardım Sayfası (`/yardim`) & Sürüm Geçmişi (`VersionHistory.tsx`):
+  - v0.26 sürüm notu eklendi.
+  - Yardım rehberine "Deneme Girişi & Karnesi" ve "Deneme Analizi (3 Seviye)" kartları eklendi.
+- Doğrulama: `npm run test:types`, `npm run lint`, `npm run build`, `npm run test:exam-report` hepsi temiz.
 
 ### 📥 agy — K5: Öğrenci + veli portalı [YAPILACAK — K4'ten sonra]
 Spec §8, taslak artboard 4-5.

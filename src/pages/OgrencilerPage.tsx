@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, Fragment } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, ChevronRight, ChevronDown, Plus, Search, TrendingUp, Award,
   CheckSquare, MoreVertical, MessageCircle, Smartphone, UserX,
@@ -10,6 +10,7 @@ import ProgressRing from '../components/charts/ProgressRing'
 import AddStudentModal from '../components/students/AddStudentModal'
 import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import ExamShareButtons from '../components/exams/ExamShareButtons'
+import StudentExamAnalysisView from '../components/exams/StudentExamAnalysisView'
 import { formatPhoneForWhatsApp, openWhatsAppChat } from '../lib/whatsapp'
 import { ensureStudentAccessCodes } from '../lib/accessCode'
 import { fetchStudents } from '../lib/students'
@@ -21,7 +22,7 @@ import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../l
 import { topicAppliesTo, gradeCurriculum } from '../lib/curriculum'
 import { weightedNet } from '../lib/examSections'
 
-type ActiveTab = 'overview' | 'exams' | 'subjects' | 'tasks' | 'attendance'
+type ActiveTab = 'overview' | 'exams' | 'analysis' | 'subjects' | 'tasks' | 'attendance'
 
 /**
  * Mobil portal erişim linkini WhatsApp ile gönderir (öğrenciye ya da veliye).
@@ -78,8 +79,15 @@ export default function OgrencilerPage() {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   
   // State for single-student detail view
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab') as ActiveTab | null
   const [studentData, setStudentData] = useState<StudentData | null>(null)
-  const [activeTab, setActiveTab] = useState<ActiveTab>('overview')
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    if (tabParam && ['overview', 'exams', 'analysis', 'subjects', 'tasks', 'attendance'].includes(tabParam)) {
+      return tabParam
+    }
+    return 'overview'
+  })
   // Deneme Geçmişi sekmesinde tıklanan denemenin bölüm tablosu açılır
   const [expandedExamId, setExpandedExamId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -710,11 +718,18 @@ export default function OgrencilerPage() {
       )}
 
       {/* Tabs Menu */}
-      <div style={{ display: 'flex', gap: 20, borderBottom: '1px solid var(--border)', marginBottom: 24 }}>
-        {(['overview', 'exams', 'subjects', 'tasks', 'attendance'] as const).map(tab => (
+      <div style={{ display: 'flex', gap: 20, borderBottom: '1px solid var(--border)', marginBottom: 24, overflowX: 'auto' }}>
+        {(['overview', 'exams', 'analysis', 'subjects', 'tasks', 'attendance'] as const).map(tab => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => {
+              setActiveTab(tab)
+              setSearchParams(prev => {
+                const next = new URLSearchParams(prev)
+                next.set('tab', tab)
+                return next
+              })
+            }}
             style={{
               padding: '12px 6px',
               border: 'none',
@@ -723,11 +738,13 @@ export default function OgrencilerPage() {
               color: activeTab === tab ? 'var(--indigo-600)' : 'var(--ink-soft)',
               borderBottom: activeTab === tab ? '2px solid var(--indigo-600)' : '2px solid transparent',
               cursor: 'pointer',
-              fontSize: 13.5
+              fontSize: 13.5,
+              whiteSpace: 'nowrap'
             }}
           >
             {tab === 'overview' && 'Genel Bakış'}
             {tab === 'exams' && 'Deneme Geçmişi'}
+            {tab === 'analysis' && 'Deneme Analizi'}
             {tab === 'subjects' && 'Konu Yeterliliği'}
             {tab === 'tasks' && 'Görevler'}
             {tab === 'attendance' && 'Devamsızlık'}
@@ -968,6 +985,11 @@ export default function OgrencilerPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* TAB CONTENT: Deneme Analizi (K4) */}
+      {activeTab === 'analysis' && (
+        <StudentExamAnalysisView studentId={student.id} role="coach" />
       )}
 
       {/* TAB CONTENT: Subject Proficiency Map */}

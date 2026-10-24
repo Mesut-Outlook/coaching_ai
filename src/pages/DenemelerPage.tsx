@@ -8,6 +8,7 @@ import PageHeader from '../components/layout/PageHeader'
 import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import ExamShareButtons from '../components/exams/ExamShareButtons'
 import ExamReportForm from '../components/exams/ExamReportForm'
+import CoachExamsOverviewTab from '../components/exams/CoachExamsOverviewTab'
 import type { Student, MockExam, MockExamSection } from '../types/database'
 
 export default function DenemelerPage() {
@@ -25,7 +26,7 @@ export default function DenemelerPage() {
   const [editingExamId, setEditingExamId] = useState<string | null>(null)
 
   // Tab View State
-  const [activeViewTab, setActiveViewTab] = useState<'entry' | 'list'>('entry')
+  const [activeViewTab, setActiveViewTab] = useState<'entry' | 'results' | 'list'>('entry')
 
   // Tıklanan denemenin bölüm tablosu açılır (her iki sekmede de ayrı ayrı)
   const [expandedExamId, setExpandedExamId] = useState<string | null>(null)
@@ -233,6 +234,22 @@ export default function DenemelerPage() {
         </button>
         <button
           type="button"
+          onClick={() => setActiveViewTab('results')}
+          style={{
+            padding: '10px 4px',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeViewTab === 'results' ? '2px solid var(--indigo-600)' : '2px solid transparent',
+            color: activeViewTab === 'results' ? 'var(--indigo-600)' : 'var(--ink-soft)',
+            fontWeight: activeViewTab === 'results' ? 700 : 500,
+            fontSize: 13.5,
+            cursor: 'pointer',
+          }}
+        >
+          Sonuçlar & Koç Özeti
+        </button>
+        <button
+          type="button"
           onClick={() => setActiveViewTab('list')}
           style={{
             padding: '10px 4px',
@@ -428,6 +445,10 @@ export default function DenemelerPage() {
             )}
           </div>
         </div>
+      )}
+
+      {isSupabaseConfigured && activeViewTab === 'results' && (
+        <CoachExamsOverviewTab students={students} allExams={allExams} />
       )}
 
       {isSupabaseConfigured && activeViewTab === 'list' && (

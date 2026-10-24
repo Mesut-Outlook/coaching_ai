@@ -18,6 +18,17 @@ const HISTORY: DateGroup[] = [
     date: '24 Ekim 2026',
     entries: [
       {
+        version: 'v0.26',
+        title: 'Deneme Karnesi & 3 Seviyeli Analiz Modülü (Genel · Ders · Konu)',
+        items: [
+          'Karne Düzeninde Deneme Girişi: Soru, Doğru, Yanlış ve Boş sayıları artık fiziksel karne formatında, alt ders ve açılır konu detaylarıyla girilebiliyor. Canlı özet balonları net ve başarı oranını anında hesaplıyor.',
+          'Puan ve Sıralamalar: Yayının açıkladığı puan, yüzdelik dilim ve şube/kurum/ilçe/il/genel sıraları isteğe bağlı olarak kaydedilebiliyor. Ayrıca koçun yazdığı not öğrenci ve veli portalına doğrudan iletiliyor.',
+          'Öğrenci Profilinde Deneme Analizi: Profilde açılan yeni "Deneme Analizi" sekmesiyle öğrencinin denemeleri Genel, Ders ve Konu olmak üzere 3 seviyede incelenebiliyor.',
+          'Gelişim ve Kayıp Grafikleri: Saf SVG ile çizilen net eğilimi çizgisi, ortalama çizgisi, en çok net kaybettiren dersler ve konuların yatay çubukları ve bölüm dağılımı grafikleri eklendi.',
+          'Denemeler Sayfasında Koç Genel Bakışı ("Sonuçlar"): Tüm öğrencilerin son deneme netleri, net değişim rozetleri (Δ), son 7 günde girilen deneme sayısı ve kurum genelinde en çok net kaybedilen alanlar tek ekranda toplandı.',
+        ],
+      },
+      {
         version: 'v0.25',
         title: 'Ek Yerleştirme ekranı, veri düzeltmesi ve yıl bazlı puanlar',
         items: [
