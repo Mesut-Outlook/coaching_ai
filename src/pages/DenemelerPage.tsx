@@ -1,34 +1,28 @@
 import { useEffect, useState, useMemo, Fragment } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { Trash2, ClipboardList, AlertCircle, Save, Search, ChevronDown, ChevronRight } from 'lucide-react'
+import { Trash2, Search, ChevronDown, ChevronRight, Edit3 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import PageHeader from '../components/layout/PageHeader'
 import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import ExamShareButtons from '../components/exams/ExamShareButtons'
-import type { Student, MockExam, MockExamSection, ExamType } from '../types/database'
-import { getExamSections, sectionNet, weightedNet, wrongPenaltyFor } from '../lib/examSections'
-import { gradeCurriculum } from '../lib/curriculum'
+import ExamReportForm from '../components/exams/ExamReportForm'
+import type { Student, MockExam, MockExamSection } from '../types/database'
 
 export default function DenemelerPage() {
   const { studentScope } = useAccess()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialStudentId = searchParams.get('studentId') || ''
-  
+
   const [students, setStudents] = useState<Student[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState(initialStudentId)
   const [exams, setExams] = useState<(MockExam & { totalNet: number; sectionsList: MockExamSection[] })[]>([])
   const [loading, setLoading] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
-  // Form State
-  const [examName, setExamName] = useState('')
-  const [publisher, setPublisher] = useState('')
-  const [examType, setExamType] = useState<ExamType>('TYT')
-  const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0])
-  const [scores, setScores] = useState<Record<string, { correct: number; wrong: number }>>({})
+
+  // Düzenleme durumu
+  const [editingExamId, setEditingExamId] = useState<string | null>(null)
 
   // Tab View State
   const [activeViewTab, setActiveViewTab] = useState<'entry' | 'list'>('entry')
@@ -38,71 +32,34 @@ export default function DenemelerPage() {
   const toggleExam = (id: string) => setExpandedExamId((prev) => (prev === id ? null : id))
 
   // All Exams History List State
-  const [allExams, setAllExams] = useState<(MockExam & { 
-    students: { full_name: string; track: string; phone_number: string | null; parent_phone_number: string | null } | null;
-    totalNet: number; 
-    sectionsList: MockExamSection[] 
-  })[]>([])
+  const [allExams, setAllExams] = useState<
+    (MockExam & {
+      students: { full_name: string; track: string; phone_number: string | null; parent_phone_number: string | null } | null
+      totalNet: number
+      sectionsList: MockExamSection[]
+    })[]
+  >([])
   const [listSearch, setListSearch] = useState('')
   const [listTypeFilter, setListTypeFilter] = useState<'ALL' | 'TYT' | 'AYT' | 'LGS'>('ALL')
 
   // Find selected student
   const currentStudent = useMemo(() => {
-    return students.find(s => s.id === selectedStudentId)
+    return students.find((s) => s.id === selectedStudentId)
   }, [students, selectedStudentId])
-
-  // Seçili öğrencinin müfredatı — hangi sınav türlerinin görünür olacağının tek kaynağı.
-  const studentCurriculum = currentStudent ? gradeCurriculum(currentStudent.grade) : null
-
-  // Öğrenci değişince sınav türünü öğrencinin müfredatıyla uyumlu hale getir
-  // (LGS öğrencisinde yalnız LGS, YKS öğrencisinde TYT/AYT — asla ikisi karışık görünmez).
-  useEffect(() => {
-    if (!studentCurriculum) return
-    setExamType(prev => {
-      if (studentCurriculum === 'LGS') return 'LGS'
-      return prev === 'LGS' ? 'TYT' : prev
-    })
-  }, [studentCurriculum])
-
-  // Get active exam sections layout
-  const activeSections = useMemo(
-    () => getExamSections(examType, currentStudent?.track ?? null),
-    [examType, currentStudent]
-  )
-
-  // Anlık önizleme: bölüm netleri + toplam net + (yalnız LGS) katsayılı ağırlıklı net.
-  const totalNetPreview = useMemo(
-    () =>
-      activeSections.reduce((sum, sec) => {
-        const score = scores[sec.name] || { correct: 0, wrong: 0 }
-        return sum + sectionNet(score.correct, score.wrong, examType)
-      }, 0),
-    [activeSections, scores, examType]
-  )
-  const weightedNetPreview = useMemo(() => {
-    if (examType !== 'LGS') return null
-    return weightedNet(
-      activeSections.map(sec => {
-        const score = scores[sec.name] || { correct: 0, wrong: 0 }
-        return { section_name: sec.name, net: sectionNet(score.correct, score.wrong, examType) }
-      })
-    )
-  }, [activeSections, scores, examType])
 
   // Load students list
   useEffect(() => {
     if (!isSupabaseConfigured) return
-    fetchStudents({ activeOnly: true, orderBy: 'full_name', ...studentScope })
-      .then((data) => {
-        if (data) {
-          setStudents(data)
-          if (!selectedStudentId && data.length > 0) {
-            setSelectedStudentId(data[0].id)
-            setSearchParams({ studentId: data[0].id })
-          }
+    fetchStudents({ activeOnly: true, orderBy: 'full_name', ...studentScope }).then((data) => {
+      if (data) {
+        setStudents(data)
+        if (!selectedStudentId && data.length > 0) {
+          setSelectedStudentId(data[0].id)
+          setSearchParams({ studentId: data[0].id })
         }
-      })
-  }, [studentScope])
+      }
+    })
+  }, [studentScope, selectedStudentId, setSearchParams])
 
   // Sync selectedStudentId with query params
   const handleStudentChange = (id: string) => {
@@ -115,7 +72,7 @@ export default function DenemelerPage() {
     if (!selectedStudentId || !isSupabaseConfigured) return
     setLoading(true)
     setError(null)
-    
+
     try {
       const { data: rawExams, error: examsError } = await supabase
         .from('mock_exams')
@@ -125,15 +82,15 @@ export default function DenemelerPage() {
       if (examsError) throw examsError
 
       if (rawExams && rawExams.length > 0) {
-        const examIds = rawExams.map(e => e.id)
+        const examIds = rawExams.map((e) => e.id)
         const { data: rawSections, error: sectionsError } = await supabase
           .from('mock_exam_sections')
           .select('*')
           .in('mock_exam_id', examIds)
         if (sectionsError) throw sectionsError
 
-        const enrichedExams = rawExams.map(exam => {
-          const secs = rawSections?.filter(s => s.mock_exam_id === exam.id) || []
+        const enrichedExams = rawExams.map((exam) => {
+          const secs = rawSections?.filter((s) => s.mock_exam_id === exam.id) || []
           const totalNet = Math.round(secs.reduce((sum, s) => sum + Number(s.net), 0) * 100) / 100
           return { ...exam, totalNet, sectionsList: secs }
         })
@@ -142,6 +99,7 @@ export default function DenemelerPage() {
         setExams([])
       }
     } catch (err) {
+      console.error('Sınav yükleme hatası:', err)
       setError(err instanceof Error ? err.message : 'Sınav verileri yüklenemedi')
     } finally {
       setLoading(false)
@@ -153,7 +111,7 @@ export default function DenemelerPage() {
     if (!isSupabaseConfigured) return
     setLoading(true)
     setError(null)
-    
+
     try {
       const { data: rawAllExams, error: examsError } = await (supabase
         .from('mock_exams')
@@ -170,7 +128,7 @@ export default function DenemelerPage() {
         if (sectionsError) throw sectionsError
 
         const enrichedAllExams = rawAllExams.map((exam: any) => {
-          const secs = rawSections?.filter(s => s.mock_exam_id === exam.id) || []
+          const secs = rawSections?.filter((s) => s.mock_exam_id === exam.id) || []
           const totalNet = Math.round(secs.reduce((sum, s) => sum + Number(s.net), 0) * 100) / 100
           return { ...exam, totalNet, sectionsList: secs, students: exam.students as any }
         })
@@ -179,6 +137,7 @@ export default function DenemelerPage() {
         setAllExams([])
       }
     } catch (err) {
+      console.error('Tüm sınavlar yükleme hatası:', err)
       setError(err instanceof Error ? err.message : 'Tüm sınav verileri yüklenemedi')
     } finally {
       setLoading(false)
@@ -201,113 +160,58 @@ export default function DenemelerPage() {
     loadAllExamsList()
   }, [])
 
-  // Initialize scores state when active sections change
-  useEffect(() => {
-    const newScores: Record<string, { correct: number; wrong: number }> = {}
-    activeSections.forEach(sec => {
-      newScores[sec.name] = { correct: 0, wrong: 0 }
-    })
-    setScores(newScores)
-  }, [activeSections])
-
-  const handleScoreChange = (secName: string, field: 'correct' | 'wrong', val: number) => {
-    setScores(prev => ({
-      ...prev,
-      [secName]: {
-        ...prev[secName],
-        [field]: val
-      }
-    }))
-  }
-
-  // Handle Form Submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedStudentId) return alert('Lütfen bir öğrenci seçin.')
-    if (!examName) return alert('Lütfen deneme adını girin.')
-
-    setSubmitting(true)
-    setError(null)
-
-    try {
-      // 1. Insert exam
-      const { data: examData, error: examError } = await supabase
-        .from('mock_exams')
-        .insert({
-          student_id: selectedStudentId,
-          name: examName,
-          publisher: publisher || null,
-          exam_type: examType,
-          exam_date: examDate
-        })
-        .select('id')
-        .single()
-      
-      if (examError) throw examError
-
-      // ⚠️ wrong_penalty yalnız LGS'te gönderilir (default 4 zaten TYT/AYT için doğru).
-      // Aynı insert çağrısındaki TÜM satırlar bu alanı ya hep taşımalı ya hiç taşımamalı —
-      // supabase-js toplu insert'te anahtarları birleştirip eksik olanlara null yazıyor,
-      // karışık gönderim `not null` hatası verir. Tek bir denemenin bölümleri hep aynı
-      // examType'a ait olduğu için burada zaten homojen.
-      const sectionsToInsert = activeSections.map(sec => {
-        const score = scores[sec.name] || { correct: 0, wrong: 0 }
-        const blank = sec.max - (score.correct + score.wrong)
-        return {
-          mock_exam_id: examData.id,
-          section_name: sec.name,
-          max_questions: sec.max,
-          correct_count: score.correct,
-          wrong_count: score.wrong,
-          blank_count: Math.max(0, blank),
-          ...(examType === 'LGS' ? { wrong_penalty: wrongPenaltyFor(examType) } : {})
-        }
-      })
-
-      const { error: secError } = await supabase
-        .from('mock_exam_sections')
-        .insert(sectionsToInsert as any)
-      if (secError) throw secError
-
-      // Reset form
-      setExamName('')
-      setPublisher('')
-      loadExams()
-      loadAllExamsList()
-      alert('Deneme başarıyla kaydedildi!')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Deneme kaydedilirken hata oluştu')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
   // Handle Exam Delete
   const handleDeleteExam = async (examId: string) => {
     if (!window.confirm('Bu deneme sonucunu silmek istediğinize emin misiniz?')) return
-    
+
     try {
-      const { error } = await supabase.from('mock_exams').delete().eq('id', examId)
-      if (error) throw error
+      const { error: delError } = await supabase.from('mock_exams').delete().eq('id', examId)
+      if (delError) throw delError
+      if (editingExamId === examId) setEditingExamId(null)
       loadExams()
       loadAllExamsList()
     } catch (err) {
+      console.error('Deneme silme hatası:', err)
       alert('Deneme silinirken hata oluştu.')
     }
   }
 
+  // Düzenleme Başlatma (Her iki listeden de çağrılabilir)
+  const handleStartEditExam = (examId: string, studentId: string) => {
+    setSelectedStudentId(studentId)
+    setSearchParams({ studentId })
+    setEditingExamId(examId)
+    setActiveViewTab('entry')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleCancelEdit = () => {
+    setEditingExamId(null)
+  }
+
+  const handleSaveSuccess = () => {
+    setEditingExamId(null)
+    loadExams()
+    loadAllExamsList()
+  }
+
   const filteredAllExams = useMemo(() => {
-    return allExams.filter(e => {
-      const studentName = e.students?.full_name || '';
-      const matchesSearch = studentName.toLowerCase().includes(listSearch.toLowerCase()) || e.name.toLowerCase().includes(listSearch.toLowerCase());
-      const matchesType = listTypeFilter === 'ALL' ? true : e.exam_type === listTypeFilter;
-      return matchesSearch && matchesType;
+    return allExams.filter((e) => {
+      const studentName = e.students?.full_name || ''
+      const matchesSearch =
+        studentName.toLowerCase().includes(listSearch.toLowerCase()) ||
+        e.name.toLowerCase().includes(listSearch.toLowerCase())
+      const matchesType = listTypeFilter === 'ALL' ? true : e.exam_type === listTypeFilter
+      return matchesSearch && matchesType
     })
   }, [allExams, listSearch, listTypeFilter])
 
   return (
     <section className="screen">
-      <PageHeader title="Deneme Girişi" subtitle="Yeni bir deneme sonucu girin, netler sistem tarafından otomatik hesaplansın." />
+      <PageHeader
+        title="Deneme Girişi"
+        subtitle="Öğrencinin karne düzeninde deneme, alt ders ve konu sonuçlarını girin; analiz motoru anında hesaplasın."
+      />
 
       {/* Tab Selectors */}
       <div style={{ display: 'flex', gap: 20, borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
@@ -322,10 +226,10 @@ export default function DenemelerPage() {
             color: activeViewTab === 'entry' ? 'var(--indigo-600)' : 'var(--ink-soft)',
             fontWeight: activeViewTab === 'entry' ? 700 : 500,
             fontSize: 13.5,
-            cursor: 'pointer'
+            cursor: 'pointer',
           }}
         >
-          Deneme Sonucu Gir
+          {editingExamId ? 'Deneme Düzenle (Karne)' : 'Deneme Sonucu Gir (Karne)'}
         </button>
         <button
           type="button"
@@ -338,223 +242,191 @@ export default function DenemelerPage() {
             color: activeViewTab === 'list' ? 'var(--indigo-600)' : 'var(--ink-soft)',
             fontWeight: activeViewTab === 'list' ? 700 : 500,
             fontSize: 13.5,
-            cursor: 'pointer'
+            cursor: 'pointer',
           }}
         >
           Tüm Deneme Geçmişi ({allExams.length})
         </button>
       </div>
 
+      {error && (
+        <div className="alert alert-error" style={{ marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
+
       {!isSupabaseConfigured && (
-        <div className="card" style={{ padding: 16, marginBottom: 20, background: 'var(--warning-bg)', border: 'none', color: 'var(--warning-text)' }}>
+        <div
+          className="card"
+          style={{
+            padding: 16,
+            marginBottom: 20,
+            background: 'var(--warning-bg)',
+            border: 'none',
+            color: 'var(--warning-text)',
+          }}
+        >
           Supabase bağlı değil — Lütfen Supabase yapılandırmasını tamamlayın.
         </div>
       )}
 
       {isSupabaseConfigured && activeViewTab === 'entry' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 24, alignItems: 'start' }}>
-          
-          {/* LEFT COLUMN: Entry Form */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* KARNE GİRİŞ FORMU */}
+          <ExamReportForm
+            students={students}
+            selectedStudentId={selectedStudentId}
+            onStudentChange={handleStudentChange}
+            editingExamId={editingExamId}
+            onCancelEdit={handleCancelEdit}
+            onSaveSuccess={handleSaveSuccess}
+          />
+
+          {/* SEÇİLİ ÖĞRENCİNİN DENEME GEÇMİŞİ LİSTESİ */}
           <div className="card" style={{ padding: 22 }}>
-            <h3 style={{ fontSize: 15, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 7 }}>
-              <ClipboardList size={18} color="var(--indigo-600)" />
-              Yeni Deneme Sonucu Ekle
-            </h3>
-            
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Student Selector */}
-              <div className="field">
-                <label>Öğrenci Seçin</label>
-                <select value={selectedStudentId} onChange={(e) => handleStudentChange(e.target.value)}>
-                  {students.map(s => (
-                    <option key={s.id} value={s.id}>{s.full_name} ({s.track})</option>
-                  ))}
-                </select>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 15, margin: 0 }}>
+                {currentStudent ? `${currentStudent.full_name} Deneme Geçmişi (${exams.length})` : 'Deneme Geçmişi'}
+              </h3>
+              <span style={{ fontSize: 12, color: 'var(--ink-faint)' }}>
+                Düzenlemek ve konularını girmek için kaleme tıklayın
+              </span>
+            </div>
 
-              {/* Exam Info */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="field">
-                  <label>Sınav Adı</label>
-                  <input type="text" placeholder="Örn: Türkiye Geneli - 1" value={examName} onChange={e => setExamName(e.target.value)} required />
-                </div>
-                <div className="field">
-                  <label>Yayıncı / Kurum</label>
-                  <input type="text" placeholder="Örn: 3D Yayınları" value={publisher} onChange={e => setPublisher(e.target.value)} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="field">
-                  <label>Sınav Türü</label>
-                  <select value={examType} onChange={e => setExamType(e.target.value as ExamType)}>
-                    {studentCurriculum === 'LGS' ? (
-                      <option value="LGS">LGS</option>
-                    ) : (
-                      <>
-                        <option value="TYT">TYT</option>
-                        <option value="AYT">AYT</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Sınav Tarihi</label>
-                  <input type="date" value={examDate} onChange={e => setExamDate(e.target.value)} required />
-                </div>
-              </div>
-
-              {/* Section Score Inputs */}
-              <div style={{ borderTop: '1px solid var(--border-soft)', paddingTop: 14 }}>
-                <h4 style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginBottom: 12 }}>Bölüm Skorları (Doğru / Yanlış)</h4>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {activeSections.map(sec => {
-                    const score = scores[sec.name] || { correct: 0, wrong: 0 }
-                    const liveNet = sectionNet(score.correct, score.wrong, examType)
-                    return (
-                      <div key={sec.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'var(--surface-alt)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-soft)' }}>
-                        <div style={{ minWidth: 100 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600 }}>{sec.name}</span>
-                          <div style={{ fontSize: 10, color: 'var(--ink-faint)', marginTop: 1 }}>
-                            Maks: {sec.max} soru{sec.katsayi ? ` · katsayı ${sec.katsayi}` : ''}
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <input
-                            type="number"
-                            min="0"
-                            max={sec.max}
-                            placeholder="D"
-                            value={score.correct || ''}
-                            onChange={e => handleScoreChange(sec.name, 'correct', parseInt(e.target.value) || 0)}
-                            style={{ width: 60, padding: 6, textAlign: 'center', fontSize: 12.5 }}
-                          />
-                          <span style={{ fontSize: 12, color: 'var(--ink-faint)' }}>/</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max={sec.max - score.correct}
-                            placeholder="Y"
-                            value={score.wrong || ''}
-                            onChange={e => handleScoreChange(sec.name, 'wrong', parseInt(e.target.value) || 0)}
-                            style={{ width: 60, padding: 6, textAlign: 'center', fontSize: 12.5 }}
-                          />
-                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--indigo-600)', minWidth: 42, textAlign: 'right' }}>
-                            {Math.round(liveNet * 100) / 100}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, padding: '8px 12px', borderRadius: 8, background: 'var(--indigo-050)' }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>Toplam Net</span>
-                  <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--indigo-600)' }}>
-                    {Math.round(totalNetPreview * 100) / 100}
-                  </span>
-                </div>
-                {examType === 'LGS' && weightedNetPreview !== null && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, padding: '8px 12px', borderRadius: 8, background: 'var(--surface-alt)', border: '1px solid var(--border-soft)' }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-soft)' }}>Ağırlıklı Net (LGS puanı değildir)</span>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--ink)' }}>
-                      {Math.round(weightedNetPreview * 100) / 100}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {error && (
-                <div style={{ display: 'flex', gap: 6, color: 'var(--critical)', fontSize: 12, alignItems: 'center' }}>
-                  <AlertCircle size={14} />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={submitting}>
-                <Save size={16} /> {submitting ? 'Kaydediliyor…' : 'Deneme Sonucunu Kaydet'}
-              </button>
-            </form>
-          </div>
-
-          {/* RIGHT COLUMN: History List */}
-          <div className="card" style={{ padding: 22 }}>
-            <h3 style={{ fontSize: 15, marginBottom: 18 }}>
-              {currentStudent ? `${currentStudent.full_name} Deneme Geçmişi` : 'Deneme Geçmişi'}
-            </h3>
-            
             {loading ? (
               <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Yükleniyor…</div>
             ) : exams.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Kayıtlı deneme bulunamadı.</div>
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>
+                Bu öğrenciye ait kayıtlı deneme bulunamadı.
+              </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {exams.map(e => {
+                {exams.map((e) => {
                   const isOpen = expandedExamId === e.id
+                  const isBeingEdited = editingExamId === e.id
+
                   return (
-                  <div key={e.id} style={{ border: '1px solid var(--border-soft)', borderRadius: 10, background: 'var(--surface-alt)', overflow: 'hidden' }}>
                     <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => toggleExam(e.id)}
-                      onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleExam(e.id) } }}
-                      title={isOpen ? 'Bölüm tablosunu kapat' : 'Bölüm tablosunu aç'}
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', cursor: 'pointer' }}
+                      key={e.id}
+                      style={{
+                        border: isBeingEdited ? '2px solid var(--indigo-600)' : '1px solid var(--border-soft)',
+                        borderRadius: 10,
+                        background: 'var(--surface-alt)',
+                        overflow: 'hidden',
+                      }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ color: 'var(--ink-faint)', display: 'flex' }}>
-                          {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-                        </span>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: 13.5 }}>{e.name}</div>
-                          <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 3 }}>
-                            {e.exam_date} · {e.exam_type}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => toggleExam(e.id)}
+                        onKeyDown={(ev) => {
+                          if (ev.key === 'Enter' || ev.key === ' ') {
+                            ev.preventDefault()
+                            toggleExam(e.id)
+                          }
+                        }}
+                        title={isOpen ? 'Bölüm tablosunu kapat' : 'Bölüm tablosunu aç'}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '12px 14px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ color: 'var(--ink-faint)', display: 'flex' }}>
+                            {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                          </span>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 13.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              {e.name}
+                              {isBeingEdited && (
+                                <span className="badge badge-primary" style={{ fontSize: 10 }}>
+                                  Düzenleniyor
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 3 }}>
+                              {e.exam_date} · {e.exam_type} {e.publisher ? `· ${e.publisher}` : ''}
+                            </div>
+                            <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 4 }}>
+                              {e.sectionsList.map((s) => `${s.section_name}: ${s.net}`).join(' · ')}
+                            </div>
                           </div>
-                          <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 4 }}>
-                            {e.sectionsList.map(s => `${s.section_name}: ${s.net}`).join(' · ')}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--indigo-600)' }}>{e.totalNet}</div>
+                            <div style={{ fontSize: 9.5, color: 'var(--ink-faint)' }}>toplam net</div>
                           </div>
+
+                          {/* Düzenle / Konuları gir */}
+                          <button
+                            type="button"
+                            onClick={(ev) => {
+                              ev.stopPropagation()
+                              handleStartEditExam(e.id, e.student_id)
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              border: '1px solid var(--border)',
+                              background: 'var(--surface)',
+                              borderRadius: 6,
+                              padding: '5px 8px',
+                              color: 'var(--indigo-600)',
+                              fontSize: 12,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                            title="Düzenle / Konuları gir"
+                          >
+                            <Edit3 size={13} /> Düzenle
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(ev) => {
+                              ev.stopPropagation()
+                              handleDeleteExam(e.id)
+                            }}
+                            style={{
+                              border: 'none',
+                              background: 'none',
+                              padding: 4,
+                              color: 'var(--critical)',
+                              cursor: 'pointer',
+                            }}
+                            title="Denemeyi sil"
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--indigo-600)' }}>{e.totalNet}</div>
-                          <div style={{ fontSize: 9.5, color: 'var(--ink-faint)' }}>toplam net</div>
+                      {isOpen && (
+                        <div style={{ padding: '0 12px 12px' }}>
+                          <ExamSectionsTable sections={e.sectionsList} />
+                          {currentStudent && (
+                            <ExamShareButtons
+                              exam={e}
+                              sections={e.sectionsList}
+                              studentName={currentStudent.full_name}
+                              phone={currentStudent.phone_number}
+                              parentPhone={currentStudent.parent_phone_number}
+                            />
+                          )}
                         </div>
-                        <button
-                          type="button"
-                          onClick={(ev) => { ev.stopPropagation(); handleDeleteExam(e.id) }}
-                          style={{ border: 'none', background: 'none', padding: 4, color: 'var(--critical)', cursor: 'pointer' }}
-                          title="Denemeyi sil"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
+                      )}
                     </div>
-
-                    {isOpen && (
-                      <div style={{ padding: '0 12px 12px' }}>
-                        <ExamSectionsTable sections={e.sectionsList} />
-                        {currentStudent && (
-                          <ExamShareButtons
-                            exam={e}
-                            sections={e.sectionsList}
-                            studentName={currentStudent.full_name}
-                            phone={currentStudent.phone_number}
-                            parentPhone={currentStudent.parent_phone_number}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
                   )
                 })}
               </div>
             )}
           </div>
-
         </div>
       )}
 
@@ -562,14 +434,34 @@ export default function DenemelerPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Filter Tools */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', width: '100%', maxWidth: 320, color: 'var(--ink-faint)' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 10,
+                padding: '8px 12px',
+                width: '100%',
+                maxWidth: 320,
+                color: 'var(--ink-faint)',
+              }}
+            >
               <Search size={14} />
               <input
                 type="text"
                 placeholder="Öğrenci veya sınav ara…"
                 value={listSearch}
                 onChange={(e) => setListSearch(e.target.value)}
-                style={{ border: 'none', outline: 'none', background: 'none', flex: 1, color: 'var(--ink)', fontSize: 13.5 }}
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  background: 'none',
+                  flex: 1,
+                  color: 'var(--ink)',
+                  fontSize: 13.5,
+                }}
               />
             </div>
 
@@ -577,7 +469,13 @@ export default function DenemelerPage() {
               <select
                 value={listTypeFilter}
                 onChange={(e) => setListTypeFilter(e.target.value as any)}
-                style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10, fontSize: 13, background: 'var(--surface)' }}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  background: 'var(--surface)',
+                }}
               >
                 <option value="ALL">Tüm Sınav Türleri</option>
                 <option value="TYT">TYT</option>
@@ -611,71 +509,141 @@ export default function DenemelerPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAllExams.map(e => {
+                  {filteredAllExams.map((e) => {
                     const isOpen = expandedExamId === e.id
                     return (
-                    <Fragment key={e.id}>
-                    <tr
-                      onClick={() => toggleExam(e.id)}
-                      title={isOpen ? 'Bölüm tablosunu kapat' : 'Bölüm tablosunu aç'}
-                      style={{ borderBottom: isOpen ? 'none' : '1px solid var(--border-soft)', cursor: 'pointer' }}
-                    >
-                      <td style={{ padding: '12px 4px', color: 'var(--ink-faint)' }}>
-                        {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-                      </td>
-                      <td style={{ padding: '12px 14px', fontWeight: 600 }}>
-                        {e.students ? (
-                          <Link to={`/ogrenciler/${e.student_id}`} onClick={(ev) => ev.stopPropagation()} style={{ textDecoration: 'none', color: 'var(--indigo-600)' }}>
-                            {e.students.full_name}
-                          </Link>
-                        ) : (
-                          'Bilinmeyen Öğrenci'
-                        )}
-                      </td>
-                      <td style={{ padding: '12px 14px', fontWeight: 600 }}>{e.name}</td>
-                      <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>{e.publisher || '—'}</td>
-                      <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>{e.exam_date}</td>
-                      <td style={{ padding: '12px 14px' }}>
-                        <span className={`chip ${e.exam_type === 'TYT' ? 'chip-say' : e.exam_type === 'AYT' ? 'chip-ea' : 'chip-soz'}`} style={{ padding: '1px 6px', fontSize: 10.5 }}>
-                          {e.exam_type}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 14px', color: 'var(--ink-soft)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={e.sectionsList.map(s => `${s.section_name}: ${s.correct_count}D ${s.wrong_count}Y (${s.net} net)`).join(' · ')}>
-                        {e.sectionsList.map(s => `${s.section_name}: ${s.net}`).join(' · ')}
-                      </td>
-                      <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 700, color: 'var(--indigo-600)', fontSize: 14 }}>
-                        {e.totalNet}
-                      </td>
-                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                        <button
-                          type="button"
-                          onClick={(ev) => { ev.stopPropagation(); handleDeleteExam(e.id) }}
-                          style={{ border: 'none', background: 'none', padding: 4, color: 'var(--critical)', cursor: 'pointer' }}
-                          title="Denemeyi sil"
+                      <Fragment key={e.id}>
+                        <tr
+                          onClick={() => toggleExam(e.id)}
+                          title={isOpen ? 'Bölüm tablosunu kapat' : 'Bölüm tablosunu aç'}
+                          style={{
+                            borderBottom: isOpen ? 'none' : '1px solid var(--border-soft)',
+                            cursor: 'pointer',
+                          }}
                         >
-                          <Trash2 size={15} />
-                        </button>
-                      </td>
-                    </tr>
-                    {isOpen && (
-                      <tr style={{ borderBottom: '1px solid var(--border-soft)' }}>
-                        <td colSpan={9} style={{ padding: '0 14px 14px 34px', background: 'var(--surface-alt)' }}>
-                          <div style={{ maxWidth: 760 }}>
-                            <ExamSectionsTable sections={e.sectionsList} />
-                            {e.students && (
-                              <ExamShareButtons
-                                exam={e}
-                                sections={e.sectionsList}
-                                studentName={e.students.full_name}
-                                phone={e.students.phone_number}
-                                parentPhone={e.students.parent_phone_number}
-                              />
+                          <td style={{ padding: '12px 4px', color: 'var(--ink-faint)' }}>
+                            {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                          </td>
+                          <td style={{ padding: '12px 14px', fontWeight: 600 }}>
+                            {e.students ? (
+                              <Link
+                                to={`/ogrenciler/${e.student_id}`}
+                                onClick={(ev) => ev.stopPropagation()}
+                                style={{ textDecoration: 'none', color: 'var(--indigo-600)' }}
+                              >
+                                {e.students.full_name}
+                              </Link>
+                            ) : (
+                              'Bilinmeyen Öğrenci'
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                    </Fragment>
+                          </td>
+                          <td style={{ padding: '12px 14px', fontWeight: 600 }}>{e.name}</td>
+                          <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>{e.publisher || '—'}</td>
+                          <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>{e.exam_date}</td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span
+                              className={`chip ${
+                                e.exam_type === 'TYT'
+                                  ? 'chip-say'
+                                  : e.exam_type === 'AYT'
+                                  ? 'chip-ea'
+                                  : 'chip-soz'
+                              }`}
+                              style={{ padding: '1px 6px', fontSize: 10.5 }}
+                            >
+                              {e.exam_type}
+                            </span>
+                          </td>
+                          <td
+                            style={{
+                              padding: '12px 14px',
+                              color: 'var(--ink-soft)',
+                              maxWidth: 280,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                            title={e.sectionsList
+                              .map((s) => `${s.section_name}: ${s.correct_count}D ${s.wrong_count}Y (${s.net} net)`)
+                              .join(' · ')}
+                          >
+                            {e.sectionsList.map((s) => `${s.section_name}: ${s.net}`).join(' · ')}
+                          </td>
+                          <td
+                            style={{
+                              padding: '12px 14px',
+                              textAlign: 'right',
+                              fontWeight: 700,
+                              color: 'var(--indigo-600)',
+                              fontSize: 14,
+                            }}
+                          >
+                            {e.totalNet}
+                          </td>
+                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: 6, alignItems: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={(ev) => {
+                                  ev.stopPropagation()
+                                  handleStartEditExam(e.id, e.student_id)
+                                }}
+                                style={{
+                                  border: '1px solid var(--border)',
+                                  background: 'var(--surface)',
+                                  borderRadius: 6,
+                                  padding: '4px 6px',
+                                  color: 'var(--indigo-600)',
+                                  fontSize: 11.5,
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 3,
+                                }}
+                                title="Düzenle / Konuları gir"
+                              >
+                                <Edit3 size={13} /> Düzenle
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(ev) => {
+                                  ev.stopPropagation()
+                                  handleDeleteExam(e.id)
+                                }}
+                                style={{
+                                  border: 'none',
+                                  background: 'none',
+                                  padding: 4,
+                                  color: 'var(--critical)',
+                                  cursor: 'pointer',
+                                }}
+                                title="Denemeyi sil"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        {isOpen && (
+                          <tr style={{ borderBottom: '1px solid var(--border-soft)' }}>
+                            <td colSpan={9} style={{ padding: '0 14px 14px 34px', background: 'var(--surface-alt)' }}>
+                              <div style={{ maxWidth: 760 }}>
+                                <ExamSectionsTable sections={e.sectionsList} />
+                                {e.students && (
+                                  <ExamShareButtons
+                                    exam={e}
+                                    sections={e.sectionsList}
+                                    studentName={e.students.full_name}
+                                    phone={e.students.phone_number}
+                                    parentPhone={e.students.parent_phone_number}
+                                  />
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     )
                   })}
                 </tbody>

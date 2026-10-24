@@ -2479,17 +2479,19 @@ Spec §4 ve §10b-3.
    - Canlı probe: anon çağrısı `permission denied for function save_exam_report` ile güvenle reddedildi.
 - **Opus kontrol kapısı:** SQL incelemesi, ardından kullanıcı SQL Editor'de çalıştırır. Opus `seed:exam-catalog`'u koşar, canlıda `count=exact` ile katalog sayılarını kendisi sayar (TYT 11 alt ders / 65 konu satırı = 64 benzersiz + Felsefe (Seçmeli) satırı), RPC'yi bogus öğrenciyle prob eder (RLS reddi beklenir).
 
-### 📥 agy — K2: Deneme giriş ekranı (karne düzeni) [YAPILACAK — K1 canlıda olmalı]
-Spec §5, §10b-1/2, taslak artboard 1. `src/pages/DenemelerPage.tsx` giriş sekmesi yeniden yazılır. Gerekirse `src/components/exams/` altına bileşenler ayrılır.
-- Başlık şeridinde canlı özet balonları (Soru/D/Y/B/Net) yer alır. Altında isteğe bağlı "Puan ve sıralama" paneli ve "Koçun notu" kutusu ("öğrenci ve veli görür" etiketiyle) bulunur.
-- Bölüm kartları renkli olur, alt ders tablosu katalogdan (`exam_subjects`) gelir. Seçmeli grup için anahtar, altında açılır "Konular" (`exam_topics`, sınıfa göre `grades` süzmesi; `topicAppliesTo` mantığıyla aynı), tutarlılık çubuğu (sarı uyarı, kaydı engellemez) ve "+ Konu ekle".
-- Boş kutu girilmedi sayılır, "0" bir değerdir. Bölüm ayrıntılı/elle kuralı §10b-2'deki gibidir.
-- Klavye: Tab yalnız giriş kutularında dolaşır, Enter bir alt satıra iner, odakta içerik seçilir. Fare kullanmadan bir TYT karnesi girilebilmeli.
-- Kayıt **yalnız** `save_exam_report` RPC'si ile yapılır.
-- Deneme listesinde "Düzenle / Konuları gir" düğmesi aynı formu dolu açar. Öğrencinin portaldan girdiği deneme de açılabilir; bölüm değerleri korunur.
-- LGS öğrencisinde sınav türü LGS'ye kilitli kalır, ceza 3, "puan" kelimesi kullanılmaz.
-- **Kabul:** Taslaktaki örnek karne (TYT 120 soru, 95,00 net; Türkçe konuları 40/31/9) elle girilip kaydedilince DB'de bölüm, alt ders ve konu satırlarının sayıları karneyle birebir olmalı. Yeniden açılıp bir konu silinince satır DB'den kalkmalı.
-- **Opus kontrol kapısı:** canlıda deneme girişi (test öğrencisiyle, sonra silinir), DB'de `count=exact`, bundle'da yeni string.
+### 📥 agy — K2: Deneme giriş ekranı (karne düzeni) [✅ TAMAMLANDI]
+Spec §5, §10b-1/2, taslak artboard 1. `src/pages/DenemelerPage.tsx` ve `src/components/exams/ExamReportForm.tsx`:
+- Başlık şeridinde canlı özet balonları (Soru/D/Y/B/Net + LGS ağırlıklı net). Altında isteğe bağlı açılır "Puan ve sıralama" paneli (yayının puanı, yüzdelik, genel/kurum/şube/il/ilçe sıra/katılan) ve "Koçun notu" kutusu ("öğrenci ve veli görür" etiketiyle).
+- Bölüm kartları karnedeki renk bloklarıyla (Türkçe, Matematik, Sosyal, Fen, LGS bölümleri) ızgara düzeninde yerleşti. Alt ders tablosu katalogdan (`exam_subjects`) çekilir; seçmeli grup anahtarı (`sosyal-secmeli` Din Kültürü ↔ Felsefe Seçmeli) tek tıkla seçilir.
+- Alt dersin altında açılır "Konular" (`exam_topics`), öğrenci sınıfına göre (`grades`) süzülür. Konu bazında S · D · Y girilir, boşlar ve başarı % anında hesaplanır.
+- Tutarlılık çubuğu: "Konular: X/Y soru · A/B doğru · C/D yanlış" sarı uyarı verir, kaydı engellemez.
+- Satır içi "+ Konu ekle" alanı: koç anında kataloğa (`exam_topics`) yeni konu ekleyebilir.
+- Bölüm ↔ alt ders mantığı (§10b-2): Bir bölümün alt dersleri girilmişse bölüm otomatik toplanır ve rozetle belirtilir. Alt ders girilmemiş bölümlerde elle giriş korunur.
+- Klavye akışı: Enter bir alt satıra geçer, odaklanıldığında girdi otomatik seçilir (`e.target.select()`). Negatif sayı ve D+Y > S ihlalleri engellenir.
+- Kayıt **yalnız** atomik `save_exam_report` RPC'si üzerinden çalışır.
+- Deneme listelerinde (öğrenci deneme geçmişi ve tüm denemeler tablosu) her satırda "Düzenle" düğmesi formu dolu olarak açar ve mevcut kaydı günceller.
+- LGS öğrencisinde sınav türü LGS'ye kilitli kalır, ceza katsayısı 3 olarak hesaplanır, puan yerine ağırlıklı net gösterilir.
+- Doğrulama: `npm run test:types`, `npm run lint`, `npm run build` temiz.
 
 ### 📥 agy — K3: Analiz motoru + uyarılar (saf TS) [✅ TAMAMLANDI]
 Spec §6 ve §7.
