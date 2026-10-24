@@ -2314,7 +2314,7 @@ Kaynak görev: `~/Downloads/ek-yerlestirme-claude-code-gorev.md`. Eski 2026-09-2
 - `ogrenci_tercih_listeleri`: student_id (cascade), yil, donem ('asil'|'ek'), program_kodu, sira 1..24, notlar; unique (student_id, yil, donem, sira) + (…, program_kodu). Kayıt `tercih_listesi_kaydet(student, yil, donem, items jsonb)` (security invoker, tek transaction'da sil+ekle). RLS `student_permission(student_id,'tercih.view')`. Audit listesine eklenir.
 - Program, koşul ve ücret tabloları: authenticated okur, yazma yalnız service role.
 
-**Durum (2026-10-23):** ✅ E1–E5 tamam ve commit'li (`ebfa766`, `cc8fa81`). Şema canlıda uygulandı (kullanıcı, SQL Editor), örnek veri yüklendi, sayfa tarayıcıda uçtan uca test edildi (filtre, detay, ekle/sırala/kaydet/yenile, yazdırma bloğu). Kalan: `main`'e push + burs_indirim düzeltmesi için `seed:ek`'i bir kez daha koşmak. Bilinen küçük eksik: yıl/öğrenci değişince kaydedilmemiş liste için uyarı yok.
+**Durum (2026-10-24):** ✅ E1–E6 tüm paketler tamamlandı, canlı veritabanı güncellendi ve doğrulandı. Şema uygulandı, 2026 tam ek yerleştirme verisi (16.715 program, 195 koşul, 2.536 ücret) yüklendi. Yıl/öğrenci değişiminde ve sayfa kapatılırken kaydedilmemiş değişiklik uyarısı (`dirty` guard + `beforeunload`) eklendi. Build, test:types ve lint 0 hata ile geçiyor.
 
 **Paketler:** E1 şema+tipler (Sonnet alt ajan) · E2 örnek veri + `seed:ek` (Haiku) · E3 `ChipMultiSelect` + Türkçe arama ortak dosyaya, davranış değişmez (Haiku) · E4 `/ek-yerlestirme` sayfası + menü (Sonnet) · E5 `docs/ek-yerlestirme.md` (Opus) · **E6 tam PDF parser (agy, sonraki oturum)** · **T1 YÖK Atlas 2026 güncellemesi (agy)**. Her paketten sonra Opus kontrolü: build + test:types + lint.
 

@@ -99,6 +99,15 @@ export default function EkYerlestirmePage() {
   const [dragIdx, setDragIdx] = useState<number | null>(null)
 
   useEffect(() => {
+    if (!dirty) return
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [dirty])
+
+  useEffect(() => {
     if (!isSupabaseConfigured) { setLoading(false); return }
     fetchStudents({ activeOnly: true, orderBy: 'full_name', ...studentScope }).then(setStudents)
   }, [studentScope])
@@ -205,6 +214,23 @@ export default function EkYerlestirmePage() {
     const s = { ...scores, [t]: v }; setScores(s); if (studentId) saveScores(studentId, s)
   }
 
+  const handleStudentChange = (newId: string) => {
+    if (newId === studentId) return
+    if (dirty && !window.confirm('Kaydedilmemiş değişiklikleriniz kaybolacak. Devam etmek istiyor musunuz?')) {
+      return
+    }
+    setStudentId(newId)
+  }
+
+  const handleYearChange = (newYear: number) => {
+    if (newYear === year) return
+    if (dirty && !window.confirm('Kaydedilmemiş değişiklikleriniz kaybolacak. Devam etmek istiyor musunuz?')) {
+      return
+    }
+    setYear(newYear)
+    setOpenCode(null)
+  }
+
   const save = async () => {
     if (!studentId || year == null) return
     setSaving(true); setMsg(null)
@@ -237,7 +263,7 @@ export default function EkYerlestirmePage() {
           title="Ek Yerleştirme"
           subtitle="Merkezî yerleştirmede boş kalan kontenjanlar. Öğrenci için en fazla 24 tercihlik liste hazırla."
           actions={
-            <select value={year ?? ''} onChange={(e) => { setYear(Number(e.target.value)); setOpenCode(null) }} title="Kılavuz yılı">
+            <select value={year ?? ''} onChange={(e) => handleYearChange(Number(e.target.value))} title="Kılavuz yılı">
               {years.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
           }
@@ -393,7 +419,7 @@ export default function EkYerlestirmePage() {
 
           <div className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="field"><label>Öğrenci</label>
-              <select style={sel} value={studentId} onChange={(e) => setStudentId(e.target.value)}>
+              <select style={sel} value={studentId} onChange={(e) => handleStudentChange(e.target.value)}>
                 <option value="">Öğrenci seç…</option>
                 {students.map((s) => <option key={s.id} value={s.id}>{s.full_name}</option>)}
               </select></div>

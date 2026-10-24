@@ -339,7 +339,25 @@ def parse_conditions(pdf_path, yil):
     print(f"Extracted {len(all_conds)} conditions.")
     return all_conds
 
-def parse_vakif_fees(pdf_path, yil):
+FEE_LEVELS = ('Önlisans', 'Lisans', 'Hazırlık')
+PRICE_RE = re.compile(r'^\d{1,3}(\.\d{3})*,\d{2}$')
+
+# Ücret tablosunun iki yerleşimi var (kök neden: eskiden yalnız ilki biliniyordu):
+#  - vakıf sayfaları: ücret xMin≈303; üni <150, düzey 150-200, program 200-290, açıklama ≥355
+#  - KKTC sayfaları (s.~452+): ücret xMin≈239; üni <140, düzey 140-180, program 180-236, açıklama ≥285
+# Yerleşim ücret kelimesinin x'inden satır bazında seçilir. (price_lo, price_hi, duzey_lo, prog_lo, prog_hi, note_lo)
+FEE_LAYOUTS = [
+    (295, 312, 150, 200, 290, 355),
+    (232, 246, 140, 180, 236, 285),
+]
+
+def norm_uni(s):
+    s = s.replace('i', 'İ').replace('ı', 'I').upper()
+    s = re.sub(r'\([^)]*\)?', ' ', s)   # parantezli (kapanmamış dahil) ekleri at
+    s = re.sub(r'^\d+\s+|\*', ' ', s)
+    return re.sub(r'\s+', ' ', s).strip()
+
+def parse_vakif_fees(pdf_path, yil, programs):
     print("Extracting foundation university fees (pages 402..467)...")
     page_numbers = list(range(UCRET_START, UCRET_END + 1))
     with ThreadPoolExecutor(max_workers=8) as executor:
@@ -352,26 +370,40 @@ def parse_vakif_fees(pdf_path, yil):
         words = parse_words_from_xml(xml_bytes)
         table_words = [w for w in words if w['yMin'] >= (330 if p == 402 else 40) and w['yMin'] <= 815]
 
-        price_words = [w for w in table_words if 290 <= w['cx'] <= 355 and re.search(r'\d+[\.,]\d+', w['text'])]
-        price_words.sort(key=lambda w: w['cy'])
+        price_words = []
+        for w in table_words:
+            if not PRICE_RE.match(w['text']):
+                continue
+            for lay in FEE_LAYOUTS:
+                if lay[0] <= w['xMin'] <= lay[1]:  # ücret kolonu sola dayalı; notlardaki tutarlar (x=287, 329, 360…) dışarıda kalır
+                    price_words.append((w, lay))
+                    break
+        # Ücreti olmayan satırlar ("öğrenim ücreti ilgili programla aynıdır" gibi): düzey kolonunun
+        # başında Önlisans/Lisans/Hazırlık olan ve yanında ücret kelimesi bulunmayan satır → ucret=None.
+        for w in table_words:
+            if w['text'] in FEE_LEVELS and 140 <= w['xMin'] < 170 and not any(abs(w['cy'] - q['cy']) < 3 for q, _ in price_words) \
+                    and any(abs(w['cy'] - u['cy']) < 3 and u['xMin'] < 140 for u in table_words):
+                price_words.append((w, FEE_LAYOUTS[1] if w['xMin'] < 155 else FEE_LAYOUTS[0]))
+        price_words.sort(key=lambda t: t[0]['cy'])
 
-        for idx, pw in enumerate(price_words):
-            cy = pw['cy']
-            prev_cy = price_words[idx - 1]['cy'] if idx > 0 else (cy - 12.0)
-            next_cy = price_words[idx + 1]['cy'] if idx < len(price_words) - 1 else (cy + 15.0)
+        for idx, (pw, lay) in enumerate(price_words):
+            _, _, duzey_lo, prog_lo, prog_hi, note_lo = lay
+            # Satır sahipliği: ücret satırının devam satırları (üni adının 2. satırı, program/düzey
+            # devamı) HER ZAMAN ücretin ALTINDA. Kelime, kendinden önce (≤+3pt) gelen en yakın ücret
+            # satırına aittir. (Eski orta-nokta penceresi 2. satırı komşu satıra kaçırıyordu.)
+            y_low = pw['cy'] - 3.0
+            y_high = price_words[idx + 1][0]['cy'] - 3.0 if idx < len(price_words) - 1 else float('inf')
+            row_w = [w for w in table_words if y_low <= w['cy'] < y_high and (w is not pw or pw['text'] in FEE_LEVELS)]
 
-            y_low = (prev_cy + cy) / 2.0
-            y_high = (next_cy + cy) / 2.0
-
-            row_w = [w for w in table_words if y_low <= w['cy'] <= y_high]
-
-            uni_words = sorted([w for w in row_w if w['cx'] < 155], key=lambda w: (round(w['cy'] / 3.0) * 3.0, w['xMin']))
-            duzey_words = sorted([w for w in row_w if 155 <= w['cx'] < 195], key=lambda w: w['xMin'])
-            prog_words = sorted([w for w in row_w if 195 <= w['cx'] < 290], key=lambda w: (round(w['cy'] / 3.0) * 3.0, w['xMin']))
-            note_words = sorted([w for w in row_w if w['cx'] >= 355], key=lambda w: (round(w['cy'] / 3.0) * 3.0, w['xMin']))
+            # Kolon ataması xMin ile (düzey kolonundaki kelime ada, ad kelimesi düzeye kaçmasın)
+            key = lambda w: (round(w['cy'] / 3.0) * 3.0, w['xMin'])
+            uni_words = sorted([w for w in row_w if w['xMin'] < duzey_lo], key=key)
+            duzey_words = sorted([w for w in row_w if duzey_lo <= w['xMin'] < prog_lo], key=key)
+            prog_words = sorted([w for w in row_w if prog_lo <= w['xMin'] < prog_hi], key=key)
+            note_words = sorted([w for w in row_w if w['xMin'] >= note_lo], key=key)
 
             uni_str = ' '.join(w['text'] for w in uni_words).strip()
-            if 'ÜNİVERSİTE' in uni_str or 'YÜKSEKOKUL' in uni_str or len(uni_str) > 10:
+            if uni_str:
                 current_uni = uni_str
 
             duzey = ' '.join(w['text'] for w in duzey_words).strip()
@@ -380,11 +412,10 @@ def parse_vakif_fees(pdf_path, yil):
             if not prog:
                 continue
 
-            ucret_str = pw['text'].replace('.', '').replace(',', '.')
-            try:
-                val = float(ucret_str)
+            if PRICE_RE.match(pw['text']):
+                val = float(pw['text'].replace('.', '').replace(',', '.'))
                 val = int(val) if val.is_integer() else val
-            except ValueError:
+            else:
                 val = None
 
             note = ' '.join(w['text'] for w in note_words).strip() if note_words else None
@@ -398,15 +429,41 @@ def parse_vakif_fees(pdf_path, yil):
                 'not': note
             })
 
+    # Ad doğrulaması: vakıf/KKTC/yurt dışı program üniversite adlarına normalize ederek eşle.
+    canon = {}
+    for pr in programs:
+        if pr['universite_turu'] != 'devlet':
+            n = norm_uni(pr['universite'])
+            if n:
+                canon.setdefault(n, n)
+    by_words = {}
+    for n in canon:
+        by_words.setdefault(frozenset(n.split()), []).append(n)
+    unmatched = []
+    for f in all_fees:
+        n = norm_uni(f['universite'])
+        if n in canon:
+            f['universite'] = canon[n]
+            continue
+        c = by_words.get(frozenset(n.split()), [])
+        if len(c) == 1:
+            f['universite'] = c[0]
+        else:
+            unmatched.append(f)
+
     # Deduplicate by (yil, universite, duzey, program) to satisfy Postgres constraint
     deduped_fees = {}
     for f in all_fees:
+        # Eşlenemeyen ama programlar listesinde hiç yer almayan kurumlar (kontenjansız) PDF'teki adıyla kalır;
+        # çöp satırlar (uzun/ÜNİVERSİTE-MYO içermeyen "ad") atılır. Hepsi raporda listelenir.
+        if f in unmatched and not (len(f['universite']) <= 60 and re.search(r'ÜNİVERSİTESİ|YÜKSEKOKULU', f['universite'])):
+            continue
         k = (f['yil'], f['universite'], f['duzey'], f['program'])
         deduped_fees[k] = f
 
     fees_result = list(deduped_fees.values())
-    print(f"Extracted {len(fees_result)} unique fee entries.")
-    return fees_result
+    print(f"Extracted {len(fees_result)} unique fee entries ({len(all_fees)} raw, {len(unmatched)} unmatched).")
+    return fees_result, unmatched
 
 def generate_report(programs, conditions, fees, yil, report_path, sample_path=None):
     total_prog = len(programs)
@@ -561,7 +618,7 @@ def main():
     conditions = parse_conditions(args.pdf, args.yil)
 
     # 4. Vakif Ucretleri
-    fees = parse_vakif_fees(args.pdf, args.yil)
+    fees, unmatched = parse_vakif_fees(args.pdf, args.yil, all_programs)
 
     # Save complete JSON
     os.makedirs(os.path.dirname(out_json), exist_ok=True)
@@ -579,6 +636,11 @@ def main():
     # Generate validation report
     sample_file = f"data/ek-yerlestirme/{args.yil}-ornek.json"
     generate_report(all_programs, conditions, fees, args.yil, out_report, sample_path=sample_file)
+
+    with open(out_report, "a", encoding="utf-8") as f:
+        f.write(f"\n## Eşlenemeyen ücret satırı: {len(unmatched)}\n\n")
+        for u in unmatched:
+            f.write(f"- `{u['universite']}` | {u['duzey']} | {u['program']} | {u['ucret']}\n")
 
     elapsed = time.time() - start_time
     print(f"\n🎉 Parser tamamlandi! Gecen sure: {elapsed:.2f} saniye.")
