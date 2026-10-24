@@ -2375,7 +2375,16 @@ Kaynak görev: `~/Downloads/ek-yerlestirme-claude-code-gorev.md`. Eski 2026-09-2
   - Öğrencinin girdiği puanlar `localStorage`'da `ekYerlestirme.puan.<studentId>` anahtarıyla, **yılsız** tutuluyor. 2027'de 2026 puanı "puan altında" uyarısında kullanılır.
   - Sürüm Geçmişi'nde Ek Yerleştirme için **hiç kayıt yok** (son kayıt v0.24).
 
-### 🔄 E7 — Liste kolonları + yıl bazlı puan (Sonnet alt ajan, Opus yönetiyor) — [DEVAM EDİYOR — agy ALMASIN]
+### ✅ E7 — Liste kolonları + yıl bazlı puan (Sonnet alt ajan, Opus kontrolü) — [TAMAMLANDI 2026-10-24]
+**Opus kontrolü:**
+- Canlı veriyle tarayıcıda kılavuz s.8 ile karşılaştırıldı, hepsi tuttu:
+  - Adana ATBÜ Arka-Yüz: 2 · TYT · 1 · 317,21457.
+  - KKTC Uyruklu satırı "Dolmadı".
+  - Adıyaman Bankacılık: genel 8, puan 274,49285.
+  - Besni Büro Yönetimi: Genel boş, 34Y Kadın 1, GK Dolmadı, 34Y puan 278,53751.
+- Sol kolon oranı 1.6fr → 2fr yapıldı: 1920 px'te tablo kaydırmasız sığıyor, sayfada yatay taşma yok.
+- Sürüm notundaki "Dolmadı programlara herkes başvurabilir" iddiası, uygulamanın denetlemediği bir kural olduğu için düzeltildi.
+- Not (sonraki iş adayı): `il`'i boş 694 programın bir kısmı aynı üniversitenin kardeş programlarından doldurulabilir (örn. ATBÜ KKTC Uyruklu satırında il "—", kardeşlerinde ADANA). Yalnız kardeşlerin hepsi aynı ildeyse uygulanmalı; çok kampüslü üniversitelerde yanlış il üretir.
 Dosya: `src/pages/EkYerlestirmePage.tsx` (tek dosya; gerekirse `src/styles/global.css`).
 1. **Liste tablosu** (bugün: Kod | Program | Puan | Kont. | En küçük | +) şu hale gelsin:
    `Kod | Program | Öğr. Süre | Puan Türü | Genel | ŞGY | 34Y Kadın | GK | ŞGY | 34Y | +`.

@@ -15,6 +15,25 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '24 Ekim 2026',
+    entries: [
+      {
+        version: 'v0.25',
+        title: 'Ek Yerleştirme ekranı, veri düzeltmesi ve yıl bazlı puanlar',
+        items: [
+          'Yeni Ek Yerleştirme ekranı: ÖSYM Ek Yerleştirme Kılavuzu\'ndaki 16.715 program artık uygulamada. Tablo (Ön Lisans / Lisans), puan türü, üniversite türü (devlet / vakıf / KKTC / yurt dışı), burs ya da indirim, il ve program / üniversite adıyla süzebiliyorsun; "Sadece kontenjanı olanlar" ve "En küçük puanı boş olanlar" kutuları da var. Adlarda Türkçe harfler önemsenmiyor, "hemsirelik" yazınca "Hemşirelik" de geliyor.',
+          'Bir programa tıklayınca yanda genel, şehit / gazi yakını ve 34 yaş üstü kadın kontenjanları, her birinin en küçük puanı ve kılavuzdaki koşul metinleri açılıyor. Vakıf ve KKTC programlarında yıllık öğrenim ücreti de gösteriliyor; ücret program adından yaklaşık eşleştirildiği için kesin değil, kılavuzla birlikte kontrol et.',
+          'Öğrenci için en fazla 24 tercihlik liste hazırlanıyor: öğrenciyi seç, programları "Listeye ekle" ile ekle, sürükleyerek ya da ok butonlarıyla sırala, her satıra kısa not yaz ve Kaydet\'e bas. "Yazdır" ÖSYM\'ye girilecek program kodlarını sıra numarasıyla tek sayfalık liste olarak basıyor.',
+          'Öğrencinin puanlarını (TYT, SAY, EA, SÖZ, DİL) girersen, puanı bir programın en küçük puanının altında kalan satırlarda kırmızı "Puan altında" uyarısı çıkıyor. "Dolmadı" yazan programlarda merkezî yerleştirmede kontenjan dolmadığı için karşılaştırılacak bir puan yok, bu satırlarda uyarı çıkmaz. Puanlar yalnızca bu tarayıcıda saklanıyor.',
+          'Kaydedilmemiş değişiklik uyarısı: listede değişiklik yapıp Kaydet\'e basmadan başka öğrenciye ya da başka yıla geçmeye, hatta sayfayı kapatmaya çalışırsan uygulama önce soruyor; böylece hazırladığın liste yanlışlıkla kaybolmuyor.',
+          'Düzeltme: bazı programlarda üniversite adı boş ya da eksik görünüyordu, ad ayrıştırması düzeltildi. Bazı vakıf programlarında da başka bir üniversitenin ya da bozuk bir yıllık ücret gösteriliyordu; artık ücret yalnızca gerçekten aynı üniversite ve programla eşleşirse gösteriliyor, eşleşme yoksa hiçbir şey yazılmıyor.',
+          'Program listesine kılavuzdaki sütunlar eklendi: öğrenim süresi, puan türü, genel / şehit-gazi yakını / 34 yaş üstü kadın ek kontenjanı ve bu üç kontenjanın en küçük puanı. Kontenjanı olmayan hücreler kılavuzdaki gibi boş bırakılıyor; başlıklara fare ile gelince tam adı görünüyor.',
+          'Kılavuz yılı seçici artık etiketli ("Kılavuz yılı"). Öğrencinin puanları yıla göre ayrı saklanıyor: yıl değiştirince o yıla ait puanlar geliyor. Önceden girilmiş puanlar kaybolmadı, en yeni yıla taşındı.',
+        ],
+      },
+    ],
+  },
+  {
     date: '21 Ağustos 2026',
     entries: [
       {

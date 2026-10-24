@@ -56,14 +56,21 @@ async function fetchAll<T>(table: string, year: number): Promise<T[]> {
   return parts.flatMap((r) => (r.data as T[] | null) ?? [])
 }
 
-function loadScores(studentId: string): Scores {
+// Eski (yılsız) anahtar bir kereliğine en yeni yıla taşınır, sonra silinir.
+function loadScores(studentId: string, year: number, latestYear: number): Scores {
   try {
-    const raw = localStorage.getItem(`ekYerlestirme.puan.${studentId}`)
+    const eski = `ekYerlestirme.puan.${studentId}`
+    const old = localStorage.getItem(eski)
+    if (old) {
+      if (!localStorage.getItem(`${eski}.${latestYear}`)) localStorage.setItem(`${eski}.${latestYear}`, old)
+      localStorage.removeItem(eski)
+    }
+    const raw = localStorage.getItem(`${eski}.${year}`)
     return raw ? (JSON.parse(raw) as Scores) : {}
   } catch { return {} }
 }
-function saveScores(studentId: string, s: Scores) {
-  try { localStorage.setItem(`ekYerlestirme.puan.${studentId}`, JSON.stringify(s)) } catch { /* yok say */ }
+function saveScores(studentId: string, year: number, s: Scores) {
+  try { localStorage.setItem(`ekYerlestirme.puan.${studentId}.${year}`, JSON.stringify(s)) } catch { /* yok say */ }
 }
 
 export default function EkYerlestirmePage() {
@@ -152,7 +159,7 @@ export default function EkYerlestirmePage() {
   useEffect(() => {
     setMsg(null); setDirty(false)
     if (!studentId || year == null) { setList([]); setScores({}); return }
-    setScores(loadScores(studentId))
+    setScores(loadScores(studentId, year, years[0] ?? year))
     supabase.from('ogrenci_tercih_listeleri').select('program_kodu, notlar')
       .eq('student_id', studentId).eq('yil', year).eq('donem', 'ek').order('sira')
       .then(({ data, error }) => {
@@ -160,7 +167,7 @@ export default function EkYerlestirmePage() {
         else setList(((data as { program_kodu: number; notlar: string | null }[]) ?? [])
           .map((r) => ({ program_kodu: r.program_kodu, notlar: r.notlar ?? '' })))
       })
-  }, [studentId, year])
+  }, [studentId, year]) // eslint-disable-line react-hooks/exhaustive-deps -- years yalnız bir kez yüklenir
 
   const byCode = useMemo(() => new Map(programs.map((p) => [p.program_kodu, p])), [programs])
   const kosulMap = useMemo(() => new Map(kosullar.map((k) => [k.kosul_no, k])), [kosullar])
@@ -212,7 +219,7 @@ export default function EkYerlestirmePage() {
   const remove = (i: number) => { setList(list.filter((_, j) => j !== i)); setDirty(true) }
   const setNote = (i: number, notlar: string) => { setList(list.map((l, j) => (j === i ? { ...l, notlar } : l))); setDirty(true) }
   const setScore = (t: string, v: string) => {
-    const s = { ...scores, [t]: v }; setScores(s); if (studentId) saveScores(studentId, s)
+    const s = { ...scores, [t]: v }; setScores(s); if (studentId && year != null) saveScores(studentId, year, s)
   }
 
   const handleStudentChange = (newId: string) => {
@@ -247,6 +254,7 @@ export default function EkYerlestirmePage() {
   const student = students.find((s) => s.id === studentId)
   const open = openCode != null ? byCode.get(openCode) ?? null : null
   const sel = { width: '100%' }
+  const num = { fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' } as const
 
   if (!isSupabaseConfigured || (!loading && years.length === 0)) {
     return (
@@ -264,9 +272,12 @@ export default function EkYerlestirmePage() {
           title="Ek Yerleştirme"
           subtitle="Merkezî yerleştirmede boş kalan kontenjanlar. Öğrenci için en fazla 24 tercihlik liste hazırla."
           actions={
-            <select value={year ?? ''} onChange={(e) => handleYearChange(Number(e.target.value))} title="Kılavuz yılı">
-              {years.map((y) => <option key={y} value={y}>{y}</option>)}
-            </select>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--ink-soft)' }}>
+              Kılavuz yılı
+              <select value={year ?? ''} onChange={(e) => handleYearChange(Number(e.target.value))} title="Kılavuz yılı">
+                {years.map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </label>
           }
         />
       </div>
@@ -294,7 +305,7 @@ export default function EkYerlestirmePage() {
         </table>
       </div>
 
-      <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.6fr) minmax(320px, 1fr)', gap: 18, alignItems: 'start' }}>
+      <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(320px, 1fr)', gap: 18, alignItems: 'start' }}>
         {/* SOL: filtre + liste */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
           <div className="card" style={{ padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 12 }}>
@@ -338,7 +349,22 @@ export default function EkYerlestirmePage() {
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table className="table" style={{ width: '100%' }}>
-                <thead><tr><th>Kod</th><th>Program</th><th>Puan</th><th>Kont.</th><th>En küçük</th><th /></tr></thead>
+                <thead>
+                  <tr>
+                    <th rowSpan={2}>Kod</th><th rowSpan={2} style={{ minWidth: 240 }}>Program</th>
+                    <th rowSpan={2} style={{ textAlign: 'right', whiteSpace: 'nowrap' }} title="Öğrenim süresi (yıl)">Öğr. Süre</th>
+                    <th rowSpan={2} title="Puan türü">Puan Türü</th>
+                    <th colSpan={3} style={{ textAlign: 'center', borderLeft: '1px solid var(--border)' }}>Ek Kontenjan</th>
+                    <th colSpan={3} style={{ textAlign: 'center', borderLeft: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{year} En Küçük Puan</th>
+                    <th rowSpan={2} />
+                  </tr>
+                  <tr>
+                    {([['Genel', 'Genel Ek Kontenjan'], ['ŞGY', 'Şehit ve Gazi Yakınları Ek Kontenjanı'], ['34Y Kadın', '34 Yaş Üstü Kadın Ek Kontenjanı'],
+                      ['GK', 'Genel Kontenjan En Küçük Puan'], ['ŞGY', 'Şehit ve Gazi Yakınları Kontenjanı En Küçük Puan'], ['34Y', '34 Yaş Üstü Kadın Kontenjanı En Küçük Puan']] as const).map(([h, t], i) => (
+                      <th key={i} title={t} style={{ textAlign: 'right', whiteSpace: 'nowrap', borderLeft: i % 3 === 0 ? '1px solid var(--border)' : undefined }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
                 <tbody>
                   {filtered.slice(0, SHOW_LIMIT).map((p) => (
                     <tr key={p.program_kodu} onClick={() => setOpenCode(p.program_kodu)} style={{ cursor: 'pointer', background: openCode === p.program_kodu ? 'var(--indigo-050)' : undefined }}>
@@ -347,9 +373,14 @@ export default function EkYerlestirmePage() {
                         <div style={{ fontWeight: 600 }}>{p.program_adi}</div>
                         <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{p.universite} · {p.il ?? '—'} · {TURU_LABEL[p.universite_turu]}</div>
                       </td>
+                      <td style={{ textAlign: 'right', ...num }}>{p.ogrenim_suresi ?? ''}</td>
                       <td>{p.puan_turu}</td>
-                      <td>{kont(p)}</td>
-                      <td>{p.en_kucuk_gk == null ? <span className="badge badge-subtle">Dolmadı</span> : fmtPuan(p.en_kucuk_gk)} <Warn p={p} /></td>
+                      <td style={{ textAlign: 'right', ...num }}>{p.genel_ek_kont || ''}</td>
+                      <td style={{ textAlign: 'right', ...num }}>{p.sgy_ek_kont || ''}</td>
+                      <td style={{ textAlign: 'right', ...num }}>{p.k34_ek_kont || ''}</td>
+                      <td style={{ textAlign: 'right', ...num }}>{p.en_kucuk_gk == null ? <span className="badge badge-subtle">Dolmadı</span> : fmtPuan(p.en_kucuk_gk)} <Warn p={p} /></td>
+                      <td style={{ textAlign: 'right', ...num }}>{p.en_kucuk_sgy == null ? '' : fmtPuan(p.en_kucuk_sgy)}</td>
+                      <td style={{ textAlign: 'right', ...num }}>{p.en_kucuk_34y == null ? '' : fmtPuan(p.en_kucuk_34y)}</td>
                       <td>
                         <button className="btn btn-ghost btn-sm" disabled={!studentId || full || inList(p.program_kodu)}
                           onClick={(e) => { e.stopPropagation(); add(p.program_kodu) }}
