@@ -2538,3 +2538,46 @@ Spec §8, taslak artboard 4-5.
 `exam_topic_links(exam_topic_id, topic_id)`, gözden geçirilmiş eşleme seed'i ve haritanın deneme sonuçlarını okuması. 1→N dağıtım kuralı gözden geçirmede kararlaştırılacak. Gözden geçirme sayfası: https://claude.ai/artifact/2GYyaXvpkRnRoRjKc5GPJF (paylaşılabilir; Eda kararlarını "Kararları kopyala" ile metin olarak gönderir, kullanıcı Opus'a yapıştırır). Liste onaylanınca Opus paketi buraya yazar. Aynı sayfada AYT müfredat eklemesi (`seed:ayt`) de onay bekliyor.
 
 **Sıra:** K1 → (K2 ∥ K3) → K4 → K5. Her paketten sonra Opus kontrolü yapılır. agy "bitti" dese de repo + canlı üzerinden doğrulanmadan bitmiş sayılmaz.
+
+---
+
+## ⏸ BACKLOG — Raporlar 2.0: denemeden programa (kullanıcı kararı 2026-10-24: **haftalık limit yenilendikten sonra** planlanacak)
+
+**Henüz kimse başlamasın.** Planlama Opus'ta; kullanıcının haftalık kullanım limiti yenilenince Opus bunu spec + iş paketlerine çevirecek, sonra agy alacak. Deneme Karnesi K1–K5'in üstüne kurulur.
+
+Öneri ve taslaklar (paylaşılabilir): https://claude.ai/artifact/SnhPEnMiaUgVY7idHoKn7W
+
+**Kapsam özeti:**
+- **Veri eksikleri:**
+  - `weekly_tasks`'a doğru/yanlış/boş, `completed_at`, kaynak (kitap) ve tür (konu · tekrar · rutin · süreli test · deneme) eklenir.
+  - Görev nereden geldiğini saklar (rapor/öneri + konu). Bu, "işe yaradı mı?" analizi için gerekli.
+  - Hedef net (TYT/AYT).
+  - Sınav tarihi (kurum ayarı).
+  - Konu ağırlığı: önce denemelerdeki ortalama soru, sonra ÖSYM son 5 yıl.
+- **Koç 360 raporu (B1–B9):**
+  - Görüşmede konuşulacaklar (+ aksiyon düğmesi).
+  - Hedef yolu projeksiyonu.
+  - Öncelik matrisi (ağırlık × başarı).
+  - Net kaybı Pareto.
+  - Hata profili (yanlış/boş dörtlüsü).
+  - Ödev↔deneme tutarlılığı.
+  - Müfredat ilerlemesi (başlanmadı → çalışıldı → gelişiyor → yeterli) + yetişme tahmini.
+  - Tekrar zamanı (aralıklı tekrar).
+  - Müdahale etkisi (önce/sonra).
+- **Eksikten programa (C):**
+  - "Öneri taslağı oluştur": öncelik, tekrar ve son 4 haftanın gerçek temposuna göre haftalık taslak.
+  - Taslak koç onayı olmadan programa girmez.
+  - Rapordaki zayıf satırlardan "Programa ekle" penceresi.
+  - Öğrencinin görevi bitirirken sonuç girmesi.
+- **Öğrenci "Haftam" + veli haftalık özeti (D):** "evde nasıl destek olabilirsiniz" maddeleri, WhatsApp ile gönderim (dürüst damgalama).
+
+**Fazlar:**
+- **R1:** veri + tek tık aksiyon (B1, C2, C3).
+- **R2:** koç görselleri (B2–B7).
+- **R3:** öneri motoru + tekrar + müdahale etkisi + öğrenci/veli.
+- **R4:** ÖSYM ağırlıkları, kurum içi anonim karşılaştırma, çalışma süresi, yanlış nedeni.
+
+**Planlamadan önce kullanıcıya sorulacak 3 karar:**
+1. Görev sonucunu kim girer? (öneri: öğrenci portaldan, koç düzeltir)
+2. Hedef net elle mi, hedef programın taban puanından öneri mi?
+3. Öneri motoru yalnız öncelik listesi mi, günlere dağıtılmış tam taslak mı?
