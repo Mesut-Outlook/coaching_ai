@@ -2495,7 +2495,7 @@ Spec §5, §10b-1/2, taslak artboard 1. `src/pages/DenemelerPage.tsx` ve `src/co
 - Alt dersin altında açılır "Konular" (`exam_topics`), öğrenci sınıfına göre (`grades`) süzülür. Konu bazında S · D · Y girilir, boşlar ve başarı % anında hesaplanır.
 - Tutarlılık çubuğu: "Konular: X/Y soru · A/B doğru · C/D yanlış" sarı uyarı verir, kaydı engellemez.
 - Satır içi "+ Konu ekle" alanı: koç anında kataloğa (`exam_topics`) yeni konu ekleyebilir.
-- Bölüm ↔ alt ders mantığı (§10b-2): Bir bölümün alt dersleri girilmişse bölüm otomatik toplanır ve rozetle belirtilir. Alt ders girilmemiş bölümlerde elle giriş korunur.
+- **Ders önce, konu sonra (kullanıcı kararı 2026-10-24, §10b-2 güncel):** Alt ders ve bölüm D/Y değerleri elle girilir; konulardan **hesaplanmaz, ezilmez**. Konu satırları isteğe bağlı ayrıntıdır. Konu toplamı ders toplamıyla uyuşmazsa konu tablosunun altında sarı uyarı çıkar, kaydı engellemez. Önceki "alt dersler tamamlanınca bölüm otomatik toplanır" kuralı iptal.
 - Klavye akışı: Enter bir alt satıra geçer, odaklanıldığında girdi otomatik seçilir (`e.target.select()`). Negatif sayı ve D+Y > S ihlalleri engellenir.
 - Kayıt **yalnız** atomik `save_exam_report` RPC'si üzerinden çalışır.
 - Deneme listelerinde (öğrenci deneme geçmişi ve tüm denemeler tablosu) her satırda "Düzenle" düğmesi formu dolu olarak açar ve mevcut kaydı günceller.
