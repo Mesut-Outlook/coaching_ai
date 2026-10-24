@@ -2375,7 +2375,7 @@ Kaynak görev: `~/Downloads/ek-yerlestirme-claude-code-gorev.md`. Eski 2026-09-2
   - Öğrencinin girdiği puanlar `localStorage`'da `ekYerlestirme.puan.<studentId>` anahtarıyla, **yılsız** tutuluyor. 2027'de 2026 puanı "puan altında" uyarısında kullanılır.
   - Sürüm Geçmişi'nde Ek Yerleştirme için **hiç kayıt yok** (son kayıt v0.24).
 
-### 📥 E7 — Liste kolonları + yıl bazlı puan (Sonnet alt ajan ya da agy) — [YAPILACAK]
+### 🔄 E7 — Liste kolonları + yıl bazlı puan (Sonnet alt ajan, Opus yönetiyor) — [DEVAM EDİYOR — agy ALMASIN]
 Dosya: `src/pages/EkYerlestirmePage.tsx` (tek dosya; gerekirse `src/styles/global.css`).
 1. **Liste tablosu** (bugün: Kod | Program | Puan | Kont. | En küçük | +) şu hale gelsin:
    `Kod | Program | Öğr. Süre | Puan Türü | Genel | ŞGY | 34Y Kadın | GK | ŞGY | 34Y | +`.
@@ -2401,7 +2401,7 @@ Dosya: `src/pages/EkYerlestirmePage.tsx` (tek dosya; gerekirse `src/styles/globa
   - `npm run build` + `npm run test:types` + `npm run lint` (yeni uyarı yok).
 - **Opus kontrol kapısı:** kod incelemesi + tarayıcıda canlı veriyle görsel kontrol + PDF ile satır karşılaştırması.
 
-### 📥 E8 — Parser'ı yıldan bağımsız yap (agy) — [YAPILACAK]
+### 📥 E8 — Parser'ı yıldan bağımsız yap (agy) — [YAPILACAK — agy alacak; 2025 kılavuzu canlıya da yüklenecek (kullanıcı onayı 2026-10-24)]
 Dosya: `scripts/parseEkKilavuz.py` (+ `docs/ek-yerlestirme.md`).
 1. Sabit sayfa aralıklarını (`TABLO3_START/END`, `TABLO4_START/END`, `KOSUL_PAGES_K1/K2`, `UCRET_START/END`) **sayfa metninden otomatik bulan** bir `detect_sections(pdf)` ile değiştir:
    - Her sayfanın düz metnini `pdftotext -f N -l N` ile oku. Bölümleri başlıklarından tanı: "TABLO-3" (Ön Lisans), "TABLO-4" (Lisans), koşulların "1. KISIM" / "2. KISIM" başlıkları, ücret tablosunun "ÜNİVERSİTE ADI … ÖĞRENİM ÜCRETİ" başlık satırı ve KKTC bölümü.
