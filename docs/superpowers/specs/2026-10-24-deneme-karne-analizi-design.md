@@ -12,10 +12,12 @@ Kaynak belge: yayın karnesi (örnek `KONSEPT HIZ VE RENK 1 TYT SONUCU.pdf`, her
 
 ## 2. Kullanıcının verdiği kararlar
 
-- Girişi Eda elle yapar. Ekran görüntüsünden ya da PDF'ten otomatik doldurma ek bir kolaylıktır, elle girişin yerini almaz.
+- Girişi Eda elle yapar. **PDF ve ekran görüntüsünden otomatik doldurma bu kapsamdan çıkarıldı** (2026-10-24: "sonra düşünürüz").
 - **Konu girişi karne ile uyumlu olur.** Eda karnedeki konu satırlarını gördüğü gibi girer ("SAYILAR 5 4 1"). Bizim daha ince müfredatımıza dağıtım yapmaz.
 - Müfredatta karneye göre eksik olan eklendi: Felsefe → "MÖ 6. Yüzyıl - MS 2. Yüzyıl Felsefesi" (`npm run seed:tyt-karne`, commit c381451). TYT Türkçe ve TYT Matematik canlıda aktif yapıldı (2026-10-24).
-- Bu PDF biçimi olduğu sürece desteklenir. Farklı bir yayın biçimi gelince ona ayrı bir ad verilir ve uyum o zaman sağlanır (**şimdi biçim adı/kolonu yok**).
+- Konu kataloğu bu karnenin (Konsept) biçimine göre kurulur. Farklı bir yayın biçimi gelince ona ayrı bir ad verilir ve uyum o zaman sağlanır (**şimdi biçim adı/kolonu yok**).
+- AYT eşit ağırlık ve sözel dersleri (Edebiyat, Felsefe Grubu, Tarih/Coğrafya'nın AYT konuları) **MEB listesinden müfredata eklenir** (ayrı iş, `npm run seed:ayt`). AYT `exam_subjects`/`exam_topics` kataloğu bu eklemeden sonra müfredattan kopyalanır.
+- Konu Yeterlilik Haritası beslemesi için önce **karne konusu → müfredat konusu eşleme listesi** çıkarılıp kullanıcıyla tek tek gözden geçirilir. Onaylanan liste `exam_topic_links` tablosunun tohumu olur (Faz 4).
 - Koç, öğrenci ve veli sonuçları istedikleri zaman detaylı görür. Öğrenci ve veli bunu kendi portal linkinden yapar.
 - Analiz üç seviyede, her seviyede **sayı + yüzde + grafik**:
   1. **Genel:** son denemedeki durum ve önceki denemelere göre değişim.
@@ -220,16 +222,16 @@ Rol tonu:
 | 2 | **K3 Analiz motoru + uyarılar:** `examReport.ts`, `examInsights.ts` + `assert` tabanlı küçük öz-test | Sonnet | K1 (tipler) |
 | 3 | **K4 Koç görünümü:** profil sekmesi + SVG grafikler + deneme karnesi görünümü | agy veya Sonnet | K3 |
 | 3 | **K5 Portal:** `portal_exam_report` RPC + öğrenci/veli sekmesi | Sonnet | K3, K4 bileşenleri |
-| 4 | **K6 PDF'ten doldurma** ("Konsept karnesi" biçimi): tarayıcıda pdf.js, öğrenci eşleştirme önizlemesi, aynı forma ön-doldurma | Sonnet | K2 |
-| 4 | (karar bekliyor) Ekran görüntüsünden doldurma · Konu Yeterlilik Haritası beslemesi · yanlış nedeni · hedef net (Etkin'deki "Hedefe ne kadar yakın?" ve ders başına hedef payı; `students.target_net` gerekir) · zayıf konudan tek tıkla haftalık programa görev | — | §10 |
+| 4 | **K6 Konu Yeterlilik beslemesi:** `exam_topic_links(exam_topic_id, topic_id)` + gözden geçirilmiş eşleme seed'i + haritanın deneme sonuçlarını okuması (1→N dağıtım kuralı eşleme gözden geçirmesinde kararlaştırılır) | Sonnet | K1, eşleme onayı |
+| sonra | PDF / ekran görüntüsünden doldurma · yanlış nedeni · hedef net (Etkin'deki "Hedefe ne kadar yakın?" ve ders başına hedef payı; `students.target_net` gerekir) · zayıf konudan tek tıkla haftalık programa görev | — | §10 |
 
 Her paketin kapısı (Opus): kod incelemesi + `npm run build` + `npm run test:types` + `npm run lint` (yeni uyarı yok) + canlıda doğrulama (agy için: `git log`, canlı bundle'da yeni string, DB'de `count=exact`). Bkz. memory `agy-teslim-dogrulama`.
 
-## 10. Açık sorular (kullanıcıya)
+## 10. Kullanıcı cevapları (2026-10-24)
 
-1. **Ekran görüntüsünden doldurma** için görselin bir yapay zekâ servisine (Claude API) gönderilmesi gerekir. Bu, öğrenci adının ve notlarının dışarı çıkması demek. PDF yolu ise tarayıcıda kalıyor, dışarı veri gitmiyor. Ekran görüntüsü yolu açılsın mı, yoksa PDF yeterli mi?
-2. **Konu Yeterlilik Haritası** deneme konu sonuçlarıyla otomatik güncellensin mi? Bir karne konusu bizde birden çok konuya denk geliyor ("Sayılar" → 4 konu). Bunun için karne-konusu → müfredat-konusu eşleme tablosu gerekir.
-3. **AYT EA/SÖZ dersleri** (Edebiyat, Tarih-2, Coğrafya-2, Felsefe Grubu) müfredatta yok. Bir AYT karnesi ve LGS karnesi örneği gelince eklensin mi, yoksa şimdi MEB listesinden mi eklensin?
+1. PDF/ekran görüntüsünden doldurma: kaldırıldı, sonra düşünülecek.
+2. Konu Yeterlilik Haritası: önce eşleşen/eşleşmeyen listesi çıkarılıp birlikte gözden geçirilecek (K6'nın girdisi).
+3. AYT EA/SÖZ: müfredata MEB listesinden eklenecek.
 
 ## 10b. Uygulayıcı kontrolünden çıkan kararlar (Opus'un kararı, kullanıcı itiraz edebilir)
 
@@ -239,7 +241,7 @@ Her paketin kapısı (Opus): kod incelemesi + `npm run build` + `npm run test:ty
 4. **"Aynı tür".** Yalnız `exam_type` (TYT ile TYT; AYT'de alan farkı bölüm adından anlaşılır). Yayın farkı gözetilmez. Alt ders ya da konu verisi olmayan denemeler, Ders ve Konu ısı tablolarında "–" sütunu olarak görünür. 3 deneme eşiği **o seviyede verisi olan** denemeleri sayar.
 5. **Portal görünürlüğü.** Puan, yüzdelik, sıralar ve koç notu öğrenciye de veliye de görünür (karne zaten onlara veriliyor). Tek koç notu iki role birden gider. Arayüzde "öğrenci ve veli görür" diye yazar.
 6. **LGS/AYT kataloğu** müfredattan kopyalanır, giriş açık kalır. Eda "+ Konu ekle" ile düzeltir, gerçek karne gelince katalog düzenlenir.
-7. **Test verisi.** K3'ün öz-testi Konsept PDF'indeki bir karnenin sayılarıyla yazılır. Ad ve kimlik bilgisi taşımaz, "Örnek Öğrenci" olarak geçer. K3, K2'yi beklemez. Gerçek veriyle ilk doğrulama K2 canlıya çıktıktan sonra yapılır.
+7. **Test verisi.** K3'ün öz-testi Konsept karnesindeki bir öğrencinin sayılarıyla yazılır. Ad ve kimlik bilgisi taşımaz, "Örnek Öğrenci" olarak geçer. K3, K2'yi beklemez. Gerçek veriyle ilk doğrulama K2 canlıya çıktıktan sonra yapılır.
 
 ## 11. Uygulayıcıya bırakılanlar
 
