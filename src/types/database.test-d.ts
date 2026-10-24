@@ -38,6 +38,8 @@ import type {
   MockExamSection,
   MockExamSubjectResult,
   MockExamTopicResult,
+  ExamTopicLink,
+  TopicExamMeasurement,
   NotifyTarget,
   PermissionCatalogItem,
   Profile,
@@ -105,6 +107,7 @@ export type _rowEkProgram = Expect<Equals<Row<'ek_yerlestirme_programlari'>, EkY
 export type _rowEkKosul = Expect<Equals<Row<'ek_yerlestirme_kosullari'>, EkYerlestirmeKosulu>>
 export type _rowVakifUcret = Expect<Equals<Row<'vakif_ogrenim_ucretleri'>, VakifOgrenimUcreti>>
 export type _rowTercihListesi = Expect<Equals<Row<'ogrenci_tercih_listeleri'>, OgrenciTercihListesi>>
+export type _rowExamTopicLinks = Expect<Equals<Row<'exam_topic_links'>, ExamTopicLink>>
 
 /**
  * Tablo listesi tam — bir tablo sessizce düşerse (veya adı değişirse) burada patlar.
@@ -130,6 +133,7 @@ export type _tableNames = Expect<
     | 'exam_topics'
     | 'mock_exam_subject_results'
     | 'mock_exam_topic_results'
+    | 'exam_topic_links'
     | 'error_basket_items'
     | 'weekly_tasks'
     | 'university_rankings'
@@ -144,6 +148,9 @@ export type _tableNames = Expect<
 
 /** postgrest-js generic client'ı Views/Functions anahtarlarını bekliyor. */
 export type _hasViews = Expect<Equals<keyof Database['public'], 'Tables' | 'Views' | 'Functions'>>
+export type _rowTopicExamMeasurements = Expect<
+  Equals<Database['public']['Views']['topic_exam_measurements']['Row'], TopicExamMeasurement>
+>
 
 // --------------------------------------------------------------------------
 // 2. TableDef sözleşmesi: Insert'te yalnız id/created_at opsiyonel, Update tümüyle kısmi

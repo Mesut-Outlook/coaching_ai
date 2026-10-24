@@ -17,6 +17,7 @@ type Props = {
   topicId: number
   topicName: string
   subjectName?: string | null
+  topicHint?: string | null
   /** Kayıt/silme sonrası çağrılır — çağıran sayfa kendi listesini tazeleyebilir. */
   onSaved?: () => void
   /** Koç kararı kaydedildiğinde ya da İptal'e basıldığında çağrılır. */
@@ -28,6 +29,7 @@ export default function TopicProgressPanel({
   topicId,
   topicName,
   subjectName,
+  topicHint,
   onSaved,
   onClose,
 }: Props) {
@@ -62,9 +64,15 @@ export default function TopicProgressPanel({
     setTestMeasuredAt(new Date().toISOString().split('T')[0])
 
     const load = async () => {
-      const [{ data: measData }, { data: decData }] = await Promise.all([
+      const [{ data: measData }, { data: examMeasData }, { data: decData }] = await Promise.all([
         supabase
           .from('topic_measurements')
+          .select('*')
+          .eq('student_id', studentId)
+          .eq('topic_id', topicId)
+          .order('measured_at', { ascending: false }),
+        supabase
+          .from('topic_exam_measurements')
           .select('*')
           .eq('student_id', studentId)
           .eq('topic_id', topicId)
@@ -72,7 +80,25 @@ export default function TopicProgressPanel({
         supabase.from('coach_decisions').select('*').eq('student_id', studentId).eq('topic_id', topicId),
       ])
       if (cancelled) return
-      setMeasurements(measData || [])
+
+      const combined: TopicMeasurement[] = [
+        ...(measData || []),
+        ...(examMeasData || []).map((em) => ({
+          id: `exam-${em.mock_exam_id}-${em.topic_id}`,
+          student_id: em.student_id,
+          topic_id: em.topic_id,
+          source: 'deneme' as const,
+          source_label: em.source_label,
+          correct_count: em.correct_count,
+          wrong_count: em.wrong_count,
+          blank_count: em.blank_count,
+          accuracy_pct: em.accuracy_pct,
+          measured_at: em.measured_at,
+          created_at: em.measured_at,
+        })),
+      ].sort((a, b) => new Date(b.measured_at).getTime() - new Date(a.measured_at).getTime())
+
+      setMeasurements(combined)
       const dec = (decData || [])[0] as CoachDecision | undefined
       setEditState((dec?.state as DecisionState) || 'olculmedi')
       setEditNote(dec?.note || '')
@@ -185,6 +211,12 @@ export default function TopicProgressPanel({
           </span>
         )}
         <h3 style={{ fontSize: 15, marginTop: 4 }}>{topicName}</h3>
+        {topicHint && (
+          <div style={{ marginTop: 6, fontSize: 11.5, color: 'var(--ink-soft)', background: 'var(--surface-alt)', padding: '6px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <HelpCircle size={13} style={{ flexShrink: 0, color: 'var(--ink-faint)' }} />
+            <span>{topicHint}</span>
+          </div>
+        )}
       </div>
 
       {/* Ölçüm geçmişi + ortalama */}

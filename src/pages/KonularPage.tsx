@@ -8,7 +8,7 @@ import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
-import type { Student, Subject, Topic, CoachDecision, TopicMeasurement } from '../types/database'
+import type { Student, Subject, Topic, CoachDecision, TopicMeasurement, ExamTopicLink } from '../types/database'
 import { subjectAppliesTo, topicAppliesTo } from '../lib/curriculum'
 
 export default function KonularPage() {
@@ -28,6 +28,8 @@ export default function KonularPage() {
   
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [topics, setTopics] = useState<Topic[]>([])
+  const [examTopicLinks, setExamTopicLinks] = useState<ExamTopicLink[]>([])
+  const [examTopics, setExamTopics] = useState<{ id: number; name: string }[]>([])
   const [decisions, setDecisions] = useState<CoachDecision[]>([])
   const [measurements, setMeasurements] = useState<TopicMeasurement[]>([])
   
@@ -89,13 +91,41 @@ export default function KonularPage() {
     setLoading(true)
     
     try {
-      const [{ data: decData }, { data: measData }] = await Promise.all([
+      const [
+        { data: decData },
+        { data: measData },
+        { data: examMeasData },
+        { data: linksData },
+        { data: etData },
+      ] = await Promise.all([
         supabase.from('coach_decisions').select('*').eq('student_id', selectedStudentId),
-        supabase.from('topic_measurements').select('*').eq('student_id', selectedStudentId).order('measured_at', { ascending: false })
+        supabase.from('topic_measurements').select('*').eq('student_id', selectedStudentId).order('measured_at', { ascending: false }),
+        supabase.from('topic_exam_measurements').select('*').eq('student_id', selectedStudentId).order('measured_at', { ascending: false }),
+        supabase.from('exam_topic_links').select('*'),
+        supabase.from('exam_topics').select('id, name'),
       ])
       
+      const combined: TopicMeasurement[] = [
+        ...(measData || []),
+        ...(examMeasData || []).map((em) => ({
+          id: `exam-${em.mock_exam_id}-${em.topic_id}`,
+          student_id: em.student_id,
+          topic_id: em.topic_id,
+          source: 'deneme' as const,
+          source_label: em.source_label,
+          correct_count: em.correct_count,
+          wrong_count: em.wrong_count,
+          blank_count: em.blank_count,
+          accuracy_pct: em.accuracy_pct,
+          measured_at: em.measured_at,
+          created_at: em.measured_at,
+        })),
+      ].sort((a, b) => new Date(b.measured_at).getTime() - new Date(a.measured_at).getTime())
+
       setDecisions(decData || [])
-      setMeasurements(measData || [])
+      setMeasurements(combined)
+      if (linksData) setExamTopicLinks(linksData)
+      if (etData) setExamTopics(etData)
     } catch (err) {
       console.error('Error loading subjects/topics data:', err)
     } finally {
@@ -173,6 +203,23 @@ export default function KonularPage() {
     if (subjectMeas.length === 0) return null
     const total = subjectMeas.reduce((sum, m) => sum + Number(m.accuracy_pct), 0)
     return Math.round(total / subjectMeas.length)
+  }
+
+  const getTopicHint = (topicId: number) => {
+    const link = examTopicLinks.find((l) => l.topic_id === topicId)
+    if (!link) return null
+    const et = examTopics.find((t) => t.id === link.exam_topic_id)
+    if (!et) return null
+
+    if (link.is_primary) {
+      return `Denemede "${et.name}" üzerinden ölçülür`
+    } else {
+      const primaryLink = examTopicLinks.find((l) => l.exam_topic_id === link.exam_topic_id && l.is_primary)
+      const primaryTopic = topics.find((t) => t.id === primaryLink?.topic_id)
+      return primaryTopic
+        ? `"${et.name}" sonucu ${primaryTopic.name}'a yazılır`
+        : `"${et.name}" denemesiyle bağlantılıdır`
+    }
   }
 
   return (
@@ -307,7 +354,22 @@ export default function KonularPage() {
                                 }}
                               >
                                 <div style={{ minWidth: 0, paddingRight: 8 }}>
-                                  <div style={{ fontWeight: 600, fontSize: 12.5, color: 'var(--ink)' }}>{topic.name}</div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                    <span style={{ fontWeight: 600, fontSize: 12.5, color: 'var(--ink)' }}>{topic.name}</span>
+                                    {getTopicHint(topic.id) && (
+                                      <span
+                                        title={getTopicHint(topic.id)!}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          color: 'var(--ink-faint)',
+                                          cursor: 'help',
+                                        }}
+                                      >
+                                        <Info size={12} />
+                                      </span>
+                                    )}
+                                  </div>
                                   <div style={{ fontSize: 10, color: 'var(--ink-faint)', marginTop: 2 }}>
                                     {avgAccuracy !== null ? `Ort: %${avgAccuracy} (Son: %${latestAccuracy})` : 'Ölçüm yok'}
                                   </div>
@@ -354,6 +416,7 @@ export default function KonularPage() {
                   topicId={topic.id}
                   topicName={topic.name}
                   subjectName={subject?.name}
+                  topicHint={getTopicHint(topic.id)}
                   onSaved={loadStudentData}
                   onClose={() => setEditingTopicId(null)}
                 />

@@ -493,6 +493,42 @@ create table if not exists mock_exam_topic_results (
 create index if not exists mock_exam_topic_res_exam_idx on mock_exam_topic_results(mock_exam_id);
 create index if not exists mock_exam_topic_res_topic_idx on mock_exam_topic_results(exam_topic_id);
 
+-- Karne Konuları ↔ Müfredat Konuları Eşleşmesi (exam_topic_links)
+create table if not exists exam_topic_links (
+  exam_topic_id int not null references exam_topics(id) on delete cascade,
+  topic_id int not null references topics(id) on delete cascade,
+  is_primary boolean not null default false,
+  primary key (exam_topic_id, topic_id)
+);
+create unique index if not exists exam_topic_links_one_primary
+  on exam_topic_links(exam_topic_id) where is_primary;
+create index if not exists idx_exam_topic_links_topic
+  on exam_topic_links(topic_id);
+
+-- Konu Yeterlilik Haritası Deneme Ölçümleri View'ı (topic_exam_measurements)
+-- Deneme sonuçlarını (mock_exam_topic_results) birincil müfredat konusuna (is_primary = true)
+-- eşleyerek konu yeterlilik ölçümü formatında sunar.
+-- security_invoker = true ile çağıran kullanıcının mock_exams/mock_exam_topic_results RLS'i geçerli olur.
+create or replace view topic_exam_measurements
+with (security_invoker = true)
+as
+select
+  me.student_id,
+  etl.topic_id,
+  round((tr.correct_count::numeric / nullif(tr.question_count, 0)) * 100, 1) as accuracy_pct,
+  tr.correct_count,
+  tr.wrong_count,
+  tr.blank_count,
+  tr.question_count,
+  me.exam_date as measured_at,
+  'Deneme · ' || me.name as source_label,
+  et.name as exam_topic_name,
+  me.id as mock_exam_id
+from mock_exam_topic_results tr
+join exam_topic_links etl on etl.exam_topic_id = tr.exam_topic_id and etl.is_primary = true
+join exam_topics et on et.id = tr.exam_topic_id
+join mock_exams me on me.id = tr.mock_exam_id;
+
 create table if not exists error_basket_items (
   id uuid primary key default gen_random_uuid(),
   mock_exam_id uuid not null references mock_exams(id) on delete cascade,
@@ -1259,6 +1295,30 @@ create policy "exam_topics: yetkili koç günceller" on exam_topics for update u
 );
 drop policy if exists "exam_topics: yetkili koç siler" on exam_topics;
 create policy "exam_topics: yetkili koç siler" on exam_topics for delete using (
+  (select user_has_any_permission('curriculum.manage'))
+);
+
+alter table exam_topic_links enable row level security;
+
+drop policy if exists "exam_topic_links: herkes okur" on exam_topic_links;
+create policy "exam_topic_links: herkes okur" on exam_topic_links for select using (
+  auth.role() = 'authenticated'
+);
+
+drop policy if exists "exam_topic_links: yetkili koç ekler" on exam_topic_links;
+create policy "exam_topic_links: yetkili koç ekler" on exam_topic_links for insert with check (
+  (select user_has_any_permission('curriculum.manage')) or (select user_has_any_permission('exams.manage'))
+);
+
+drop policy if exists "exam_topic_links: yetkili koç günceller" on exam_topic_links;
+create policy "exam_topic_links: yetkili koç günceller" on exam_topic_links for update using (
+  (select user_has_any_permission('curriculum.manage'))
+) with check (
+  (select user_has_any_permission('curriculum.manage'))
+);
+
+drop policy if exists "exam_topic_links: yetkili koç siler" on exam_topic_links;
+create policy "exam_topic_links: yetkili koç siler" on exam_topic_links for delete using (
   (select user_has_any_permission('curriculum.manage'))
 );
 

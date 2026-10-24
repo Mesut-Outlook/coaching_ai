@@ -252,6 +252,26 @@ export type MockExamTopicResult = {
   blank_count: number
 }
 
+export type ExamTopicLink = {
+  exam_topic_id: number
+  topic_id: number
+  is_primary: boolean
+}
+
+export type TopicExamMeasurement = {
+  student_id: string
+  topic_id: number
+  accuracy_pct: number
+  correct_count: number
+  wrong_count: number
+  blank_count: number
+  question_count: number
+  measured_at: string
+  source_label: string
+  exam_topic_name: string
+  mock_exam_id: string
+}
+
 export type SaveExamReportPayload = {
   id?: string | null
   student_id: string
@@ -409,6 +429,11 @@ type TableDef<Row> = {
   Relationships: []
 }
 
+type ViewDef<Row> = {
+  Row: Row
+  Relationships: []
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -429,6 +454,7 @@ export type Database = {
       exam_topics: TableDef<ExamTopic>
       mock_exam_subject_results: TableDef<MockExamSubjectResult>
       mock_exam_topic_results: TableDef<MockExamTopicResult>
+      exam_topic_links: TableDef<ExamTopicLink>
       error_basket_items: TableDef<ErrorBasketItem>
       weekly_tasks: TableDef<WeeklyTask>
       university_rankings: TableDef<UniversityRanking>
@@ -439,7 +465,9 @@ export type Database = {
       vakif_ogrenim_ucretleri: TableDef<VakifOgrenimUcreti>
       ogrenci_tercih_listeleri: TableDef<OgrenciTercihListesi>
     }
-    Views: Record<string, never>
+    Views: {
+      topic_exam_measurements: ViewDef<TopicExamMeasurement>
+    }
     Functions: {
       my_access: { Args: Record<string, never>; Returns: Json }
       invitation_by_token: { Args: { p_token: string }; Returns: Json }

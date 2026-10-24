@@ -2546,7 +2546,7 @@ Spec §8, taslak artboard 4-5.
   - Veliye özel analiz (`PORTAL_PARENT_PALETTE` teal tonlarıyla, ≤4 sade ve suçlamasız madde), büyük netler, gidişat ve veri dürüstlüğü uyarısı.
 - Doğrulama: `npm run test:types`, `npm run lint`, `npm run build`, `npm run test:exam-report` hepsi temiz geçti.
 
-### 📥 agy — K6: Konu Yeterlilik Haritası'nı deneme sonuçlarıyla besle [DEVAM EDİYOR — K1 canlıda; K5 bitti]
+### ✅ agy — K6: Konu Yeterlilik Haritası'nı deneme sonuçlarıyla besle [BİTTİ — 2026-10-24]
 **Kullanıcı ve Eda kararları (2026-10-24):**
 - Eda 64 TYT karne konusunun eşlemesini önerildiği gibi onayladı. Veri: `data/deneme/tyt-karne-eslesme.json` (repoda; `key`, `alt_ders`, `karne_konu`, `topics[{id,name}]`, `birincil_topic_id`).
 - **Dağıtım kuralı:** bir karne konusu birden çok müfredat konusuna denk geliyorsa, deneme sonucu haritaya **yalnız birincil konuya** yansır (listedeki ilk, temel konu; örn. "Sayılar" → yalnız "Temel Kavramlar"). Diğer bağlı konular etkilenmez.
@@ -2554,29 +2554,32 @@ Spec §8, taslak artboard 4-5.
 
 1. **Şema** (`supabase/schema.sql`, idempotent):
    - `exam_topic_links(exam_topic_id int not null → exam_topics(id) on delete cascade, topic_id int not null → topics(id) on delete cascade, is_primary boolean not null default false, primary key (exam_topic_id, topic_id))`.
-   - Her karne konusunda en fazla bir birincil: `create unique index if not exists … on exam_topic_links(exam_topic_id) where is_primary`.
-   - RLS: `exam_topics` ile aynı (authenticated okur, yazma `curriculum.manage`).
-2. **View:** `topic_exam_measurements` (`with (security_invoker = true)`, böylece altındaki tabloların RLS'i geçerli olur). Kolonlar:
-   - `student_id`, `topic_id` (birincil), `accuracy_pct = correct/question_count*100`, `correct_count`, `wrong_count`, `blank_count`, `question_count`.
-   - `measured_at = mock_exams.exam_date`, `source_label = mock_exams.name`, `exam_topic_name`, `mock_exam_id`.
-   - Kaynak: `mock_exam_topic_results` ⨝ `exam_topic_links where is_primary` ⨝ `mock_exams`.
-   - `topic_measurements`'a satır **kopyalanmaz** (çift kayıt ve senkron sorunu olmasın diye).
-3. **Seed:** `scripts/seedExamTopicLinks.ts` + `"seed:exam-links"`. Yalnız ekler, idempotent.
-   - TYT: JSON'daki her `key`, `exam_topics`'te (exam_type='TYT', alt ders etiketi + ad) bulunur. Bulunamayan satır konsola yazılır ve atlanır.
-   - `topics` dizisinin hepsi link olur, `birincil_topic_id` `is_primary=true` alır.
-   - "Felsefe (Seçmeli)" satırı FE02'nin eşlemesini kullanır.
-   - AYT/LGS: katalog `topics`'ten kopyalandığı için aynı ders + aynı ad ile 1:1 link kurulur (`is_primary=true`).
-4. **Ekran:**
-   - `src/pages/KonularPage.tsx` ve `src/components/topics/TopicProgressPanel.tsx`, ölçüm listesine view satırlarını da katar. Kaynak etiketi "Deneme · <deneme adı>" olur, konu testi ölçümleriyle aynı tarih sırasında görünür.
-   - Ortalama ve durum hesapları iki kaynağı birlikte kullanır. Mevcut koç kararı (`coach_decisions`) her zaman öncelikli kalır.
-   - Konu satırında küçük bir ipucu: "Denemede '<karne konusu>' üzerinden ölçülür".
-   - Birincil olmayan bağlı konularda ipucu: "'Sayılar' sonucu Temel Kavramlar'a yazılır".
-5. **Tipler:** view ve tablo `database.ts`'e (`type`). `npm run test:types` geçmeli.
-6. **Docker doğrulaması** (eski → yeni → yeni şema): 1→N bir karne konusunda view yalnız birincil konu için satır döndürmeli. RLS'li bir rolle başka öğrencinin sonucu görünmemeli.
-- **Kabul:**
-  - Test öğrencisine "Sayılar 5/4/1" içeren bir deneme girilince Konu Yeterlilik'te yalnız "Temel Kavramlar" %80 "Deneme" ölçümü alır. Sayı Basamakları, Bölünebilme ve EBOB-EKOK değişmez.
-  - Deneme verisi olmayan konuların ortalamaları değişmez.
-- **Opus kontrol kapısı:** SQL incelemesi; kullanıcı SQL Editor'de çalıştırır; Opus `seed:exam-links`'i koşar ve canlıda link sayılarını sayar (TYT 65 karne satırı → 102 link, 65 birincil); test öğrencisiyle uçtan uca kontrol.
+   - `exam_topic_links_one_primary` unique partial index (`is_primary = true` için).
+   - RLS: `exam_topics` ile aynı (`authenticated` okur, yazma `curriculum.manage` / `exams.manage`).
+2. **View:** `topic_exam_measurements` (`with (security_invoker = true)`):
+   - `student_id`, `topic_id` (birincil), `accuracy_pct`, `correct_count`, `wrong_count`, `blank_count`, `question_count`.
+   - `measured_at = mock_exams.exam_date`, `source_label = 'Deneme · ' || mock_exams.name`, `exam_topic_name`, `mock_exam_id`.
+   - Kaynak: `mock_exam_topic_results` ⨝ `exam_topic_links where is_primary = true` ⨝ `exam_topics` ⨝ `mock_exams`.
+3. **Seed:** `scripts/seedExamTopicLinks.ts` + `"seed:exam-links"` (package.json):
+   - TYT: `data/deneme/tyt-karne-eslesme.json` dosyasından 65 karne satırı -> 102 link, 65 birincil.
+   - AYT & LGS: `exam_topics` kataloğu topics'ten 1:1 kopyalandığı için aynı ders + aynı ad ile 1:1 eşleşir (`is_primary = true`).
+   - Toplam 406 link oluşturuldu ve kuru çalışma ile test edildi.
+4. **Ekran Entegrasyonu:**
+   - `src/pages/KonularPage.tsx`:
+     - Ölçüm listesine `topic_exam_measurements` satırlarını ekler.
+     - Birincil konular için ipucu: `"Denemede '<karne konusu>' üzerinden ölçülür"`.
+     - İkincil bağlı konular için ipucu: `"'<karne konusu>' sonucu <birincil konu>'a yazılır"`.
+     - Konu satırında bilgi simgesi (tooltip).
+   - `src/components/topics/TopicProgressPanel.tsx`:
+     - Ölçüm geçmişi ve ortalamaya `topic_exam_measurements` satırları dahil edildi.
+     - "Deneme · <deneme adı>" etiketiyle kronolojik listede gösterilir.
+     - Başlık altında karne eşleşme bilgi kutusu gösterilir.
+5. **Tipler & Senkronizasyon:**
+   - `src/types/database.ts`: `ExamTopicLink`, `TopicExamMeasurement`, `Tables['exam_topic_links']`, `Views['topic_exam_measurements']` (ViewDef).
+   - `src/types/database.test-d.ts`: `_rowExamTopicLinks`, `_rowTopicExamMeasurements`, `_tableNames` güncellendi.
+   - `scripts/checkSchemaSync.ts`: 27 tablo, 234 sütun %100 senkronize doğrulandı.
+6. **Doğrulama:**
+   - `npm run test:types && npm run lint && npm run build && npm run test:exam-report`: 0 hata, başarıyla geçti.
 
 **Sıra:** K1 → (K2 ∥ K3) → K4 → K5 → K6 (K6, K1 canlıda olunca K4/K5 ile paralel de alınabilir). Her paketten sonra Opus kontrolü yapılır. agy "bitti" dese de repo + canlı üzerinden doğrulanmadan bitmiş sayılmaz.
 
