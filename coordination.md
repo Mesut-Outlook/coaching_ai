@@ -2434,3 +2434,107 @@ Dosya: `scripts/parseEkKilavuz.py` (+ `docs/ek-yerlestirme.md`).
   - Kullanıcı onayıyla 2025 canlıya yüklenir. Ekranda yıl seçici 2025/2026 arasında geçiş yapmalı; tercih listesi ve puanlar yıla göre ayrışmalı.
 
 **Sıra:** E7 ve E8 bağımsız (farklı dosyalar), paralel yürüyebilir. E8 ancak E7 canlıdayken uçtan uca test edilir (yıl seçici + yıl bazlı puan).
+
+---
+
+## 🚧 DENEME KARNESİ — ders + konu girişi, 3 seviyeli gelişim analizi (kullanıcı onayı, 2026-10-24) — Opus planı
+
+**Tasarım (tek kaynak, önce bunu oku):** `docs/superpowers/specs/2026-10-24-deneme-karne-analizi-design.md`. Ekran taslakları: https://claude.ai/artifact/84FANavGCFNUyJ46mocytS (giriş · koç genel+ders · koç konu · öğrenci portalı · veli portalı). Paketler aşağıda; ayrıntı ve formüller spec'te (§ numaralarıyla anılıyor).
+
+**Kullanıcı kararları:** Eda deneme sonuçlarını kendisi elle girer. Konu satırları **yayın karnesinin konu adlarıyla** girilir (bizim ince `topics` ile değil). PDF ya da ekran görüntüsünden doldurma **yok** ("sonra düşünürüz"). Koç, öğrenci ve veli kendi linklerinden genel, ders ve konu seviyesinde gelişimi görür (sayı + % + grafik). Her role uyarılar gider. Uygulama agy'de, planlama ve kontrol Opus'ta.
+
+**Bu oturumda canlıda yapılanlar (Opus):** TYT Türkçe (id 1) ve TYT Matematik (id 2) `is_active=true` yapıldı. Felsefe'ye "MÖ 6. Yüzyıl - MS 2. Yüzyıl Felsefesi" konusu eklendi (`seed:tyt-karne`, `c381451`). AYT eşit ağırlık ve sözel müfredatı (`seed:ayt`) Opus tarafından ayrıca yüklenecek.
+
+**Genel YASAKLAR (tüm paketler):**
+- `npm run seed*` ya da Supabase'e bağlanan hiçbir script'i çalıştırma. Seed'ler `.env.local`'i kendileri okuyup **canlıya** yazar.
+- Şemayı kullanıcı SQL Editor'de uygular. Sen yalnız `supabase/schema.sql`'i güncellersin.
+- Tailwind yok. Var olmayan CSS token yazma (`--surface-elevated`, `--ink-muted`, `--accent` yok; `--indigo-050` sıfır dolgulu).
+- Ders adı listesi koda gömülmez. Gruplama `subject_id` / `exam_subject_id` üzerinden yapılır.
+- Satır tipleri `type` olur, `interface` değil.
+- Portalda `supabase.from(...)` kullanılmaz. Portal renkleri `portalTheme.ts`'ten sabit hex.
+- Her paketin sonunda `npm run build` + `npm run test:types` + `npm run lint` (yeni uyarı yok). Commit mesajı Türkçe, paket kodu başta (`feat(deneme): K1 …`).
+
+### 📥 agy — K1: Şema + katalog seed'i + atomik kayıt RPC'si [YAPILACAK]
+Spec §4 ve §10b-3.
+1. `supabase/schema.sql`:
+   - Yeni tablolar: `exam_subjects`, `exam_topics`, `mock_exam_subject_results`, `mock_exam_topic_results`. Kolonlar, check'ler, generated kolonlar (`blank_count`, `net`) ve unique'ler spec'teki tablolarla birebir aynı olmalı.
+   - `mock_exams` ek kolonları: `score`, `percentile`, `ranks jsonb`, `coach_note`. Hepsi `alter table … add column if not exists`. **Bu kolonlara dokunan her şey alter'ların ALTINDA olacak.**
+   - RLS: sonuç tabloları `mock_exam_sections` ile aynı politikaları alır (`exam_student_id(mock_exam_id)` + `exams.view` / `exams.manage`). Katalog tablolarını authenticated okur. Yazma `curriculum.manage` iznine bağlı. Tek istisna `exam_topics` insert'i: `curriculum.manage` **veya** `exams.manage` ("+ Konu ekle" için).
+   - Audit listesine yeni sonuç tabloları eklenir (mevcut audit trigger desenine bak).
+   - RPC `save_exam_report(p_payload jsonb) returns uuid`, **SECURITY INVOKER**, tek transaction. İçinde sırayla:
+     - `mock_exams` insert ya da update, upsert ile `mock_exam_sections`, `mock_exam_subject_results` ve `mock_exam_topic_results`.
+     - Formda boşaltılan satırların silinmesi (payload'da olmayan sonuç satırları silinir).
+     - `wrong_penalty` exam_type'tan **sunucuda** türetilir: LGS 3, diğerleri 4. İstemciden alınmaz.
+     - D+Y≤S ihlali hata verir.
+     - Payload şeklini sen tasarla ve SQL'in üstüne yorumla yaz.
+   - `grant execute … to authenticated`, `revoke … from public, anon`.
+2. `src/types/database.ts`: yeni satır tipleri, `mock_exams` ek kolonları, RPC imzası. `src/types/database.test-d.ts`'e en az bir derleme testi. `npm run test:types` geçmeli.
+3. `scripts/seedExamCatalog.ts` + `package.json` → `"seed:exam-catalog"`. Yalnız ekler, idempotent, hiçbir şeyi silmez.
+   - **TYT:** `data/deneme/tyt-karne-katalog.json`'dan okunur (Opus repoya koyacak; alt ders etiketi, `subject_id`, soru sayısı, `choice_group`, karne sırasıyla konu adları).
+   - **AYT SAY:** Matematik 40 (AYT Matematik); Fen: Fizik 14, Kimya 13, Biyoloji 13.
+   - **AYT EA/SÖZ:** Edebiyat-Sosyal1 bölümü Edebiyat 24, Tarih-1 10, Coğrafya-1 6; Sosyal Bilimler-2 bölümü Tarih-2 11, Coğrafya-2 11, Felsefe Grubu 12, Din 6. `subject_id`'ler canlıdaki ders adlarından bulunur; ders yoksa o satır **atlanır ve konsola yazılır** (AYT müfredatı ayrıca yüklenecek).
+   - **LGS:** `SECTIONS_CONFIG.LGS`'teki 6 bölümün her biri tek alt derstir.
+   - TYT dışındaki konular `topics`'ten kopyalanır, `grades` dahil, `is_active=true` olanlar.
+   - Bölüm adları `src/lib/examSections.ts` `SECTIONS_CONFIG` ile birebir aynı olur.
+4. **Docker doğrulaması (zorunlu):** `docker run postgres:16` + auth/Supabase stub'ları. Sıra: **eski şema (git HEAD'deki schema.sql) → yeni şema → yeni şema tekrar**. Ardından:
+   - RPC ile bir TYT denemesi kaydı.
+   - Aynı denemeyi bir konu satırı eksik olarak tekrar kaydet: silinmeli.
+   - D+Y>S ihlali: hata vermeli.
+   - LGS satırında `net` = D − Y/3 olmalı.
+   - Çıktıyı commit mesajına özetle.
+- **Opus kontrol kapısı:** SQL incelemesi, ardından kullanıcı SQL Editor'de çalıştırır. Opus `seed:exam-catalog`'u koşar, canlıda `count=exact` ile katalog sayılarını kendisi sayar (TYT 11 alt ders / 64 konu), RPC'yi bogus öğrenciyle prob eder (RLS reddi beklenir).
+
+### 📥 agy — K2: Deneme giriş ekranı (karne düzeni) [YAPILACAK — K1 canlıda olmalı]
+Spec §5, §10b-1/2, taslak artboard 1. `src/pages/DenemelerPage.tsx` giriş sekmesi yeniden yazılır. Gerekirse `src/components/exams/` altına bileşenler ayrılır.
+- Başlık şeridinde canlı özet balonları (Soru/D/Y/B/Net) yer alır. Altında isteğe bağlı "Puan ve sıralama" paneli ve "Koçun notu" kutusu ("öğrenci ve veli görür" etiketiyle) bulunur.
+- Bölüm kartları renkli olur, alt ders tablosu katalogdan (`exam_subjects`) gelir. Seçmeli grup için anahtar, altında açılır "Konular" (`exam_topics`, sınıfa göre `grades` süzmesi; `topicAppliesTo` mantığıyla aynı), tutarlılık çubuğu (sarı uyarı, kaydı engellemez) ve "+ Konu ekle".
+- Boş kutu girilmedi sayılır, "0" bir değerdir. Bölüm ayrıntılı/elle kuralı §10b-2'deki gibidir.
+- Klavye: Tab yalnız giriş kutularında dolaşır, Enter bir alt satıra iner, odakta içerik seçilir. Fare kullanmadan bir TYT karnesi girilebilmeli.
+- Kayıt **yalnız** `save_exam_report` RPC'si ile yapılır.
+- Deneme listesinde "Düzenle / Konuları gir" düğmesi aynı formu dolu açar. Öğrencinin portaldan girdiği deneme de açılabilir; bölüm değerleri korunur.
+- LGS öğrencisinde sınav türü LGS'ye kilitli kalır, ceza 3, "puan" kelimesi kullanılmaz.
+- **Kabul:** Taslaktaki örnek karne (TYT 120 soru, 95,00 net; Türkçe konuları 40/31/9) elle girilip kaydedilince DB'de bölüm, alt ders ve konu satırlarının sayıları karneyle birebir olmalı. Yeniden açılıp bir konu silinince satır DB'den kalkmalı.
+- **Opus kontrol kapısı:** canlıda deneme girişi (test öğrencisiyle, sonra silinir), DB'de `count=exact`, bundle'da yeni string.
+
+### 📥 agy — K3: Analiz motoru + uyarılar (saf TS) [YAPILACAK — K1 tipleri yeterli, K2'yi beklemez]
+Spec §6 ve §7.
+- `src/lib/examReport.ts`: girdi ham satırlar (deneme + bölüm + alt ders + konu + katalog adları), çıktı üç seviyenin verisi.
+  - Formüller: net, başarı % (ders: net/S; konu: D/S), kayıp = S − (D − Y/ceza), Δ (önceki **aynı exam_type**), birikimli Σ.
+  - Asgari veri kuralı: eğilim için 3 deneme, yüzde ve rozet için konuda 3 soru. Sayılan denemeler o seviyede verisi olanlardır.
+  - Her kart için **tek cümlelik başlık özeti** üretir. Örnekler: "Son deneme 95,00 net (+6,25)", "En çok kaybettiren Problemler: 32,25 net".
+- `src/lib/examInsights.ts`: kural tablosu (kritik konu · tekrarlayan hata · düşüş · boş alışkanlığı · yanlış riski · ilerleme). Eşikler dosyanın başında tek blokta durur. Rol şablonları:
+  - Koç ≤8 madde, teknik ve eylem odaklı.
+  - Öğrenci ≤5 madde, cesaretlendirici, en az 1 olumlu.
+  - Veli ≤4 madde, sade, terimsiz, suçlamasız.
+- Öz-test: `scripts/examReport.selftest.ts` (`assert` tabanlı, `npm run test:exam-report`). Örnek karne verisiyle (spec §10b-7; ad yok) en az şunları doğrular: net, başarı %, kayıp, Δ, 3 deneme eşiği ve kritik konu kuralı.
+- **Opus kontrol kapısı:** öz-test çıktısı + formüllerin karne sayılarıyla elle karşılaştırılması.
+
+### 📥 agy — K4: Koç görünümleri [YAPILACAK — K3'ten sonra]
+Spec §6 ve §8, taslak artboard 2-3.
+- Öğrenci Profili'nde (`/ogrenciler/:studentId`) yeni **"Deneme Analizi"** sekmesi. İçinde Genel / Ders / Konu seviye seçici ve TYT/AYT/LGS seçici (yalnız verisi olanlar).
+  - Genel: başlık kartı, net çizgisi + ortalama, Δ listesi, "Görüşmede konuşulacaklar".
+  - Ders: ısı tablosu (net + %), Sparkline, Δ ve "son denemede ne kadar net gitti" çubukları.
+  - Konu: alt ders çipleri, konu × deneme ısı tablosu ("–" = girilmedi), Σ sütunları, rozet, "nerede net kaybediyor" ilk 10 ve konu ayrıntı grafiği.
+  - Her grafikte Grafik/Tablo geçişi ve "ⓘ nasıl hesaplandı" bulunur.
+- Grafikler elle SVG ile çizilir, yeni kütüphane eklenmez. `src/components/charts/` altında `Sparkline` tarzında yazılır. Renkler **prop olarak bir palet nesnesinden** gelir (K5 portalda yeniden kullanacak).
+- Denemeler sayfası "Sonuçlar" sekmesi (koç genel bakışı):
+  - Öğrenci başına son deneme, net ve Δ rozeti.
+  - 3 sayı kartı: son 7 günde girilen deneme · konusu girilmemiş deneme · ortalama net değişimi.
+  - "Nerede puan kaybediyorlar?" listesi (öğrenci filtresiyle).
+- Deneme satırı açılınca salt-okunur karne görünümü gelir (K2 düzeni, renkli).
+- Yardım sayfasına (`/yardim`) "Deneme Analizi" bölümü ve Sürüm Geçmişi'ne yeni sürüm satırı eklenir.
+- **Opus kontrol kapısı:** canlıda gerçek veriyle üç seviye. Sayılar karneyle karşılaştırılır.
+
+### 📥 agy — K5: Öğrenci + veli portalı [YAPILACAK — K4'ten sonra]
+Spec §8, taslak artboard 4-5.
+- RPC `portal_exam_report(p_code text) returns json`, SECURITY DEFINER, `portal_resolve_code` ile. Son 30 denemenin ham satırlarını K3'ün beklediği biçimde döndürür (puan, sıra ve koç notu dahil). `revoke all … from public, anon, authenticated;` ardından `grant execute … to anon, authenticated` (fonksiyon yetkisi tuzağı: CLAUDE.md).
+- `/ogrenci`'ye "Denemelerim", `/veli`'ye "Denemeler" sekmesi eklenir. Aynı K4 bileşenleri `portalTheme` paletiyle kullanılır.
+  - Öğrenci: son deneme kartı, "Bu hafta odağın", net gidişi, derslerim, koçun notu.
+  - Veli: "Kısaca" özeti, gidiş grafiği, güçlü / birlikte destekleyeceğimiz konular, ders özeti, koçun notu.
+  - Altta veri dürüstlüğü notu bulunur.
+- **Opus kontrol kapısı:** canlıda test öğrencisinin öğrenci ve veli kodlarıyla giriş. Anon ile başka öğrencinin kodu reddedilmeli.
+
+### ⏸ K6 — Konu Yeterlilik Haritası beslemesi [BEKLİYOR — karne→müfredat eşleme listesi kullanıcıyla gözden geçiriliyor]
+`exam_topic_links(exam_topic_id, topic_id)`, gözden geçirilmiş eşleme seed'i ve haritanın deneme sonuçlarını okuması. 1→N dağıtım kuralı gözden geçirmede kararlaştırılacak. Liste onaylanınca Opus paketi buraya yazar.
+
+**Sıra:** K1 → (K2 ∥ K3) → K4 → K5. Her paketten sonra Opus kontrolü yapılır. agy "bitti" dese de repo + canlı üzerinden doğrulanmadan bitmiş sayılmaz.
