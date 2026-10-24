@@ -2637,3 +2637,15 @@ Spec §8, taslak artboard 4-5.
 1. Görev sonucunu kim girer? (öneri: öğrenci portaldan, koç düzeltir)
 2. Hedef net elle mi, hedef programın taban puanından öneri mi?
 3. Öneri motoru yalnız öncelik listesi mi, günlere dağıtılmış tam taslak mı?
+
+---
+
+## 🐞 BUG — "Konusu girilmemiş deneme" sayacı yanlış (2026-10-24, Test Test testi sırasında bulundu)
+
+**Dosya:** `src/components/exams/CoachExamsOverviewTab.tsx` (`examsWithoutTopicsCount`, ~satır 40).
+**Sorun:** sayaç, konu verisine değil **`score` alanının boşluğuna** bakıyor (`!e.score && sectionsList.length > 0`). Konu sonucu olan denemeler de sayılıyor. Test Test'in 10 denemesinde 640 konu sonucu var, ama ekran "Konusu girilmemiş: 15 deneme" diyor (toplam 15 deneme).
+**Düzeltme:** sayaç, denemenin `mock_exam_topic_results` kaydı olup olmadığına bakmalı. Bunun için konu sonuçlarını `allExams` yükleyişine eklemek gerekir (`StudentExamAnalysisView.tsx` satır ~127 zaten yüklüyor, aynı sorguyu paylaşmak yeterli).
+**Kabul:** Test Test için sayaç 0 olmalı (10 denemenin hepsinde konu var). Konu girilmemiş bir denemeyi (örn. eski ASLI AKTAŞ denemesi) eklersen sayaç 1 olmalı.
+**Öncelik:** düşük; kullanıcı kararı değil, tek satırlık sayaç hatası.
+
+**Not (test verisi):** Test Test'e 2026-08-17 → 2026-10-19 arası 10 TYT denemesi girildi (TEST Deneme 01–10). Net: 69,75 → 92,50; dalgalanma 2., 5. ve 7. denemelerde. Bunlar gerçek öğrenci değil, test verisi. Silinecekse `mock_exams` içinde `name LIKE 'TEST Deneme%'` ile seçilip silinir (cascade).
