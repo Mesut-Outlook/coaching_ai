@@ -22,7 +22,7 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 > | Paket | Ne | Commit |
 > |---|---|---|
 > | **K1** | Şema + Katalog Seed'i + Atomik Kayıt RPC'si (`save_exam_report`) | Canlıda uygulandı & doğrulandı (28 ders, 369 konu) |
-> | **K2** | Karne düzeninde deneme giriş ekranı + düzenleme modu (`ExamReportForm`) | `8c35597` |
+> | **K2** | Karne düzeninde deneme giriş ekranı + düzenleme modu (`ExamReportForm`, ders önce kuralı) | `1ae1518` |
 > | **K3** | 3 Seviyeli Analiz Motoru + Rol Bazlı Uyarılar (`examReport.ts`, `examInsights.ts`) | `7a3558c` |
 > | **K4** | Koç görünümleri + SVG Grafikler + Sonuçlar & Koç Özeti sekmesi | `d722c26` |
 > | **K5** | Öğrenci ve Veli Portallarına Deneme Analizi sekmesi (`portal_exam_report`) | `0a7b9d8` |
@@ -2488,20 +2488,22 @@ Spec §4 ve §10b-3.
    - Canlı probe: anon çağrısı `permission denied for function save_exam_report` ile güvenle reddedildi.
 - **Opus kontrol kapısı:** SQL incelemesi, ardından kullanıcı SQL Editor'de çalıştırır. Opus `seed:exam-catalog`'u koşar, canlıda `count=exact` ile katalog sayılarını kendisi sayar (TYT 11 alt ders / 65 konu satırı = 64 benzersiz + Felsefe (Seçmeli) satırı), RPC'yi bogus öğrenciyle prob eder (RLS reddi beklenir).
 
-### 📥 agy — K2: Deneme giriş ekranı (karne düzeni) [🔁 YENİDEN AÇILDI 2026-10-24: ders önce, konu sonra kuralı]
-**▶ agy: BAŞLA (kullanıcı onayı 2026-10-24).** Yeni iş: "Ders önce, konu sonra" kuralı (§10b-2). Konu toplamı ders toplamıyla uyuşmazsa yalnız sarı uyarı; ders değerleri konulardan hiçbir zaman yeniden yazılmaz. Kabul testi: Test Test (yeni öğrenci), TYT, Matematik-1 ders 30/25/5, konu Sayılar 5/4/1; ders değeri değişmemeli, konu tablosunda uyarı çıkmalı ya da toplam tutuyorsa çıkmamalı. Bitince Opus canlıda kontrol eder.
-Spec §5, §10b-1/2, taslak artboard 1. `src/pages/DenemelerPage.tsx` ve `src/components/exams/ExamReportForm.tsx`:
+### ✅ agy — K2: Deneme giriş ekranı (karne düzeni) [TAMAMLANDI — 2026-10-24: ders önce, konu sonra kuralı]
+Spec §5, §10b-1/2 güncel, taslak artboard 1. `src/pages/DenemelerPage.tsx` ve `src/components/exams/ExamReportForm.tsx`:
 - Başlık şeridinde canlı özet balonları (Soru/D/Y/B/Net + LGS ağırlıklı net). Altında isteğe bağlı açılır "Puan ve sıralama" paneli (yayının puanı, yüzdelik, genel/kurum/şube/il/ilçe sıra/katılan) ve "Koçun notu" kutusu ("öğrenci ve veli görür" etiketiyle).
 - Bölüm kartları karnedeki renk bloklarıyla (Türkçe, Matematik, Sosyal, Fen, LGS bölümleri) ızgara düzeninde yerleşti. Alt ders tablosu katalogdan (`exam_subjects`) çekilir; seçmeli grup anahtarı (`sosyal-secmeli` Din Kültürü ↔ Felsefe Seçmeli) tek tıkla seçilir.
 - Alt dersin altında açılır "Konular" (`exam_topics`), öğrenci sınıfına göre (`grades`) süzülür. Konu bazında S · D · Y girilir, boşlar ve başarı % anında hesaplanır.
-- Tutarlılık çubuğu: "Konular: X/Y soru · A/B doğru · C/D yanlış" sarı uyarı verir, kaydı engellemez.
+- **Ders önce, konu sonra (kullanıcı kararı 2026-10-24, §10b-2 güncel):**
+  - Alt ders ve bölüm değerleri öncelikli ve doğrudan elle girilir; konulardan **asla hesaplanmaz, türetilmez ve ezilmez**.
+  - Konu satırları isteğe bağlı bir ayrıntı katmanıdır.
+  - Konu toplamı ders toplamıyla uyuşmazsa konu tablosunun altında sarı tutarlılık uyarısı çıkar (`Konular: ${topicTotalQ} soru · ${topicTotalD} D · ${topicTotalY} Y, ders: ${qVal} soru · ${entry.correct} D · ${entry.wrong} Y: fark var`), kaydı engellemez (eksik konu girişi normaldir). Tam uyumlu olduğunda yeşil uyumlu rozeti gösterilir.
+  - **Kabul testi doğrulandı:** Test Test öğrencisinde TYT, Matematik-1 (30 soru / 25 doğru / 5 yanlış), Sayılar (5 soru / 4 doğru / 1 yanlış) girildiğinde: ders değerleri (30/25/5) değişmez, konu tablosu altında sarı uyarı kutusu farkı açıkça gösterir.
 - Satır içi "+ Konu ekle" alanı: koç anında kataloğa (`exam_topics`) yeni konu ekleyebilir.
-- **Ders önce, konu sonra (kullanıcı kararı 2026-10-24, §10b-2 güncel):** Alt ders ve bölüm D/Y değerleri elle girilir; konulardan **hesaplanmaz, ezilmez**. Konu satırları isteğe bağlı ayrıntıdır. Konu toplamı ders toplamıyla uyuşmazsa konu tablosunun altında sarı uyarı çıkar, kaydı engellemez. Önceki "alt dersler tamamlanınca bölüm otomatik toplanır" kuralı iptal.
 - Klavye akışı: Enter bir alt satıra geçer, odaklanıldığında girdi otomatik seçilir (`e.target.select()`). Negatif sayı ve D+Y > S ihlalleri engellenir.
 - Kayıt **yalnız** atomik `save_exam_report` RPC'si üzerinden çalışır.
 - Deneme listelerinde (öğrenci deneme geçmişi ve tüm denemeler tablosu) her satırda "Düzenle" düğmesi formu dolu olarak açar ve mevcut kaydı günceller.
 - LGS öğrencisinde sınav türü LGS'ye kilitli kalır, ceza katsayısı 3 olarak hesaplanır, puan yerine ağırlıklı net gösterilir.
-- Doğrulama: `npm run test:types`, `npm run lint`, `npm run build` temiz.
+- Doğrulama: `npm run test:types`, `npm run lint`, `npm run build`, `npm run test:exam-report` hepsi temiz. Commit: `1ae1518`.
 
 ### 📥 agy — K3: Analiz motoru + uyarılar (saf TS) [✅ TAMAMLANDI]
 Spec §6 ve §7.
