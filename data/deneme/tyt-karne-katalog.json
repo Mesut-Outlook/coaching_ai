@@ -1,0 +1,442 @@
+{
+  "exam_type": "TYT",
+  "kaynak": "Konsept \"Hız ve Renk 1\" TYT karnesi (2026-10)",
+  "not": "subject_id canlı DB id; seed adı (subject_name) ile de doğrulamalı. Konu sırası karnedeki sıradır.",
+  "exam_subjects": [
+    {
+      "section_name": "Türkçe",
+      "label": "Türkçe",
+      "subject_id": 1,
+      "subject_name": "TYT Türkçe",
+      "question_count": 40,
+      "choice_group": null,
+      "topics": [
+        {
+          "name": "Sözcükte ve Söz Öbeklerinde Anlam",
+          "karne_ad": "SÖZCÜKTE VE SÖZ ÖBEKLERİNDE ANLAM",
+          "key": "TR01"
+        },
+        {
+          "name": "Cümlenin Anlamı ve Yorumu",
+          "karne_ad": "CÜMLENİN ANLAMI VE YORUMU",
+          "key": "TR02"
+        },
+        {
+          "name": "Ses Bilgisi",
+          "karne_ad": "SES BİLGİSİ",
+          "key": "TR03"
+        },
+        {
+          "name": "Ekler ve Sözcük Yapısı",
+          "karne_ad": "EKLER VE SÖZCÜK YAPISI",
+          "key": "TR04"
+        },
+        {
+          "name": "Cümlenin Ögeleri",
+          "karne_ad": "CÜMLENİN ÖGELERİ",
+          "key": "TR05"
+        },
+        {
+          "name": "Noktalama İşaretleri",
+          "karne_ad": "NOKTALAMA İŞARETLERİ",
+          "key": "TR06"
+        },
+        {
+          "name": "Yazım Kuralları",
+          "karne_ad": "YAZIM KURALLARI",
+          "key": "TR07"
+        },
+        {
+          "name": "Paragrafın Yapısı",
+          "karne_ad": "PARAGRAFIN YAPISI",
+          "key": "TR08"
+        },
+        {
+          "name": "Anlatım Teknikleri ve Düşünceyi Geliştirme Yolları",
+          "karne_ad": "ANLATIM TEKNİKLERİ VE DÜŞÜNCEYİ GELİŞTİRME YOLLARI",
+          "key": "TR09"
+        },
+        {
+          "name": "Paragraf Yorumu",
+          "karne_ad": "PARAGRAF YORUMU",
+          "key": "TR10"
+        }
+      ]
+    },
+    {
+      "section_name": "Matematik",
+      "label": "Matematik-1",
+      "subject_id": 2,
+      "subject_name": "TYT Matematik",
+      "question_count": 30,
+      "choice_group": null,
+      "topics": [
+        {
+          "name": "Rasyonel Sayılar",
+          "karne_ad": "RASYONEL SAYILAR",
+          "key": "MA01"
+        },
+        {
+          "name": "Üslü ve Köklü İfadeler",
+          "karne_ad": "ÜSLÜ VE KÖKLÜ İFADELER",
+          "key": "MA02"
+        },
+        {
+          "name": "Sayılar",
+          "karne_ad": "SAYILAR",
+          "key": "MA03"
+        },
+        {
+          "name": "Birinci Dereceden Denklemler ve Eşitsizlikler",
+          "karne_ad": "BİRİNCİ DERECEDEN DENKLEMLER VE EŞİTSİZLİKLER",
+          "key": "MA04"
+        },
+        {
+          "name": "Mutlak Değer",
+          "karne_ad": "MUTLAK DEĞER",
+          "key": "MA05"
+        },
+        {
+          "name": "Kümeler",
+          "karne_ad": "KÜMELER",
+          "key": "MA06"
+        },
+        {
+          "name": "Mantık",
+          "karne_ad": "MANTIK",
+          "key": "MA07"
+        },
+        {
+          "name": "Fonksiyonlar",
+          "karne_ad": "FONKSİYONLAR",
+          "key": "MA08"
+        },
+        {
+          "name": "Problemler",
+          "karne_ad": "PROBLEMLER",
+          "key": "MA09"
+        },
+        {
+          "name": "Veri",
+          "karne_ad": "VERİ",
+          "key": "MA10"
+        },
+        {
+          "name": "Permütasyon, Kombinasyon, Binom Açılımı",
+          "karne_ad": "PERMÜTASYON, KOMBİNASYON, BİNOM AÇILIMI",
+          "key": "MA11"
+        },
+        {
+          "name": "Olasılık",
+          "karne_ad": "OLASILIK",
+          "key": "MA12"
+        }
+      ]
+    },
+    {
+      "section_name": "Matematik",
+      "label": "Geometri",
+      "subject_id": 3,
+      "subject_name": "TYT Geometri",
+      "question_count": 10,
+      "choice_group": null,
+      "topics": [
+        {
+          "name": "Doğruda ve Üçgende Açılar",
+          "karne_ad": "DOĞRUDA VE ÜÇGENDE AÇILAR",
+          "key": "GE01"
+        },
+        {
+          "name": "Özel Üçgenler",
+          "karne_ad": "ÖZEL ÜÇGENLER",
+          "key": "GE02"
+        },
+        {
+          "name": "Üçgende Alan ve Kenar-Açı İlişkileri",
+          "karne_ad": "ÜÇGENDE ALAN VE KENAR-AÇI İLİŞKİLERİ",
+          "key": "GE03"
+        },
+        {
+          "name": "Üçgenlerde Eşlik, Benzerlik ve Yardımcı Elemanlar",
+          "karne_ad": "ÜÇGENLERDE EŞLİK, BENZERLİK VE YARDIMCI ELEMANLAR",
+          "key": "GE04"
+        },
+        {
+          "name": "Çokgenler ve Dörtgenler",
+          "karne_ad": "ÇOKGENLER VE DÖRTGENLER",
+          "key": "GE05"
+        },
+        {
+          "name": "Uzay Geometri (Katı Cisimler)",
+          "karne_ad": "UZAY GEOMETRİ (KATI CİSİMLER)",
+          "key": "GE06"
+        }
+      ]
+    },
+    {
+      "section_name": "Sosyal Bilimler",
+      "label": "Tarih-1",
+      "subject_id": 4,
+      "subject_name": "Tarih",
+      "question_count": 5,
+      "choice_group": null,
+      "topics": [
+        {
+          "name": "İlk ve Orta Çağlarda Türk Dünyası",
+          "karne_ad": "İLK VE ORTA ÇAĞLARDA TÜRK DÜNYASI",
+          "key": "TA01"
+        },
+        {
+          "name": "İslam Medeniyetinin Doğuşu",
+          "karne_ad": "İSLAM MEDENİYETİNİN DOĞUŞU",
+          "key": "TA02"
+        },
+        {
+          "name": "20. Yüzyıl Başlarında Osmanlı Devleti ve Dünya",
+          "karne_ad": "20. YÜZYIL BAŞLARINDA OSMANLI DEVLETİ VE DÜNYA",
+          "key": "TA03"
+        },
+        {
+          "name": "Atatürkçülük ve Türk İnkılabı",
+          "karne_ad": "ATATÜRKÇÜLÜK VE TÜRK İNKILABI",
+          "key": "TA04"
+        },
+        {
+          "name": "Milli Mücadele",
+          "karne_ad": "MİLLİ MÜCADELE",
+          "key": "TA05"
+        }
+      ]
+    },
+    {
+      "section_name": "Sosyal Bilimler",
+      "label": "Coğrafya-1",
+      "subject_id": 6,
+      "subject_name": "Coğrafya",
+      "question_count": 5,
+      "choice_group": null,
+      "topics": [
+        {
+          "name": "Doğal Sistemler (9. Sınıf)",
+          "karne_ad": "DOĞAL SİSTEMLER (9.SINIF)",
+          "key": "CO01"
+        },
+        {
+          "name": "Doğal Sistemler (10. Sınıf)",
+          "karne_ad": "DOĞAL SİSTEMLER (10.SINIF)",
+          "key": "CO02"
+        },
+        {
+          "name": "Beşeri Sistemler (10. Sınıf)",
+          "karne_ad": "BEŞERİ SİSTEMLER (10.SINIF)",
+          "key": "CO03"
+        },
+        {
+          "name": "Küresel Ortam: Bölgeler ve Ülkeler (9. Sınıf)",
+          "karne_ad": "KÜRESEL ORTAM: BÖLGELER VE ÜLKELER (9.SINIF)",
+          "key": "CO04"
+        },
+        {
+          "name": "Çevre ve Toplum (10. Sınıf)",
+          "karne_ad": "ÇEVRE VE TOPLUM (10.SINIF)",
+          "key": "CO05"
+        }
+      ]
+    },
+    {
+      "section_name": "Sosyal Bilimler",
+      "label": "Felsefe",
+      "subject_id": 7,
+      "subject_name": "Felsefe",
+      "question_count": 5,
+      "choice_group": null,
+      "topics": [
+        {
+          "name": "MÖ 6. Yüzyıl-MS 2. Yüzyıl Felsefesi",
+          "karne_ad": "MÖ 6. YÜZYIL-MS 2. YÜZYIL FELSEFESİ",
+          "key": "FE01"
+        },
+        {
+          "name": "Felsefenin Temel Konuları ve Problemleri",
+          "karne_ad": "FELSEFENİN TEMEL KONULARI VE PROBLEMLERİ",
+          "key": "FE02"
+        }
+      ]
+    },
+    {
+      "section_name": "Sosyal Bilimler",
+      "label": "Din Kültürü",
+      "subject_id": 10,
+      "subject_name": "Din Kültürü",
+      "question_count": 5,
+      "choice_group": "sosyal-secmeli",
+      "topics": [
+        {
+          "name": "Kur'an'a Göre Hz. Muhammed",
+          "karne_ad": "KUR'AN'A GÖRE HZ. MUHAMMED",
+          "key": "DI01"
+        },
+        {
+          "name": "Allah İnsan İlişkisi",
+          "karne_ad": "ALLAH İNSAN İLİŞKİSİ",
+          "key": "DI02"
+        },
+        {
+          "name": "Din ve İslam",
+          "karne_ad": "DİN VE İSLAM",
+          "key": "DI03"
+        },
+        {
+          "name": "İslam Düşüncesinde İtikadi, Siyasi ve Fıkhi Yorumlar",
+          "karne_ad": "İSLAM DÜŞÜNCESİNDE İTİKADİ, SİYASİ VE FIKHİ YORUMLAR",
+          "key": "DI04"
+        }
+      ]
+    },
+    {
+      "section_name": "Sosyal Bilimler",
+      "label": "Felsefe (Seçmeli)",
+      "subject_id": 7,
+      "subject_name": "Felsefe",
+      "question_count": 5,
+      "choice_group": "sosyal-secmeli",
+      "topics": [
+        {
+          "name": "Felsefenin Temel Konuları ve Problemleri",
+          "karne_ad": "FELSEFENİN TEMEL KONULARI VE PROBLEMLERİ",
+          "key": "FE02"
+        }
+      ]
+    },
+    {
+      "section_name": "Fen Bilimleri",
+      "label": "Fizik",
+      "subject_id": 5,
+      "subject_name": "TYT Fizik",
+      "question_count": 7,
+      "choice_group": null,
+      "topics": [
+        {
+          "name": "Madde ve Özellikleri",
+          "karne_ad": "MADDE VE ÖZELLİKLERİ",
+          "key": "FZ01"
+        },
+        {
+          "name": "Basınç ve Kaldırma Kuvveti",
+          "karne_ad": "BASINÇ VE KALDIRMA KUVVETİ",
+          "key": "FZ02"
+        },
+        {
+          "name": "Isı ve Sıcaklık",
+          "karne_ad": "ISI VE SICAKLIK",
+          "key": "FZ03"
+        },
+        {
+          "name": "Enerji",
+          "karne_ad": "ENERJİ",
+          "key": "FZ04"
+        },
+        {
+          "name": "Elektrik Akımı ve Manyetizma",
+          "karne_ad": "ELEKTRİK AKIMI VE MANYETİZMA",
+          "key": "FZ05"
+        },
+        {
+          "name": "Dalgalar",
+          "karne_ad": "DALGALAR",
+          "key": "FZ06"
+        },
+        {
+          "name": "Optik",
+          "karne_ad": "OPTİK",
+          "key": "FZ07"
+        }
+      ]
+    },
+    {
+      "section_name": "Fen Bilimleri",
+      "label": "Kimya",
+      "subject_id": 8,
+      "subject_name": "TYT Kimya",
+      "question_count": 7,
+      "choice_group": null,
+      "topics": [
+        {
+          "name": "Atom ve Periyodik Sistem",
+          "karne_ad": "ATOM VE PERİYODİK SİSTEM",
+          "key": "KI01"
+        },
+        {
+          "name": "Kimyasal Türler Arası Etkileşimler",
+          "karne_ad": "KİMYASAL TÜRLER ARASI ETKİLEŞİMLER",
+          "key": "KI02"
+        },
+        {
+          "name": "Maddenin Hâlleri",
+          "karne_ad": "MADDENİN HÂLLERİ",
+          "key": "KI03"
+        },
+        {
+          "name": "Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar",
+          "karne_ad": "KİMYANIN TEMEL KANUNLARI VE KİMYASAL HESAPLAMALAR",
+          "key": "KI04"
+        },
+        {
+          "name": "Karışımlar",
+          "karne_ad": "KARIŞIMLAR",
+          "key": "KI05"
+        },
+        {
+          "name": "Asitler, Bazlar ve Tuzlar",
+          "karne_ad": "ASİTLER, BAZLAR VE TUZLAR",
+          "key": "KI06"
+        },
+        {
+          "name": "Kimya Her Yerde",
+          "karne_ad": "KİMYA HER YERDE",
+          "key": "KI07"
+        }
+      ]
+    },
+    {
+      "section_name": "Fen Bilimleri",
+      "label": "Biyoloji",
+      "subject_id": 9,
+      "subject_name": "TYT Biyoloji",
+      "question_count": 6,
+      "choice_group": null,
+      "topics": [
+        {
+          "name": "Yaşam Bilimi Biyoloji",
+          "karne_ad": "YAŞAM BİLİMİ BİYOLOJİ",
+          "key": "BI01"
+        },
+        {
+          "name": "Hücre",
+          "karne_ad": "HÜCRE",
+          "key": "BI02"
+        },
+        {
+          "name": "Canlılar Dünyası",
+          "karne_ad": "CANLILAR DÜNYASI",
+          "key": "BI03"
+        },
+        {
+          "name": "Hücre Bölünmeleri",
+          "karne_ad": "HÜCRE BÖLÜNMELERİ",
+          "key": "BI04"
+        },
+        {
+          "name": "Kalıtımın Genel İlkeleri",
+          "karne_ad": "KALITIMIN GENEL İLKELERİ",
+          "key": "BI05"
+        },
+        {
+          "name": "Ekosistem Ekolojisi ve Güncel Çevre Sorunları",
+          "karne_ad": "EKOSİSTEM EKOLOJİSİ VE GÜNCEL ÇEVRE SORUNLARI",
+          "key": "BI06"
+        }
+      ]
+    }
+  ]
+}

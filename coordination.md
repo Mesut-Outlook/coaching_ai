@@ -2470,7 +2470,7 @@ Spec §4 ve §10b-3.
    - `grant execute … to authenticated`, `revoke … from public, anon`.
 2. `src/types/database.ts`: yeni satır tipleri, `mock_exams` ek kolonları, RPC imzası. `src/types/database.test-d.ts`'e en az bir derleme testi. `npm run test:types` geçmeli.
 3. `scripts/seedExamCatalog.ts` + `package.json` → `"seed:exam-catalog"`. Yalnız ekler, idempotent, hiçbir şeyi silmez.
-   - **TYT:** `data/deneme/tyt-karne-katalog.json`'dan okunur (Opus repoya koyacak; alt ders etiketi, `subject_id`, soru sayısı, `choice_group`, karne sırasıyla konu adları).
+   - **TYT:** `data/deneme/tyt-karne-katalog.json`'dan okunur (repoda, Opus koydu; alt ders etiketi, `subject_id`, soru sayısı, `choice_group`, karne sırasıyla konu adları).
    - **AYT SAY:** Matematik 40 (AYT Matematik); Fen: Fizik 14, Kimya 13, Biyoloji 13.
    - **AYT EA/SÖZ:** Edebiyat-Sosyal1 bölümü Edebiyat 24, Tarih-1 10, Coğrafya-1 6; Sosyal Bilimler-2 bölümü Tarih-2 11, Coğrafya-2 11, Felsefe Grubu 12, Din 6. `subject_id`'ler canlıdaki ders adlarından bulunur; ders yoksa o satır **atlanır ve konsola yazılır** (AYT müfredatı ayrıca yüklenecek).
    - **LGS:** `SECTIONS_CONFIG.LGS`'teki 6 bölümün her biri tek alt derstir.
@@ -2482,7 +2482,7 @@ Spec §4 ve §10b-3.
    - D+Y>S ihlali: hata vermeli.
    - LGS satırında `net` = D − Y/3 olmalı.
    - Çıktıyı commit mesajına özetle.
-- **Opus kontrol kapısı:** SQL incelemesi, ardından kullanıcı SQL Editor'de çalıştırır. Opus `seed:exam-catalog`'u koşar, canlıda `count=exact` ile katalog sayılarını kendisi sayar (TYT 11 alt ders / 64 konu), RPC'yi bogus öğrenciyle prob eder (RLS reddi beklenir).
+- **Opus kontrol kapısı:** SQL incelemesi, ardından kullanıcı SQL Editor'de çalıştırır. Opus `seed:exam-catalog`'u koşar, canlıda `count=exact` ile katalog sayılarını kendisi sayar (TYT 11 alt ders / 65 konu satırı = 64 benzersiz + Felsefe (Seçmeli) satırı), RPC'yi bogus öğrenciyle prob eder (RLS reddi beklenir).
 
 ### 📥 agy — K2: Deneme giriş ekranı (karne düzeni) [YAPILACAK — K1 canlıda olmalı]
 Spec §5, §10b-1/2, taslak artboard 1. `src/pages/DenemelerPage.tsx` giriş sekmesi yeniden yazılır. Gerekirse `src/components/exams/` altına bileşenler ayrılır.
