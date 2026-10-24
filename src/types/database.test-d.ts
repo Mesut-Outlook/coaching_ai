@@ -23,6 +23,8 @@ import type {
   Database,
   ErrorBasketItem,
   ErrorType,
+  ExamSubject,
+  ExamTopic,
   ExamType,
   ExcuseType,
   Grade,
@@ -34,6 +36,8 @@ import type {
   Membership,
   MockExam,
   MockExamSection,
+  MockExamSubjectResult,
+  MockExamTopicResult,
   NotifyTarget,
   PermissionCatalogItem,
   Profile,
@@ -89,6 +93,10 @@ export type _rowTopicMeasurements = Expect<Equals<Row<'topic_measurements'>, Top
 export type _rowCoachDecisions = Expect<Equals<Row<'coach_decisions'>, CoachDecision>>
 export type _rowMockExams = Expect<Equals<Row<'mock_exams'>, MockExam>>
 export type _rowMockExamSections = Expect<Equals<Row<'mock_exam_sections'>, MockExamSection>>
+export type _rowExamSubjects = Expect<Equals<Row<'exam_subjects'>, ExamSubject>>
+export type _rowExamTopics = Expect<Equals<Row<'exam_topics'>, ExamTopic>>
+export type _rowMockExamSubjectResults = Expect<Equals<Row<'mock_exam_subject_results'>, MockExamSubjectResult>>
+export type _rowMockExamTopicResults = Expect<Equals<Row<'mock_exam_topic_results'>, MockExamTopicResult>>
 export type _rowErrorBasketItems = Expect<Equals<Row<'error_basket_items'>, ErrorBasketItem>>
 export type _rowWeeklyTasks = Expect<Equals<Row<'weekly_tasks'>, WeeklyTask>>
 export type _rowUniversityRankings = Expect<Equals<Row<'university_rankings'>, UniversityRanking>>
@@ -118,6 +126,10 @@ export type _tableNames = Expect<
     | 'coach_decisions'
     | 'mock_exams'
     | 'mock_exam_sections'
+    | 'exam_subjects'
+    | 'exam_topics'
+    | 'mock_exam_subject_results'
+    | 'mock_exam_topic_results'
     | 'error_basket_items'
     | 'weekly_tasks'
     | 'university_rankings'
@@ -156,6 +168,16 @@ export type _insAttendance = Expect<
 export type _insSubjects = Expect<Equals<OptionalKeys<Insert<'subjects'>>, 'id'>>
 export type _insTopics = Expect<Equals<OptionalKeys<Insert<'topics'>>, 'id'>>
 export type _insSections = Expect<Equals<OptionalKeys<Insert<'mock_exam_sections'>>, 'id'>>
+export type _insExamSubjects = Expect<Equals<OptionalKeys<Insert<'exam_subjects'>>, 'id' | 'choice_group'>>
+export type _insExamTopics = Expect<Equals<OptionalKeys<Insert<'exam_topics'>>, 'id'>>
+export type _insMockExamSubjectResults = Expect<Equals<OptionalKeys<Insert<'mock_exam_subject_results'>>, 'id'>>
+export type _insMockExamTopicResults = Expect<Equals<OptionalKeys<Insert<'mock_exam_topic_results'>>, 'id'>>
+export type _insMockExams = Expect<
+  Equals<
+    OptionalKeys<Insert<'mock_exams'>>,
+    'id' | 'created_at' | 'publisher' | 'score' | 'percentile' | 'ranks' | 'coach_note'
+  >
+>
 export type _insRankings = Expect<Equals<OptionalKeys<Insert<'university_rankings'>>, 'id'>>
 
 // Insert zorunlu alanı gerçekten zorunlu tutuyor (id/created_at dışı hiçbir şey düşmez).
@@ -274,4 +296,8 @@ export type _uuidKeys = Expect<
 >
 export type _serialKeys = Expect<
   Equals<Subject['id'] | Topic['id'] | Topic['subject_id'] | CoachDecision['topic_id'], number>
+>
+
+export type _saveExamReportRpc = Expect<
+  Equals<Database['public']['Functions']['save_exam_report']['Returns'], string>
 >

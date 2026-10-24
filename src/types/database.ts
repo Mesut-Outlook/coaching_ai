@@ -175,13 +175,25 @@ export type CoachDecision = {
   decided_at: string
 }
 
+export type MockExamRanks = {
+  sube?: { sira?: number; katilan?: number }
+  kurum?: { sira?: number; katilan?: number }
+  ilce?: { sira?: number; katilan?: number }
+  il?: { sira?: number; katilan?: number }
+  genel?: { sira?: number; katilan?: number }
+}
+
 export type MockExam = {
   id: string
   student_id: string
   name: string
-  publisher: string | null
+  publisher?: string | null
   exam_type: ExamType
   exam_date: string
+  score?: number | null
+  percentile?: number | null
+  ranks?: Json | null
+  coach_note?: string | null
   created_at: string
 }
 
@@ -196,6 +208,79 @@ export type MockExamSection = {
   /** Yanlışın doğruyu götürme oranı — YKS'de 4, LGS'de 3. `net` bunun üzerinden türetilir. */
   wrong_penalty: number
   net: number
+}
+
+export type ExamSubject = {
+  id: number
+  exam_type: ExamType
+  section_name: string
+  subject_id: number
+  label: string
+  question_count: number
+  choice_group?: string | null
+  sort_order: number
+}
+
+export type ExamTopic = {
+  id: number
+  exam_subject_id: number
+  name: string
+  grades: string[]
+  sort_order: number
+  is_active: boolean
+}
+
+export type MockExamSubjectResult = {
+  id: string
+  mock_exam_id: string
+  exam_subject_id: number
+  question_count: number
+  correct_count: number
+  wrong_count: number
+  blank_count: number
+  wrong_penalty: number
+  net: number
+}
+
+export type MockExamTopicResult = {
+  id: string
+  mock_exam_id: string
+  exam_topic_id: number
+  question_count: number
+  correct_count: number
+  wrong_count: number
+  blank_count: number
+}
+
+export type SaveExamReportPayload = {
+  id?: string | null
+  student_id: string
+  name: string
+  publisher?: string | null
+  exam_type: ExamType
+  exam_date: string
+  score?: number | null
+  percentile?: number | null
+  ranks?: MockExamRanks | Json | null
+  coach_note?: string | null
+  sections?: Array<{
+    section_name: string
+    max_questions: number
+    correct_count: number
+    wrong_count: number
+  }>
+  subject_results?: Array<{
+    exam_subject_id: number
+    question_count: number
+    correct_count: number
+    wrong_count: number
+  }>
+  topic_results?: Array<{
+    exam_topic_id: number
+    question_count: number
+    correct_count: number
+    wrong_count: number
+  }>
 }
 
 export type ErrorBasketItem = {
@@ -340,6 +425,10 @@ export type Database = {
       coach_decisions: TableDef<CoachDecision>
       mock_exams: TableDef<MockExam>
       mock_exam_sections: TableDef<MockExamSection>
+      exam_subjects: TableDef<ExamSubject>
+      exam_topics: TableDef<ExamTopic>
+      mock_exam_subject_results: TableDef<MockExamSubjectResult>
+      mock_exam_topic_results: TableDef<MockExamTopicResult>
       error_basket_items: TableDef<ErrorBasketItem>
       weekly_tasks: TableDef<WeeklyTask>
       university_rankings: TableDef<UniversityRanking>
@@ -376,6 +465,10 @@ export type Database = {
           p_sections: Json
         }
         Returns: Json
+      }
+      save_exam_report: {
+        Args: { p_payload: Json }
+        Returns: string
       }
     }
   }

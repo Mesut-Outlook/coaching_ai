@@ -374,6 +374,10 @@ create table if not exists mock_exams (
   publisher text,
   exam_type text not null check (exam_type in ('TYT', 'AYT', 'LGS')) default 'TYT',
   exam_date date not null,
+  score numeric,
+  percentile numeric,
+  ranks jsonb,
+  coach_note text,
   created_at timestamptz not null default now()
 );
 create index if not exists mock_exams_student_id_idx on mock_exams(student_id);
@@ -382,6 +386,12 @@ create index if not exists mock_exams_student_id_idx on mock_exams(student_id);
 -- ("create table if not exists" atlanır) — kısıtı düşürüp yeniden kuruyoruz.
 alter table mock_exams drop constraint if exists mock_exams_exam_type_check;
 alter table mock_exams add constraint mock_exams_exam_type_check check (exam_type in ('TYT', 'AYT', 'LGS'));
+
+-- Deneme Karnesi ek kolonları (puan, yüzdelik, sıralar ve koç notu)
+alter table mock_exams add column if not exists score numeric;
+alter table mock_exams add column if not exists percentile numeric;
+alter table mock_exams add column if not exists ranks jsonb;
+alter table mock_exams add column if not exists coach_note text;
 
 create table if not exists mock_exam_sections (
   id uuid primary key default gen_random_uuid(),
@@ -395,6 +405,7 @@ create table if not exists mock_exam_sections (
   net numeric generated always as (correct_count - wrong_count / wrong_penalty) stored
 );
 create index if not exists mock_exam_sections_exam_id_idx on mock_exam_sections(mock_exam_id);
+create unique index if not exists mock_exam_sections_exam_section_uidx on mock_exam_sections(mock_exam_id, section_name);
 
 -- LGS'te yanlışın doğruyu götürme oranı YKS'den farklı (3 yanlış = 1 doğru, YKS'de 4).
 -- Net bir generated column olduğu için ALTER edilemez; mevcut tabloda yukarıdaki
@@ -418,6 +429,69 @@ begin
     alter table mock_exam_sections add column net numeric generated always as (correct_count - wrong_count / wrong_penalty) stored;
   end if;
 end $$;
+
+-- ---------------------------------------------------------------------------
+-- Deneme Karne & Analiz Kataloğu ve Sonuç Tabloları
+-- ---------------------------------------------------------------------------
+
+-- Sınav yapısı kataloğu: karnedeki alt dersler ve soru sayıları (TYT/AYT/LGS).
+create table if not exists exam_subjects (
+  id serial primary key,
+  exam_type text not null check (exam_type in ('TYT', 'AYT', 'LGS')),
+  section_name text not null,
+  subject_id int not null references subjects(id),
+  label text not null,
+  question_count int not null check (question_count > 0),
+  choice_group text,
+  sort_order int not null default 0,
+  unique (exam_type, section_name, label)
+);
+create index if not exists exam_subjects_type_sec_idx on exam_subjects(exam_type, section_name);
+create index if not exists exam_subjects_subject_id_idx on exam_subjects(subject_id);
+
+-- Karne konu kataloğu: karnedeki konu satırları.
+create table if not exists exam_topics (
+  id serial primary key,
+  exam_subject_id int not null references exam_subjects(id) on delete cascade,
+  name text not null,
+  grades text[] not null default '{}',
+  sort_order int not null default 0,
+  is_active boolean not null default true,
+  unique (exam_subject_id, name)
+);
+create index if not exists exam_topics_subject_sort_idx on exam_topics(exam_subject_id, sort_order);
+
+-- Deneme alt ders sonuçları (karnedeki "Fizik 7 6 1 0 5,75 %82" satırı).
+create table if not exists mock_exam_subject_results (
+  id uuid primary key default gen_random_uuid(),
+  mock_exam_id uuid not null references mock_exams(id) on delete cascade,
+  exam_subject_id int not null references exam_subjects(id),
+  question_count int not null check (question_count > 0),
+  correct_count int not null default 0 check (correct_count >= 0),
+  wrong_count int not null default 0 check (wrong_count >= 0),
+  blank_count int generated always as (question_count - correct_count - wrong_count) stored,
+  wrong_penalty numeric not null default 4 check (wrong_penalty > 0),
+  net numeric generated always as (correct_count - wrong_count / wrong_penalty) stored,
+  check (correct_count + wrong_count <= question_count),
+  unique (mock_exam_id, exam_subject_id)
+);
+create index if not exists mock_exam_subj_res_exam_idx on mock_exam_subject_results(mock_exam_id);
+create index if not exists mock_exam_subj_res_subj_idx on mock_exam_subject_results(exam_subject_id);
+
+-- Deneme konu sonuçları (karnedeki "SAYILAR 5 4 1 80" satırı).
+create table if not exists mock_exam_topic_results (
+  id uuid primary key default gen_random_uuid(),
+  mock_exam_id uuid not null references mock_exams(id) on delete cascade,
+  exam_topic_id int not null references exam_topics(id),
+  question_count int not null check (question_count > 0),
+  correct_count int not null default 0 check (correct_count >= 0),
+  wrong_count int not null default 0 check (wrong_count >= 0),
+  blank_count int generated always as (question_count - correct_count - wrong_count) stored,
+  check (correct_count + wrong_count <= question_count),
+  unique (mock_exam_id, exam_topic_id)
+);
+create index if not exists mock_exam_topic_res_exam_idx on mock_exam_topic_results(mock_exam_id);
+create index if not exists mock_exam_topic_res_topic_idx on mock_exam_topic_results(exam_topic_id);
 
 create table if not exists error_basket_items (
   id uuid primary key default gen_random_uuid(),
@@ -907,6 +981,10 @@ alter table topic_measurements enable row level security;
 alter table coach_decisions enable row level security;
 alter table mock_exams enable row level security;
 alter table mock_exam_sections enable row level security;
+alter table exam_subjects enable row level security;
+alter table exam_topics enable row level security;
+alter table mock_exam_subject_results enable row level security;
+alter table mock_exam_topic_results enable row level security;
 alter table error_basket_items enable row level security;
 alter table weekly_tasks enable row level security;
 alter table attendance_records enable row level security;
@@ -1057,6 +1135,30 @@ create policy "error_basket_items: yönetim yetkisi" on error_basket_items for a
   (select student_permission(exam_student_id(mock_exam_id), 'exams.manage'))
 );
 
+-- Mock Exam Subject Results
+drop policy if exists "mock_exam_subject_results: okuma yetkisi" on mock_exam_subject_results;
+create policy "mock_exam_subject_results: okuma yetkisi" on mock_exam_subject_results for select using (
+  (select student_permission(exam_student_id(mock_exam_id), 'exams.view'))
+);
+drop policy if exists "mock_exam_subject_results: yönetim yetkisi" on mock_exam_subject_results;
+create policy "mock_exam_subject_results: yönetim yetkisi" on mock_exam_subject_results for all using (
+  (select student_permission(exam_student_id(mock_exam_id), 'exams.manage'))
+) with check (
+  (select student_permission(exam_student_id(mock_exam_id), 'exams.manage'))
+);
+
+-- Mock Exam Topic Results
+drop policy if exists "mock_exam_topic_results: okuma yetkisi" on mock_exam_topic_results;
+create policy "mock_exam_topic_results: okuma yetkisi" on mock_exam_topic_results for select using (
+  (select student_permission(exam_student_id(mock_exam_id), 'exams.view'))
+);
+drop policy if exists "mock_exam_topic_results: yönetim yetkisi" on mock_exam_topic_results;
+create policy "mock_exam_topic_results: yönetim yetkisi" on mock_exam_topic_results for all using (
+  (select student_permission(exam_student_id(mock_exam_id), 'exams.manage'))
+) with check (
+  (select student_permission(exam_student_id(mock_exam_id), 'exams.manage'))
+);
+
 -- Topic Measurements
 drop policy if exists "topic_measurements: okuma yetkisi" on topic_measurements;
 create policy "topic_measurements: okuma yetkisi" on topic_measurements for select using (
@@ -1118,6 +1220,45 @@ drop policy if exists "topics: yetkili koç günceller" on topics;
 create policy "topics: yetkili koç günceller" on topics for update using (
   (select user_has_any_permission('curriculum.manage'))
 ) with check (
+  (select user_has_any_permission('curriculum.manage'))
+);
+
+-- Exam Subjects & Topics Kataloğu
+drop policy if exists "exam_subjects: herkes okur" on exam_subjects;
+create policy "exam_subjects: herkes okur" on exam_subjects for select using (
+  auth.role() = 'authenticated'
+);
+drop policy if exists "exam_subjects: yetkili koç ekler" on exam_subjects;
+create policy "exam_subjects: yetkili koç ekler" on exam_subjects for insert with check (
+  (select user_has_any_permission('curriculum.manage'))
+);
+drop policy if exists "exam_subjects: yetkili koç günceller" on exam_subjects;
+create policy "exam_subjects: yetkili koç günceller" on exam_subjects for update using (
+  (select user_has_any_permission('curriculum.manage'))
+) with check (
+  (select user_has_any_permission('curriculum.manage'))
+);
+drop policy if exists "exam_subjects: yetkili koç siler" on exam_subjects;
+create policy "exam_subjects: yetkili koç siler" on exam_subjects for delete using (
+  (select user_has_any_permission('curriculum.manage'))
+);
+
+drop policy if exists "exam_topics: herkes okur" on exam_topics;
+create policy "exam_topics: herkes okur" on exam_topics for select using (
+  auth.role() = 'authenticated'
+);
+drop policy if exists "exam_topics: yetkili koç ekler" on exam_topics;
+create policy "exam_topics: yetkili koç ekler" on exam_topics for insert with check (
+  (select user_has_any_permission('curriculum.manage')) or (select user_has_any_permission('exams.manage'))
+);
+drop policy if exists "exam_topics: yetkili koç günceller" on exam_topics;
+create policy "exam_topics: yetkili koç günceller" on exam_topics for update using (
+  (select user_has_any_permission('curriculum.manage'))
+) with check (
+  (select user_has_any_permission('curriculum.manage'))
+);
+drop policy if exists "exam_topics: yetkili koç siler" on exam_topics;
+create policy "exam_topics: yetkili koç siler" on exam_topics for delete using (
   (select user_has_any_permission('curriculum.manage'))
 );
 
@@ -1415,6 +1556,280 @@ $$;
 grant execute on function portal_add_exam(text, text, text, text, date, jsonb) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
+-- 15b. save_exam_report (Atomik Deneme Kaydı RPC)
+-- ---------------------------------------------------------------------------
+-- Koç ekranından deneme karnesi girişini (genel bilgiler, bölümler, alt dersler,
+-- konular) TEK BİR TRANSACTION içinde kaydeder / günceller.
+--
+-- SECURITY INVOKER olarak çalışır: çağıran kullanıcının (koç) RLS izinleri
+-- ('exams.manage' vb.) aynen geçerlidir.
+--
+-- Payload şeması:
+-- {
+--   "id": "uuid (opsiyonel: null ise yeni deneme oluşturur, dolu ise günceller)",
+--   "student_id": "uuid (zorunlu)",
+--   "name": "text (zorunlu)",
+--   "publisher": "text (opsiyonel)",
+--   "exam_type": "'TYT' | 'AYT' | 'LGS' (zorunlu)",
+--   "exam_date": "YYYY-MM-DD (zorunlu)",
+--   "score": "numeric (opsiyonel, yayının açıkladığı puan)",
+--   "percentile": "numeric (opsiyonel, yüzdelik dilim)",
+--   "ranks": { "sube": {"sira": 1, "katilan": 10}, "genel": ... } (opsiyonel jsonb),
+--   "coach_note": "text (opsiyonel)",
+--   "sections": [
+--     { "section_name": "Türkçe", "max_questions": 40, "correct_count": 35, "wrong_count": 3 }
+--   ],
+--   "subject_results": [
+--     { "exam_subject_id": 1, "question_count": 40, "correct_count": 35, "wrong_count": 3 }
+--   ],
+--   "topic_results": [
+--     { "exam_topic_id": 10, "question_count": 5, "correct_count": 4, "wrong_count": 1 }
+--   ]
+-- }
+--
+-- Not:
+-- 1. "exam" nesnesi payload'ın kökünde veya "exam": { ... } altında verilebilir.
+-- 2. wrong_penalty (yanlışın götürdüğü net katsayısı) istemciden ASLA alınmaz;
+--    exam_type'a göre sunucuda belirlenir (LGS: 3, diğerleri: 4).
+-- 3. Formda boşaltılan veya silinen satırlar (payload'da yer almayan mevcut sonuçlar)
+--    bu deneme için otomatik olarak silinir.
+-- 4. D + Y <= S ihlalleri hata fırlatır.
+create or replace function save_exam_report(p_payload jsonb)
+returns uuid
+language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $$
+declare
+  v_exam_obj jsonb;
+  v_exam_id uuid;
+  v_student_id uuid;
+  v_name text;
+  v_publisher text;
+  v_exam_type text;
+  v_exam_date date;
+  v_score numeric;
+  v_percentile numeric;
+  v_ranks jsonb;
+  v_coach_note text;
+  v_wrong_penalty numeric;
+begin
+  if p_payload is null then
+    raise exception 'Payload boş olamaz.';
+  end if;
+
+  -- Kök nesne veya iç içe 'exam' nesnesi desteği
+  v_exam_obj := case
+    when jsonb_typeof(p_payload->'exam') = 'object' then p_payload->'exam'
+    else p_payload
+  end;
+
+  v_exam_id := nullif(btrim(coalesce(v_exam_obj->>'id', '')), '')::uuid;
+  v_student_id := nullif(btrim(coalesce(v_exam_obj->>'student_id', '')), '')::uuid;
+  v_name := btrim(coalesce(v_exam_obj->>'name', ''));
+  v_publisher := nullif(btrim(coalesce(v_exam_obj->>'publisher', '')), '');
+  v_exam_type := btrim(coalesce(v_exam_obj->>'exam_type', ''));
+  v_exam_date := nullif(btrim(coalesce(v_exam_obj->>'exam_date', '')), '')::date;
+
+  if v_exam_obj->>'score' is not null and btrim(v_exam_obj->>'score') <> '' then
+    v_score := (v_exam_obj->>'score')::numeric;
+  else
+    v_score := null;
+  end if;
+
+  if v_exam_obj->>'percentile' is not null and btrim(v_exam_obj->>'percentile') <> '' then
+    v_percentile := (v_exam_obj->>'percentile')::numeric;
+  else
+    v_percentile := null;
+  end if;
+
+  v_ranks := case
+    when jsonb_typeof(v_exam_obj->'ranks') = 'object' then v_exam_obj->'ranks'
+    else null
+  end;
+
+  v_coach_note := nullif(btrim(coalesce(v_exam_obj->>'coach_note', '')), '');
+
+  -- Doğrulamalar
+  if v_student_id is null then
+    raise exception 'Öğrenci kimliği (student_id) zorunludur.';
+  end if;
+  if v_name = '' then
+    raise exception 'Deneme adı zorunludur.';
+  end if;
+  if v_exam_type not in ('TYT', 'AYT', 'LGS') then
+    raise exception 'Geçersiz sınav türü: %', coalesce(v_exam_type, 'null');
+  end if;
+  if v_exam_date is null then
+    raise exception 'Sınav tarihi zorunludur.';
+  end if;
+
+  -- Ceza katsayısı sunucuda belirlenir
+  v_wrong_penalty := case when v_exam_type = 'LGS' then 3 else 4 end;
+
+  -- Bölüm doğrulama: D + Y <= S ve negatif olmama kontrolü
+  if exists (
+    select 1
+    from jsonb_to_recordset(coalesce(p_payload->'sections', '[]'::jsonb))
+      as x(section_name text, max_questions int, correct_count int, wrong_count int)
+    where coalesce(x.correct_count, 0) < 0
+       or coalesce(x.wrong_count, 0) < 0
+       or coalesce(x.max_questions, 0) <= 0
+       or (coalesce(x.correct_count, 0) + coalesce(x.wrong_count, 0)) > x.max_questions
+  ) then
+    raise exception 'Bölüm sonuçlarında geçersiz soru sayısı veya D+Y > S ihlali.';
+  end if;
+
+  -- Alt ders doğrulama: D + Y <= S kontrolü
+  if exists (
+    select 1
+    from jsonb_to_recordset(coalesce(p_payload->'subject_results', '[]'::jsonb))
+      as x(exam_subject_id int, question_count int, correct_count int, wrong_count int)
+    where coalesce(x.correct_count, 0) < 0
+       or coalesce(x.wrong_count, 0) < 0
+       or coalesce(x.question_count, 0) <= 0
+       or (coalesce(x.correct_count, 0) + coalesce(x.wrong_count, 0)) > x.question_count
+  ) then
+    raise exception 'Alt ders sonuçlarında geçersiz soru sayısı veya D+Y > S ihlali.';
+  end if;
+
+  -- Konu doğrulama: D + Y <= S kontrolü
+  if exists (
+    select 1
+    from jsonb_to_recordset(coalesce(p_payload->'topic_results', '[]'::jsonb))
+      as x(exam_topic_id int, question_count int, correct_count int, wrong_count int)
+    where coalesce(x.correct_count, 0) < 0
+       or coalesce(x.wrong_count, 0) < 0
+       or coalesce(x.question_count, 0) <= 0
+       or (coalesce(x.correct_count, 0) + coalesce(x.wrong_count, 0)) > x.question_count
+  ) then
+    raise exception 'Konu sonuçlarında geçersiz soru sayısı veya D+Y > S ihlali.';
+  end if;
+
+  -- 1. mock_exams upsert
+  if v_exam_id is null then
+    insert into mock_exams (
+      student_id, name, publisher, exam_type, exam_date,
+      score, percentile, ranks, coach_note
+    ) values (
+      v_student_id, v_name, v_publisher, v_exam_type, v_exam_date,
+      v_score, v_percentile, v_ranks, v_coach_note
+    ) returning id into v_exam_id;
+  else
+    update mock_exams set
+      student_id = v_student_id,
+      name = v_name,
+      publisher = v_publisher,
+      exam_type = v_exam_type,
+      exam_date = v_exam_date,
+      score = v_score,
+      percentile = v_percentile,
+      ranks = v_ranks,
+      coach_note = v_coach_note
+    where id = v_exam_id;
+
+    if not found then
+      insert into mock_exams (
+        id, student_id, name, publisher, exam_type, exam_date,
+        score, percentile, ranks, coach_note
+      ) values (
+        v_exam_id, v_student_id, v_name, v_publisher, v_exam_type, v_exam_date,
+        v_score, v_percentile, v_ranks, v_coach_note
+      );
+    end if;
+  end if;
+
+  -- 2. mock_exam_sections upsert + silinenleri temizleme
+  insert into mock_exam_sections (
+    mock_exam_id, section_name, max_questions,
+    correct_count, wrong_count, blank_count, wrong_penalty
+  )
+  select
+    v_exam_id,
+    x.section_name,
+    x.max_questions,
+    coalesce(x.correct_count, 0),
+    coalesce(x.wrong_count, 0),
+    (x.max_questions - coalesce(x.correct_count, 0) - coalesce(x.wrong_count, 0)),
+    v_wrong_penalty
+  from jsonb_to_recordset(coalesce(p_payload->'sections', '[]'::jsonb))
+    as x(section_name text, max_questions int, correct_count int, wrong_count int)
+  on conflict (mock_exam_id, section_name) do update set
+    max_questions = excluded.max_questions,
+    correct_count = excluded.correct_count,
+    wrong_count = excluded.wrong_count,
+    blank_count = excluded.blank_count,
+    wrong_penalty = excluded.wrong_penalty;
+
+  delete from mock_exam_sections
+  where mock_exam_id = v_exam_id
+    and not exists (
+      select 1
+      from jsonb_to_recordset(coalesce(p_payload->'sections', '[]'::jsonb)) as x(section_name text)
+      where x.section_name = mock_exam_sections.section_name
+    );
+
+  -- 3. mock_exam_subject_results upsert + silinenleri temizleme
+  insert into mock_exam_subject_results (
+    mock_exam_id, exam_subject_id, question_count,
+    correct_count, wrong_count, wrong_penalty
+  )
+  select
+    v_exam_id,
+    x.exam_subject_id,
+    x.question_count,
+    coalesce(x.correct_count, 0),
+    coalesce(x.wrong_count, 0),
+    v_wrong_penalty
+  from jsonb_to_recordset(coalesce(p_payload->'subject_results', '[]'::jsonb))
+    as x(exam_subject_id int, question_count int, correct_count int, wrong_count int)
+  on conflict (mock_exam_id, exam_subject_id) do update set
+    question_count = excluded.question_count,
+    correct_count = excluded.correct_count,
+    wrong_count = excluded.wrong_count,
+    wrong_penalty = excluded.wrong_penalty;
+
+  delete from mock_exam_subject_results
+  where mock_exam_id = v_exam_id
+    and not exists (
+      select 1
+      from jsonb_to_recordset(coalesce(p_payload->'subject_results', '[]'::jsonb)) as x(exam_subject_id int)
+      where x.exam_subject_id = mock_exam_subject_results.exam_subject_id
+    );
+
+  -- 4. mock_exam_topic_results upsert + silinenleri temizleme
+  insert into mock_exam_topic_results (
+    mock_exam_id, exam_topic_id, question_count,
+    correct_count, wrong_count
+  )
+  select
+    v_exam_id,
+    x.exam_topic_id,
+    x.question_count,
+    coalesce(x.correct_count, 0),
+    coalesce(x.wrong_count, 0)
+  from jsonb_to_recordset(coalesce(p_payload->'topic_results', '[]'::jsonb))
+    as x(exam_topic_id int, question_count int, correct_count int, wrong_count int)
+  on conflict (mock_exam_id, exam_topic_id) do update set
+    question_count = excluded.question_count,
+    correct_count = excluded.correct_count,
+    wrong_count = excluded.wrong_count;
+
+  delete from mock_exam_topic_results
+  where mock_exam_id = v_exam_id
+    and not exists (
+      select 1
+      from jsonb_to_recordset(coalesce(p_payload->'topic_results', '[]'::jsonb)) as x(exam_topic_id int)
+      where x.exam_topic_id = mock_exam_topic_results.exam_topic_id
+    );
+
+  return v_exam_id;
+end;
+$$;
+revoke all on function save_exam_report(jsonb) from public, anon;
+grant execute on function save_exam_report(jsonb) to authenticated;
+
+-- ---------------------------------------------------------------------------
 -- 16. Denetim Kaydı (Audit Log)
 -- ---------------------------------------------------------------------------
 -- Kim, ne zaman, hangi kaydı oluşturdu/değiştirdi/sildi.
@@ -1520,7 +1935,7 @@ begin
     elsif TG_TABLE_NAME in ('weekly_tasks','topic_measurements','coach_decisions','attendance_records','mock_exams','ogrenci_tercih_listeleri') then
       v_student := nullif(v_rec->>'student_id','')::uuid;
       select s.institution_id into v_inst from students s where s.id = v_student;
-    elsif TG_TABLE_NAME in ('mock_exam_sections','error_basket_items') then
+    elsif TG_TABLE_NAME in ('mock_exam_sections','error_basket_items','mock_exam_subject_results','mock_exam_topic_results') then
       select e.student_id, s.institution_id into v_student, v_inst
       from mock_exams e left join students s on s.id = e.student_id
       where e.id = nullif(v_rec->>'mock_exam_id','')::uuid;
@@ -1678,6 +2093,7 @@ begin
   foreach t in array array[
     'students','weekly_tasks','topic_measurements','coach_decisions',
     'attendance_records','mock_exams','mock_exam_sections','error_basket_items',
+    'mock_exam_subject_results','mock_exam_topic_results',
     'memberships','invitations','roles','institutions','subjects','topics',
     'ogrenci_tercih_listeleri'
   ]
