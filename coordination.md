@@ -2439,7 +2439,7 @@ Dosya: `scripts/parseEkKilavuz.py` (+ `docs/ek-yerlestirme.md`).
 
 ## 🚧 DENEME KARNESİ — ders + konu girişi, 3 seviyeli gelişim analizi (kullanıcı onayı, 2026-10-24) — Opus planı
 
-**Tasarım (tek kaynak, önce bunu oku):** `docs/superpowers/specs/2026-10-24-deneme-karne-analizi-design.md`. Ekran taslakları: https://claude.ai/artifact/84FANavGCFNUyJ46mocytS (giriş · koç genel+ders · koç konu · öğrenci portalı · veli portalı). Paketler aşağıda; ayrıntı ve formüller spec'te (§ numaralarıyla anılıyor).
+**Tasarım (tek kaynak, önce bunu oku):** `docs/superpowers/specs/2026-10-24-deneme-karne-analizi-design.md`. Ekran taslakları: https://claude.ai/artifact/7cjK71eAWrewk2MTvR2gJ1 (paylaşılabilir sürüm; düzenlenebilir tuval: https://claude.ai/artifact/84FANavGCFNUyJ46mocytS) (giriş · koç genel+ders · koç konu · öğrenci portalı · veli portalı). Paketler aşağıda; ayrıntı ve formüller spec'te (§ numaralarıyla anılıyor).
 
 **Kullanıcı kararları:** Eda deneme sonuçlarını kendisi elle girer. Konu satırları **yayın karnesinin konu adlarıyla** girilir (bizim ince `topics` ile değil). PDF ya da ekran görüntüsünden doldurma **yok** ("sonra düşünürüz"). Koç, öğrenci ve veli kendi linklerinden genel, ders ve konu seviyesinde gelişimi görür (sayı + % + grafik). Her role uyarılar gider. Uygulama agy'de, planlama ve kontrol Opus'ta.
 
@@ -2535,6 +2535,6 @@ Spec §8, taslak artboard 4-5.
 - **Opus kontrol kapısı:** canlıda test öğrencisinin öğrenci ve veli kodlarıyla giriş. Anon ile başka öğrencinin kodu reddedilmeli.
 
 ### ⏸ K6 — Konu Yeterlilik Haritası beslemesi [BEKLİYOR — karne→müfredat eşleme listesi kullanıcıyla gözden geçiriliyor]
-`exam_topic_links(exam_topic_id, topic_id)`, gözden geçirilmiş eşleme seed'i ve haritanın deneme sonuçlarını okuması. 1→N dağıtım kuralı gözden geçirmede kararlaştırılacak. Gözden geçirme sayfası: https://claude.ai/artifact/2GYyaXvpkRnRoRjKc5GPJF (kararlar orada; Opus okur). Liste onaylanınca Opus paketi buraya yazar. Aynı sayfada AYT müfredat eklemesi (`seed:ayt`) de onay bekliyor.
+`exam_topic_links(exam_topic_id, topic_id)`, gözden geçirilmiş eşleme seed'i ve haritanın deneme sonuçlarını okuması. 1→N dağıtım kuralı gözden geçirmede kararlaştırılacak. Gözden geçirme sayfası: https://claude.ai/artifact/2GYyaXvpkRnRoRjKc5GPJF (paylaşılabilir; Eda kararlarını "Kararları kopyala" ile metin olarak gönderir, kullanıcı Opus'a yapıştırır). Liste onaylanınca Opus paketi buraya yazar. Aynı sayfada AYT müfredat eklemesi (`seed:ayt`) de onay bekliyor.
 
 **Sıra:** K1 → (K2 ∥ K3) → K4 → K5. Her paketten sonra Opus kontrolü yapılır. agy "bitti" dese de repo + canlı üzerinden doğrulanmadan bitmiş sayılmaz.

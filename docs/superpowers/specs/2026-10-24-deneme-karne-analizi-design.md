@@ -2,7 +2,7 @@
 
 Tarih: 2026-10-24 · Durum: TASLAK (kullanıcı onayı bekliyor) · Planlayan: Opus · Uygulayan: agy / Sonnet alt ajanları
 
-Ekran taslakları: https://claude.ai/artifact/84FANavGCFNUyJ46mocytS (giriş · koç genel+ders · koç konu · öğrenci portalı · veli portalı)
+Ekran taslakları: https://claude.ai/artifact/7cjK71eAWrewk2MTvR2gJ1 (paylaşılabilir sürüm; düzenlenebilir tuval: https://claude.ai/artifact/84FANavGCFNUyJ46mocytS) (giriş · koç genel+ders · koç konu · öğrenci portalı · veli portalı)
 
 ## 1. Neden
 
