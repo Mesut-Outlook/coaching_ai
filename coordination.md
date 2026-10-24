@@ -2535,6 +2535,6 @@ Spec §8, taslak artboard 4-5.
 - **Opus kontrol kapısı:** canlıda test öğrencisinin öğrenci ve veli kodlarıyla giriş. Anon ile başka öğrencinin kodu reddedilmeli.
 
 ### ⏸ K6 — Konu Yeterlilik Haritası beslemesi [BEKLİYOR — karne→müfredat eşleme listesi kullanıcıyla gözden geçiriliyor]
-`exam_topic_links(exam_topic_id, topic_id)`, gözden geçirilmiş eşleme seed'i ve haritanın deneme sonuçlarını okuması. 1→N dağıtım kuralı gözden geçirmede kararlaştırılacak. Liste onaylanınca Opus paketi buraya yazar.
+`exam_topic_links(exam_topic_id, topic_id)`, gözden geçirilmiş eşleme seed'i ve haritanın deneme sonuçlarını okuması. 1→N dağıtım kuralı gözden geçirmede kararlaştırılacak. Gözden geçirme sayfası: https://claude.ai/artifact/2GYyaXvpkRnRoRjKc5GPJF (kararlar orada; Opus okur). Liste onaylanınca Opus paketi buraya yazar. Aynı sayfada AYT müfredat eklemesi (`seed:ayt`) de onay bekliyor.
 
 **Sıra:** K1 → (K2 ∥ K3) → K4 → K5. Her paketten sonra Opus kontrolü yapılır. agy "bitti" dese de repo + canlı üzerinden doğrulanmadan bitmiş sayılmaz.
