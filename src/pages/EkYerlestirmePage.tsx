@@ -33,6 +33,7 @@ const normAd = (s: string) => foldTr(s.replace(/\([^)]*\)/g, ' ')).replace(/\s+/
 function findUcret(p: Program, ucretler: VakifOgrenimUcreti[]) {
   if (p.universite_turu !== 'vakif' && p.universite_turu !== 'kktc') return null
   const uni = foldTr(p.universite).trim()
+  if (!uni) return null // boş ad her ücretin içinde "bulunur" → başka üniversitenin ücreti gelirdi
   const ad = normAd(p.program_adi)
   return (
     ucretler.find((u) => {

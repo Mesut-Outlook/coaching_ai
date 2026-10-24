@@ -1,6 +1,6 @@
 # 2026 Ek Yerleştirme Kılavuzu Doğrulama Raporu
 
-**Üretim Tarihi:** 2026-10-23 21:31:34
+**Üretim Tarihi:** 2026-10-24 09:23:05
 
 ## 1. Satır ve Kapsam İstatistikleri
 - **Toplam Program Sayısı:** 16715 (Beklenen: ~16.715)
@@ -8,7 +8,7 @@
   - **Tablo 4 (Lisans):** 8308 (Beklenen: ~8.300)
 - **Tekil Program Kodu:** 16715 (Mükerrer: 0)
 - **Toplam Koşul Sayısı:** 195 (1. Kısım: 35, 2. Kısım: 160)
-- **Vakıf Ücret Kayıtları:** 2536
+- **Vakıf Ücret Kayıtları:** 2610
 
 ## 2. Puan Türü Dağılımı
 | Puan Türü | Program Sayısı |
@@ -28,7 +28,23 @@
 ## 4. Örnek Veri Regresyon Testi (2026-ornek.json - 26 Satır)
 ✅ **Tüm 26 örnek program parser çıktısıyla birebir eşleşti (0 hata).**
 
-## Eşlenemeyen ücret satırı: 74
+## 5. Üniversite Adı Denetimi
+- **Tekil üniversite adı:** 226 (226 farklı 4 haneli önek)
+- **Boş üniversite adı:** 0 (beklenen 0)
+- **4 haneli önekten doldurulan satır (güvenlik ağı):** 0
+- **Birden çok adı olan önek:** 2 — kampüs/yerleşke alt başlıkları, kasıtlı ayrı tutuldu:
+  - `1109`: `ANKARA SOSYAL BİLİMLER ÜNİVERSİTESİ` / `ASBÜ-KUZEY KIBRIS YERLEŞKESİ`
+  - `1084`: `ODTÜ KUZEY KIBRIS KAMPUSU` / `ORTA DOĞU TEKNİK ÜNİVERSİTESİ`
+- **Şüpheli ad (ÜNİVERSİTESİ/YÜKSEKOKULU/ENSTİTÜSÜ/AKADEMİSİ/YERLEŞKESİ/KAMPUSU/CERRAHPAŞA ile bitmeyen veya parantez/rakam/küçük harf/yıldız içeren):** 2
+  - `KİLİS 7 ARALIK ÜNİVERSİTESİ` — adın parçası olan rakam (meşru)
+  - `İSTANBUL 29 MAYIS ÜNİVERSİTESİ` — adın parçası olan rakam (meşru)
+
+## Eşlenemeyen ücret satırı: 72
+
+- **Programı olmayan kurum (beklenen, ücret satırı yine de saklanır):** 72 satır, kurumlar: `İBN HALDUN ÜNİVERSİTESİ`, `İSTANBUL ŞİŞLİ MESLEK YÜKSEKOKULU`, `İZMİR KONAK MESLEK YÜKSEKOKULU`
+- **Gerçek eşleşme hatası şüphesi:** 0 satır
+
+### Programı olmayan kurum
 
 - `İBN HALDUN ÜNİVERSİTESİ` | Hazırlık Programı | İngilizce Hazırlık Programı (İngilizce, Arapça, Türkçe) | 1000000
 - `İBN HALDUN ÜNİVERSİTESİ` | Lisans | Felsefe ve Yapay Zeka | 1000000
@@ -102,5 +118,6 @@
 - `İZMİR KONAK MESLEK YÜKSEKOKULU` | Önlisans | Tıbbi Görüntüleme Teknikleri | 853977
 - `İZMİR KONAK MESLEK YÜKSEKOKULU` | Önlisans | Tıbbi Laboratuvar Teknikleri | 853977
 - `İZMİR KONAK MESLEK YÜKSEKOKULU` | Önlisans | Yenilenebilir Enerji Teknikerliği | 538991
-- `İSTANBUL MEDİPOL ÜNİVERSİTESİ KKTC yükseköğretim kurumlarının yer almakta olup programın ücretlerine KDV dahildir. 2026 YKS sonuçları ile ve Kuzey Kıbrıs Türk Milletlerarası Anlaşmanın veya Yönetim Kurulu öğrencilerden (burslu öğrenciler ücret alınabilmektedir. Yükseköğretim kurumu muafiyeti, burs, para, yurt, ücretler, burslu programlara yükseköğretim kurumunun öğrencisi veya başka üniversitenin programından mezun yükseköğretim kurumunun yapabilmesine izin verebilir; kayıtlarını yapma hakkını almaları gerekmektedir. inceleyerek tercihlerini ÜNİVERSİTE ADI Öğrenim Düzeyi` | Lisans KKTC ÜNİVERSİTELERİ indirim kayıt yaptıran Cumhuriyeti 5. Maddesi” tarafından uygun dahil Mütevelli yemek vb.), ilişkin internet öğrencisi olanların, YKS kendi Üniversite, saklı tutar. Adayların tercihlerini yapmaları gerekmektedir. AD | Sosyal Hizmet Öğretim (2026-2027 2026-2027 eğitim ve oranına göre ilgili yükseköğretim öğrenciler için sonraki (KKTC) Hukukuna Göre uyarınca ve her yıl görülen oranlarda kayıt ücreti/öğrenci hizmet Heyeti/Yönetim Kurulu öğrenim ücretini ödeme ayrıca verilecek burs sayfasından öğrencilere olup ayrılanların sonuçlarına göre mevzuatı doğrultusunda bu durumda olanların Bu durumda olanların yapmadan önce ÜCRET AÇIKLAMA | 260000
-- `YAKIN DOĞU ÜNİVERSİTESİ ÜNİVERSİTELERİN ABDULLAH ADANA ADIYAMAN AFYON AFYONKARAHİSAR AĞRI İBRAHİM AKDENİZ AKSARAY AMASYA ANADOLU ANKARA ANKARA ANKARA ANKARA ANKARA ALANYA ARDAHAN ARTVİN ATATÜRK AYDIN BALIKESİR BANDIRMA BARTIN BATMAN BAYBURT BİLECİKŞEYH` | Lisans GÜL ÜNİVERSİTESİ ALPARSLAN ÜNİVERSİTESİ KOCATEPE ÇEÇEN ÜNİVERSİTESİ ÜNİVERSİTESİ ÜNİVERSİTESİ ÜNİVERSİTESİ HACI BAYRAM MÜZİK VE SOSYAL ÜNİVERSİTESİ YILDIRIM ALAADDİN ÜNİVERSİTESİ ÇORUH ÜNİVERSİTESİ ÜNİVERSİTESİ ADNAN MENDERES ÜNİVERSİTESİ ONYEDİ ÜNİVERSİTESİ ÜNİVERSİTESİ ÜNİVERSİTESİ EDEBALİ | Ziraat Fakültesi http://www.agu.edu.tr TÜRKEŞ BİLİM http://www.adiyaman.edu.tr ÜNİVERSİTESİ SAĞLIK BİLİMLERİ ÜNİVERSİTESİ http://www.akdeniz.edu.tr http://www.aksaray.edu.tr http://www.amasya.edu.tr http://www.anadolu.edu.tr VELİ ÜNİVERSİTESİ GÜZEL SANATLAR BİLİMLER ÜNİVERSİTESİ http://www.ankara.edu.tr BEYAZIT ÜNİVERSİTESİ KEYKUBAT http://www.ardahan.edu.tr http://www.artvin.edu.tr http://www.atauni.edu.tr ÜNİVERSİTESİ http://www.balikesir.edu.tr EYLÜL ÜNİVERSİTESİ http://www.bartin.edu.tr http://www.batman.edu.tr http://www.bayburt.edu.tr ÜNİVERSİTESİ | 808638
+
+### Gerçek eşleşme hatası şüphesi
+

@@ -1,11 +1,16 @@
 /**
  * Ek Yerleştirme referans verisini (program / koşul / vakıf ücreti) Supabase'e yükler.
  *
- * Kullanım: npm run seed:ek -- --yil 2026 --dosya data/ek-yerlestirme/2026-ornek.json
+ * Kullanım: npm run seed:ek -- --yil 2026 --dosya data/ek-yerlestirme/2026-ornek.json [--ucret-temizle]
  *
  * ⚠️ HİÇBİR ŞEY SİLMEZ. Upsert yapar: (yil, program_kodu), (yil, kosul_no),
  * (yil, universite, duzey, program) üzerinden eşleşen satırı günceller, yoksa ekler.
  * Tekrar tekrar çalıştırmak güvenlidir (idempotent).
+ *
+ * İSTİSNA (yalnız açıkça istenirse): `--ucret-temizle` bayrağı, upsert'ten SONRA o yılın
+ * vakif_ogrenim_ucretleri satırlarından (universite, duzey, program) anahtarı dosyada OLMAYANLARI
+ * siler (eski/bozuk parser çıktısından kalan, yanlış ücret gösteren satırlar). Programlar için
+ * böyle bir temizlik YOKTUR: öğrenci tercih listeleri program_kodu'na bağlıdır.
  *
  * Dosyadaki `yil` ve her satırın `yil`'i --yil ile aynı değilse hiçbir şey yazmadan çıkar.
  */
@@ -228,10 +233,47 @@ async function main() {
   const kosulSayi = await yazParti('ek_yerlestirme_kosullari', kosullar, 'yil,kosul_no')
   const ucretSayi = await yazParti('vakif_ogrenim_ucretleri', ucretler, 'yil,universite,duzey,program')
 
-  console.log('✅ Ek Yerleştirme verisi yüklendi (upsert, hiçbir şey silinmedi).\n')
+  // --ucret-temizle: dosyada olmayan o yılın ücret satırlarını sil (varsayılan KAPALI).
+  let ucretSilinen = 0
+  if (process.argv.includes('--ucret-temizle')) {
+    const dosyadakiler = new Set(ucretler.map((u) => `${u.universite}__${u.duzey}__${u.program}`))
+    const silinecek: number[] = []
+    // Supabase 1000 satır cap'i: count + range ile sayfala (id sırası sabit).
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase
+        .from('vakif_ogrenim_ucretleri')
+        .select('id, universite, duzey, program')
+        .eq('yil', yil)
+        .order('id', { ascending: true })
+        .range(from, from + 999)
+      if (error) {
+        console.error('❌ vakif_ogrenim_ucretleri okunamadı:', error.message)
+        process.exit(1)
+      }
+      for (const r of data ?? []) {
+        if (!dosyadakiler.has(`${r.universite}__${r.duzey}__${r.program}`)) silinecek.push(r.id)
+      }
+      if (!data || data.length < 1000) break
+    }
+    for (let i = 0; i < silinecek.length; i += PARTI) {
+      const { error } = await supabase.from('vakif_ogrenim_ucretleri').delete().in('id', silinecek.slice(i, i + PARTI))
+      if (error) {
+        console.error('❌ vakif_ogrenim_ucretleri silinirken hata:', error.message)
+        process.exit(1)
+      }
+    }
+    ucretSilinen = silinecek.length
+  }
+
+  console.log(
+    process.argv.includes('--ucret-temizle')
+      ? '✅ Ek Yerleştirme verisi yüklendi (upsert + --ucret-temizle: yalnız dosyada olmayan ücret satırları silindi).\n'
+      : '✅ Ek Yerleştirme verisi yüklendi (upsert, hiçbir şey silinmedi).\n',
+  )
   console.log(`ek_yerlestirme_programlari: ${progSayi} satır yazıldı (il doldurulan: ${ilDoldurulan} / il boş: ${ilEksik.length})`)
   console.log(`ek_yerlestirme_kosullari:   ${kosulSayi} satır yazıldı`)
   console.log(`vakif_ogrenim_ucretleri:    ${ucretSayi} satır yazıldı`)
+  if (process.argv.includes('--ucret-temizle')) console.log(`vakif_ogrenim_ucretleri:    ${ucretSilinen} eski satır silindi`)
 }
 
 main().catch((err) => {

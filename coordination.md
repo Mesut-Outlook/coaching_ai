@@ -2316,6 +2316,12 @@ Kaynak görev: `~/Downloads/ek-yerlestirme-claude-code-gorev.md`. Eski 2026-09-2
 
 **Durum (2026-10-24):** ✅ E1–E6 tüm paketler tamamlandı, canlı veritabanı güncellendi ve doğrulandı. Şema uygulandı, 2026 tam ek yerleştirme verisi (16.715 program, 195 koşul, 2.536 ücret) yüklendi. Yıl/öğrenci değişiminde ve sayfa kapatılırken kaydedilmemiş değişiklik uyarısı (`dirty` guard + `beforeunload`) eklendi. Build, test:types ve lint 0 hata ile geçiyor.
 
+**Opus kontrolü (2026-10-24):** agy commit'i (`4bc4cb8`) dünkü yarım ücret düzeltmesini olduğu gibi içeriyordu; ayrıca E6'dan kalan iki veri hatası bulundu ve düzeltildi (Sonnet alt ajan + Opus doğrulaması):
+- **Üniversite adları:** 331 programda `universite` boştu, ~2.900'ünde kırpıntı vardı (`… (Devlet`, `Uyruklu) GİRESUN…`, `320 DOĞU AKDENİZ…`, dipnot metni). Kök neden: iki satıra bölünen başlığın 2. satırı ayrı başlık sayılıyordu + başlık tüm kolonlardan kuruluyordu. Şimdi boş 0, şüpheli ad 0, tekil 226 (4 haneli kod öneki tek üniye karşılık geliyor; istisna yalnız `1109` ASBÜ KKTC ve `1084` ODTÜ KKK). Ad dışında kod/kontenjan/puan/koşul farkı 0; `il` 131, `fakulte` 333 satırda düzeldi.
+- **Yanlış ücret:** (1) boş üni adı sayfadaki `findUcret`'te `includes('')` ile **başka üniversitenin** ücretini alıyordu (Acıbadem MYO'ya Altınbaş 790.000 ₺ vb., 28+ program) → veri düzeldi + `findUcret`'e boş ad koruması. (2) seed hiç silmediği için canlıda dosyada olmayan **535 eski ücret satırı** kaldı, 37 programa yanlış ücret gösteriyor (örn. 59.700.288 ₺) → `seed:ek`'e `--ucret-temizle` bayrağı (varsayılan kapalı; yalnız o yılın, dosyada olmayan ücret satırlarını siler, programlara dokunmaz).
+- Ücret: 2.536 → 2.610 (Medipol KKTC + Yakın Doğu kurtarıldı; 72 eşleşmeyen satır ek yerleştirmede programı olmayan kurumlar: İbn Haldun, Şişli MYO, Konak MYO).
+- **Kalan:** canlıya `npm run seed:ek -- --yil 2026 --dosya data/ek-yerlestirme/2026.json --ucret-temizle` (kullanıcı onayıyla). Beklenen sonuç: `vakif_ogrenim_ucretleri` yil=2026 → 2.610, boş üni adlı program 0.
+
 **Paketler:** E1 şema+tipler (Sonnet alt ajan) · E2 örnek veri + `seed:ek` (Haiku) · E3 `ChipMultiSelect` + Türkçe arama ortak dosyaya, davranış değişmez (Haiku) · E4 `/ek-yerlestirme` sayfası + menü (Sonnet) · E5 `docs/ek-yerlestirme.md` (Opus) · **E6 tam PDF parser (agy, sonraki oturum)** · **T1 YÖK Atlas 2026 güncellemesi (agy)**. Her paketten sonra Opus kontrolü: build + test:types + lint.
 
 ### 📥 agy — T1: YÖK Atlas 2026 verisi + yıl-kayması guard'ı [✅ TAMAMLANDI VE CANLIDA DOĞRULANDI]

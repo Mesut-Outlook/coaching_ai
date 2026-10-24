@@ -56,6 +56,15 @@ def parse_words_from_xml(xml_bytes):
         })
     return words
 
+def clean_uni_name(raw):
+    """Başlık satırından yalın üniversite adı: parantezli ekler (kapanmamış dahil), baştaki sayı,
+    "Uyruklu) " gibi önceki başlığın kuyruğu, dipnot metni ve sondaki '*' atılır."""
+    s = re.sub(r'\s*\([^\)]*(\)|$)', '', raw)
+    s = re.sub(r'^.*?\)\s+', '', s)                 # "Üniversitesi) ASBÜ-…" kuyruğu
+    s = re.sub(r'^\*[^*]*?(?=[A-ZÇĞİÖŞÜ-]+(\s+[A-ZÇĞİÖŞÜ-]+)*\s*\*?$)', '', s)  # dipnot metni
+    s = re.sub(r'^\d+\s+', '', s).replace('*', '')
+    return re.sub(r'\s+', ' ', s).strip()
+
 def parse_uni_line(raw_line):
     uni_type = 'devlet'
     raw_lower = raw_line.lower()
@@ -83,7 +92,7 @@ def parse_uni_line(raw_line):
             il = p_strip
             break
 
-    clean_name = re.sub(r'\s*\([^\)]*\)', '', raw_line).strip()
+    clean_name = clean_uni_name(raw_line)
     return clean_name, uni_type, il
 
 def parse_programs_section(pdf_path, start_page, end_page, is_lisans, yil):
@@ -164,37 +173,57 @@ def parse_programs_section(pdf_path, start_page, end_page, is_lisans, yil):
         sorted_ys = sorted(y_lines.keys())
         elements = []
 
+        # Dipnot satırları ("*Uluslararası anlaşmalar ile kurulmuş olan…") sayfa kenarından (sütun 1)
+        # başlar ve koddan yoksundur; ne başlığa ne program adına karışmasın.
+        foot_ids = set()
+        for lw in y_lines.values():
+            if not any(get_col(w) == 1 and re.match(r'^\d{9}$', w['text']) for w in lw) and any(get_col(w) == 1 for w in lw):
+                foot_ids.update(id(w) for w in lw)
+        body = [w for w in body if id(w) not in foot_ids]
+
         # Add code elements
         for cw in code_words:
             elements.append(('code', int(cw['text']), cw, cw['cy']))
 
         # Find uni & faculty headers
-        i = 0
-        while i < len(sorted_ys):
-            y = sorted_ys[i]
-            lwords = sorted(y_lines[y], key=lambda w: w['xMin'])
-            has_code = any(get_col(w) == 1 and re.match(r'^\d{9}$', w['text']) for w in lwords)
-            if has_code:
-                i += 1
+        # Kök neden (2026): başlık yalnız sütun 2'deki (program adı) kelimelerden kurulur ve çok
+        # satırlı başlık açık-parantez/devam satırı kuralıyla birleştirilir. Eskiden (a) başlığın
+        # 2. satırı ("(Devlet Üniversitesi)", "Üniversitesi)") ayrı bir 'uni' sayılıp adı boşa
+        # düşüyordu, (b) "Uyruklu)" gibi program adı kuyruğu sonraki başlığa yapışıyordu,
+        # (c) kosul sütunundaki sayılar ("320") ve dipnot metni ada giriyordu.
+        text_lines = []   # (y, col-2 metni) — kodlu satırlar hariç
+        for y in sorted_ys:
+            lw = y_lines[y]
+            if any(get_col(w) == 1 and re.match(r'^\d{9}$', w['text']) for w in lw):
                 continue
+            lw = [w for w in lw if id(w) not in foot_ids]
+            c2 = sorted([w for w in lw if get_col(w) == 2], key=lambda w: w['xMin'])
+            if c2:
+                text_lines.append((y, ' '.join(w['text'] for w in c2)))
 
-            line_str = ' '.join(w['text'] for w in lwords)
-
-            # Check if university heading
-            is_uni = False
-            if any(k in line_str for k in ['ÜNİVERSİTESİ', 'YÜKSEK TEKNOLOJİ ENSTİTÜSÜ', '(Devlet Üniversitesi)', '(Vakıf Üniversitesi)', '(KKTC-LEFKOŞA)', '(KKTC-GAZİMAĞUSA)', '(KKTC-GİRNE)']):
+        UNI_KEYS = ['ÜNİVERSİTESİ', 'YÜKSEK TEKNOLOJİ ENSTİTÜSÜ', '(Devlet Üniversitesi)', '(Vakıf Üniversitesi)', '(KKTC-']
+        i = 0
+        while i < len(text_lines):
+            y, line_str = text_lines[i]
+            nxt = text_lines[i + 1][1] if i + 1 < len(text_lines) else ''
+            is_uni = any(k in line_str for k in UNI_KEYS)
+            tail_m = re.search(r'(Vakıf|Devlet) Üniversitesi\)', nxt)
+            force = not is_uni and (nxt.startswith('ÜNİVERSİTESİ') or (tail_m and nxt.startswith(('(', 'YÜKSEKOKULU'))))
+            if force:
+                # "ADANA ALPARSLAN TÜRKEŞ BİLİM VE TEKNOLOJİ" / "ÜNİVERSİTESİ (Devlet Üniversitesi)"
+                # "İSTANBUL SAĞLIK VE SOSYAL BİLİMLER MESLEK" / "YÜKSEKOKULU (Vakıf Üniversitesi)"
+                # "ATAŞEHİR ADIGÜZEL MESLEK YÜKSEKOKULU" / "(İSTANBUL) (Vakıf Üniversitesi)"
                 is_uni = True
-            elif i + 1 < len(sorted_ys):
-                next_lwords = sorted(y_lines[sorted_ys[i+1]], key=lambda w: w['xMin'])
-                next_has_code = any(get_col(w) == 1 and re.match(r'^\d{9}$', w['text']) for w in next_lwords)
-                if not next_has_code:
-                    next_line = ' '.join(w['text'] for w in next_lwords)
-                    if any(k in next_line for k in ['ÜNİVERSİTESİ', '(Devlet Üniversitesi)', '(Vakıf Üniversitesi)', '(KKTC-']):
-                        line_str = line_str + ' ' + next_line
-                        i += 1
-                        is_uni = True
-
             if is_uni:
+                # Başlığın devam satırları: açık parantez, "(…)" ile başlayan ya da "Üniversitesi)" kuyruğu
+                while i + 1 < len(text_lines):
+                    nxt = text_lines[i + 1][1]
+                    if force or line_str.count('(') > line_str.count(')') or nxt.startswith('(') or nxt.startswith('Üniversitesi)') or nxt.startswith('ÜNİVERSİTESİ'):
+                        line_str += ' ' + nxt
+                        i += 1
+                        force = False
+                    else:
+                        break
                 clean_name, uni_type, il = parse_uni_line(line_str)
                 elements.append(('uni', (clean_name, uni_type, il), y))
                 i += 1
@@ -202,10 +231,13 @@ def parse_programs_section(pdf_path, start_page, end_page, is_lisans, yil):
 
             # Check if faculty heading
             if any(k in line_str for k in ['FAKÜLTE', 'MESLEK YÜKSEKOKULU', 'YÜKSEKOKULU', 'KONSERVATUVAR', 'ENSTİTÜ', 'BÖLÜM']):
-                elements.append(('fakulte', line_str.strip(), y))
-                i += 1
-                continue
-
+                fak = line_str.strip()
+                # Satır sonunda bölünmüş ad: "KIZILCAHAMAM SAĞLIK HİZMETLERİ MESLEK" / "YÜKSEKOKULU"
+                if i > 0 and re.match(r'^(YÜKSEKOKULU|FAKÜLTESİ|ENSTİTÜSÜ|KONSERVATUVARI)\b', fak):
+                    py, pstr = text_lines[i - 1]
+                    if y - py <= 10 and pstr == pstr.upper() and '(' not in pstr and not any(k in pstr for k in UNI_KEYS):
+                        fak = pstr + ' ' + fak
+                elements.append(('fakulte', fak, y))
             i += 1
 
         # Sort elements by y
@@ -299,6 +331,24 @@ def parse_programs_section(pdf_path, start_page, end_page, is_lisans, yil):
     print(f"Extracted {len(all_programs)} programs from {tablo_name}.")
     return all_programs
 
+def fill_uni_from_prefix(programs):
+    """Güvenlik ağı: program kodunun ilk 4 hanesi üniversiteyi belirler. Adı hâlâ boş olan satırı,
+    önek yalnız TEK bir adla görülüyorsa o adla doldurur; ayrıca tüm adlara clean_uni_name uygular.
+    Dönüş: doldurulan satır sayısı."""
+    for pr in programs:
+        pr['universite'] = clean_uni_name(pr['universite'] or '')
+    by_prefix = {}
+    for pr in programs:
+        if pr['universite']:
+            by_prefix.setdefault(str(pr['program_kodu'])[:4], set()).add(pr['universite'])
+    filled = 0
+    for pr in programs:
+        names = by_prefix.get(str(pr['program_kodu'])[:4], set())
+        if not pr['universite'] and len(names) == 1:
+            pr['universite'] = next(iter(names))
+            filled += 1
+    return filled
+
 def parse_conditions(pdf_path, yil):
     print("Extracting conditions (pages 305..329)...")
     all_conds = []
@@ -386,6 +436,13 @@ def parse_vakif_fees(pdf_path, yil, programs):
                 price_words.append((w, FEE_LAYOUTS[1] if w['xMin'] < 155 else FEE_LAYOUTS[0]))
         price_words.sort(key=lambda t: t[0]['cy'])
 
+        # Tablo dışı bloklar: KKTC bölümünün açıklama paragrafı ("KKTC ÜNİVERSİTELERİ ÖĞRENİM ÜCRETLERİ"
+        # başlığı + metin) ve son sayfadaki "ÜNİVERSİTELERİN İNTERNET ADRESLERİ" listesi. Önceki ücret
+        # satırının sahipliği bu başlıktan öteye geçmesin (eskiden son satırın üni adına metin giriyordu).
+        cuts = sorted(w['yMin'] for w in table_words
+                      if w['text'] == 'ÜNİVERSİTELERİN'
+                      or (w['text'] == 'ÜNİVERSİTELERİ' and any(o['text'] == 'ÖĞRENİM' and abs(o['cy'] - w['cy']) < 3 for o in table_words)))
+
         for idx, (pw, lay) in enumerate(price_words):
             _, _, duzey_lo, prog_lo, prog_hi, note_lo = lay
             # Satır sahipliği: ücret satırının devam satırları (üni adının 2. satırı, program/düzey
@@ -393,6 +450,7 @@ def parse_vakif_fees(pdf_path, yil, programs):
             # satırına aittir. (Eski orta-nokta penceresi 2. satırı komşu satıra kaçırıyordu.)
             y_low = pw['cy'] - 3.0
             y_high = price_words[idx + 1][0]['cy'] - 3.0 if idx < len(price_words) - 1 else float('inf')
+            y_high = min([y_high] + [c - 1.0 for c in cuts if c > pw['cy']])
             row_w = [w for w in table_words if y_low <= w['cy'] < y_high and (w is not pw or pw['text'] in FEE_LEVELS)]
 
             # Kolon ataması xMin ile (düzey kolonundaki kelime ada, ad kelimesi düzeye kaçmasın)
@@ -465,7 +523,7 @@ def parse_vakif_fees(pdf_path, yil, programs):
     print(f"Extracted {len(fees_result)} unique fee entries ({len(all_fees)} raw, {len(unmatched)} unmatched).")
     return fees_result, unmatched
 
-def generate_report(programs, conditions, fees, yil, report_path, sample_path=None):
+def generate_report(programs, conditions, fees, yil, report_path, sample_path=None, prefix_filled=0):
     total_prog = len(programs)
     tablo3_progs = [p for p in programs if p['tablo'] == 'onlisans']
     tablo4_progs = [p for p in programs if p['tablo'] == 'lisans']
@@ -581,6 +639,30 @@ def generate_report(programs, conditions, fees, yil, report_path, sample_path=No
         for d in sample_diffs:
             lines.append(f"- {d}")
 
+    # Üniversite adı denetimi
+    names = sorted({p['universite'] for p in programs})
+    bos_uni = sum(1 for p in programs if not p['universite'])
+    suspicious = [u for u in names if not re.search(r'(ÜNİVERSİTESİ|YÜKSEKOKULU|ENSTİTÜSÜ|AKADEMİSİ|YERLEŞKESİ|CERRAHPAŞA|KAMPUSU)$', u)
+                  or re.search(r'[()*a-zçğıöşü]|\d', u)]
+    by_prefix = {}
+    for p in programs:
+        by_prefix.setdefault(str(p['program_kodu'])[:4], set()).add(p['universite'])
+    multi = {k: sorted(v) for k, v in by_prefix.items() if len(v) > 1}
+    lines.extend([
+        "",
+        "## 5. Üniversite Adı Denetimi",
+        f"- **Tekil üniversite adı:** {len(names)} ({len(by_prefix)} farklı 4 haneli önek)",
+        f"- **Boş üniversite adı:** {bos_uni} (beklenen 0)",
+        f"- **4 haneli önekten doldurulan satır (güvenlik ağı):** {prefix_filled}",
+        f"- **Birden çok adı olan önek:** {len(multi)}" + ("" if not multi else " — kampüs/yerleşke alt başlıkları, kasıtlı ayrı tutuldu:"),
+    ])
+    for k, v in multi.items():
+        lines.append(f"  - `{k}`: " + ' / '.join(f'`{x}`' for x in v))
+    lines.append(f"- **Şüpheli ad (ÜNİVERSİTESİ/YÜKSEKOKULU/ENSTİTÜSÜ/AKADEMİSİ/YERLEŞKESİ/KAMPUSU/CERRAHPAŞA ile bitmeyen veya parantez/rakam/küçük harf/yıldız içeren):** {len(suspicious)}")
+    for u in suspicious:
+        note = ' — adın parçası olan rakam (meşru)' if re.search(r'\d', u) and not re.search(r'[()*a-zçğıöşü]', u) and re.search(r'(ÜNİVERSİTESİ)$', u) else ''
+        lines.append(f"  - `{u}`{note}")
+
     report_content = '\n'.join(lines) + '\n'
     os.makedirs(os.path.dirname(report_path), exist_ok=True)
     with open(report_path, 'w', encoding='utf-8') as f:
@@ -613,6 +695,8 @@ def main():
     tablo4_programs = parse_programs_section(args.pdf, TABLO4_START, TABLO4_END, is_lisans=True, yil=args.yil)
 
     all_programs = tablo3_programs + tablo4_programs
+    prefix_filled = fill_uni_from_prefix(all_programs)
+    print(f"Önekten doldurulan boş üniversite adı: {prefix_filled}")
 
     # 3. Kosullar
     conditions = parse_conditions(args.pdf, args.yil)
@@ -635,12 +719,29 @@ def main():
 
     # Generate validation report
     sample_file = f"data/ek-yerlestirme/{args.yil}-ornek.json"
-    generate_report(all_programs, conditions, fees, args.yil, out_report, sample_path=sample_file)
+    generate_report(all_programs, conditions, fees, args.yil, out_report, sample_path=sample_file, prefix_filled=prefix_filled)
 
     with open(out_report, "a", encoding="utf-8") as f:
-        f.write(f"\n## Eşlenemeyen ücret satırı: {len(unmatched)}\n\n")
+        # Ayrım: ad kalıbı geçerliyse (kısa, ÜNİVERSİTESİ/YÜKSEKOKULU) ve hiçbir program adına yakın değilse
+        # kurumun ek yerleştirmede programı yoktur (beklenen); aksi halde gerçek eşleşme hatası şüphesi.
+        import difflib
+        canon_names = sorted({norm_uni(p['universite']) for p in all_programs if p['universite_turu'] != 'devlet'})
+        no_prog, errors = [], []
         for u in unmatched:
+            n = norm_uni(u['universite'])
+            valid = len(u['universite']) <= 60 and re.search(r'ÜNİVERSİTESİ|YÜKSEKOKULU', u['universite'])
+            close = difflib.get_close_matches(n, canon_names, n=1, cutoff=0.9)
+            (errors if (not valid or close) else no_prog).append((u, close))
+        f.write(f"\n## Eşlenemeyen ücret satırı: {len(unmatched)}\n\n")
+        f.write(f"- **Programı olmayan kurum (beklenen, ücret satırı yine de saklanır):** {len(no_prog)} satır, kurumlar: "
+                + ', '.join(sorted({f'`{u["universite"]}`' for u, _ in no_prog})) + "\n")
+        f.write(f"- **Gerçek eşleşme hatası şüphesi:** {len(errors)} satır\n\n")
+        f.write("### Programı olmayan kurum\n\n")
+        for u, _ in no_prog:
             f.write(f"- `{u['universite']}` | {u['duzey']} | {u['program']} | {u['ucret']}\n")
+        f.write("\n### Gerçek eşleşme hatası şüphesi\n\n")
+        for u, c in errors:
+            f.write(f"- `{u['universite']}` | {u['duzey']} | {u['program']} | {u['ucret']}" + (f" (yakın ad: `{c[0]}`)" if c else "") + "\n")
 
     elapsed = time.time() - start_time
     print(f"\n🎉 Parser tamamlandi! Gecen sure: {elapsed:.2f} saniye.")
