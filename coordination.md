@@ -2489,6 +2489,7 @@ Spec §4 ve §10b-3.
 - **Opus kontrol kapısı:** SQL incelemesi, ardından kullanıcı SQL Editor'de çalıştırır. Opus `seed:exam-catalog`'u koşar, canlıda `count=exact` ile katalog sayılarını kendisi sayar (TYT 11 alt ders / 65 konu satırı = 64 benzersiz + Felsefe (Seçmeli) satırı), RPC'yi bogus öğrenciyle prob eder (RLS reddi beklenir).
 
 ### 📥 agy — K2: Deneme giriş ekranı (karne düzeni) [✅ TAMAMLANDI]
+**▶ agy: BAŞLA (kullanıcı onayı 2026-10-24).** Yeni iş: "Ders önce, konu sonra" kuralı (§10b-2). Konu toplamı ders toplamıyla uyuşmazsa yalnız sarı uyarı; ders değerleri konulardan hiçbir zaman yeniden yazılmaz. Kabul testi: Test Test (yeni öğrenci), TYT, Matematik-1 ders 30/25/5, konu Sayılar 5/4/1; ders değeri değişmemeli, konu tablosunda uyarı çıkmalı ya da toplam tutuyorsa çıkmamalı. Bitince Opus canlıda kontrol eder.
 Spec §5, §10b-1/2, taslak artboard 1. `src/pages/DenemelerPage.tsx` ve `src/components/exams/ExamReportForm.tsx`:
 - Başlık şeridinde canlı özet balonları (Soru/D/Y/B/Net + LGS ağırlıklı net). Altında isteğe bağlı açılır "Puan ve sıralama" paneli (yayının puanı, yüzdelik, genel/kurum/şube/il/ilçe sıra/katılan) ve "Koçun notu" kutusu ("öğrenci ve veli görür" etiketiyle).
 - Bölüm kartları karnedeki renk bloklarıyla (Türkçe, Matematik, Sosyal, Fen, LGS bölümleri) ızgara düzeninde yerleşti. Alt ders tablosu katalogdan (`exam_subjects`) çekilir; seçmeli grup anahtarı (`sosyal-secmeli` Din Kültürü ↔ Felsefe Seçmeli) tek tıkla seçilir.
