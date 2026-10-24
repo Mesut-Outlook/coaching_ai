@@ -1,0 +1,898 @@
+{
+  "kaynak": "Konsept TYT karnesi; Eda 2026-10-24 tüm 64 eşlemeyi önerildiği gibi onayladı (D).",
+  "not": "topic id = canlı topics.id; karne konusu exam_topics (exam_type=TYT, alt ders etiketi + ad) ile eşlenir. Felsefe (Seçmeli) satırı FE02 ile aynı eşlemeyi kullanır.",
+  "eslesme": [
+    {
+      "key": "BI01",
+      "alt_ders": "Biyoloji",
+      "karne_konu": "Yaşam Bilimi Biyoloji",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 129,
+          "name": "Yaşam Bilimi Biyoloji"
+        }
+      ]
+    },
+    {
+      "key": "BI02",
+      "alt_ders": "Biyoloji",
+      "karne_konu": "Hücre",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 130,
+          "name": "Hücre"
+        }
+      ]
+    },
+    {
+      "key": "BI03",
+      "alt_ders": "Biyoloji",
+      "karne_konu": "Canlılar Dünyası",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 131,
+          "name": "Canlıların Dünyası (Sınıflandırma)"
+        }
+      ]
+    },
+    {
+      "key": "BI04",
+      "alt_ders": "Biyoloji",
+      "karne_konu": "Hücre Bölünmeleri",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 132,
+          "name": "Hücre Bölünmeleri"
+        }
+      ]
+    },
+    {
+      "key": "BI05",
+      "alt_ders": "Biyoloji",
+      "karne_konu": "Kalıtımın Genel İlkeleri",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 133,
+          "name": "Kalıtımın Temel İlkeleri"
+        }
+      ]
+    },
+    {
+      "key": "BI06",
+      "alt_ders": "Biyoloji",
+      "karne_konu": "Ekosistem Ekolojisi ve Güncel Çevre Sorunları",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 134,
+          "name": "Ekosistem Biyolojisi"
+        }
+      ]
+    },
+    {
+      "key": "CO01",
+      "alt_ders": "Coğrafya-1",
+      "karne_konu": "Doğal Sistemler (9. Sınıf)",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 96,
+          "name": "Dünya'nın Şekli ve Hareketleri"
+        },
+        {
+          "id": 98,
+          "name": "Harita Bilgisi"
+        },
+        {
+          "id": 99,
+          "name": "Atmosfer ve Sıcaklık"
+        },
+        {
+          "id": 100,
+          "name": "İklimler"
+        },
+        {
+          "id": 101,
+          "name": "Basınç ve Rüzgarlar"
+        },
+        {
+          "id": 102,
+          "name": "Nem, Yağış ve Buharlaşma"
+        },
+        {
+          "id": 103,
+          "name": "İç Kuvvetler / Dış Kuvvetler"
+        }
+      ]
+    },
+    {
+      "key": "CO02",
+      "alt_ders": "Coğrafya-1",
+      "karne_konu": "Doğal Sistemler (10. Sınıf)",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 104,
+          "name": "Su - Toprak ve Bitkiler"
+        },
+        {
+          "id": 106,
+          "name": "Türkiye'nin Yer Şekilleri"
+        }
+      ]
+    },
+    {
+      "key": "CO03",
+      "alt_ders": "Coğrafya-1",
+      "karne_konu": "Beşeri Sistemler (10. Sınıf)",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 105,
+          "name": "Nüfus-Göç-Yerleşme"
+        },
+        {
+          "id": 107,
+          "name": "Ekonomik Faaliyetler"
+        },
+        {
+          "id": 109,
+          "name": "Uluslararası Ulaşım Hatları"
+        }
+      ]
+    },
+    {
+      "key": "CO04",
+      "alt_ders": "Coğrafya-1",
+      "karne_konu": "Küresel Ortam: Bölgeler ve Ülkeler (9. Sınıf)",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 108,
+          "name": "Bölgeler ve Ülkeler"
+        }
+      ]
+    },
+    {
+      "key": "CO05",
+      "alt_ders": "Coğrafya-1",
+      "karne_konu": "Çevre ve Toplum (10. Sınıf)",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 110,
+          "name": "Çevre ve Toplum"
+        },
+        {
+          "id": 111,
+          "name": "Doğal Afetler"
+        }
+      ]
+    },
+    {
+      "key": "DI01",
+      "alt_ders": "Din Kültürü",
+      "karne_konu": "Kur'an'a Göre Hz. Muhammed",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 137,
+          "name": "Hz. Muhammed'in Hayatı"
+        }
+      ]
+    },
+    {
+      "key": "DI02",
+      "alt_ders": "Din Kültürü",
+      "karne_konu": "Allah İnsan İlişkisi",
+      "durum": "kismen",
+      "topics": [
+        {
+          "id": 135,
+          "name": "İnsan ve Din (İnanç)"
+        }
+      ]
+    },
+    {
+      "key": "DI03",
+      "alt_ders": "Din Kültürü",
+      "karne_konu": "Din ve İslam",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 135,
+          "name": "İnsan ve Din (İnanç)"
+        },
+        {
+          "id": 138,
+          "name": "Vahiy ve Akıl"
+        }
+      ]
+    },
+    {
+      "key": "DI04",
+      "alt_ders": "Din Kültürü",
+      "karne_konu": "İslam Düşüncesinde İtikadi, Siyasi ve Fıkhi Yorumlar",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 139,
+          "name": "İslam Düşüncesi ve Yorumu"
+        }
+      ]
+    },
+    {
+      "key": "FE01",
+      "alt_ders": "Felsefe",
+      "karne_konu": "MÖ 6. Yüzyıl-MS 2. Yüzyıl Felsefesi",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 291,
+          "name": "MÖ 6. Yüzyıl - MS 2. Yüzyıl Felsefesi"
+        }
+      ]
+    },
+    {
+      "key": "FE02",
+      "alt_ders": "Felsefe (Seçmeli)",
+      "karne_konu": "Felsefenin Temel Konuları ve Problemleri",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 113,
+          "name": "Bilgi Felsefesi"
+        },
+        {
+          "id": 114,
+          "name": "Bilim Felsefesi"
+        },
+        {
+          "id": 115,
+          "name": "Varlık Felsefesi"
+        },
+        {
+          "id": 116,
+          "name": "Ahlak Felsefesi"
+        },
+        {
+          "id": 117,
+          "name": "Siyaset Felsefesi"
+        },
+        {
+          "id": 118,
+          "name": "Sanat Felsefesi"
+        },
+        {
+          "id": 119,
+          "name": "Din Felsefesi"
+        }
+      ]
+    },
+    {
+      "key": "FZ01",
+      "alt_ders": "Fizik",
+      "karne_konu": "Madde ve Özellikleri",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 86,
+          "name": "Madde ve Özellikleri"
+        }
+      ]
+    },
+    {
+      "key": "FZ02",
+      "alt_ders": "Fizik",
+      "karne_konu": "Basınç ve Kaldırma Kuvveti",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 90,
+          "name": "Basınç ve Kaldırma Kuvveti"
+        }
+      ]
+    },
+    {
+      "key": "FZ03",
+      "alt_ders": "Fizik",
+      "karne_konu": "Isı ve Sıcaklık",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 89,
+          "name": "Isı ve Sıcaklık"
+        }
+      ]
+    },
+    {
+      "key": "FZ04",
+      "alt_ders": "Fizik",
+      "karne_konu": "Enerji",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 88,
+          "name": "Enerji"
+        }
+      ]
+    },
+    {
+      "key": "FZ05",
+      "alt_ders": "Fizik",
+      "karne_konu": "Elektrik Akımı ve Manyetizma",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 92,
+          "name": "Elektrik ve Manyetizma"
+        }
+      ]
+    },
+    {
+      "key": "FZ06",
+      "alt_ders": "Fizik",
+      "karne_konu": "Dalgalar",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 93,
+          "name": "Dalgalar"
+        }
+      ]
+    },
+    {
+      "key": "FZ07",
+      "alt_ders": "Fizik",
+      "karne_konu": "Optik",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 94,
+          "name": "Optik"
+        }
+      ]
+    },
+    {
+      "key": "GE01",
+      "alt_ders": "Geometri",
+      "karne_konu": "Doğruda ve Üçgende Açılar",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 145,
+          "name": "Geometrik Kavramlar ve Doğruda Açılar"
+        },
+        {
+          "id": 146,
+          "name": "Üçgenler (Açı, Benzerlik, Alan, Dik Üçgen)"
+        }
+      ]
+    },
+    {
+      "key": "GE02",
+      "alt_ders": "Geometri",
+      "karne_konu": "Özel Üçgenler",
+      "durum": "kismen",
+      "topics": [
+        {
+          "id": 146,
+          "name": "Üçgenler (Açı, Benzerlik, Alan, Dik Üçgen)"
+        }
+      ]
+    },
+    {
+      "key": "GE03",
+      "alt_ders": "Geometri",
+      "karne_konu": "Üçgende Alan ve Kenar-Açı İlişkileri",
+      "durum": "kismen",
+      "topics": [
+        {
+          "id": 146,
+          "name": "Üçgenler (Açı, Benzerlik, Alan, Dik Üçgen)"
+        }
+      ]
+    },
+    {
+      "key": "GE04",
+      "alt_ders": "Geometri",
+      "karne_konu": "Üçgenlerde Eşlik, Benzerlik ve Yardımcı Elemanlar",
+      "durum": "kismen",
+      "topics": [
+        {
+          "id": 146,
+          "name": "Üçgenler (Açı, Benzerlik, Alan, Dik Üçgen)"
+        }
+      ]
+    },
+    {
+      "key": "GE05",
+      "alt_ders": "Geometri",
+      "karne_konu": "Çokgenler ve Dörtgenler",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 51,
+          "name": "Çokgenler"
+        },
+        {
+          "id": 52,
+          "name": "Dörtgenler (Paralelkenar, Dikdörtgen, Kare vb.)"
+        }
+      ]
+    },
+    {
+      "key": "GE06",
+      "alt_ders": "Geometri",
+      "karne_konu": "Uzay Geometri (Katı Cisimler)",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 63,
+          "name": "Katı Cisimler"
+        }
+      ]
+    },
+    {
+      "key": "KI01",
+      "alt_ders": "Kimya",
+      "karne_konu": "Atom ve Periyodik Sistem",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 121,
+          "name": "Atom ve Periyodik Sistem"
+        }
+      ]
+    },
+    {
+      "key": "KI02",
+      "alt_ders": "Kimya",
+      "karne_konu": "Kimyasal Türler Arası Etkileşimler",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 122,
+          "name": "Kimyasal Türler Arası Etkileşimler"
+        }
+      ]
+    },
+    {
+      "key": "KI03",
+      "alt_ders": "Kimya",
+      "karne_konu": "Maddenin Hâlleri",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 123,
+          "name": "Maddenin Halleri"
+        }
+      ]
+    },
+    {
+      "key": "KI04",
+      "alt_ders": "Kimya",
+      "karne_konu": "Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 125,
+          "name": "Kimyanın Temel Kanunları"
+        },
+        {
+          "id": 149,
+          "name": "Kimyasal Hesaplamalar"
+        }
+      ]
+    },
+    {
+      "key": "KI05",
+      "alt_ders": "Kimya",
+      "karne_konu": "Karışımlar",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 126,
+          "name": "Karışımlar"
+        }
+      ]
+    },
+    {
+      "key": "KI06",
+      "alt_ders": "Kimya",
+      "karne_konu": "Asitler, Bazlar ve Tuzlar",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 127,
+          "name": "Asitler, Bazlar ve Tuzlar"
+        }
+      ]
+    },
+    {
+      "key": "KI07",
+      "alt_ders": "Kimya",
+      "karne_konu": "Kimya Her Yerde",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 128,
+          "name": "Kimya Her Yerde"
+        }
+      ]
+    },
+    {
+      "key": "MA01",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Rasyonel Sayılar",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 22,
+          "name": "Rasyonel Sayılar"
+        }
+      ]
+    },
+    {
+      "key": "MA02",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Üslü ve Köklü İfadeler",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 25,
+          "name": "Üslü Sayılar"
+        },
+        {
+          "id": 26,
+          "name": "Köklü Sayılar"
+        }
+      ]
+    },
+    {
+      "key": "MA03",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Sayılar",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 18,
+          "name": "Temel Kavramlar"
+        },
+        {
+          "id": 19,
+          "name": "Sayı Basamakları"
+        },
+        {
+          "id": 20,
+          "name": "Bölme ve Bölünebilme"
+        },
+        {
+          "id": 21,
+          "name": "EBOB-EKOK"
+        }
+      ]
+    },
+    {
+      "key": "MA04",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Birinci Dereceden Denklemler ve Eşitsizlikler",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 29,
+          "name": "Denklem Çözme"
+        },
+        {
+          "id": 23,
+          "name": "Basit Eşitsizlikler"
+        }
+      ]
+    },
+    {
+      "key": "MA05",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Mutlak Değer",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 24,
+          "name": "Mutlak Değer"
+        }
+      ]
+    },
+    {
+      "key": "MA06",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Kümeler",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 31,
+          "name": "Kümeler ve Kartezyen Çarpım"
+        }
+      ]
+    },
+    {
+      "key": "MA07",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Mantık",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 41,
+          "name": "Mantık"
+        }
+      ]
+    },
+    {
+      "key": "MA08",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Fonksiyonlar",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 32,
+          "name": "Fonksiyonlar"
+        }
+      ]
+    },
+    {
+      "key": "MA09",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Problemler",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 30,
+          "name": "Problemler"
+        },
+        {
+          "id": 28,
+          "name": "Oran-Orantı"
+        }
+      ]
+    },
+    {
+      "key": "MA10",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Veri",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 143,
+          "name": "Veri ve İstatistik"
+        }
+      ]
+    },
+    {
+      "key": "MA11",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Permütasyon, Kombinasyon, Binom Açılımı",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 144,
+          "name": "Permütasyon - Kombinasyon"
+        },
+        {
+          "id": 35,
+          "name": "Binom Açılımı"
+        }
+      ]
+    },
+    {
+      "key": "MA12",
+      "alt_ders": "Matematik-1",
+      "karne_konu": "Olasılık",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 36,
+          "name": "Olasılık"
+        }
+      ]
+    },
+    {
+      "key": "TA01",
+      "alt_ders": "Tarih-1",
+      "karne_konu": "İlk ve Orta Çağlarda Türk Dünyası",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 66,
+          "name": "İlk Türk Devletleri"
+        },
+        {
+          "id": 68,
+          "name": "Türk-İslam Devletleri"
+        },
+        {
+          "id": 69,
+          "name": "Türklerin İslamiyeti Kabulü"
+        }
+      ]
+    },
+    {
+      "key": "TA02",
+      "alt_ders": "Tarih-1",
+      "karne_konu": "İslam Medeniyetinin Doğuşu",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 67,
+          "name": "İslam Tarihi ve Uygarlığı"
+        }
+      ]
+    },
+    {
+      "key": "TA03",
+      "alt_ders": "Tarih-1",
+      "karne_konu": "20. Yüzyıl Başlarında Osmanlı Devleti ve Dünya",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 78,
+          "name": "20. Yüzyıl Başlarında Osmanlı Devleti"
+        }
+      ]
+    },
+    {
+      "key": "TA04",
+      "alt_ders": "Tarih-1",
+      "karne_konu": "Atatürkçülük ve Türk İnkılabı",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 82,
+          "name": "Türk İnkılabı"
+        },
+        {
+          "id": 83,
+          "name": "Atatürkçülük ve Atatürk İlkeleri"
+        }
+      ]
+    },
+    {
+      "key": "TA05",
+      "alt_ders": "Tarih-1",
+      "karne_konu": "Milli Mücadele",
+      "durum": "kapsar",
+      "topics": [
+        {
+          "id": 80,
+          "name": "1. Dünya Savaşı - Milli Mücadeleye Hazırlık Dönemi"
+        },
+        {
+          "id": 81,
+          "name": "Kurtuluş Savaşında Cepheler"
+        }
+      ]
+    },
+    {
+      "key": "TR01",
+      "alt_ders": "Türkçe",
+      "karne_konu": "Sözcükte ve Söz Öbeklerinde Anlam",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 1,
+          "name": "Sözcük Anlamı"
+        }
+      ]
+    },
+    {
+      "key": "TR02",
+      "alt_ders": "Türkçe",
+      "karne_konu": "Cümlenin Anlamı ve Yorumu",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 2,
+          "name": "Cümle Anlamı"
+        }
+      ]
+    },
+    {
+      "key": "TR03",
+      "alt_ders": "Türkçe",
+      "karne_konu": "Ses Bilgisi",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 5,
+          "name": "Ses Bilgisi"
+        }
+      ]
+    },
+    {
+      "key": "TR04",
+      "alt_ders": "Türkçe",
+      "karne_konu": "Ekler ve Sözcük Yapısı",
+      "durum": "ad_farki",
+      "topics": [
+        {
+          "id": 8,
+          "name": "Sözcükte Yapı"
+        }
+      ]
+    },
+    {
+      "key": "TR05",
+      "alt_ders": "Türkçe",
+      "karne_konu": "Cümlenin Ögeleri",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 15,
+          "name": "Cümle Ögeleri"
+        }
+      ]
+    },
+    {
+      "key": "TR06",
+      "alt_ders": "Türkçe",
+      "karne_konu": "Noktalama İşaretleri",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 7,
+          "name": "Noktalama İşaretleri"
+        }
+      ]
+    },
+    {
+      "key": "TR07",
+      "alt_ders": "Türkçe",
+      "karne_konu": "Yazım Kuralları",
+      "durum": "tam",
+      "topics": [
+        {
+          "id": 6,
+          "name": "Yazım Kuralları"
+        }
+      ]
+    },
+    {
+      "key": "TR08",
+      "alt_ders": "Türkçe",
+      "karne_konu": "Paragrafın Yapısı",
+      "durum": "kismen",
+      "topics": [
+        {
+          "id": 3,
+          "name": "Paragraf"
+        }
+      ]
+    },
+    {
+      "key": "TR09",
+      "alt_ders": "Türkçe",
+      "karne_konu": "Anlatım Teknikleri ve Düşünceyi Geliştirme Yolları",
+      "durum": "kismen",
+      "topics": [
+        {
+          "id": 3,
+          "name": "Paragraf"
+        }
+      ]
+    },
+    {
+      "key": "TR10",
+      "alt_ders": "Türkçe",
+      "karne_konu": "Paragraf Yorumu",
+      "durum": "kismen",
+      "topics": [
+        {
+          "id": 3,
+          "name": "Paragraf"
+        }
+      ]
+    }
+  ]
+}
