@@ -2454,7 +2454,7 @@ Dosya: `scripts/parseEkKilavuz.py` (+ `docs/ek-yerlestirme.md`).
 - Portalda `supabase.from(...)` kullanılmaz. Portal renkleri `portalTheme.ts`'ten sabit hex.
 - Her paketin sonunda `npm run build` + `npm run test:types` + `npm run lint` (yeni uyarı yok). Commit mesajı Türkçe, paket kodu başta (`feat(deneme): K1 …`).
 
-### 📥 agy — K1: Şema + katalog seed'i + atomik kayıt RPC'si [TAMAMLANDI — Opus kontrolü bekliyor]
+### 📥 agy — K1: Şema + katalog seed'i + atomik kayıt RPC'si [✅ TAMAMLANDI VE CANLIDA DOĞRULANDI]
 Spec §4 ve §10b-3.
 1. `supabase/schema.sql`:
    - Yeni tablolar: `exam_subjects`, `exam_topics`, `mock_exam_subject_results`, `mock_exam_topic_results`. Kolonlar, check'ler, generated kolonlar (`blank_count`, `net`) ve unique'ler eklendi.
@@ -2468,13 +2468,15 @@ Spec §4 ve §10b-3.
    - `test:types` (26 tablo, 231 sütun) ve derleme testleri geçti.
 3. `scripts/seedExamCatalog.ts` + `package.json` → `"seed:exam-catalog"`:
    - TYT (`data/deneme/tyt-karne-katalog.json`), AYT SAY, AYT EA/SÖZ ve LGS katalog tohumlayıcı yazıldı. Idempotent ve silme yapmaz.
-4. **Docker doğrulaması (başarılı):**
+   - Canlıda çalıştırıldı: 28 exam_subjects, 369 exam_topics (TYT 11 alt ders / 65 konu satırı birebir doğrulandı).
+4. **Docker doğrulaması:**
    - `scripts/verifyExamReportK1.sh` ile `postgres:16` üzerinde:
      - git HEAD eski şema → yeni şema (migration) → yeni şema tekrar (idempotentlik) başarıyla geçti.
      - `save_exam_report` ile TYT denemesi atomik kaydedildi.
      - Aynı deneme 1 konu eksik tekrar kaydedildi ve silindiği doğrulandı.
      - D+Y > S ihlali denenerek transaction'ın beklenen hatayla durduğu doğrulandı.
      - LGS denemesinde `net = 10 - 3/3 = 9.00` kuralının doğru uygulandığı doğrulandı.
+   - Canlı probe: anon çağrısı `permission denied for function save_exam_report` ile güvenle reddedildi.
 - **Opus kontrol kapısı:** SQL incelemesi, ardından kullanıcı SQL Editor'de çalıştırır. Opus `seed:exam-catalog`'u koşar, canlıda `count=exact` ile katalog sayılarını kendisi sayar (TYT 11 alt ders / 65 konu satırı = 64 benzersiz + Felsefe (Seçmeli) satırı), RPC'yi bogus öğrenciyle prob eder (RLS reddi beklenir).
 
 ### 📥 agy — K2: Deneme giriş ekranı (karne düzeni) [YAPILACAK — K1 canlıda olmalı]
