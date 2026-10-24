@@ -2360,3 +2360,68 @@ Kaynak görev: `~/Downloads/ek-yerlestirme-claude-code-gorev.md`. Eski 2026-09-2
   - `ek_yerlestirme_kosullari`: **195 satır**
   - `vakif_ogrenim_ucretleri`: **2.744 satır** (örnek veri + kılavuz birleşimi)
   - RLS ve veri bütünlüğü doğrulandı. ✅
+
+---
+
+## 🚧 EK YERLEŞTİRME — Kılavuz kolonları + çok yıllı destek (kullanıcı isteği, 2026-10-24) — Opus planı
+
+**İstek:** (1) Program listesinde, program adının yanında kılavuzdaki kolonlar görünsün: Öğr. Süre, Puan Türü, Genel Ek Kont., Şehit ve Gazi Yak. Ek Kont., 34 Yaş Üstü Kadın Ek Kont., TYT En Küçük Puan (GK / ŞGY / 34Y). (2) Bu çalışma 2026 için yapıldı; başka yılların kılavuzları geldiğinde yıl seçilebilsin.
+
+**Tespit (Opus):**
+- Kolonların verisi **DB'de zaten var**: `ek_yerlestirme_programlari.ogrenim_suresi, puan_turu, genel_ek_kont, sgy_ek_kont, k34_ek_kont, en_kucuk_gk, en_kucuk_sgy, en_kucuk_34y`. Bu iş yalnız arayüz işi, **şema değişikliği yok**.
+- Yıl seçici **zaten var** (`EkYerlestirmePage.tsx` PageHeader `actions` → `<select>`). Yıllar DB'den otomatik bulunuyor, varsayılan en yeni yıl. Tercih listeleri (`ogrenci_tercih_listeleri.yil`) ve ücretler yıl bazlı. Yani yeni bir yılın verisi yüklenince seçici kendiliğinden çalışır.
+- **Asıl engel parser'da:** `scripts/parseEkKilavuz.py` 2026 PDF'ine sabitlenmiş: `TABLO3_START=11 … UCRET_END=467`, `KOSUL_PAGES_K1/K2` ve `p == 402` için özel `yMin ≥ 330` kuralı. Başka bir yılın PDF'inde sayfa numaraları farklı olacağı için çıktı sessizce bozulur.
+- Yan bulgular:
+  - Öğrencinin girdiği puanlar `localStorage`'da `ekYerlestirme.puan.<studentId>` anahtarıyla, **yılsız** tutuluyor. 2027'de 2026 puanı "puan altında" uyarısında kullanılır.
+  - Sürüm Geçmişi'nde Ek Yerleştirme için **hiç kayıt yok** (son kayıt v0.24).
+
+### 📥 E7 — Liste kolonları + yıl bazlı puan (Sonnet alt ajan ya da agy) — [YAPILACAK]
+Dosya: `src/pages/EkYerlestirmePage.tsx` (tek dosya; gerekirse `src/styles/global.css`).
+1. **Liste tablosu** (bugün: Kod | Program | Puan | Kont. | En küçük | +) şu hale gelsin:
+   `Kod | Program | Öğr. Süre | Puan Türü | Genel | ŞGY | 34Y Kadın | GK | ŞGY | 34Y | +`.
+   - İki satırlı `thead`: üst satırda grup başlıkları **"Ek Kontenjan"** (3 kolon) ve **"{year} En Küçük Puan"** (3 kolon). Yıl sabit yazılmasın, `year` state'inden gelsin. "TYT" yazılmasın: Lisans tablosunda puan türü SAY/EA/SÖZ/DİL.
+   - Her başlığa kılavuzdaki tam adı veren `title` ekle ("Şehit ve Gazi Yakınları Ek Kontenjanı" vb.).
+   - `Kont.` (toplam) kolonu kalkar. `kont()` fonksiyonu "Sadece kontenjanı olanlar" filtresinde kullanılmaya devam eder.
+   - Program hücresi bugünkü gibi kalır (ad + altında üni · il · tür).
+   - Boş değerler PDF'teki gibi gösterilsin:
+     - Kontenjanı 0 olan hücre boş kalır.
+     - `en_kucuk_gk == null` → mevcut "Dolmadı" rozeti ve `<Warn>` korunur.
+     - `en_kucuk_sgy`/`en_kucuk_34y` null ise hücre **boş** kalır. Rozet koyma, çoğu satır null ve rozet kalabalık yapar.
+   - Sayı kolonları sağa hizalı, `fontVariantNumeric: 'tabular-nums'`, `whiteSpace: 'nowrap'`. Puan için mevcut `fmtPuan` kullanılır (5 ondalık, kılavuzla aynı).
+   - Tablo sol kolonda (`1.6fr`) yer alıyor ve mevcut `overflowX: 'auto'` sarmalayıcısı kalır. Program kolonuna `minWidth: 240` ver, ad sıkışmasın.
+2. **Yıl bazlı puan:** `loadScores/saveScores` anahtarı `ekYerlestirme.puan.<studentId>.<year>` olsun. Eski anahtar (yılsız) okunurken bir kereliğine en yeni yıla taşınsın, sonra silinsin. Yıl değişince `scores` yeniden yüklensin (`useEffect([studentId, year])` zaten var, oraya bağla).
+3. **Yıl seçici:** yanına görünür bir etiket ekle ("Kılavuz yılı"). Bugün yalnız `title` var. Tek yıl varken de görünsün.
+4. **Sürüm Geçmişi:** `src/components/help/VersionHistory.tsx`'e **v0.25** (24 Ekim 2026) kaydı: Ek Yerleştirme modülü (filtreler, 24 tercihlik liste, yazdırma, vakıf ücreti), bugünkü veri düzeltmesi (üniversite adları, yanlış ücretler) ve bu yeni kolonlar. Mevcut kayıtların dili ve uzunluğuyla aynı tonda yaz.
+5. **Yardım:** `src/pages/YardimPage.tsx` Ek Yerleştirme kartına kolonlar ve yıl seçimi bir cümleyle eklensin.
+- **Tuzaklar:** Tailwind YOK, utility sınıfı çalışmaz. Yalnız var olan sınıflar (`table`, `badge*`, `btn*`) ve token'lar kullanılabilir (`--ink-soft`, `--border`, `--indigo-050`; `--ink-muted`/`--accent` YOK). Aynı seçiciyle ikinci bir CSS bloğu açma.
+- **Kabul:**
+  - Kılavuz s.8'deki (Tablo-3, Adana Alparslan Türkeş / Adıyaman) ilk 10 satır ekranda PDF ile birebir aynı görünmeli. Örnek: Büro Yönetimi (Besni): Genel boş, 34Y Kadın 1.
+  - 34Y puanı olan bir satır (örn. 278.53751) doğru kolonda görünmeli.
+  - 1280 px genişlikte yatay kaydırma yalnız tablo kabında olmalı, sayfada olmamalı.
+  - `npm run build` + `npm run test:types` + `npm run lint` (yeni uyarı yok).
+- **Opus kontrol kapısı:** kod incelemesi + tarayıcıda canlı veriyle görsel kontrol + PDF ile satır karşılaştırması.
+
+### 📥 E8 — Parser'ı yıldan bağımsız yap (agy) — [YAPILACAK]
+Dosya: `scripts/parseEkKilavuz.py` (+ `docs/ek-yerlestirme.md`).
+1. Sabit sayfa aralıklarını (`TABLO3_START/END`, `TABLO4_START/END`, `KOSUL_PAGES_K1/K2`, `UCRET_START/END`) **sayfa metninden otomatik bulan** bir `detect_sections(pdf)` ile değiştir:
+   - Her sayfanın düz metnini `pdftotext -f N -l N` ile oku. Bölümleri başlıklarından tanı: "TABLO-3" (Ön Lisans), "TABLO-4" (Lisans), koşulların "1. KISIM" / "2. KISIM" başlıkları, ücret tablosunun "ÜNİVERSİTE ADI … ÖĞRENİM ÜCRETİ" başlık satırı ve KKTC bölümü.
+   - Bölüm bitişi = bir sonraki bölümün başlangıcı − 1.
+   - Bulunan aralıkları konsola ve rapora yaz.
+   - Herhangi bir bölüm bulunamazsa **hata verip çık**. Sessizce boş çıktı üretme.
+   - Kaçış kapısı: `--sayfalar tablo3=11-124,tablo4=126-304,...` ile elle verilebilsin.
+2. `p == 402` için `yMin ≥ 330` özel kuralını kaldır. Ücret tablosunun ilk sayfasında başlık satırının y'si bulunsun, tablo onun altından başlasın.
+3. Başlık/kolon tanımada yıl sabit yazılmasın (kılavuz başlığı "2026-TYT EN KÜÇÜK PUAN(GK)"; 2027'de "2027-…"). `--yil` ile PDF'teki yılın tutmadığı durumda uyarı ver.
+4. **Kabul (2026, regresyon):** yeni parser'ın 2026 çıktısı, `00949bf`'deki `data/ek-yerlestirme/2026.json` ile **birebir aynı** olmalı (`programlar`, `kosullar`, `ucretler`). Yalnız rapordaki üretim tarihi farklı olabilir. Fark varsa her biri gerekçelendirilir.
+5. **Kabul (ikinci yıl):** ÖSYM'nin **2025 Ek Yerleştirme kılavuzu** PDF'i (ÖSYM sitesi → 2025-YKS → Ek Yerleştirme; kullanıcının `~/Downloads`'ına indirilir) ile koştur:
+   - Program sayıları kılavuzun kendi toplamlarıyla tutmalı.
+   - Mükerrer kod 0, tanımsız koşul kodu 0, boş üni adı 0, şüpheli ad 0 (2026 raporundaki aynı denetimler).
+   - `en_kucuk_gk` ile `university_rankings` 2025 `minPuan` çapraz eşleşmesi yüksek olmalı (2026'da 11.158/11.158 idi). Not: YÖK Atlas yıl eşleşmesi kuralı için CLAUDE/hafıza notuna bak.
+   - Çıktılar: `data/ek-yerlestirme/2025.json` + `2025-rapor.md`.
+6. `docs/ek-yerlestirme.md`'ye **"Yeni yıl ekleme"** adımları yazılsın: PDF indir → parser → raporu kontrol et → (kullanıcı) `npm run seed:ek -- --yil <YIL> --dosya data/ek-yerlestirme/<YIL>.json --ucret-temizle` → ekranda yıl seçicide görünür.
+- **YASAK:** `npm run seed*` ya da Supabase'e bağlanan hiçbir şeyi çalıştırma. Seed script'leri `.env.local`'i kendileri okur ve canlıya yazar. Canlı yükleme kullanıcı onayıyla Opus tarafından yapılır.
+- **Opus kontrol kapısı:**
+  - 2026 JSON diff'i boş olmalı.
+  - 2025 raporu bağımsız ölçümle doğrulanır (sayılar kendi script'imle tekrar sayılır, agy'nin raporundan alınmaz).
+  - Kullanıcı onayıyla 2025 canlıya yüklenir. Ekranda yıl seçici 2025/2026 arasında geçiş yapmalı; tercih listesi ve puanlar yıla göre ayrışmalı.
+
+**Sıra:** E7 ve E8 bağımsız (farklı dosyalar), paralel yürüyebilir. E8 ancak E7 canlıdayken uçtan uca test edilir (yıl seçici + yıl bazlı puan).
