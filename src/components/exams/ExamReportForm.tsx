@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import {
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -297,15 +298,15 @@ export default function ExamReportForm({
       })
 
       const hasAltDersKatalog = activeSubjects.length > 0
-      // Bir bölümün "ayrıntılı" sayılması için tüm aktif alt derslerinin girilmiş olması gerekir
-      const isDetailed =
-        hasAltDersKatalog &&
-        activeSubjects.every((s) => {
-          const entry = subjectEntries[s.id]
-          return entry && entry.entered
-        })
+      const enteredSubjects = activeSubjects.filter((s) => {
+        const entry = subjectEntries[s.id]
+        return entry && entry.entered
+      })
+      const hasAnyEntered = enteredSubjects.length > 0
+      const allEntered = hasAltDersKatalog && activeSubjects.length > 0 && enteredSubjects.length === activeSubjects.length
 
-      if (isDetailed) {
+      // Alt ders kataloğu varsa ve en az bir alt ders girilmişse: alt derslerden topla
+      if (hasAltDersKatalog && hasAnyEntered) {
         const correct = activeSubjects.reduce((sum, s) => sum + (subjectEntries[s.id]?.correct || 0), 0)
         const wrong = activeSubjects.reduce((sum, s) => sum + (subjectEntries[s.id]?.wrong || 0), 0)
         const totalQ = activeSubjects.reduce((sum, s) => sum + (subjectEntries[s.id]?.questionCount || s.question_count), 0)
@@ -318,6 +319,7 @@ export default function ExamReportForm({
           max: totalQ,
           katsayi: template.katsayi,
           isDetailed: true,
+          allEntered,
           hasAltDersKatalog,
           activeSubjects,
           correct,
@@ -340,6 +342,7 @@ export default function ExamReportForm({
         max,
         katsayi: template.katsayi,
         isDetailed: false,
+        allEntered: false,
         hasAltDersKatalog,
         activeSubjects,
         correct: manual.correct,
@@ -1019,7 +1022,7 @@ export default function ExamReportForm({
                     {sec.katsayi ? ` · katsayı ${sec.katsayi}` : ''}
                     {sec.isDetailed && (
                       <span className="badge badge-success" style={{ marginLeft: 6, fontSize: 10 }}>
-                        Alt derslerden otomatik
+                        {sec.allEntered ? 'Alt derslerden otomatik' : 'Alt derslerden'}
                       </span>
                     )}
                   </div>
@@ -1367,24 +1370,29 @@ export default function ExamReportForm({
                                     <div
                                       style={{
                                         marginTop: 8,
-                                        padding: '6px 10px',
+                                        padding: '7px 12px',
                                         borderRadius: 6,
                                         fontSize: 11.5,
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
+                                        gap: 8,
                                         background: isMismatch ? 'var(--warning-bg)' : 'var(--success-bg)',
                                         color: isMismatch ? 'var(--warning-text)' : 'var(--success-text)',
+                                        border: `1px solid ${isMismatch ? 'var(--warning-border)' : 'var(--success-border)'}`,
                                       }}
                                     >
-                                      <span>
-                                        Konular: {topicTotalQ}/{qVal} soru · {topicTotalD}/{entry.correct} doğru · {topicTotalY}/{entry.wrong} yanlış
-                                      </span>
-                                      {isMismatch && (
-                                        <span style={{ fontSize: 10.5, fontWeight: 600 }}>
-                                          (Tutarsızlık var; kaydı engellemez)
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        {isMismatch ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
+                                        <span>
+                                          {isMismatch
+                                            ? `Konular ${topicTotalQ} soru · ${topicTotalD} D · ${topicTotalY} Y, ders ${qVal} soru · ${entry.correct} D · ${entry.wrong} Y: fark var`
+                                            : `Konular dersle tam uyumlu (${topicTotalQ} soru · ${topicTotalD} D · ${topicTotalY} Y)`}
                                         </span>
-                                      )}
+                                      </div>
+                                      <span style={{ fontSize: 10.5, opacity: 0.9 }}>
+                                        {isMismatch ? 'Uyarı: kaydı engellemez' : 'Uyumlu'}
+                                      </span>
                                     </div>
                                   )}
 
