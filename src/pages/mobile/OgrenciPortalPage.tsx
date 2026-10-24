@@ -7,13 +7,17 @@ import { getExamSections, sectionNet, weightedNet } from '../../lib/examSections
 import { gradeCurriculum } from '../../lib/curriculum'
 import { PORTAL_THEME, roleBadgeStyle, roleTopBarStyle } from '../../lib/portalTheme'
 import type { ExamType } from '../../types/database'
+import StudentExamAnalysisView from '../../components/exams/StudentExamAnalysisView'
+import { PORTAL_STUDENT_PALETTE } from '../../components/charts/chartPalette'
 import {
   clearPortalSession,
   getPortalSession,
   portalAddExam,
   portalDashboard,
+  portalExamReport,
   portalSetTaskCompleted,
   type PortalDashboard,
+  type PortalExamReportData,
   type PortalTask,
 } from '../../lib/portal'
 
@@ -52,6 +56,20 @@ export default function OgrenciPortalPage() {
   const [activeTab, setActiveTab] = useState<'tasks' | 'exams' | 'goals' | 'attendance'>('tasks')
   const [showExamModal, setShowExamModal] = useState(false)
   const [openExamId, setOpenExamId] = useState<string | null>(null)
+  const [examSubTab, setExamSubTab] = useState<'analysis' | 'list'>('analysis')
+  const [examReportData, setExamReportData] = useState<PortalExamReportData | null>(null)
+  const [examReportLoading, setExamReportLoading] = useState(false)
+
+  const loadExamReport = useCallback(async () => {
+    const session = getPortalSession()
+    if (!session) return
+    setExamReportLoading(true)
+    const res = await portalExamReport(session.code)
+    if (res.ok) {
+      setExamReportData(res.data)
+    }
+    setExamReportLoading(false)
+  }, [])
 
   const load = useCallback(async () => {
     const session = getPortalSession()
@@ -80,7 +98,14 @@ export default function OgrenciPortalPage() {
 
   useEffect(() => {
     load()
-  }, [load])
+    loadExamReport()
+  }, [load, loadExamReport])
+
+  useEffect(() => {
+    if (activeTab === 'exams' && !examReportData) {
+      loadExamReport()
+    }
+  }, [activeTab, examReportData, loadExamReport])
 
   async function toggleTaskCompleted(task: PortalTask) {
     const session = getPortalSession()
@@ -309,8 +334,44 @@ export default function OgrenciPortalPage() {
 
         {activeTab === 'exams' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700 }}>Deneme Geçmişim</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 4, background: '#e2e8f0', padding: 3, borderRadius: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setExamSubTab('analysis')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    border: 'none',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: examSubTab === 'analysis' ? '#ffffff' : 'transparent',
+                    color: examSubTab === 'analysis' ? theme.accentStrong : 'var(--ink-soft)',
+                    boxShadow: examSubTab === 'analysis' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  }}
+                >
+                  Analiz & Karne
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExamSubTab('list')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    border: 'none',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: examSubTab === 'list' ? '#ffffff' : 'transparent',
+                    color: examSubTab === 'list' ? theme.accentStrong : 'var(--ink-soft)',
+                    boxShadow: examSubTab === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  }}
+                >
+                  Deneme Listesi ({exams.length})
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setShowExamModal(true)}
@@ -321,55 +382,80 @@ export default function OgrenciPortalPage() {
               </button>
             </div>
 
-            {exams.length === 0 ? (
-              <div style={{ ...card, textAlign: 'center', padding: 30, color: 'var(--ink-soft)' }}>
-                Henüz kayıtlı deneme yok. "Deneme Ekle" ile ilk sonucunu gir.
-              </div>
+            {examSubTab === 'analysis' ? (
+              examReportLoading ? (
+                <div style={{ ...card, textAlign: 'center', padding: 30, color: 'var(--ink-soft)' }}>
+                  Deneme analiz raporu yükleniyor…
+                </div>
+              ) : examReportData && examReportData.exams.length > 0 ? (
+                <div>
+                  <StudentExamAnalysisView
+                    studentId={student.id}
+                    role="student"
+                    palette={PORTAL_STUDENT_PALETTE}
+                    initialCatalog={examReportData.catalog}
+                    initialExams={examReportData.exams}
+                  />
+                  <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11.5, color: '#8A86A3', padding: '12px 16px' }}>
+                    Sayılar girilen deneme sonuçlarından hesaplanır; konusu girilmemiş denemeler konu analizinde yer almaz.
+                  </div>
+                </div>
+              ) : (
+                <div style={{ ...card, textAlign: 'center', padding: 30, color: 'var(--ink-soft)' }}>
+                  Henüz kayıtlı deneme karnesi bulunmuyor. "Deneme Ekle" ile sonucunu kaydedebilirsin.
+                </div>
+              )
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {exams.map((e) => {
-                  const open = openExamId === e.id
-                  return (
-                    <div key={e.id} style={{ ...card, padding: 0, overflow: 'hidden' }}>
-                      <button
-                        type="button"
-                        onClick={() => setOpenExamId(open ? null : e.id)}
-                        style={{
-                          width: '100%',
-                          padding: 16,
-                          background: 'none',
-                          border: 'none',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: 10,
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                        }}
-                      >
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{e.name}</div>
-                          <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
-                            {e.exam_type}
-                            {e.publisher ? ` · ${e.publisher}` : ''} · {e.exam_date}
+              exams.length === 0 ? (
+                <div style={{ ...card, textAlign: 'center', padding: 30, color: 'var(--ink-soft)' }}>
+                  Henüz kayıtlı deneme yok. "Deneme Ekle" ile ilk sonucunu gir.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {exams.map((e) => {
+                    const open = openExamId === e.id
+                    return (
+                      <div key={e.id} style={{ ...card, padding: 0, overflow: 'hidden' }}>
+                        <button
+                          type="button"
+                          onClick={() => setOpenExamId(open ? null : e.id)}
+                          style={{
+                            width: '100%',
+                            padding: 16,
+                            background: 'none',
+                            border: 'none',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: 10,
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{e.name}</div>
+                            <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
+                              {e.exam_type}
+                              {e.publisher ? ` · ${e.publisher}` : ''} · {e.exam_date}
+                            </div>
                           </div>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <div style={{ fontSize: 18, fontWeight: 800, color: theme.accentStrong, fontVariantNumeric: 'tabular-nums' }}>
-                            {Math.round(Number(e.total_net) * 100) / 100}
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div style={{ fontSize: 18, fontWeight: 800, color: theme.accentStrong, fontVariantNumeric: 'tabular-nums' }}>
+                              {Math.round(Number(e.total_net) * 100) / 100}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>net</div>
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>net</div>
-                        </div>
-                      </button>
-                      {open && (
-                        <div style={{ padding: '0 12px 12px 12px' }}>
-                          <ExamSectionsTable sections={e.sections} />
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+                        </button>
+                        {open && (
+                          <div style={{ padding: '0 12px 12px 12px' }}>
+                            <ExamSectionsTable sections={e.sections} />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
             )}
           </div>
         )}
@@ -400,6 +486,7 @@ export default function OgrenciPortalPage() {
           onSaved={() => {
             setShowExamModal(false)
             load()
+            loadExamReport()
           }}
         />
       )}

@@ -42,6 +42,8 @@ export interface StudentExamAnalysisViewProps {
   palette?: Partial<ChartPalette>
   role?: 'coach' | 'student' | 'parent'
   initialExamType?: ExamType
+  initialCatalog?: ExamReportCatalog
+  initialExams?: RawExamRecord[]
 }
 
 export default function StudentExamAnalysisView({
@@ -49,14 +51,16 @@ export default function StudentExamAnalysisView({
   palette,
   role = 'coach',
   initialExamType,
+  initialCatalog,
+  initialExams,
 }: StudentExamAnalysisViewProps) {
   const pal = { ...DEFAULT_CHART_PALETTE, ...palette }
 
   // Durum
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initialCatalog || !initialExams)
   const [error, setError] = useState<string | null>(null)
-  const [rawExams, setRawExams] = useState<RawExamRecord[]>([])
-  const [catalog, setCatalog] = useState<ExamReportCatalog>({ subjects: [], topics: [] })
+  const [rawExams, setRawExams] = useState<RawExamRecord[]>(initialExams || [])
+  const [catalog, setCatalog] = useState<ExamReportCatalog>(initialCatalog || { subjects: [], topics: [] })
 
   // Filtreler & Seviyeler
   const [selectedExamType, setSelectedExamType] = useState<ExamType | undefined>(initialExamType)
@@ -68,6 +72,13 @@ export default function StudentExamAnalysisView({
 
   // Veri yükleme
   useEffect(() => {
+    if (initialCatalog && initialExams) {
+      setCatalog(initialCatalog)
+      setRawExams(initialExams)
+      setLoading(false)
+      return
+    }
+
     let isMounted = true
     setLoading(true)
     setError(null)
@@ -153,7 +164,7 @@ export default function StudentExamAnalysisView({
     return () => {
       isMounted = false
     }
-  }, [studentId])
+  }, [studentId, initialCatalog, initialExams])
 
   // Rapor Motoru Çıktısı
   const report: ExamReportResult | null = useMemo(() => {
@@ -222,7 +233,11 @@ export default function StudentExamAnalysisView({
     return (
       <div className="card empty-state" style={{ padding: 40, textAlign: 'center' }}>
         <h3>Henüz Deneme Verisi Yok</h3>
-        <p>Öğrenciye ait kayıtlı deneme karnesi bulunmuyor. Denemeler sayfasından yeni deneme ekleyebilirsiniz.</p>
+        <p>
+          {role === 'coach'
+            ? 'Öğrenciye ait kayıtlı deneme karnesi bulunmuyor. Denemeler sayfasından yeni deneme ekleyebilirsiniz.'
+            : 'Henüz kayıtlı bir deneme karnesi bulunmuyor.'}
+        </p>
       </div>
     )
   }
@@ -286,7 +301,7 @@ export default function StudentExamAnalysisView({
                 fontSize: 13,
                 fontWeight: activeLevel === 'general' ? 700 : 500,
                 cursor: 'pointer',
-                background: activeLevel === 'general' ? 'var(--indigo-050)' : 'transparent',
+                background: activeLevel === 'general' ? pal.primaryArea : 'transparent',
                 color: activeLevel === 'general' ? pal.primary : pal.textMuted,
               }}
             >
@@ -305,7 +320,7 @@ export default function StudentExamAnalysisView({
                 fontSize: 13,
                 fontWeight: activeLevel === 'subject' ? 700 : 500,
                 cursor: 'pointer',
-                background: activeLevel === 'subject' ? 'var(--indigo-050)' : 'transparent',
+                background: activeLevel === 'subject' ? pal.primaryArea : 'transparent',
                 color: activeLevel === 'subject' ? pal.primary : pal.textMuted,
               }}
             >
@@ -324,7 +339,7 @@ export default function StudentExamAnalysisView({
                 fontSize: 13,
                 fontWeight: activeLevel === 'topic' ? 700 : 500,
                 cursor: 'pointer',
-                background: activeLevel === 'topic' ? 'var(--indigo-050)' : 'transparent',
+                background: activeLevel === 'topic' ? pal.primaryArea : 'transparent',
                 color: activeLevel === 'topic' ? pal.primary : pal.textMuted,
               }}
             >

@@ -1556,6 +1556,132 @@ $$;
 grant execute on function portal_add_exam(text, text, text, text, date, jsonb) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
+-- 15c. portal_exam_report (Mobil Öğrenci & Veli Portalı Deneme Analiz RPC)
+-- ---------------------------------------------------------------------------
+-- Erişim koduyla çağrılır. Öğrenci veya velinin son 30 denemesinin ham satırlarını
+-- (genel bilgiler, bölümler, alt dersler, konular) ve katalog eşleştirmelerini
+-- JSON olarak döndürür.
+--
+-- SECURITY DEFINER olarak çalışır: anon rolüyle gelen mobil isteklerin
+-- doğrudan tablolara erişimi yoktur; erişim kodu doğrulanarak yalnız o öğrencinin
+-- verisi güvenle süzülür.
+create or replace function portal_exam_report(p_code text)
+returns json
+language plpgsql
+security definer
+set search_path = public, pg_temp
+stable
+as $$
+declare
+  v_student_id uuid;
+  v_role text;
+  v_result json;
+begin
+  select r.student_id, r.portal_role into v_student_id, v_role
+  from portal_resolve_code(p_code) r;
+
+  if v_student_id is null then
+    return json_build_object('ok', false, 'error', 'Geçersiz erişim kodu.');
+  end if;
+
+  select json_build_object(
+    'ok', true,
+    'role', v_role,
+    'student', (
+      select json_build_object(
+        'id', s.id, 'full_name', s.full_name, 'grade', s.grade, 'track', s.track
+      ) from students s where s.id = v_student_id
+    ),
+    'catalog', json_build_object(
+      'subjects', coalesce((
+        select json_agg(json_build_object(
+          'id', es.id,
+          'exam_type', es.exam_type,
+          'section_name', es.section_name,
+          'subject_id', es.subject_id,
+          'label', es.label,
+          'question_count', es.question_count,
+          'choice_group', es.choice_group,
+          'sort_order', es.sort_order
+        ) order by es.sort_order, es.id)
+        from exam_subjects es
+      ), '[]'::json),
+      'topics', coalesce((
+        select json_agg(json_build_object(
+          'id', et.id,
+          'exam_subject_id', et.exam_subject_id,
+          'name', et.name,
+          'grades', et.grades,
+          'sort_order', et.sort_order,
+          'is_active', et.is_active
+        ) order by et.sort_order, et.id)
+        from exam_topics et
+        where et.is_active = true
+      ), '[]'::json)
+    ),
+    'exams', coalesce((
+      select json_agg(e order by e.exam_date desc, e.created_at desc) from (
+        select
+          me.id,
+          me.student_id,
+          me.name,
+          me.publisher,
+          me.exam_type,
+          me.exam_date,
+          me.score,
+          me.percentile,
+          me.ranks,
+          me.coach_note,
+          me.created_at,
+          coalesce((
+            select json_agg(json_build_object(
+              'section_name', ms.section_name,
+              'max_questions', ms.max_questions,
+              'correct_count', ms.correct_count,
+              'wrong_count', ms.wrong_count,
+              'blank_count', ms.blank_count,
+              'wrong_penalty', ms.wrong_penalty,
+              'net', ms.net
+            ) order by ms.section_name)
+            from mock_exam_sections ms where ms.mock_exam_id = me.id
+          ), '[]'::json) as sections,
+          coalesce((
+            select json_agg(json_build_object(
+              'exam_subject_id', sr.exam_subject_id,
+              'question_count', sr.question_count,
+              'correct_count', sr.correct_count,
+              'wrong_count', sr.wrong_count,
+              'blank_count', sr.blank_count,
+              'wrong_penalty', sr.wrong_penalty,
+              'net', sr.net
+            ) order by sr.exam_subject_id)
+            from mock_exam_subject_results sr where sr.mock_exam_id = me.id
+          ), '[]'::json) as subject_results,
+          coalesce((
+            select json_agg(json_build_object(
+              'exam_topic_id', tr.exam_topic_id,
+              'question_count', tr.question_count,
+              'correct_count', tr.correct_count,
+              'wrong_count', tr.wrong_count,
+              'blank_count', tr.blank_count
+            ) order by tr.exam_topic_id)
+            from mock_exam_topic_results tr where tr.mock_exam_id = me.id
+          ), '[]'::json) as topic_results
+        from mock_exams me
+        where me.student_id = v_student_id
+        order by me.exam_date desc, me.created_at desc
+        limit 30
+      ) e
+    ), '[]'::json)
+  ) into v_result;
+
+  return v_result;
+end;
+$$;
+revoke all on function portal_exam_report(text) from public, anon, authenticated;
+grant execute on function portal_exam_report(text) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
 -- 15b. save_exam_report (Atomik Deneme Kaydı RPC)
 -- ---------------------------------------------------------------------------
 -- Koç ekranından deneme karnesi girişini (genel bilgiler, bölümler, alt dersler,

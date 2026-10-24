@@ -466,6 +466,10 @@ export type Database = {
         }
         Returns: Json
       }
+      portal_exam_report: {
+        Args: { p_code: string }
+        Returns: Json
+      }
       save_exam_report: {
         Args: { p_payload: Json }
         Returns: string

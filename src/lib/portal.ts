@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Database, ExamType, Grade, Json, Track } from '../types/database'
+import type { ExamReportCatalog, RawExamRecord } from './examReport'
 
 /**
  * Mobil portal (öğrenci/veli) veri katmanı.
@@ -73,6 +74,13 @@ export type PortalDashboard = {
   attendance: PortalAttendance[]
 }
 
+export type PortalExamReportData = {
+  role: PortalRole
+  student: PortalStudent
+  catalog: ExamReportCatalog
+  exams: RawExamRecord[]
+}
+
 type RpcEnvelope = { ok: boolean; error?: string } & Record<string, unknown>
 
 const GENERIC_ERROR = 'Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.'
@@ -132,6 +140,23 @@ export async function portalDashboard(
       tasks: (res.tasks as PortalTask[]) ?? [],
       exams: (res.exams as PortalExam[]) ?? [],
       attendance: (res.attendance as PortalAttendance[]) ?? [],
+    },
+  }
+}
+
+/** Deneme analiz raporu ve kataloğu (öğrenci/veli portalları için). */
+export async function portalExamReport(
+  code: string
+): Promise<{ ok: true; data: PortalExamReportData } | { ok: false; error: string }> {
+  const res = await callRpc('portal_exam_report', { p_code: normalizeAccessCode(code) })
+  if (!res.ok) return { ok: false, error: res.error ?? 'Deneme analizi yüklenemedi.' }
+  return {
+    ok: true,
+    data: {
+      role: res.role as PortalRole,
+      student: res.student as PortalStudent,
+      catalog: (res.catalog as ExamReportCatalog) ?? { subjects: [], topics: [] },
+      exams: (res.exams as RawExamRecord[]) ?? [],
     },
   }
 }

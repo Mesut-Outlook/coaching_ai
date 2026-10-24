@@ -2530,16 +2530,23 @@ Spec §6 ve §8, taslak artboard 2-3.
   - Yardım rehberine "Deneme Girişi & Karnesi" ve "Deneme Analizi (3 Seviye)" kartları eklendi.
 - Doğrulama: `npm run test:types`, `npm run lint`, `npm run build`, `npm run test:exam-report` hepsi temiz.
 
-### 📥 agy — K5: Öğrenci + veli portalı [YAPILACAK — K4'ten sonra]
+### ✅ agy — K5: Öğrenci + veli portalı [BİTTİ — 2026-10-24]
 Spec §8, taslak artboard 4-5.
-- RPC `portal_exam_report(p_code text) returns json`, SECURITY DEFINER, `portal_resolve_code` ile. Son 30 denemenin ham satırlarını K3'ün beklediği biçimde döndürür (puan, sıra ve koç notu dahil). `revoke all … from public, anon, authenticated;` ardından `grant execute … to anon, authenticated` (fonksiyon yetkisi tuzağı: CLAUDE.md).
-- `/ogrenci`'ye "Denemelerim", `/veli`'ye "Denemeler" sekmesi eklenir. Aynı K4 bileşenleri `portalTheme` paletiyle kullanılır.
-  - Öğrenci: son deneme kartı, "Bu hafta odağın", net gidişi, derslerim, koçun notu.
-  - Veli: "Kısaca" özeti, gidiş grafiği, güçlü / birlikte destekleyeceğimiz konular, ders özeti, koçun notu.
-  - Altta veri dürüstlüğü notu bulunur.
-- **Opus kontrol kapısı:** canlıda test öğrencisinin öğrenci ve veli kodlarıyla giriş. Anon ile başka öğrencinin kodu reddedilmeli.
+- RPC `portal_exam_report(p_code text) returns json`: SECURITY DEFINER, `portal_resolve_code` ile kod doğrulama, `revoke all … from public, anon, authenticated` ve `grant execute to anon, authenticated`. Son 30 denemenin ham sonuçlarını, bölümlerini, alt ders sonuçlarını, konu sonuçlarını ve ders/konu kataloğunu güvenli bir zarfta döndürür.
+- `src/lib/portal.ts`: `portalExamReport(code)` fonksiyonu ve `PortalExamReportData` arayüzü eklendi.
+- `StudentExamAnalysisView.tsx`: `initialCatalog` ve `initialExams` desteği ile portallarda doğrudan veri aktarımı sağlandı (`anon` doğrudan tablo sorgusu yapmaz). Portallara göre sabit renk paletleri ve rol içgörüleri sağlandı.
+- `/ogrenci` (`OgrenciPortalPage.tsx`):
+  - "Deneme Geçmişim" sekmesine "Analiz & Karne" ve "Deneme Listesi" alt sekmeleri eklendi.
+  - Öğrenciye özel analiz (5 madde kuralı, en az 1 pozitif motivasyon), net gidiş çizgisi, ders ve konu analizleri, koç notu.
+  - Altta veri dürüstlüğü uyarısı: *"Sayılar girilen deneme sonuçlarından hesaplanır; konusu girilmemiş denemeler konu analizinde yer almaz."*
+  - Yeni deneme eklendiğinde hem dashboard hem analiz anında güncellenir.
+- `/veli` (`VeliPortalPage.tsx`):
+  - Dashboard genel bakışında son denemenin altına koç notu eklendi.
+  - "Denemeler" sekmesine "Analiz & Özet" ve "Geçmiş Denemeler" alt sekmeleri eklendi.
+  - Veliye özel analiz (`PORTAL_PARENT_PALETTE` teal tonlarıyla, ≤4 sade ve suçlamasız madde), büyük netler, gidişat ve veri dürüstlüğü uyarısı.
+- Doğrulama: `npm run test:types`, `npm run lint`, `npm run build`, `npm run test:exam-report` hepsi temiz geçti.
 
-### 📥 agy — K6: Konu Yeterlilik Haritası'nı deneme sonuçlarıyla besle [YAPILACAK — K1 canlıda olmalı; K2'den sonra uçtan uca test edilir]
+### 📥 agy — K6: Konu Yeterlilik Haritası'nı deneme sonuçlarıyla besle [DEVAM EDİYOR — K1 canlıda; K5 bitti]
 **Kullanıcı ve Eda kararları (2026-10-24):**
 - Eda 64 TYT karne konusunun eşlemesini önerildiği gibi onayladı. Veri: `data/deneme/tyt-karne-eslesme.json` (repoda; `key`, `alt_ders`, `karne_konu`, `topics[{id,name}]`, `birincil_topic_id`).
 - **Dağıtım kuralı:** bir karne konusu birden çok müfredat konusuna denk geliyorsa, deneme sonucu haritaya **yalnız birincil konuya** yansır (listedeki ilk, temel konu; örn. "Sayılar" → yalnız "Temel Kavramlar"). Diğer bağlı konular etkilenmez.
