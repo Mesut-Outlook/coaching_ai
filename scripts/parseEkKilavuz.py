@@ -20,15 +20,156 @@ import time
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 
-# Default ranges for 2026 PDF
-TABLO3_START = 11
-TABLO3_END = 124
-TABLO4_START = 126
-TABLO4_END = 304
-KOSUL_PAGES_K1 = (305, 308)
-KOSUL_PAGES_K2 = (309, 329)
-UCRET_START = 402
-UCRET_END = 467
+def detect_sections(pdf_path, manual_sayfalar=None, expected_year=None):
+    """
+    Sayfa metinlerinden otomatik olarak kılavuz bölümlerini tanır (E8).
+    Bölüm bitişi = bir sonraki bölümün başlangıcı - 1 (veya kapak/filtre kuralı).
+    """
+    cmd = ['pdfinfo', pdf_path]
+    try:
+        info = subprocess.check_output(cmd).decode('utf-8', errors='ignore')
+    except Exception as e:
+        print(f"Hata: pdfinfo çalıştırılamadı: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    m = re.search(r'Pages:\s+(\d+)', info)
+    if not m:
+        print("Hata: PDF toplam sayfa sayısı tespit edilemedi.", file=sys.stderr)
+        sys.exit(1)
+    total_pages = int(m.group(1))
+
+    # Kılavuz yılı kontrolü
+    if expected_year:
+        try:
+            txt_p1 = fetch_plain_text(pdf_path, 1)
+            ym = re.search(r'\b(20\d\d)\b', txt_p1)
+            if ym:
+                detected_year = int(ym.group(1))
+                if detected_year != expected_year:
+                    print(f"⚠ UYARI: PDF'te tespit edilen kılavuz yılı ({detected_year}), belirtilen --yil ({expected_year}) ile eşleşmiyor!", file=sys.stderr)
+        except Exception:
+            pass
+
+    # Manuel sayfa geçersiz kılma varsa parse et
+    overrides = {}
+    if manual_sayfalar:
+        for part in manual_sayfalar.split(','):
+            part = part.strip()
+            if not part:
+                continue
+            if '=' not in part:
+                print(f"Hata: Geçersiz --sayfalar formatı: {part}", file=sys.stderr)
+                sys.exit(1)
+            k, v = part.split('=', 1)
+            k = k.strip().lower()
+            m_rng = re.match(r'^(\d+)-(\d+)$', v.strip())
+            if not m_rng:
+                print(f"Hata: Geçersiz sayfa aralığı ({k}={v}). Örnek: tablo3=11-124", file=sys.stderr)
+                sys.exit(1)
+            s_p, e_p = int(m_rng.group(1)), int(m_rng.group(2))
+            if k in ('tablo3', 't3'):
+                overrides['tablo3'] = (s_p, e_p)
+            elif k in ('tablo4', 't4'):
+                overrides['tablo4'] = (s_p, e_p)
+            elif k in ('kosul_k1', 'k1', 'kosulk1'):
+                overrides['kosul_k1'] = (s_p, e_p)
+            elif k in ('kosul_k2', 'k2', 'kosulk2'):
+                overrides['kosul_k2'] = (s_p, e_p)
+            elif k in ('ucret', 'ucretler', 'vakif'):
+                overrides['ucret'] = (s_p, e_p)
+
+    print(f"Bölümler otomatik taranıyor (toplam {total_pages} sayfa)...")
+    with ThreadPoolExecutor(max_workers=16) as ex:
+        pages_text = dict(ex.map(lambda p: (p, fetch_plain_text(pdf_path, p)), range(1, total_pages + 1)))
+
+    t3_start, t4_start = None, None
+    k1_start, k2_start = None, None
+    k2_last = None
+    ucret_start, ucret_end = None, None
+
+    for p in range(1, total_pages + 1):
+        txt = pages_text[p]
+        has_9digit = bool(re.search(r'\b\d{9}\b', txt))
+
+        # Tablo-3 (Ön Lisans Program Tablosu): TABLO-3 + Merkezi Yerleştirme + 9 haneli kod
+        if t3_start is None:
+            if re.search(r'TABLO[- ]3\.\s*Merkezi Yerleştirme', txt, re.IGNORECASE) and has_9digit:
+                t3_start = p
+
+        # Tablo-4 (Lisans Program Tablosu): TABLO-4 + Merkezi Yerleştirme + 9 haneli kod
+        if t4_start is None:
+            if re.search(r'TABLO[- ]4\.\s*Merkezi Yerleştirme', txt, re.IGNORECASE) and has_9digit:
+                t4_start = p
+
+        # Koşullar 1. Kısım: "(1. KISIM KOŞULLAR)"
+        if k1_start is None:
+            if re.search(r'\(\s*1\.\s*KISIM\s+KOŞULLAR\s*\)', txt, re.IGNORECASE) or (re.search(r'1\.\s*KISIM\s+KOŞULLAR\b', txt, re.IGNORECASE) and 'BİTTİ' not in txt):
+                k1_start = p
+
+        # Koşullar 2. Kısım: "(2. KISIM KOŞULLAR)"
+        if k2_start is None:
+            if re.search(r'\(\s*2\.\s*KISIM\s+KOŞULLAR\s*\)', txt, re.IGNORECASE) or (re.search(r'2\.\s*KISIM\s+KOŞULLAR\b', txt, re.IGNORECASE) and 'İNCELEYİNİZ' not in txt and 'BİTTİ' not in txt):
+                k2_start = p
+
+        # Koşullar 2. Kısım son sayfası (Bk. \d+ içeren son sayfa, ücretlerden önce)
+        if k2_start is not None and p >= k2_start and ucret_start is None:
+            if re.search(r'\bBk\.\s*\d+\b', txt):
+                k2_last = p
+
+        # Vakıf / KKTC Öğrenim Ücretleri tablosu
+        if k2_last is not None and p > k2_last and ucret_start is None:
+            if re.search(r'VAKIF\s+YÜKSEKÖĞRETİM\s+KURUMLARI\s+ÖĞRENİM\s+ÜCRETLERİ', txt, re.IGNORECASE) or (re.search(r'ÖĞRENİM\s+ÜCRETLERİ', txt, re.IGNORECASE) and re.search(r'ÜNİVERSİTE\s+ADI', txt, re.IGNORECASE)):
+                ucret_start = p
+
+        # Ücretler bitiş sayfası: Ücretler başladıktan sonra internet adresleri listesi
+        if ucret_start is not None and p >= ucret_start and ucret_end is None:
+            http_count = len(re.findall(r'https?://|\.edu\.tr', txt))
+            if http_count > 10 and not re.search(r'\d{1,3}(\.\d{3})*,\d{2}', txt):
+                ucret_end = p - 1
+
+    if ucret_start is not None and ucret_end is None:
+        ucret_end = total_pages
+
+    # Tablo 3 bitişi: Tablo 4'ten önceki programlı sayfa
+    t3_end = (t4_start - 1) if t4_start else None
+    if t3_end and t3_start:
+        while t3_end > t3_start and not re.search(r'\b\d{9}\b', pages_text[t3_end]):
+            t3_end -= 1
+
+    # Tablo 4 bitişi: K1'den önceki programlı sayfa
+    t4_end = (k1_start - 1) if k1_start else None
+    if t4_end and t4_start:
+        while t4_end > t4_start and not re.search(r'\b\d{9}\b', pages_text[t4_end]):
+            t4_end -= 1
+
+    k1_end = (k2_start - 1) if k2_start else None
+    k2_end = k2_last
+
+    detected = {
+        'tablo3': overrides.get('tablo3', (t3_start, t3_end)),
+        'tablo4': overrides.get('tablo4', (t4_start, t4_end)),
+        'kosul_k1': overrides.get('kosul_k1', (k1_start, k1_end)),
+        'kosul_k2': overrides.get('kosul_k2', (k2_start, k2_end)),
+        'ucret': overrides.get('ucret', (ucret_start, ucret_end)),
+    }
+
+    # Hata kontrolü: Herhangi bir bölüm bulunamadıysa hata verip çık (sessizce boş üretme)
+    missing = []
+    for sec_name, rng in detected.items():
+        if rng[0] is None or rng[1] is None or rng[0] > rng[1]:
+            missing.append(f"{sec_name} ({rng[0]}..{rng[1]})")
+
+    if missing:
+        print(f"HATA: Kılavuz PDF'inde şu bölümler tespit edilemedi: {', '.join(missing)}", file=sys.stderr)
+        print("Çözüm: Bölüm aralıklarını '--sayfalar tablo3=11-124,tablo4=126-304,...' parametresiyle elle belirtin.", file=sys.stderr)
+        sys.exit(1)
+
+    print("Otomatik Bölüm Tespiti Başarılı:")
+    for k, v in detected.items():
+        src = " (ELLE BELİRTİLDİ)" if k in overrides else ""
+        print(f"  - {k}: Sayfa {v[0]}..{v[1]}{src}")
+
+    return detected
 
 def fetch_bbox_xml(pdf_path, page_num):
     cmd = ['pdftotext', '-bbox', '-f', str(page_num), '-l', str(page_num), pdf_path, '-']
@@ -349,10 +490,10 @@ def fill_uni_from_prefix(programs):
             filled += 1
     return filled
 
-def parse_conditions(pdf_path, yil):
-    print("Extracting conditions (pages 305..329)...")
+def parse_conditions(pdf_path, yil, k1_range, k2_range):
+    print(f"Extracting conditions (pages {k1_range[0]}..{k2_range[1]})...")
     all_conds = []
-    for kisim, (start_p, end_p) in [(1, KOSUL_PAGES_K1), (2, KOSUL_PAGES_K2)]:
+    for kisim, (start_p, end_p) in [(1, k1_range), (2, k2_range)]:
         pages_text = []
         for p in range(start_p, end_p + 1):
             txt = fetch_plain_text(pdf_path, p)
@@ -407,9 +548,10 @@ def norm_uni(s):
     s = re.sub(r'^\d+\s+|\*', ' ', s)
     return re.sub(r'\s+', ' ', s).strip()
 
-def parse_vakif_fees(pdf_path, yil, programs):
-    print("Extracting foundation university fees (pages 402..467)...")
-    page_numbers = list(range(UCRET_START, UCRET_END + 1))
+def parse_vakif_fees(pdf_path, yil, programs, ucret_range):
+    start_p, end_p = ucret_range
+    print(f"Extracting foundation university fees (pages {start_p}..{end_p})...")
+    page_numbers = list(range(start_p, end_p + 1))
     with ThreadPoolExecutor(max_workers=8) as executor:
         xml_list = list(executor.map(lambda p: fetch_bbox_xml(pdf_path, p), page_numbers))
 
@@ -418,7 +560,11 @@ def parse_vakif_fees(pdf_path, yil, programs):
 
     for p, xml_bytes in zip(page_numbers, xml_list):
         words = parse_words_from_xml(xml_bytes)
-        table_words = [w for w in words if w['yMin'] >= (330 if p == 402 else 40) and w['yMin'] <= 815]
+        
+        # İlk sayfada veya başlık içeren sayfada 'ÜCRET' başlığının altından başla
+        header_hw = next((w for w in words if w['text'] == 'ÜCRET' and 200 <= w['yMin'] <= 450), None)
+        min_y = (header_hw['yMin'] + 15.0) if header_hw else 40.0
+        table_words = [w for w in words if w['yMin'] >= min_y and w['yMin'] <= 815]
 
         price_words = []
         for w in table_words:
@@ -523,7 +669,7 @@ def parse_vakif_fees(pdf_path, yil, programs):
     print(f"Extracted {len(fees_result)} unique fee entries ({len(all_fees)} raw, {len(unmatched)} unmatched).")
     return fees_result, unmatched
 
-def generate_report(programs, conditions, fees, yil, report_path, sample_path=None, prefix_filled=0):
+def generate_report(programs, conditions, fees, yil, report_path, sample_path=None, prefix_filled=0, sections_info=None):
     total_prog = len(programs)
     tablo3_progs = [p for p in programs if p['tablo'] == 'onlisans']
     tablo4_progs = [p for p in programs if p['tablo'] == 'lisans']
@@ -605,11 +751,24 @@ def generate_report(programs, conditions, fees, yil, report_path, sample_path=No
         f"- **Tekil Program Kodu:** {len(code_counts)} (Mükerrer: {len(dup_codes)})",
         f"- **Toplam Koşul Sayısı:** {len(conditions)} (1. Kısım: {len([c for c in conditions if c['kisim'] == 1])}, 2. Kısım: {len([c for c in conditions if c['kisim'] == 2])})",
         f"- **Vakıf Ücret Kayıtları:** {len(fees)}",
+    ]
+
+    if sections_info:
+        lines.extend([
+            f"- **Kılavuz Sayfa Aralıkları (Otomatik Tespit):**",
+            f"  - Tablo 3 (Ön Lisans): Sayfa {sections_info['tablo3'][0]}..{sections_info['tablo3'][1]}",
+            f"  - Tablo 4 (Lisans): Sayfa {sections_info['tablo4'][0]}..{sections_info['tablo4'][1]}",
+            f"  - Koşullar (1. Kısım): Sayfa {sections_info['kosul_k1'][0]}..{sections_info['kosul_k1'][1]}",
+            f"  - Koşullar (2. Kısım): Sayfa {sections_info['kosul_k2'][0]}..{sections_info['kosul_k2'][1]}",
+            f"  - Vakıf/KKTC Öğrenim Ücretleri: Sayfa {sections_info['ucret'][0]}..{sections_info['ucret'][1]}",
+        ])
+
+    lines.extend([
         "",
         "## 2. Puan Türü Dağılımı",
         "| Puan Türü | Program Sayısı |",
         "|---|---|",
-    ]
+    ])
     for pt in ['TYT', 'SAY', 'EA', 'SÖZ', 'DİL']:
         lines.append(f"| {pt} | {puan_counts.get(pt, 0)} |")
     for pt, cnt in puan_counts.items():
@@ -675,6 +834,8 @@ def main():
     parser.add_argument("--yil", type=int, default=2026, help="Kilavuz yili (varsayilan: 2026)")
     parser.add_argument("--cikti", type=str, default=None, help="Cikti JSON dosyasi")
     parser.add_argument("--rapor", type=str, default=None, help="Cikti Markdown rapor dosyasi")
+    parser.add_argument("--sayfalar", type=str, default=None,
+                        help="Manuel sayfa araliklari (orn: tablo3=11-124,tablo4=126-304,k1=305-308,k2=309-329,ucret=402-467)")
 
     args = parser.parse_args()
 
@@ -688,21 +849,26 @@ def main():
     start_time = time.time()
     print(f"=== Ek Yerlestirme Kilavuzu Parser Baslatildi ({args.yil}) ===")
 
+    # Otomatik bölüm tespiti
+    sections = detect_sections(args.pdf, manual_sayfalar=args.sayfalar, expected_year=args.yil)
+
     # 1. Tablo 3: On Lisans
-    tablo3_programs = parse_programs_section(args.pdf, TABLO3_START, TABLO3_END, is_lisans=False, yil=args.yil)
+    t3_start, t3_end = sections['tablo3']
+    tablo3_programs = parse_programs_section(args.pdf, t3_start, t3_end, is_lisans=False, yil=args.yil)
 
     # 2. Tablo 4: Lisans
-    tablo4_programs = parse_programs_section(args.pdf, TABLO4_START, TABLO4_END, is_lisans=True, yil=args.yil)
+    t4_start, t4_end = sections['tablo4']
+    tablo4_programs = parse_programs_section(args.pdf, t4_start, t4_end, is_lisans=True, yil=args.yil)
 
     all_programs = tablo3_programs + tablo4_programs
     prefix_filled = fill_uni_from_prefix(all_programs)
     print(f"Önekten doldurulan boş üniversite adı: {prefix_filled}")
 
     # 3. Kosullar
-    conditions = parse_conditions(args.pdf, args.yil)
+    conditions = parse_conditions(args.pdf, args.yil, sections['kosul_k1'], sections['kosul_k2'])
 
     # 4. Vakif Ucretleri
-    fees, unmatched = parse_vakif_fees(args.pdf, args.yil, all_programs)
+    fees, unmatched = parse_vakif_fees(args.pdf, args.yil, all_programs, sections['ucret'])
 
     # Save complete JSON
     os.makedirs(os.path.dirname(out_json), exist_ok=True)
@@ -719,7 +885,7 @@ def main():
 
     # Generate validation report
     sample_file = f"data/ek-yerlestirme/{args.yil}-ornek.json"
-    generate_report(all_programs, conditions, fees, args.yil, out_report, sample_path=sample_file, prefix_filled=prefix_filled)
+    generate_report(all_programs, conditions, fees, args.yil, out_report, sample_path=sample_file, prefix_filled=prefix_filled, sections_info=sections)
 
     with open(out_report, "a", encoding="utf-8") as f:
         # Ayrım: ad kalıbı geçerliyse (kısa, ÜNİVERSİTESİ/YÜKSEKOKULU) ve hiçbir program adına yakın değilse
