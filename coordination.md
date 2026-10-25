@@ -16,6 +16,8 @@ Bu dosya kimin ne üzerinde çalıştığını takip eder. Yeni iş eklerken do�
 
 **Bu dosya 2600+ satır ve kronolojik. Aşağısı geçmiş kaydıdır — güncel durum burada.**
 
+> 🌙 **BU GECE (2026-10-25 → 26): GECE PLANI aktif — dosyanın EN SONUNDA.** Ana sayfa tasarımı (Opus, önizleme, sabah onayı) + agy G1 sayaç hatası, G2 ana sayfa veri katmanı, G3 E8 parser. Kontrol: ~30 dk.
+
 > ✅ **SON TUR TAMAMLANDI: Deneme Karnesi & Analiz Modülü (K1→K6) — hepsi CANLIDA ve TAMAMLANDI.**
 > Detaylar dosyanın **en sonunda**. Özet:
 >
@@ -2649,3 +2651,86 @@ Spec §8, taslak artboard 4-5.
 **Öncelik:** düşük; kullanıcı kararı değil, tek satırlık sayaç hatası.
 
 **Not (test verisi):** Test Test'e 2026-08-17 → 2026-10-19 arası 10 TYT denemesi girildi (TEST Deneme 01–10). Net: 69,75 → 92,50; dalgalanma 2., 5. ve 7. denemelerde. Bunlar gerçek öğrenci değil, test verisi. Silinecekse `mock_exams` içinde `name LIKE 'TEST Deneme%'` ile seçilip silinir (cascade).
+
+---
+
+## 🌙 GECE PLANI — 2026-10-25 20:45 → 2026-10-26 08:00 (Opus planladı, kullanıcı talimatı)
+
+**Kullanıcının bu gece istedikleri:**
+1. Giriş sonrası açılan **Panel** sayfası yeniden düşünülecek. Ana sayfa / landing gibi olacak: Öğrenciler, Denemeler, Program, Devamsızlık, Raporlar'a kısa yoldan giriş + özet bilgiler. Profesyonel olacak, koçu etkileyecek, ilk girişte **aksiyon alma ihtiyacı** hissettirecek.
+2. Sol menünün **kaydırma çubuğu** daha modern olacak.
+3. Beyaz doku korunacak, aşırıya kaçmadan biraz daha renkli olacak. Görsel geçişler ve efektler olacak: sade ama modern.
+4. ⚠️ **Kullanıcı sabah görüp ONAYLAMADAN canlıya hiçbir arayüz değişikliği girmez.** Bu gece tasarım bir **önizleme sayfası** (artifact) olarak hazırlanır. `src/` içindeki Panel/Sidebar dosyalarına bu gece dokunulmaz.
+5. agy'ye görev verilecek, Opus agy'nin işini **her ~30 dakikada bir** kontrol edecek. İki taraf da birbirini en az bekleyecek şekilde saat planı yapacak; aralıklar duruma göre esneyecek.
+
+### Opus'un saat planı
+| Saat | Opus ne yapıyor |
+|---|---|
+| 20:45–21:15 | Bu plan + timer'lar. Ana sayfa **veri sözleşmesi** (aşağıda) yazıldı. agy G1+G2'ye hemen başlayabilir. |
+| 21:15–23:00 | **Araştırma:** 2025–26 SaaS/eğitim dashboard örnekleri, "aksiyon odaklı" ana sayfa kalıpları, ince modern scrollbar (`scrollbar-width`/`scrollbar-color`, kaydırınca beliren ince çubuk, kenar gölgesi), View Transitions API, `prefers-reduced-motion`. Mevcut `global.css` token'larıyla uyumlu renk genişletmesi. |
+| 23:00–03:30 | **Önizleme sayfası (artifact):** yeni Ana Sayfa + yeni Sidebar. Gerçek veri şekliyle sahte veri kullanılır (gerçek öğrenci adı yok). Açık/koyu tema ve mobil uyumlu. Gerekirse A/B iki varyant. |
+| 03:30–06:30 | Cilalama, erişilebilirlik, mobil. G2'nin veri alanları tasarımla birebir eşleştirilir. Tasarımda olup veride karşılığı olmayan alan kalmaz, varsa "veri yok" diye işaretlenir. |
+| 06:30–08:00 | Sabah raporu: önizleme linki, agy'nin bitirdikleri (doğrulanmış), kullanıcıdan beklenen kararlar. |
+| Her ~30 dk | agy kontrolü (aşağıdaki protokol). |
+
+### agy'nin görevleri (sırayla; biri bitince beklemeden sonrakine geç)
+
+**G1 — "Konusu girilmemiş deneme" sayacı hatası** (tanım: bu dosyada 🐞 BUG bölümü). Hedef ~45 dk.
+- Küçük ve güvenli. `main`'e commit edilebilir, push **Opus kontrolünden sonra** yapılır.
+- Kabul: Test Test için sayaç 0 olmalı. `npm run test:types && npm run lint && npm run build && npm run test:exam-report` temiz geçmeli.
+
+**G2 — Ana sayfa veri katmanı** (`src/lib/homeSummary.ts`). Hedef ~3 saat.
+- **Branch:** `gece/ana-sayfa-veri`. `main`'e merge yok, push yok. Sabah tasarım onayından sonra birleşir.
+- **Yalnız veri.** UI yok, `PanelPage.tsx`/`Sidebar.tsx`'e dokunma.
+- Fonksiyon: `loadHomeSummary(scope: StudentScope): Promise<HomeSummary>`. `PanelPage.tsx`'teki `loadDashboard` ile aynı kapsamı kullansın (`fetchStudents` + `StudentScope`), kurum izolasyonu bozulmasın.
+- **Veri sözleşmesi** (alan adları değişebilir; anlamı değişmesin):
+  - `students`: aktif sayı; YKS / LGS dağılımı (`gradeCurriculum()` ile, mantık kopyalanmaz).
+  - `attention: Array<{ studentId, name, reasons: AttentionReason[] }>`. Neden türleri:
+    - `kritik_karar`: `coach_decisions.state = 'kritik'`.
+    - `deneme_yok`: son 21 günde deneme yok.
+    - `net_dususu`: son deneme bir öncekinden ≥ 5 net düşük.
+    - `program_dusuk`: bu haftanın görev tamamlama oranı < %50, hafta en az yarılanmışsa.
+    - `program_yok`: bu hafta hiç görev yok.
+    - `devamsizlik_takip`: Devamsızlık sayfasındaki "Takip gerekli" eşiğiyle **aynı fonksiyon**. Eşik kopyalanmaz, ortak yere taşınır.
+  - Sıralama: neden sayısı, sonra ağırlık (kritik > net düşüşü > devamsızlık > program > deneme yok).
+  - `exams`: son 7 günde girilen deneme sayısı; ortalama net değişimi; konusu girilmemiş deneme sayısı (G1'deki doğru mantıkla, ortak fonksiyon).
+  - `program`: bu hafta toplam/tamamlanan görev, genel %, hiç görevi olmayan öğrenci sayısı.
+  - `attendance`: bu hafta devamsızlık sayısı, takip gereken öğrenci sayısı, WhatsApp bildirimi gönderilmemiş/açılmamış sayısı (mevcut kolonlar neyse).
+  - `recent: Array<{ kind: 'exam'|'task'|'attendance', at, studentName, text }>`: son 10 olay, "son hareketler" akışı için.
+- Kurallar:
+  - Supabase 1000 satır cap'ine dikkat: `count` + `.range()` kullan, ya da yalnız gereken pencereyi çek.
+  - Var olmayan veri için **uydurma alan üretme**: tablo/kolon yoksa alan `null` olur ve log'a not düşülür.
+  - Saf hesaplama kısmını (`buildHomeSummary(rows)`) sorgudan ayır. `scripts/homeSummary.selftest.ts` + `npm run test:home-summary` ile her neden türü için en az bir assert yaz.
+  - Şema değişikliği yok. Gerekirse yalnız öneri olarak log'a yaz.
+
+**G3 — E8 çok yıllı parser** (tanım: bu dosyada E8 bölümü). Hedef ~3–4 saat, G2'den sonra.
+- Branch: `gece/e8-parser`. Seed **YASAK**, Supabase'e bağlanma yok.
+- 2025 PDF'i yoksa yalnız 2026 regresyonu (diff boş) yapılır. 2025 kısmı log'a "PDF bekleniyor" diye yazılır.
+
+**G4 — Boşta kalırsan:** "Opus → agy" kutusuna bak. Orada iş yoksa G2'ye ek test yaz. **Kendiliğinden UI işine girme.**
+
+### Ortak kurallar (bu gece)
+- **Aynı dizindeyiz.** `git add -A` / `git add .` YASAK. Dosya adını açıkça ver, commit'ten önce `git status`'a bak.
+- Opus bu gece yalnız `coordination.md` ve scratchpad'e yazar (`src/`'e dokunmaz), çakışma olmaz.
+- `coordination.md`'de agy **yalnız "agy durum günlüğü"ne**, Opus **yalnız "Opus → agy" kutusuna** yazar. İkisi de dosyanın en altında.
+- `npm run seed*`, şema SQL'i, Supabase'e yazan hiçbir şey çalıştırılmaz.
+- `main`'e push yalnız G1 için ve Opus "✅ G1 onay" yazdıktan sonra yapılır. `main`'e push = canlıya deploy.
+
+### Kontrol protokolü — beklemesiz akış
+- **agy:** her ~30 dk'da ve her görev geçişinde günlüğe **bir satır** yazar:
+  `HH:MM | G# | durum (başladı/sürüyor/bitti/takıldı) | commit/branch | sıradaki | engel`
+- **agy beklemez:** bir görevi bitirince Opus onayını beklemeden sıradaki göreve geçer. Opus düzeltme isterse "Opus → agy" kutusuna yazar. agy bir sonraki günlük satırında onu alır, mevcut işinin araya girebilir bir noktasında düzeltir.
+- **Opus:** her ~30 dk'da (`:12` ve `:42` civarı) günlüğü, `git log --all`'u ve yeni commit'leri okur. "Bitti" denen işi **kendisi doğrular** (testleri koşar, diff'e bakar). Sonucu "Opus → agy" kutusuna yazar.
+- **Esneklik:**
+  - agy "takıldı" yazarsa ya da 45 dk günlük gelmezse, Opus aralığı **15 dk**'ya indirir.
+  - agy uzun bir işin ortasında düzenli günlük yazıyorsa, Opus aralığı **45–60 dk**'ya çıkarır.
+  - agy de kendi günlük sıklığını aynı mantıkla ayarlar. Takılınca hemen, akış iyiyse 30–45 dk. Bir sonraki günlük saatini satıra yazar (`sıradaki kontrol ~HH:MM`).
+
+### agy saat planı
+_(agy dolduracak: Opus planına göre kendi saatlerini yazsın: G1/G2/G3 başlangıç-bitiş tahmini ve günlük yazma saatleri.)_
+
+### 📨 Opus → agy
+- 20:50 — Plan hazır. G1 ile başla, sonra G2. Saat planını yukarıya yaz.
+
+### 📒 agy durum günlüğü
+_(agy her satırı buraya ekler)_
