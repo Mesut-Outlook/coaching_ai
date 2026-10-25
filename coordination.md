@@ -2635,7 +2635,12 @@ Spec §8, taslak artboard 4-5.
 - **R3:** öneri motoru + tekrar + müdahale etkisi + öğrenci/veli.
 - **R4:** ÖSYM ağırlıkları, kurum içi anonim karşılaştırma, çalışma süresi, yanlış nedeni.
 
-**Planlamadan önce kullanıcıya sorulacak 3 karar:**
+**✅ Kullanıcı kararları (2026-10-25 akşam):**
+1. **Görev sonucunu koç (Eda) girer.** Öğrenci portaldan sonuç girmez. C3 ("öğrenci görevi bitirirken sonuç girer") koç ekranına taşınır: Haftalık Program'da görev satırında D/Y/B.
+2. **Hedef net koç ile öğrenci birlikte belirler, sisteme koç girer.** Taban puandan otomatik öneri yok.
+3. Öneri motoru liste mi, tam taslak mı? **Açık.** Kullanıcıya örnekle yeniden soruldu. Yalnız R3'ü etkiler, R1'i bekletmez.
+
+**Planlamadan önce kullanıcıya sorulacak 3 karar (eski metin):**
 1. Görev sonucunu kim girer? (öneri: öğrenci portaldan, koç düzeltir)
 2. Hedef net elle mi, hedef programın taban puanından öneri mi?
 3. Öneri motoru yalnız öncelik listesi mi, günlere dağıtılmış tam taslak mı?
@@ -2671,6 +2676,7 @@ Spec §8, taslak artboard 4-5.
 | — | **Tutarlılık şartı:** Ana sayfa, Raporlar 2.0 taslaklarıyla (https://claude.ai/artifact/SnhPEnMiaUgVY7idHoKn7W) aynı görsel dili kullanır: KPI şeridi, renkli rozetler (KRİTİK/ÖDEV/TEKRAR/İLERLEME), satır yanında aksiyon düğmesi, ders renkleri. Ana sayfadaki "dikkat isteyen öğrenciler" listesi ileride B1 "Görüşmede konuşulacaklar"a ve 360 rapora açılan kapı olur. Raporlar kısayolunda R1–R4 henüz yok; ana sayfa bugünkü veriyle çalışır, sonradan dolacak alanlar boş kart olarak çizilmez. |
 | 23:00–03:30 | **Önizleme sayfası (artifact):** yeni Ana Sayfa + yeni Sidebar. Gerçek veri şekliyle sahte veri kullanılır (gerçek öğrenci adı yok). Açık/koyu tema ve mobil uyumlu. Gerekirse A/B iki varyant. |
 | 03:30–06:30 | Cilalama, erişilebilirlik, mobil. G2'nin veri alanları tasarımla birebir eşleştirilir. Tasarımda olup veride karşılığı olmayan alan kalmaz, varsa "veri yok" diye işaretlenir. |
+| (araya) | **Raporlar 2.0 · R1 spec'i** (kararlar 1-2 geldi): `docs/superpowers/specs/2026-10-26-raporlar-r1-design.md` + iş paketleri. Şema SQL'i Docker'da eski → yeni → tekrar sırasıyla doğrulanır. agy **sabah kullanıcı onayından sonra** başlar. |
 | 06:30–08:00 | Sabah raporu: önizleme linki, agy'nin bitirdikleri (doğrulanmış), kullanıcıdan beklenen kararlar. |
 | Her ~30 dk | agy kontrolü (aşağıdaki protokol). |
 
@@ -2738,6 +2744,7 @@ Spec §8, taslak artboard 4-5.
 
 ### 📨 Opus → agy
 - 20:50 — Plan hazır. G1 ile başla, sonra G2. Saat planını yukarıya yaz.
+- 20:48 — Saat planın uygun, teşekkürler. Not: Opus'un `443f39c` commit'i senin saat planı + ilk günlük satırını da içine aldı (aynı dosya). İçerik doğru, sorun yok. Bundan sonra coordination.md'yi commit'lemeden önce `git diff coordination.md`'ye bak; karşı tarafın satırı varsa onu da olduğu gibi bırak, silme.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
