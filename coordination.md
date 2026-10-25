@@ -2747,7 +2747,41 @@ Spec §8, taslak artboard 4-5.
 - 20:48 — Saat planın uygun, teşekkürler. Not: Opus'un `443f39c` commit'i senin saat planı + ilk günlük satırını da içine aldı (aynı dosya). İçerik doğru, sorun yok. Bundan sonra coordination.md'yi commit'lemeden önce `git diff coordination.md`'ye bak; karşı tarafın satırı varsa onu da olduğu gibi bırak, silme.
 - 21:00 — ✅ **G1 onay — push edebilirsin** (`git push origin main`). Ayrı worktree'de `0fa73fc` doğrulandı: test:types ✓, build ✓, test:exam-report ✓, lint uyarısı 30 → 28. Not (G1 dışı, eski): `DenemelerPage` `mock_exam_sections` sorgusu sayfalamasız, 1000 satır cap'ine takılabilir. G2'den sonra boşta kalırsan aynı `.range()` döngüsünü oraya da uygula.
 - 21:00 — G2: Devamsızlık eşiğini ortak fonksiyona taşıman doğru yol. `DevamsizlikPage` davranışı birebir aynı kalmalı. Commit mesajında "davranış değişmedi" kanıtını yaz (ör. aynı girdiyle eski ve yeni fonksiyon aynı sonucu veriyor, selftest'te).
+- 21:20 — ⚠️ **Git düzeni (önce bunu yap):** Ana dizin branch değiştirdikçe `coordination.md` branch'lere bölünüyor. Senin 21:00/21:05 satırların yalnız `gece/ana-sayfa-veri`'de, benim 21:00 notum ise `main`'de. Bundan sonra:
+  (1) Ana dizini **`main`'de bırak.** Branch işleri ayrı dizinde yapılsın: `git worktree add ../Coching_AI-g2 gece/ana-sayfa-veri` ve `git worktree add ../Coching_AI-e8 gece/e8-parser` (`node_modules` için `ln -s ../Coching_AI/node_modules`).
+  (2) `coordination.md` **yalnız ana dizinde, `main`'de** commit'lenir. Branch'lerde coordination.md değişikliği olmasın.
+  (3) Bu notu ve günlüğündeki 21:00/21:05 satırlarını `main`'de bir commit'le birleştir. Push gerekmez.
+- 21:20 — ✅ **G2 doğrulandı** (`19c0331`, ayrı worktree): test:home-summary ✓, test:types ✓, build ✓, lint 28 (artış yok). Ortak devamsızlık eşiği doğru taşınmış. **G3'e geçmeden önce G2b'yi yap** (aynı branch, ~1–1,5 saat). Sabahki tasarım bu alanlara bağlı. Tasarım: https://claude.ai/artifact/FSzBggnXyTSP3yXGdGT7SZ ("Veri notları" kutusu her kartın beslendiği alanı gösterir).
+  **G2b — düzeltmeler:**
+  a) `src/lib/supabase.ts` değişikliğini **geri al**. Üretim istemcisine `globalThis.process.env` yedeği girmesin. Saf kısmı (`buildHomeSummary` + tipler) supabase import etmeyen `src/lib/homeSummaryCore.ts`'e taşı. Selftest yalnız onu import etsin. `homeSummary.ts` = yükleyici + yeniden export.
+  b) `whatsappPendingCount` bugün **tüm zamanların** `notified_at` boş kayıtlarını sayıyor. **Son 14 gün** ile sınırla. Adını `notifyNotOpenedCount` yap: `notified_at` "WhatsApp açıldı" damgası, "gönderildi" değil.
+  c) Son hareketlerde görev olayları `created_at` ile "tamamlandı" diyor ama tamamlanma zamanı yok (`completed_at` R1'de gelecek). **Görev olaylarını akıştan çıkar.** Yerine `coach_decisions` ekle (`decided_at`; metin: "<konu adı> → <durum>").
+  d) `mock_exam_sections` / `mock_exam_topic_results` `.in(mock_exam_id, …)` listesi tüm denemeleri taşıyor. Yüzlerce UUID'de URL sınırı aşılır. ID listesini **200'lük parçalara böl** (yardımcı fonksiyon), sayfalama da kalsın.
+  **G2b — tasarımın istediği ek alanlar:**
+  e) `attention[].reasons[].detail` yapılandırılmış olsun:
+     - kritik: `{ count, topicNames: string[] (ilk 3) }` (`topics` join)
+     - net_dususu: `{ prev, last, delta, examType }`
+     - devamsizlik: `{ last14Count, notOpened: boolean }`
+     - program: `{ pct }`
+     - deneme_yok: `{ daysSinceLast: number | null }`
+     Satıra `grade` ve `track` de ekle (UI'de "12. Sınıf · SAY" yazıyor).
+  f) `program`:
+     - `byDay: {dayIndex, planned, done}[7]` (`weekly_tasks.day_index`)
+     - `toDate: {planned, done, pct}`: bugünün `day_index`'ine kadar
+     - `lastWeekSameDayPct`: geçen haftanın aynı gününe kadarki oran (geçen haftanın görevlerini de çek)
+     - Mevcut `completionRate` kalsın.
+  g) `exams`:
+     - `weeklyAvgNet: {weekStart, avg}[]`: son 8 hafta, **yalnız TYT**, haftalık ortalama toplam net (sparkline için)
+     - `recent: {studentName, name, examType, date, totalNet, delta|null, topicResultsCount}[5]`
+  h) `students.newThisMonth` (`created_at` bu ay).
+  i) `attendance.byDay: number[7]` (bu haftanın günleri).
+  j) `reports: { criticalTopicCount, studentsWithCritical, topTopic: {name, studentCount} | null, bySubject: {subjectName, count}[] }` (`coach_decisions` kritik + `topics`/`subjects` join).
+  k) Selftest'e her yeni alan için en az bir assert ekle. Tarih için `referenceDate` sabit (Perşembe) kullan.
+  Bitince G3'e dön.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
 - 20:50 | G1 | bitti | 0fa73fc on main | G2 branch gece/ana-sayfa-veri açılıp başlanıyor | yok (G1 push için Opus onayı bekleniyor) | sıradaki kontrol ~21:20
+- 21:00 | G1 | canlida | main push edildi (dc8a40f) | G2 tamamlandı, testler doğrulandı | yok | sıradaki kontrol ~21:30
+- 21:05 | G2 | bitti | 19c0331 on gece/ana-sayfa-veri | G3 e8 parser analizi ve gece/e8-parser branch | yok | sıradaki kontrol ~21:35
+- 21:10 | G3 | bitti (ön) | 38250e1 on gece/e8-parser (2026 0 diff regresyon tam) | G2b'ye dönülüyor, worktree düzenine geçildi | yok | sıradaki kontrol ~21:40
