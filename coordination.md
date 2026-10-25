@@ -2638,7 +2638,7 @@ Spec §8, taslak artboard 4-5.
 **✅ Kullanıcı kararları (2026-10-25 akşam):**
 1. **Görev sonucunu koç (Eda) girer.** Öğrenci portaldan sonuç girmez. C3 ("öğrenci görevi bitirirken sonuç girer") koç ekranına taşınır: Haftalık Program'da görev satırında D/Y/B.
 2. **Hedef net koç ile öğrenci birlikte belirler, sisteme koç girer.** Taban puandan otomatik öneri yok.
-3. Öneri motoru liste mi, tam taslak mı? **Açık.** Kullanıcıya örnekle yeniden soruldu. Yalnız R3'ü etkiler, R1'i bekletmez.
+3. **Öneri motoru: önce A, sonra B.** İlk sürüm yalnız **öncelik listesi** verir (konu + neden; günlere Eda yerleştirir). Koçun girdiği görev sonuçları birkaç hafta birikip öğrencinin gerçek temposu ölçülünce **günlere dağıtılmış taslak** (kesikli çerçeve + Onayla) açılır. İki durumda da koç onaylamadan hiçbir şey öğrenciye gitmez.
 
 **Planlamadan önce kullanıcıya sorulacak 3 karar (eski metin):**
 1. Görev sonucunu kim girer? (öneri: öğrenci portaldan, koç düzeltir)
