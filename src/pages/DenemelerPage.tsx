@@ -11,6 +11,14 @@ import ExamReportForm from '../components/exams/ExamReportForm'
 import CoachExamsOverviewTab from '../components/exams/CoachExamsOverviewTab'
 import type { Student, MockExam, MockExamSection } from '../types/database'
 
+function chunkArray<T>(items: readonly T[], chunkSize = 200): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < items.length; i += chunkSize) {
+    chunks.push(items.slice(i, i + chunkSize))
+  }
+  return chunks
+}
+
 export default function DenemelerPage() {
   const { studentScope } = useAccess()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -86,14 +94,28 @@ export default function DenemelerPage() {
 
       if (rawExams && rawExams.length > 0) {
         const examIds = rawExams.map((e) => e.id)
-        const { data: rawSections, error: sectionsError } = await supabase
-          .from('mock_exam_sections')
-          .select('*')
-          .in('mock_exam_id', examIds)
-        if (sectionsError) throw sectionsError
+        const examIdChunks = chunkArray(examIds, 200)
+
+        let rawSections: MockExamSection[] = []
+        for (const chunk of examIdChunks) {
+          let from = 0
+          const pageSize = 1000
+          while (true) {
+            const { data: sectionBatch, error: sectionsError } = await supabase
+              .from('mock_exam_sections')
+              .select('*')
+              .in('mock_exam_id', chunk)
+              .range(from, from + pageSize - 1)
+            if (sectionsError) throw sectionsError
+            if (!sectionBatch || sectionBatch.length === 0) break
+            rawSections = rawSections.concat(sectionBatch)
+            if (sectionBatch.length < pageSize) break
+            from += pageSize
+          }
+        }
 
         const enrichedExams = rawExams.map((exam) => {
-          const secs = rawSections?.filter((s) => s.mock_exam_id === exam.id) || []
+          const secs = rawSections.filter((s) => s.mock_exam_id === exam.id)
           const totalNet = Math.round(secs.reduce((sum, s) => sum + Number(s.net), 0) * 100) / 100
           return { ...exam, totalNet, sectionsList: secs }
         })
@@ -123,28 +145,45 @@ export default function DenemelerPage() {
       if (examsError) throw examsError
 
       if (rawAllExams && rawAllExams.length > 0) {
-        const examIds = rawAllExams.map((e: any) => e.id)
-        const { data: rawSections, error: sectionsError } = await supabase
-          .from('mock_exam_sections')
-          .select('*')
-          .in('mock_exam_id', examIds)
-        if (sectionsError) throw sectionsError
+        const examIds: string[] = rawAllExams.map((e: any) => String(e.id))
+        const examIdChunks = chunkArray(examIds, 200)
 
-        // Konu sonuçlarını çek (1000 satır sınırına takılmamak için sayfalama ile)
+        // Bölüm sonuçlarını çek (1000 satır sınırı + 200 chunk ile)
+        let rawSections: MockExamSection[] = []
+        for (const chunk of examIdChunks) {
+          let from = 0
+          const pageSize = 1000
+          while (true) {
+            const { data: sectionBatch, error: sectionsError } = await supabase
+              .from('mock_exam_sections')
+              .select('*')
+              .in('mock_exam_id', chunk)
+              .range(from, from + pageSize - 1)
+            if (sectionsError) throw sectionsError
+            if (!sectionBatch || sectionBatch.length === 0) break
+            rawSections = rawSections.concat(sectionBatch)
+            if (sectionBatch.length < pageSize) break
+            from += pageSize
+          }
+        }
+
+        // Konu sonuçlarını çek (1000 satır sınırı + 200 chunk ile)
         let rawTopics: { mock_exam_id: string }[] = []
-        let from = 0
-        const pageSize = 1000
-        while (true) {
-          const { data: topicBatch, error: topicsError } = await supabase
-            .from('mock_exam_topic_results')
-            .select('mock_exam_id')
-            .in('mock_exam_id', examIds)
-            .range(from, from + pageSize - 1)
-          if (topicsError) throw topicsError
-          if (!topicBatch || topicBatch.length === 0) break
-          rawTopics = rawTopics.concat(topicBatch)
-          if (topicBatch.length < pageSize) break
-          from += pageSize
+        for (const chunk of examIdChunks) {
+          let from = 0
+          const pageSize = 1000
+          while (true) {
+            const { data: topicBatch, error: topicsError } = await supabase
+              .from('mock_exam_topic_results')
+              .select('mock_exam_id')
+              .in('mock_exam_id', chunk)
+              .range(from, from + pageSize - 1)
+            if (topicsError) throw topicsError
+            if (!topicBatch || topicBatch.length === 0) break
+            rawTopics = rawTopics.concat(topicBatch)
+            if (topicBatch.length < pageSize) break
+            from += pageSize
+          }
         }
 
         const topicCountsByExam: Record<string, number> = {}
