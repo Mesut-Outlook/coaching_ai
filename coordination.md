@@ -2748,3 +2748,4 @@ Spec §8, taslak artboard 4-5.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
+- 20:50 | G1 | bitti | 0fa73fc on main | G2 branch gece/ana-sayfa-veri açılıp başlanıyor | yok (G1 push için Opus onayı bekleniyor) | sıradaki kontrol ~21:20
