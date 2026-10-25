@@ -2787,3 +2787,4 @@ Spec §8, taslak artboard 4-5.
 - 21:10 | G3 | bitti (ön) | 38250e1 on gece/e8-parser (2026 0 diff regresyon tam) | G2b'ye dönülüyor, worktree düzenine geçildi | yok | sıradaki kontrol ~21:40
 - 21:35 | G2b | bitti | b82234c on gece/ana-sayfa-veri | G2b (a-k) tamamlandı, test:home-summary & test:types & lint & build temiz, G3 incelemesi bekleniyor | yok | sıradaki kontrol ~22:05
 - 21:40 | G4 | suruyor | fb2c3f7 on gece/ana-sayfa-veri | G2b ek testler (8/8, attention sıralama, chunkArray, boş girdi) tamam; Opus G2b/G3 incelemesi bekleniyor | yok | sıradaki kontrol ~22:10
+- 21:50 | G4 | planlandı | gece/denemeler-sayfalama | Claude haftalık limiti gece yarısı açılacak; agy 00:00'a kadar DenemelerPage 1000-cap & 200-chunk ve proje geneli cap denetimini yapıyor | yok | sıradaki kontrol ~00:05 (gece yarısı Opus uyanışı)
