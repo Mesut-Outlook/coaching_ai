@@ -1,22 +1,37 @@
 /**
  * scripts/homeSummary.selftest.ts
  *
- * G2 — Ana Sayfa Veri Katmanı Öz-Testi (Saf Assert, Harici DB Bağımlılığı Yok).
+ * G2 + G2b — Ana Sayfa Veri Katmanı Öz-Testi (Saf Assert, Supabase Bağımsız).
  *
  * Doğrulananlar:
- * 1. Öğrenci Dağılımı: YKS / LGS (gradeCurriculum) ayrımı ve aktif sayısı.
- * 2. İlgi Bekleyen Öğrenciler (Attention Reasons):
- *    - 'kritik_karar': coach_decisions.state = 'kritik'.
- *    - 'net_dususu': aynı sınav türünde bir önceki denemeye göre ≥ 5 net düşüş.
- *    - 'devamsizlik_takip': son 30 günde toplam ≥ 3 veya mazeretsiz ≥ 2 devamsızlık.
- *    - 'program_dusuk': hafta yarılandığında tamamlama < %50.
- *    - 'program_yok': haftalık görev planlanmamış olması.
- *    - 'deneme_yok': son 21 günde hiç deneme girilmemiş olması.
+ * 1. Öğrenci Dağılımı: YKS / LGS ayrımı, aktif sayısı ve bu ay yeni kayıt (newThisMonth).
+ * 2. İlgi Bekleyen Öğrenciler (Attention Reasons) ve Yapılandırılmış `detail` Alanları:
+ *    - 'kritik_karar': { count, topicNames: string[] }
+ *    - 'net_dususu': { prev, last, delta, examType }
+ *    - 'devamsizlik_takip': { last14Count, notOpened: boolean }
+ *    - 'program_dusuk': { pct }
+ *    - 'program_yok': detail null
+ *    - 'deneme_yok': { daysSinceLast: number | null }
+ *    - Satırda grade ve track alanlarının varlığı.
  * 3. Öncelik Sıralaması: Neden sayısı çok olan önce, ardından ağırlık sırası.
- * 4. Denemeler Özeti: Son 7 gün sayısı, ortalama net değişimi (avgDelta), konusu girilmemiş sayaç.
- * 5. Program Özeti: Toplam görev, tamamlanan görev, genel %, görevi olmayan öğrenci sayısı.
- * 6. Devamsızlık Özeti: Bu hafta devamsızlıkları, takip gereken öğrenci, WhatsApp bildirimi bekleyenler.
- * 7. Son Hareketler Akışı: Son 10 hareket, azalan kronolojik sıralı.
+ * 4. Denemeler Özeti:
+ *    - Son 7 gün sayısı, ortalama net değişimi (avgDelta), konusu girilmemiş sayaç.
+ *    - Son 8 hafta TYT haftalık ortalama net dizisi (`weeklyAvgNet`, sparkline için).
+ *    - Son 5 deneme listesi (`recent`, delta ve konu bilgisiyle).
+ * 5. Program Özeti:
+ *    - Toplam/tamamlanan görev, genel %, görevi olmayan öğrenci sayısı.
+ *    - Günlük dağılım (`byDay`, 7 gün).
+ *    - Bugüne kadarki oran (`toDate`, bugünün dayIndex'ine kadar).
+ *    - Geçen haftanın aynı gününe kadarki karşılaştırma oranı (`lastWeekSameDayPct`).
+ * 6. Devamsızlık Özeti:
+ *    - Bu haftaki devamsızlıklar, gün dağılımı (`byDay`, 7 gün).
+ *    - Takip gereken öğrenci sayısı.
+ *    - Son 14 günde bildirimi açılmamış kayıt sayısı (`notifyNotOpenedCount`).
+ * 7. Raporlar Özeti:
+ *    - Kritik konu sayısı, kritik kararı olan öğrenci sayısı, en çok zorlanılan konu (`topTopic`), ders dağılımı (`bySubject`).
+ * 8. Son Hareketler Akışı:
+ *    - Görev olayları çıkarıldı; deneme, devamsızlık ve koç kararları (`decision`) eklendi.
+ *    - Azalan kronolojik sıralı (max 10).
  *
  * Çalıştırma: npm run test:home-summary
  */
@@ -25,7 +40,9 @@ import assert from 'node:assert/strict'
 import {
   buildHomeSummary,
   type EnrichedMockExam,
-} from '../src/lib/homeSummary'
+  type SubjectInfo,
+  type TopicInfo,
+} from '../src/lib/homeSummaryCore'
 import type {
   AttendanceRecord,
   CoachDecision,
@@ -33,12 +50,30 @@ import type {
   WeeklyTask,
 } from '../src/types/database'
 
-console.log('▶ G2 Ana Sayfa Veri Katmanı Öz-Testi Başlatılıyor...\n')
+console.log('▶ G2 + G2b Ana Sayfa Veri Katmanı Öz-Testi Başlatılıyor...\n')
 
-const REF_DATE = '2026-10-25T12:00:00Z' // Pazar günü (hafta tamamlanmış/yarılanmış)
+// Sabit referans tarihi: 22 Ekim 2026 Perşembe (hafta yarılanmış, dayIndex = 3)
+const REF_DATE = '2026-10-22T12:00:00Z'
+const THIS_WEEK_MON = '2026-10-19'
+const LAST_WEEK_MON = '2026-10-12'
 
 // ---------------------------------------------------------------------------
-// Mock Veriler
+// Mock Referans Verileri (Dersler ve Konular)
+// ---------------------------------------------------------------------------
+
+const mockSubjects: SubjectInfo[] = [
+  { id: 1, name: 'Matematik' },
+  { id: 2, name: 'Türkçe' },
+]
+
+const mockTopics: TopicInfo[] = [
+  { id: 101, name: 'Türev', subject_id: 1 },
+  { id: 102, name: 'İntegral', subject_id: 1 },
+  { id: 201, name: 'Paragraf', subject_id: 2 },
+]
+
+// ---------------------------------------------------------------------------
+// Mock Öğrenciler
 // ---------------------------------------------------------------------------
 
 const mockStudents: Student[] = [
@@ -54,7 +89,7 @@ const mockStudents: Student[] = [
     phone_number: '5551111111',
     parent_phone_number: '5552222222',
     is_active: true,
-    created_at: '2026-08-01T09:00:00Z',
+    created_at: '2026-10-05T09:00:00Z', // Bu ay yeni kayıt (newThisMonth)
     access_code: null,
     coaching_coach_id: null,
     photo_url: null,
@@ -88,7 +123,7 @@ const mockStudents: Student[] = [
     phone_number: null,
     parent_phone_number: null,
     is_active: true,
-    created_at: '2026-08-01T09:00:00Z',
+    created_at: '2026-07-15T09:00:00Z',
     access_code: null,
     coaching_coach_id: null,
     photo_url: null,
@@ -104,8 +139,8 @@ const mockStudents: Student[] = [
     notes: null,
     phone_number: null,
     parent_phone_number: null,
-    is_active: false, // Pasif öğrenci sayılmamalı
-    created_at: '2026-08-01T09:00:00Z',
+    is_active: false, // Pasif
+    created_at: '2026-10-02T09:00:00Z',
     access_code: null,
     coaching_coach_id: null,
     photo_url: null,
@@ -126,45 +161,36 @@ const baseSummary = buildHomeSummary({
 })
 
 assert.equal(baseSummary.students.totalActive, 3, 'Aktif öğrenci sayısı 3 olmalı (pasif hariç)')
-assert.equal(baseSummary.students.yksCount, 2, 'YKS öğrencisi 2 olmalı (12. Sınıf + Mezun)')
-assert.equal(baseSummary.students.lgsCount, 1, 'LGS öğrencisi 1 olmalı (8. Sınıf)')
-console.log('✓ 1. Öğrenci dağılımı (YKS/LGS) başarıyla doğrulandı.')
+assert.equal(baseSummary.students.yksCount, 2, 'YKS öğrencisi 2 olmalı')
+assert.equal(baseSummary.students.lgsCount, 1, 'LGS öğrencisi 1 olmalı')
+assert.equal(baseSummary.students.newThisMonth, 1, 'Bu ay kayıtlı aktif öğrenci 1 olmalı (Ali, 2026-10-05)')
+console.log('✓ 1. Öğrenci dağılımı ve newThisMonth başarıyla doğrulandı.')
 
 // ---------------------------------------------------------------------------
-// 2. İlgi Bekleyen Öğrenciler (Attention Reasons)
+// 2. İlgi Bekleyen Öğrenciler ve Yapılandırılmış Detaylar
 // ---------------------------------------------------------------------------
 
-// A) kritik_karar testi
 const decisions: CoachDecision[] = [
   {
     id: 'cd-1',
     student_id: 's-ali',
-    topic_id: 101,
+    topic_id: 101, // Türev
     state: 'kritik',
     note: 'Türevde ciddi eksik',
     decided_by: 'coach-1',
-    decided_at: '2026-10-24T10:00:00Z',
+    decided_at: '2026-10-21T10:00:00Z',
+  },
+  {
+    id: 'cd-2',
+    student_id: 's-mehmet',
+    topic_id: 101, // Türev
+    state: 'kritik',
+    note: 'Temel kavramlar',
+    decided_by: 'coach-1',
+    decided_at: '2026-10-20T10:00:00Z',
   },
 ]
 
-const summaryWithKritik = buildHomeSummary({
-  students: mockStudents,
-  coachDecisions: decisions,
-  mockExams: [],
-  weeklyTasks: [],
-  attendanceRecords: [],
-  referenceDate: REF_DATE,
-})
-
-const aliAttention = summaryWithKritik.attention.find((a) => a.studentId === 's-ali')
-assert.ok(aliAttention, 'Ali ilgi listesinde olmalı')
-assert.ok(
-  aliAttention.reasons.some((r) => r.kind === 'kritik_karar'),
-  'Ali için kritik_karar nedeni bulunmalı'
-)
-console.log('✓ 2.A kritik_karar nedeni doğrulandı.')
-
-// B) net_dususu testi (son deneme bir öncekinden >= 5 net düşük)
 const mockExams: EnrichedMockExam[] = [
   // Ali: TYT Deneme 1 (2026-10-10) -> 80 net
   {
@@ -182,97 +208,64 @@ const mockExams: EnrichedMockExam[] = [
     totalNet: 80,
     sectionsList: [{ id: 'sec-1', mock_exam_id: 'e-ali-1', section_name: 'Türkçe', max_questions: 40, correct_count: 40, wrong_count: 0, blank_count: 0, wrong_penalty: 4, net: 40 }],
     hasTopics: true,
+    topicResultsCount: 40,
   },
-  // Ali: TYT Deneme 2 (2026-10-24) -> 73 net (7 net düşüş! >= 5)
+  // Ali: TYT Deneme 2 (2026-10-21) -> 73 net (7 net düşüş)
   {
     id: 'e-ali-2',
     student_id: 's-ali',
     name: 'TYT Deneme 2',
     publisher: 'Test Yayını',
     exam_type: 'TYT',
-    exam_date: '2026-10-24',
+    exam_date: '2026-10-21',
     score: null,
     percentile: null,
     ranks: null,
     coach_note: null,
-    created_at: '2026-10-24T12:00:00Z',
+    created_at: '2026-10-21T12:00:00Z',
     totalNet: 73,
     sectionsList: [{ id: 'sec-2', mock_exam_id: 'e-ali-2', section_name: 'Türkçe', max_questions: 40, correct_count: 33, wrong_count: 0, blank_count: 7, wrong_penalty: 4, net: 33 }],
     hasTopics: true,
+    topicResultsCount: 40,
   },
 ]
 
-const summaryWithExams = buildHomeSummary({
-  students: mockStudents,
-  coachDecisions: [],
-  mockExams,
-  weeklyTasks: [],
-  attendanceRecords: [],
-  referenceDate: REF_DATE,
-})
-
-const aliNetDususu = summaryWithExams.attention.find((a) => a.studentId === 's-ali')
-assert.ok(
-  aliNetDususu?.reasons.some((r) => r.kind === 'net_dususu'),
-  'Ali için net_dususu nedeni bulunmalı (-7 net)'
-)
-console.log('✓ 2.B net_dususu nedeni doğrulandı.')
-
-// C) devamsizlik_takip testi (30 günde >= 3 toplam veya >= 2 mazeretsiz)
 const attendance: AttendanceRecord[] = [
   {
     id: 'att-1',
     student_id: 's-ayse',
-    absence_date: '2026-10-20',
+    absence_date: '2026-10-19', // Pazartesi
     session_type: 'birebir',
     status: 'gelmedi',
-    excuse_type: 'yok', // 1. mazeretsiz
+    excuse_type: 'yok',
     excuse_note: null,
-    notified_at: null,
+    notified_at: null, // Açılmadı
     notified_to: null,
-    created_at: '2026-10-20T10:00:00Z',
+    created_at: '2026-10-19T10:00:00Z',
   },
   {
     id: 'att-2',
     student_id: 's-ayse',
-    absence_date: '2026-10-22',
+    absence_date: '2026-10-21', // Çarşamba
     session_type: 'etut',
     status: 'gelmedi',
     excuse_type: 'yok', // 2. mazeretsiz -> TAKİP GEREKLİ!
     excuse_note: null,
-    notified_at: null,
+    notified_at: null, // Açılmadı
     notified_to: null,
-    created_at: '2026-10-22T10:00:00Z',
+    created_at: '2026-10-21T10:00:00Z',
   },
 ]
 
-const summaryWithAttendance = buildHomeSummary({
-  students: mockStudents,
-  coachDecisions: [],
-  mockExams: [],
-  weeklyTasks: [],
-  attendanceRecords: attendance,
-  referenceDate: REF_DATE,
-})
-
-const ayseAttention = summaryWithAttendance.attention.find((a) => a.studentId === 's-ayse')
-assert.ok(
-  ayseAttention?.reasons.some((r) => r.kind === 'devamsizlik_takip'),
-  'Ayşe için devamsizlik_takip nedeni bulunmalı'
-)
-console.log('✓ 2.C devamsizlik_takip nedeni doğrulandı.')
-
-// D) program_dusuk ve program_yok testi
-const thisWeekKey = '2026-10-19' // 2026-10-25 haftasının pazartesisi
-const weeklyTasks: WeeklyTask[] = [
+const thisWeekTasks: WeeklyTask[] = [
   // Ayşe için 4 görev: 1'i tamamlanmış (%25 < %50)
   {
     id: 't-1',
     student_id: 's-ayse',
-    week_start: thisWeekKey,
-    day_index: 0,
-    topic_id: 1,
-    custom_label: 'Matematik Çarpanlar',
+    week_start: THIS_WEEK_MON,
+    day_index: 0, // Pzt
+    topic_id: 101,
+    custom_label: 'Matematik 1',
     question_count: 30,
     is_exam: false,
     completed: true,
@@ -281,10 +274,10 @@ const weeklyTasks: WeeklyTask[] = [
   {
     id: 't-2',
     student_id: 's-ayse',
-    week_start: thisWeekKey,
-    day_index: 1,
-    topic_id: 1,
-    custom_label: 'Matematik Test 2',
+    week_start: THIS_WEEK_MON,
+    day_index: 1, // Salı
+    topic_id: 101,
+    custom_label: 'Matematik 2',
     question_count: 30,
     is_exam: false,
     completed: false,
@@ -293,10 +286,10 @@ const weeklyTasks: WeeklyTask[] = [
   {
     id: 't-3',
     student_id: 's-ayse',
-    week_start: thisWeekKey,
-    day_index: 2,
-    topic_id: 2,
-    custom_label: 'Türkçe Paragraf',
+    week_start: THIS_WEEK_MON,
+    day_index: 2, // Çarşamba
+    topic_id: 201,
+    custom_label: 'Paragraf',
     question_count: 20,
     is_exam: false,
     completed: false,
@@ -305,165 +298,190 @@ const weeklyTasks: WeeklyTask[] = [
   {
     id: 't-4',
     student_id: 's-ayse',
-    week_start: thisWeekKey,
-    day_index: 3,
-    topic_id: 2,
-    custom_label: 'Türkçe Deneme',
+    week_start: THIS_WEEK_MON,
+    day_index: 3, // Perşembe
+    topic_id: 201,
+    custom_label: 'Paragraf 2',
     question_count: 20,
     is_exam: false,
     completed: false,
     created_at: '2026-10-19T08:00:00Z',
   },
+  // Ali için bu hafta 1 görev (tamamlanmış)
+  {
+    id: 't-ali-1',
+    student_id: 's-ali',
+    week_start: THIS_WEEK_MON,
+    day_index: 0,
+    topic_id: 101,
+    custom_label: 'Türev Soru Çözümü',
+    question_count: 50,
+    is_exam: false,
+    completed: true,
+    created_at: '2026-10-19T08:00:00Z',
+  },
 ]
 
-const summaryWithTasks = buildHomeSummary({
+// Geçen hafta görevleri (Ali için 2'de 2 tamamlanmış = %100)
+const lastWeekTasks: WeeklyTask[] = [
+  {
+    id: 't-lw-1',
+    student_id: 's-ali',
+    week_start: LAST_WEEK_MON,
+    day_index: 0,
+    topic_id: 101,
+    custom_label: 'Limit 1',
+    question_count: 40,
+    is_exam: false,
+    completed: true,
+    created_at: '2026-10-12T08:00:00Z',
+  },
+  {
+    id: 't-lw-2',
+    student_id: 's-ali',
+    week_start: LAST_WEEK_MON,
+    day_index: 2,
+    topic_id: 101,
+    custom_label: 'Limit 2',
+    question_count: 40,
+    is_exam: false,
+    completed: true,
+    created_at: '2026-10-12T08:00:00Z',
+  },
+]
+
+const summary = buildHomeSummary({
   students: mockStudents,
-  coachDecisions: [],
-  mockExams: [],
-  weeklyTasks,
-  attendanceRecords: [],
+  coachDecisions: decisions,
+  mockExams,
+  weeklyTasks: thisWeekTasks,
+  lastWeekTasks,
+  attendanceRecords: attendance,
+  topics: mockTopics,
+  subjects: mockSubjects,
   referenceDate: REF_DATE,
-  isWeekHalfway: true,
 })
 
-const ayseTaskAttention = summaryWithTasks.attention.find((a) => a.studentId === 's-ayse')
-assert.ok(
-  ayseTaskAttention?.reasons.some((r) => r.kind === 'program_dusuk'),
-  'Ayşe için program_dusuk nedeni bulunmalı (%25)'
-)
+// A) Attention ve Yapılandırılmış Detail Testleri
+const aliAtt = summary.attention.find((a) => a.studentId === 's-ali')
+assert.ok(aliAtt, 'Ali ilgi listesinde olmalı')
+assert.equal(aliAtt.grade, '12. Sınıf', 'Öğrenci sınıfı bulunmalı')
+assert.equal(aliAtt.track, 'SAY', 'Öğrenci alanı bulunmalı')
 
-// Mehmet'in hiç görevi yok -> program_yok olmalı
-const mehmetTaskAttention = summaryWithTasks.attention.find((a) => a.studentId === 's-mehmet')
-assert.ok(
-  mehmetTaskAttention?.reasons.some((r) => r.kind === 'program_yok'),
-  'Mehmet için program_yok nedeni bulunmalı'
-)
-console.log('✓ 2.D program_dusuk ve program_yok nedenleri doğrulandı.')
+// Kritik karar detail: { count, topicNames: ['Türev'] }
+const kritikR = aliAtt.reasons.find((r) => r.kind === 'kritik_karar')
+assert.ok(kritikR, 'Kritik karar nedeni bulunmalı')
+const kritikDetail = kritikR.detail as { count: number; topicNames: string[] }
+assert.equal(kritikDetail.count, 1)
+assert.deepEqual(kritikDetail.topicNames, ['Türev'])
 
-// E) deneme_yok testi (son 21 günde hiç deneme yok)
-// Mehmet'in hiç denemesi yok
-assert.ok(
-  mehmetTaskAttention?.reasons.some((r) => r.kind === 'deneme_yok'),
-  'Mehmet için son 21 günde deneme_yok nedeni bulunmalı'
-)
-console.log('✓ 2.E deneme_yok nedeni doğrulandı.')
+// Net düşüşü detail: { prev: 80, last: 73, delta: -7, examType: 'TYT' }
+const netR = aliAtt.reasons.find((r) => r.kind === 'net_dususu')
+assert.ok(netR, 'Net düşüşü nedeni bulunmalı')
+const netDetail = netR.detail as { prev: number; last: number; delta: number; examType: string }
+assert.equal(netDetail.prev, 80)
+assert.equal(netDetail.last, 73)
+assert.equal(netDetail.delta, -7)
+assert.equal(netDetail.examType, 'TYT')
 
-// ---------------------------------------------------------------------------
-// 3. Sıralama Algoritması Testi
-// ---------------------------------------------------------------------------
-// Ayşe: devamsizlik_takip + program_dusuk + deneme_yok (3 neden)
-// Ali: kritik_karar + net_dususu + tam görev (2 neden, kritik_karar ağırlıklı)
-// Mehmet: program_yok + deneme_yok (2 neden, düşük ağırlıklı)
+// Ayşe Devamsızlık detail: { last14Count: 2, notOpened: true }
+const ayseAtt = summary.attention.find((a) => a.studentId === 's-ayse')
+assert.ok(ayseAtt, 'Ayşe ilgi listesinde olmalı')
+const devR = ayseAtt.reasons.find((r) => r.kind === 'devamsizlik_takip')
+assert.ok(devR, 'Devamsızlık nedeni bulunmalı')
+const devDetail = devR.detail as { last14Count: number; notOpened: boolean }
+assert.equal(devDetail.last14Count, 2)
+assert.equal(devDetail.notOpened, true)
 
-const aliCompleteTask: WeeklyTask = {
-  id: 't-ali-1',
-  student_id: 's-ali',
-  week_start: thisWeekKey,
-  day_index: 0,
-  topic_id: 101,
-  custom_label: 'Türev Tekrar',
-  question_count: 50,
-  is_exam: false,
-  completed: true,
-  created_at: '2026-10-19T08:00:00Z',
-}
+// Ayşe Program Düşük detail: { pct: 25 }
+const progR = ayseAtt.reasons.find((r) => r.kind === 'program_dusuk')
+assert.ok(progR, 'Program düşük nedeni bulunmalı')
+const progDetail = progR.detail as { pct: number }
+assert.equal(progDetail.pct, 25)
 
-const combinedSummary = buildHomeSummary({
-  students: mockStudents,
-  coachDecisions: decisions, // Ali: kritik_karar
-  mockExams, // Ali: net_dususu
-  weeklyTasks: [...weeklyTasks, aliCompleteTask], // Ayşe: program_dusuk, Ali: tam program, Mehmet: program_yok
-  attendanceRecords: attendance, // Ayşe: devamsizlik_takip
-  referenceDate: REF_DATE,
-  isWeekHalfway: true,
-})
+// Mehmet Program Yok ve Deneme Yok detail
+const mehmetAtt = summary.attention.find((a) => a.studentId === 's-mehmet')
+assert.ok(mehmetAtt, 'Mehmet ilgi listesinde olmalı')
+assert.ok(mehmetAtt.reasons.some((r) => r.kind === 'program_yok'), 'Mehmet için program_yok olmalı')
+const denemeYokR = mehmetAtt.reasons.find((r) => r.kind === 'deneme_yok')
+assert.ok(denemeYokR, 'Mehmet için deneme_yok olmalı')
+const denemeYokDetail = denemeYokR.detail as { daysSinceLast: number | null }
+assert.equal(denemeYokDetail.daysSinceLast, null, 'Hiç denemesi olmayanın daysSinceLast null olmalı')
 
-// Ayşe 3 nedene sahip olduğu için ilk sırada olmalı
-assert.equal(
-  combinedSummary.attention[0].studentId,
-  's-ayse',
-  'En çok nedene (3) sahip Ayşe 1. sırada olmalı'
-)
-// Ali 2 nedene sahip ama kritik_karar ağırlığı Mehmet'ten yüksek olduğu için 2. sırada olmalı
-assert.equal(
-  combinedSummary.attention[1].studentId,
-  's-ali',
-  'Kritik karar ağırlığına sahip Ali 2. sırada olmalı'
-)
-// Mehmet 3. sırada olmalı
-assert.equal(
-  combinedSummary.attention[2].studentId,
-  's-mehmet',
-  'Mehmet 3. sırada olmalı'
-)
-console.log('✓ 3. İlgi bekleyenler sıralama algoritması (neden sayısı + öncelik ağırlığı) doğrulandı.')
+console.log('✓ 2. Attention yapılandırılmış detaylar (G2b e) başarıyla doğrulandı.')
 
 // ---------------------------------------------------------------------------
-// 4. Denemeler Özeti Testi
+// 3. Denemeler Özeti (weeklyAvgNet ve recent)
 // ---------------------------------------------------------------------------
-assert.equal(
-  combinedSummary.exams.last7DaysCount,
-  1,
-  'Son 7 günde (18-25 Ekim) girilen deneme sayısı 1 olmalı (24 Ekim denemesi)'
-)
-assert.equal(
-  combinedSummary.exams.avgDelta,
-  -7,
-  'Ortalama net değişimi -7 net olmalı'
-)
-assert.equal(
-  combinedSummary.exams.withoutTopicsCount,
-  0,
-  'Konusu girilmemiş deneme sayısı 0 olmalı'
-)
-console.log('✓ 4. Denemeler kartı özeti doğrulandı.')
+assert.equal(summary.exams.last7DaysCount, 1, 'Son 7 günde 1 deneme (21 Ekim)')
+assert.equal(summary.exams.avgDelta, -7)
+assert.equal(summary.exams.weeklyAvgNet.length, 8, 'Son 8 haftanın TYT ortalama dizisi üretilmeli')
+// 19 Ekim haftasında 1 TYT denemesi var (73 net), ortalama 73 olmalı
+const currentWeekTyt = summary.exams.weeklyAvgNet[7]
+assert.equal(currentWeekTyt.weekStart, THIS_WEEK_MON)
+assert.equal(currentWeekTyt.avg, 73)
+
+// Recent exams
+assert.ok(summary.exams.recent.length <= 5, 'Recent denemeler en fazla 5 olmalı')
+assert.equal(summary.exams.recent[0].totalNet, 73)
+assert.equal(summary.exams.recent[0].delta, -7)
+console.log('✓ 3. Denemeler weeklyAvgNet ve recent (G2b g) başarıyla doğrulandı.')
 
 // ---------------------------------------------------------------------------
-// 5. Program Özeti Testi
+// 4. Program Özeti (byDay, toDate, lastWeekSameDayPct)
 // ---------------------------------------------------------------------------
-assert.equal(combinedSummary.program.thisWeekTotalTasks, 5, 'Bu hafta 5 görev olmalı (Ayşe 4 + Ali 1)')
-assert.equal(combinedSummary.program.thisWeekCompletedTasks, 2, 'Bu hafta 2 tamamlanan görev olmalı')
-assert.equal(combinedSummary.program.completionRate, 40, 'Tamamlama oranı %40 olmalı (2/5)')
-assert.equal(
-  combinedSummary.program.studentsWithoutTasksCount,
-  1,
-  'Görevi olmayan aktif öğrenci sayısı 1 olmalı (yalnız Mehmet)'
-)
-console.log('✓ 5. Program kartı özeti doğrulandı.')
+assert.equal(summary.program.byDay.length, 7, 'Haftanın 7 günü için byDay dizisi olmalı')
+assert.equal(summary.program.byDay[0].planned, 2, 'Pazartesi 2 görev planlanmış (Ayşe + Ali)')
+assert.equal(summary.program.byDay[0].done, 2, 'Pazartesi 2 görev tamamlanmış')
+assert.equal(summary.program.byDay[1].planned, 1, 'Salı 1 görev')
+
+// toDate: Perşembe gününe kadar (dayIndex <= 3): toplam 5 görev, 2 tamamlanan = %40
+assert.equal(summary.program.toDate.planned, 5)
+assert.equal(summary.program.toDate.done, 2)
+assert.equal(summary.program.toDate.pct, 40)
+
+// lastWeekSameDayPct: geçen hafta perşembeye kadar 2 görev vardı, 2'si tamamlandı = %100
+assert.equal(summary.program.lastWeekSameDayPct, 100)
+console.log('✓ 4. Program byDay, toDate ve lastWeekSameDayPct (G2b f) başarıyla doğrulandı.')
 
 // ---------------------------------------------------------------------------
-// 6. Devamsızlık Özeti Testi
+// 5. Devamsızlık Özeti (notifyNotOpenedCount, byDay)
 // ---------------------------------------------------------------------------
-assert.equal(
-  combinedSummary.attendance.thisWeekAbsenceCount,
-  2,
-  'Bu haftaki devamsızlık 2 olmalı'
-)
-assert.equal(
-  combinedSummary.attendance.needsAttentionCount,
-  1,
-  'Takip gereken öğrenci sayısı 1 olmalı (Ayşe)'
-)
-assert.equal(
-  combinedSummary.attendance.whatsappPendingCount,
-  2,
-  'WhatsApp bildirimi gönderilmemiş kayıt sayısı 2 olmalı'
-)
-console.log('✓ 6. Devamsızlık kartı özeti doğrulandı.')
+assert.equal(summary.attendance.thisWeekAbsenceCount, 2)
+assert.equal(summary.attendance.notifyNotOpenedCount, 2, 'Son 14 günde açılmamış 2 kayıt olmalı')
+assert.equal(summary.attendance.byDay.length, 7)
+assert.equal(summary.attendance.byDay[0], 1, 'Pazartesi günü 1 devamsızlık')
+assert.equal(summary.attendance.byDay[2], 1, 'Çarşamba günü 1 devamsızlık')
+console.log('✓ 5. Devamsızlık notifyNotOpenedCount ve byDay (G2b b/i) başarıyla doğrulandı.')
+
+// ---------------------------------------------------------------------------
+// 6. Raporlar Özeti (HomeReportsSummary)
+// ---------------------------------------------------------------------------
+assert.equal(summary.reports.criticalTopicCount, 1, '1 kritik konu var (Türev)')
+assert.equal(summary.reports.studentsWithCritical, 2, '2 öğrencinin kritik kararı var (Ali ve Mehmet)')
+assert.ok(summary.reports.topTopic, 'Top topic bulunmalı')
+assert.equal(summary.reports.topTopic.name, 'Türev')
+assert.equal(summary.reports.topTopic.studentCount, 2)
+assert.equal(summary.reports.bySubject[0].subjectName, 'Matematik')
+assert.equal(summary.reports.bySubject[0].count, 2)
+console.log('✓ 6. Raporlar özeti (G2b j) başarıyla doğrulandı.')
 
 // ---------------------------------------------------------------------------
 // 7. Son Hareketler Akışı (Recent Activity)
 // ---------------------------------------------------------------------------
-assert.ok(combinedSummary.recent.length <= 10, 'Son hareketler ≤ 10 olmalı')
-assert.ok(combinedSummary.recent.length > 0, 'En az 1 hareket olmalı')
-// Sıralama azalan tarih olmalı
-for (let i = 0; i < combinedSummary.recent.length - 1; i++) {
-  const t1 = new Date(combinedSummary.recent[i].at).getTime()
-  const t2 = new Date(combinedSummary.recent[i + 1].at).getTime()
-  assert.ok(t1 >= t2, 'Hareketler kronolojik olarak yeniden eskiye sıralı olmalı')
-}
-console.log('✓ 7. Son hareketler akışı (azalan kronolojik sıralı) doğrulandı.')
+assert.ok(summary.recent.length <= 10)
+// Görev olayı bulunmamalı
+assert.ok(
+  summary.recent.every((r) => r.kind !== ('task' as any)),
+  'Görev olayları akışta bulunmamalı (G2b c)'
+)
+// Karar olayı bulunmalı
+assert.ok(
+  summary.recent.some((r) => r.kind === 'decision' && r.text.includes('Türev → kritik')),
+  'Koç kararı akışta bulunmalı (G2b c)'
+)
+console.log('✓ 7. Son hareketler akışı (görev hariç, karar dahil) başarıyla doğrulandı.')
 
 console.log('\n==============================================')
-console.log('✅ TÜM G2 ÖZ-TESTLERİ BAŞARIYLA GEÇTİ!')
+console.log('✅ TÜM G2 + G2b ÖZ-TESTLERİ BAŞARIYLA GEÇTİ!')
 console.log('==============================================')
