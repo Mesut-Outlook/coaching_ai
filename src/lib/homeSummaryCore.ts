@@ -208,6 +208,17 @@ export function round2(val: number): number {
   return Math.round((val + Number.EPSILON) * 100) / 100
 }
 
+/**
+ * Diziyi verilen boyutta alt parçalara böler (URL uzunluğu veya sorgu sınırını aşmamak için).
+ */
+export function chunkArray<T>(items: readonly T[], chunkSize = 200): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < items.length; i += chunkSize) {
+    chunks.push(items.slice(i, i + chunkSize))
+  }
+  return chunks
+}
+
 export function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }

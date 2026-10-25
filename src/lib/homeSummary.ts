@@ -10,6 +10,7 @@ import { fetchStudents } from './students'
 import { mondayOf, weekKey } from './weeks'
 import {
   buildHomeSummary,
+  chunkArray,
   round2,
   type EnrichedMockExam,
   type HomeSummary,
@@ -26,17 +27,6 @@ import type {
 } from '../types/database'
 
 export * from './homeSummaryCore'
-
-/**
- * Diziyi verilen boyutta alt parçalara böler (URL uzunluğu sınırını aşmamak için).
- */
-export function chunkArray<T>(items: readonly T[], chunkSize = 200): T[][] {
-  const chunks: T[][] = []
-  for (let i = 0; i < items.length; i += chunkSize) {
-    chunks.push(items.slice(i, i + chunkSize))
-  }
-  return chunks
-}
 
 async function fetchAllWithPagination<T>(
   fetcher: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>

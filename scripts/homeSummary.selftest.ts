@@ -39,6 +39,7 @@
 import assert from 'node:assert/strict'
 import {
   buildHomeSummary,
+  chunkArray,
   type EnrichedMockExam,
   type SubjectInfo,
   type TopicInfo,
@@ -481,6 +482,117 @@ assert.ok(
   'Koç kararı akışta bulunmalı (G2b c)'
 )
 console.log('✓ 7. Son hareketler akışı (görev hariç, karar dahil) başarıyla doğrulandı.')
+
+// ---------------------------------------------------------------------------
+// 8. İlave Uç Durumlar ve Detaylı Doğrulamalar (G4 İncelemesi)
+// ---------------------------------------------------------------------------
+
+// A. Attention Sıralaması:
+// Mehmet: 3 neden (kritik_karar [5], program_yok [1], deneme_yok [1]) -> 3 neden, maxWeight 5 -> 1. sıra
+// Ayşe: 3 neden (devamsizlik_takip [3], program_dusuk [2], deneme_yok [1]) -> 3 neden, maxWeight 3 -> 2. sıra
+// Ali: 2 neden (kritik_karar [5], net_dususu [4]) -> 2 neden -> 3. sıra
+assert.equal(summary.attention.length, 3, 'Tam 3 öğrenci ilgi bekliyor olmalı')
+assert.equal(summary.attention[0].studentId, 's-mehmet', 'İlk sırada 3 nedeni ve maxWeight 5 olan Mehmet olmalı')
+assert.equal(summary.attention[0].reasons.length, 3)
+assert.equal(summary.attention[1].studentId, 's-ayse', 'İkinci sırada 3 nedeni ve maxWeight 3 olan Ayşe olmalı')
+assert.equal(summary.attention[1].reasons.length, 3)
+assert.equal(summary.attention[2].studentId, 's-ali', 'Üçüncü sırada 2 nedeni olan Ali olmalı')
+assert.equal(summary.attention[2].reasons.length, 2)
+
+// B. 21 günden eski deneme için daysSinceLast hesaplaması
+const oldExamStudent: Student = {
+  id: 's-old-exam',
+  institution_id: 'inst-1',
+  full_name: 'Eski Sınavlı Öğrenci',
+  grade: '12. Sınıf',
+  track: 'SAY',
+  school_name: null,
+  target_field: null,
+  notes: null,
+  phone_number: null,
+  parent_phone_number: null,
+  is_active: true,
+  created_at: '2026-08-01T09:00:00Z',
+  access_code: null,
+  coaching_coach_id: null,
+  photo_url: null,
+}
+
+// 2026-10-22'den tam 30 gün önce: 2026-09-22
+const oldExam: EnrichedMockExam = {
+  id: 'e-old-1',
+  student_id: 's-old-exam',
+  name: 'Eski Deneme',
+  publisher: null,
+  exam_type: 'TYT',
+  exam_date: '2026-09-22',
+  score: null,
+  percentile: null,
+  ranks: null,
+  coach_note: null,
+  created_at: '2026-09-22T10:00:00Z',
+  totalNet: 65,
+  sectionsList: [],
+  hasTopics: false,
+  topicResultsCount: 0,
+}
+
+const oldExamSummary = buildHomeSummary({
+  students: [oldExamStudent],
+  coachDecisions: [],
+  mockExams: [oldExam],
+  weeklyTasks: [
+    {
+      id: 't-dummy',
+      student_id: 's-old-exam',
+      subject_id: 1,
+      topic_id: 101,
+      task_type: 'soru',
+      title: 'Görev',
+      question_count: 50,
+      completed: true,
+      day_index: 0,
+      week_key: THIS_WEEK_MON,
+      institution_id: 'inst-1',
+      created_at: '2026-10-19T08:00:00Z',
+      is_exam: false,
+    },
+  ],
+  attendanceRecords: [],
+  referenceDate: REF_DATE,
+})
+
+const oldAtt = oldExamSummary.attention.find((a) => a.studentId === 's-old-exam')
+assert.ok(oldAtt, 'Eski denemeli öğrenci ilgi listesinde olmalı')
+const oldDenemeYok = oldAtt.reasons.find((r) => r.kind === 'deneme_yok')
+assert.ok(oldDenemeYok, 'Eski denemeli öğrenci deneme_yok nedeni almalı')
+const oldDetail = oldDenemeYok.detail as { daysSinceLast: number | null }
+assert.equal(oldDetail.daysSinceLast, 30, '30 gün önceki deneme için daysSinceLast 30 olmalı')
+
+// C. Boş girdi koruması (sıfır kayıtlı durumlar için güvenli varsayılanlar)
+const emptySummary = buildHomeSummary({
+  students: [],
+  coachDecisions: [],
+  mockExams: [],
+  weeklyTasks: [],
+  attendanceRecords: [],
+  referenceDate: REF_DATE,
+})
+assert.equal(emptySummary.students.totalActive, 0)
+assert.equal(emptySummary.students.newThisMonth, 0)
+assert.equal(emptySummary.attention.length, 0)
+assert.equal(emptySummary.program.completionRate, null, 'Görev planlanmamışsa completionRate null olmalı')
+assert.equal(emptySummary.program.toDate.pct, 0)
+assert.equal(emptySummary.exams.avgDelta, null)
+assert.equal(emptySummary.reports.criticalTopicCount, 0)
+assert.equal(emptySummary.reports.topTopic, null)
+
+// D. chunkArray fonksiyonu doğrulaması
+const sampleList = [1, 2, 3, 4, 5, 6, 7]
+const chunks = chunkArray(sampleList, 3)
+assert.deepEqual(chunks, [[1, 2, 3], [4, 5, 6], [7]], 'chunkArray 3 elemanlık alt parçalara bölmeli')
+
+console.log('✓ 8. İlave uç durumlar, attention sıralaması ve chunkArray başarıyla doğrulandı.')
 
 console.log('\n==============================================')
 console.log('✅ TÜM G2 + G2b ÖZ-TESTLERİ BAŞARIYLA GEÇTİ!')
