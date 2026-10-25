@@ -1,6 +1,6 @@
 # Deneme Karnesi: Ders + Konu Girişi ve Gelişim Analizi — Tasarım
 
-Tarih: 2026-10-24 · Durum: ONAYLANDI, uygulamada (agy, coordination.md K1–K6) · Planlayan: Opus · Uygulayan: agy / Sonnet alt ajanları
+Tarih: 2026-10-24 · Durum: TAMAMLANDI & CANLIDA (2026-10-24/25, K1–K6 tamamlandı; K2 ders-önce kuralı güncellendi) · Planlayan: Opus · Uygulayan: agy
 
 Ekran taslakları: https://claude.ai/artifact/7cjK71eAWrewk2MTvR2gJ1 (paylaşılabilir sürüm; düzenlenebilir tuval: https://claude.ai/artifact/84FANavGCFNUyJ46mocytS) (giriş · koç genel+ders · koç konu · öğrenci portalı · veli portalı)
 

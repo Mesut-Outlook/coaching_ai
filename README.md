@@ -14,7 +14,8 @@ Eda Cangert'in koçluk merkezi için koç paneli. Öğrenci takibi, deneme sonu�
 |---|---|---|
 | Koç Paneli | `/panel` | Tüm öğrenciler tek bakışta — kritik konu sayısı, son deneme netleri, haftalık tamamlama oranı |
 | Öğrenciler | `/ogrenciler` | Öğrenci listesi/profili — ekleme, düzenleme, arşivleme, profil fotoğrafı, öğrenci + veli telefonu, mobil erişim linki gönderme |
-| Deneme Girişi | `/denemeler` | Deneme sonucu girişi (net otomatik hesaplanır), açılır bölüm tablosu, tüm deneme geçmişi, sonucu WhatsApp ile gönderme. Sınav türü öğrencinin sınıfına kilitli: LGS öğrencisi yalnız LGS, YKS öğrencisi yalnız TYT/AYT girer |
+| Deneme Girişi & Karnesi | `/denemeler` | Yayın karnesi düzeninde deneme girişi (alt ders D/Y, isteğe bağlı karne konuları), atomik kayıt, genel sonuçlar, koç özeti ve tüm denemeler listesi. Sınav türü öğrencinin sınıfına kilitli: LGS öğrencisi yalnız LGS, YKS öğrencisi yalnız TYT/AYT girer |
+| Deneme Analizi (3 Seviye) | `/ogrenciler/:id` | Öğrenci profilinde Genel, Ders ve Konu seviyesinde gelişim analizi, SVG net çizgisi, kayıp net çubukları, D/Y/B dağılımı, konu ısı tablosu ve koç içgörüleri |
 | Konu Yeterlilik Haritası | `/konular` | Konu bazlı durum takibi, konu testi girişi, konu/ders ortalaması, "Koç Kararı" onayı. Yalnız öğrencinin sınıfına ait dersler ve konular listelenir |
 | Haftalık Program | `/program` | Gün gün görev planlama (sürükle-bırak), tek sayfa yazdırma/PDF, WhatsApp ile gönderme |
 | Devamsızlık | `/devamsizlik` | Devamsızlık kaydı (oturum türü, mazeret), öğrenci özeti, "Takip gerekli" rozeti, WhatsApp bildirimi |
@@ -60,13 +61,18 @@ Supabase tarafında yapılması gerekenler (bir kere):
 | `npm run dev` | Geliştirme sunucusu |
 | `npm run build` | Prodüksiyon derlemesi (`tsc -b && vite build`). `src/types/database.test-d.ts` derleme-zamanı tip testleri de burada koşar. |
 | `npm run test:types` | `src/types/database.ts` ile `supabase/schema.sql` arasındaki kaymayı **statik** denetler (DB'ye bağlanmaz). Şemaya ya da tip dosyasına dokunan her değişiklikten sonra çalıştır. |
+| `npm run test:exam-report` | K3 Deneme Analiz Motoru ve Rol İçgörüleri öz-test suiti (`scripts/examReport.selftest.ts`). |
 | `npm run lint` | Oxlint |
 | `npm run preview` | Derlenmiş çıktıyı yerelde önizle |
 | `npm run backup` | Tüm öğrenci verisini + profil fotoğraflarını `backups/YYYY-MM-DD/`'ye indirir. `SUPABASE_SERVICE_ROLE_KEY` gerektirir. |
 | `npm run restore` | Yedeği geri yükler (FK bağımlılık sırasına göre). |
 | `npm run generate:access-codes` | Kodu olmayan öğrencilere mobil portal erişim kodu üretir. |
+| `npm run seed:exam-catalog` | TYT/AYT/LGS sınav alt ders ve karne konu kataloğunu yükler (`exam_subjects`, `exam_topics`). Satır satır upsert eder, silme yapmaz. |
+| `npm run seed:exam-links` | Karne konuları ile müfredat konuları arasındaki eşleştirme bağlantılarını yükler (`exam_topic_links`). |
+| `npm run seed:ayt` | AYT Eşit Ağırlık ve Sözel müfredatını (Edebiyat, Felsefe grubu vb.) yükler. |
 | `npm run seed:lgs` | LGS **8. sınıf** müfredatını yükler (`src/data/lgsMufredat.json`). Hiçbir şey silmez, satır satır upsert eder — tekrar tekrar çalıştırılabilir. |
 | `npm run seed:lgs7` | LGS **7. sınıf** müfredatını yükler (`src/data/lgsMufredat7.json`) ve mevcut LGS konularını geriye dönük `8. Sınıf` olarak damgalar. Aynı şekilde silme yapmaz. |
+| `npm run seed:ek` | Ek yerleştirme kılavuz verisini yükler (`docs/ek-yerlestirme.md`). |
 | `npm run seed:universities` | YÖK Atlas verisini `university_rankings` tablosuna yükler (`src/data/universityRankings.json` gerekir). |
 | `npm run seed` | ⚠️ **Dikkatli kullan** — `subjects`/`topics` tablosunu tamamen silip `src/tytSubjects.json`'daki **eski** listeyle yeniden doldurur (cascade ile bağlı öğrenci verisini de siler). Çalıştırmadan önce `coordination.md`'ye bak. |
 
