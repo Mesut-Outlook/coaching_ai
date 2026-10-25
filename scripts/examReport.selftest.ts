@@ -22,6 +22,8 @@ import {
   calcLossNet,
   calcSubjectAccuracy,
   calcTopicAccuracy,
+  isExamWithoutTopics,
+  countExamsWithoutTopics,
   generateExamReport,
   type RawExamRecord,
   type ExamReportCatalog,
@@ -224,6 +226,42 @@ console.log('  Örnek Koç Uyarısı:', roleInsights.coach[0]?.text)
 console.log('  Örnek Öğrenci Uyarısı:', roleInsights.student.find((s) => !s.is_positive)?.text)
 console.log('  Örnek Öğrenci Olumlu:', roleInsights.student.find((s) => s.is_positive)?.text)
 console.log('  Örnek Veli Bilgilendirmesi:', roleInsights.parent[0]?.text)
+
+// ---------------------------------------------------------------------------
+// 5. "Konusu Girilmemiş Deneme" Sayacı (G1 Bug Düzeltmesi)
+// ---------------------------------------------------------------------------
+
+// Bölümü olmayan deneme sayılmamalı
+assert.equal(isExamWithoutTopics({ sectionsList: [] }), false, 'Bölümsüz deneme sayılmamalı')
+assert.equal(isExamWithoutTopics({ sections: [] }), false, 'Bölümsüz raw exam sayılmamalı')
+
+// Bölümü olan ama konusu olmayan deneme sayılmalı
+assert.equal(isExamWithoutTopics({ sectionsList: [{ id: 's1' }], hasTopics: false }), true)
+assert.equal(isExamWithoutTopics({ sectionsList: [{ id: 's1' }], topicResultsCount: 0 }), true)
+assert.equal(isExamWithoutTopics({ sections: [{ id: 's1' }], topic_results: [] }), true)
+
+// Bölümü olan ve konusu girilmiş deneme sayılmamalı
+assert.equal(isExamWithoutTopics({ sectionsList: [{ id: 's1' }], hasTopics: true }), false)
+assert.equal(isExamWithoutTopics({ sectionsList: [{ id: 's1' }], topicResultsCount: 64 }), false)
+assert.equal(isExamWithoutTopics({ sections: [{ id: 's1' }], topic_results: [{ id: 't1' }] }), false)
+
+// Test Test senaryosu: 10 denemenin hepsinde konu var -> sayaç 0
+const testTestExams = Array.from({ length: 10 }, (_, i) => ({
+  id: `test-exam-${i + 1}`,
+  sectionsList: [{ id: `sec-${i + 1}` }],
+  hasTopics: true,
+  topicResultsCount: 64,
+}))
+assert.equal(countExamsWithoutTopics(testTestExams), 0, 'Test Test için 10 konulu denemede sayaç 0 olmalı')
+
+// 10 konulu deneme + 1 konusu girilmemiş deneme (örn. eski Aslı Aktaş) -> sayaç 1
+const withOneMissingTopic = [
+  ...testTestExams,
+  { id: 'asli-aktas-1', sectionsList: [{ id: 'sec-asli' }], hasTopics: false, topicResultsCount: 0 },
+]
+assert.equal(countExamsWithoutTopics(withOneMissingTopic), 1, '1 konusu eksik deneme eklenince sayaç 1 olmalı')
+
+console.log('✓ "Konusu girilmemiş deneme" sayacı (G1) doğrulandı (Test Test 0, +1 eksik denemeyle 1).')
 
 console.log('\n==============================================')
 console.log('✅ TÜM K3 ÖZ-TESTLERİ BAŞARIYLA GEÇTİ!')

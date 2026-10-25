@@ -38,6 +38,8 @@ export default function DenemelerPage() {
       students: { full_name: string; track: string; phone_number: string | null; parent_phone_number: string | null } | null
       totalNet: number
       sectionsList: MockExamSection[]
+      hasTopics?: boolean
+      topicResultsCount?: number
     })[]
   >([])
   const [listSearch, setListSearch] = useState('')
@@ -128,10 +130,40 @@ export default function DenemelerPage() {
           .in('mock_exam_id', examIds)
         if (sectionsError) throw sectionsError
 
+        // Konu sonuçlarını çek (1000 satır sınırına takılmamak için sayfalama ile)
+        let rawTopics: { mock_exam_id: string }[] = []
+        let from = 0
+        const pageSize = 1000
+        while (true) {
+          const { data: topicBatch, error: topicsError } = await supabase
+            .from('mock_exam_topic_results')
+            .select('mock_exam_id')
+            .in('mock_exam_id', examIds)
+            .range(from, from + pageSize - 1)
+          if (topicsError) throw topicsError
+          if (!topicBatch || topicBatch.length === 0) break
+          rawTopics = rawTopics.concat(topicBatch)
+          if (topicBatch.length < pageSize) break
+          from += pageSize
+        }
+
+        const topicCountsByExam: Record<string, number> = {}
+        for (const t of rawTopics) {
+          topicCountsByExam[t.mock_exam_id] = (topicCountsByExam[t.mock_exam_id] || 0) + 1
+        }
+
         const enrichedAllExams = rawAllExams.map((exam: any) => {
           const secs = rawSections?.filter((s) => s.mock_exam_id === exam.id) || []
           const totalNet = Math.round(secs.reduce((sum, s) => sum + Number(s.net), 0) * 100) / 100
-          return { ...exam, totalNet, sectionsList: secs, students: exam.students as any }
+          const topicResultsCount = topicCountsByExam[exam.id] || 0
+          return {
+            ...exam,
+            totalNet,
+            sectionsList: secs,
+            students: exam.students as any,
+            hasTopics: topicResultsCount > 0,
+            topicResultsCount,
+          }
         })
         setAllExams(enrichedAllExams)
       } else {

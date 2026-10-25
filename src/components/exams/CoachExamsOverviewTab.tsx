@@ -9,6 +9,7 @@ import {
   Filter,
 } from 'lucide-react'
 import type { Student, MockExam, MockExamSection } from '../../types/database'
+import { countExamsWithoutTopics } from '../../lib/examReport'
 import LossBarChart from '../charts/LossBarChart'
 
 export interface CoachExamsOverviewTabProps {
@@ -17,6 +18,8 @@ export interface CoachExamsOverviewTabProps {
     students: { full_name: string; track: string; phone_number: string | null; parent_phone_number: string | null } | null
     totalNet: number
     sectionsList: MockExamSection[]
+    hasTopics?: boolean
+    topicResultsCount?: number
   })[]
 }
 
@@ -24,21 +27,20 @@ export default function CoachExamsOverviewTab({ students, allExams }: CoachExams
   const [selectedStudentFilter, setSelectedStudentFilter] = useState<string>('ALL')
 
   // 1. Son 7 Günde Girilen Deneme Sayısı
-  const now = new Date()
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const last7DaysCount = useMemo(() => {
+    const now = new Date()
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     return allExams.filter((e) => {
       const examDate = new Date(e.exam_date)
       return examDate >= sevenDaysAgo && examDate <= now
     }).length
-  }, [allExams, sevenDaysAgo, now])
+  }, [allExams])
 
   // 2. Konusu Girilmemiş Denemeler
   // MockExam nesnesinde sections var ama alt konu sayısı henüz girilmemiş olanlar
   // (sectionsList'i olan ama konusu olmayanlar)
   const examsWithoutTopicsCount = useMemo(() => {
-    // Burada konusu girilmemiş denemeler kabaca konusu girilmemiş kayıtları temsil eder
-    return allExams.filter((e) => !e.score && e.sectionsList.length > 0).length
+    return countExamsWithoutTopics(allExams)
   }, [allExams])
 
   // 3. Öğrenci Başına Son Deneme ve Δ Değişimi

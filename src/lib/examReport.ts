@@ -282,6 +282,51 @@ export function calcTopicAccuracy(correct: number, questionCount: number): numbe
   return round2((correct / questionCount) * 100)
 }
 
+/**
+ * Bir denemenin bölümleri girilmiş ancak konu detayları henüz girilmemiş mi?
+ * - Denemenin bölümleri olmalı (sectionsList veya sections > 0).
+ * - Konu verisi bulunmamalı:
+ *   - hasTopics === false
+ *   - topicResultsCount === 0
+ *   - topic_results dizisi boş
+ */
+export function isExamWithoutTopics(exam: {
+  sectionsList?: readonly unknown[]
+  sections?: readonly unknown[]
+  hasTopics?: boolean
+  topicResultsCount?: number
+  topic_results?: readonly unknown[]
+}): boolean {
+  const sectionsCount = exam.sectionsList?.length ?? exam.sections?.length ?? 0
+  if (sectionsCount === 0) return false
+
+  if (typeof exam.hasTopics === 'boolean') {
+    return !exam.hasTopics
+  }
+  if (typeof exam.topicResultsCount === 'number') {
+    return exam.topicResultsCount === 0
+  }
+  if (Array.isArray(exam.topic_results)) {
+    return exam.topic_results.length === 0
+  }
+  return true
+}
+
+/**
+ * Konusu girilmemiş deneme sayısını hesaplar.
+ */
+export function countExamsWithoutTopics(
+  exams: readonly {
+    sectionsList?: readonly unknown[]
+    sections?: readonly unknown[]
+    hasTopics?: boolean
+    topicResultsCount?: number
+    topic_results?: readonly unknown[]
+  }[]
+): number {
+  return exams.filter(isExamWithoutTopics).length
+}
+
 // ---------------------------------------------------------------------------
 // Ana Rapor Üretici
 // ---------------------------------------------------------------------------
