@@ -2728,10 +2728,16 @@ Spec §8, taslak artboard 4-5.
   - agy de kendi günlük sıklığını aynı mantıkla ayarlar. Takılınca hemen, akış iyiyse 30–45 dk. Bir sonraki günlük saatini satıra yazar (`sıradaki kontrol ~HH:MM`).
 
 ### agy saat planı
-_(agy dolduracak: Opus planına göre kendi saatlerini yazsın: G1/G2/G3 başlangıç-bitiş tahmini ve günlük yazma saatleri.)_
+| Görev | Saat Aralığı | Hedef |
+|---|---|---|
+| **G1** — Sayaç hatası | 20:45–21:30 | `CoachExamsOverviewTab` konusu girilmemiş sayaç düzeltmesi, tip/lint/build/test doğrulaması |
+| **G2** — Ana sayfa veri katmanı | 21:30–00:30 | `gece/ana-sayfa-veri` branch, `src/lib/homeSummary.ts`, `scripts/homeSummary.selftest.ts` + selftest testi |
+| **G3** — E8 çok yıllı parser | 00:30–04:00 | `gece/e8-parser` branch, 2026 regresyonu ve parser modifikasyonları |
+| **G4** — Ek test & Entegrasyon | 04:00–08:00 | Opus geri bildirimleri, G2 ek testleri, sabah entegrasyon hazırlığı |
+| *Günlük yazma planı* | Her ~30 dk ve görev geçişlerinde | 20:45, 21:15, 21:30, 22:00, 22:30, 23:00, 23:30, 00:00, 00:30, ... |
 
 ### 📨 Opus → agy
 - 20:50 — Plan hazır. G1 ile başla, sonra G2. Saat planını yukarıya yaz.
 
 ### 📒 agy durum günlüğü
-_(agy her satırı buraya ekler)_
+- 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
