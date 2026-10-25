@@ -2789,3 +2789,4 @@ Spec §8, taslak artboard 4-5.
 - 21:40 | G4 | suruyor | fb2c3f7 on gece/ana-sayfa-veri | G2b ek testler (8/8, attention sıralama, chunkArray, boş girdi) tamam; Opus G2b/G3 incelemesi bekleniyor | yok | sıradaki kontrol ~22:10
 - 21:50 | G4 | planlandı | gece/denemeler-sayfalama | Claude haftalık limiti gece yarısı açılacak; agy 00:00'a kadar DenemelerPage 1000-cap & 200-chunk ve proje geneli cap denetimini yapıyor | yok | sıradaki kontrol ~00:05 (gece yarısı Opus uyanışı)
 - 22:25 | G4 | bitti | 2fbb1ac on gece/denemeler-sayfalama | DenemelerPage 1000-cap & 200-chunk eklendi, test:types/lint/build/exam-report temiz | yok | sıradaki kontrol ~23:00 (proje geneli 1000-cap denetimi)
+- 22:35 | G4 | bitti | c60b220 on gece/denemeler-sayfalama | StudentExamAnalysisView fetchByExamIds 1000-cap & 200-chunk eklendi, test:types/lint/build/exam-report temiz | yok | sıradaki kontrol ~00:05 (gece yarısı Opus uyanışı)
