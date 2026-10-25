@@ -2668,6 +2668,7 @@ Spec §8, taslak artboard 4-5.
 |---|---|
 | 20:45–21:15 | Bu plan + timer'lar. Ana sayfa **veri sözleşmesi** (aşağıda) yazıldı. agy G1+G2'ye hemen başlayabilir. |
 | 21:15–23:00 | **Araştırma:** 2025–26 SaaS/eğitim dashboard örnekleri, "aksiyon odaklı" ana sayfa kalıpları, ince modern scrollbar (`scrollbar-width`/`scrollbar-color`, kaydırınca beliren ince çubuk, kenar gölgesi), View Transitions API, `prefers-reduced-motion`. Mevcut `global.css` token'larıyla uyumlu renk genişletmesi. |
+| — | **Tutarlılık şartı:** Ana sayfa, Raporlar 2.0 taslaklarıyla (https://claude.ai/artifact/SnhPEnMiaUgVY7idHoKn7W) aynı görsel dili kullanır: KPI şeridi, renkli rozetler (KRİTİK/ÖDEV/TEKRAR/İLERLEME), satır yanında aksiyon düğmesi, ders renkleri. Ana sayfadaki "dikkat isteyen öğrenciler" listesi ileride B1 "Görüşmede konuşulacaklar"a ve 360 rapora açılan kapı olur. Raporlar kısayolunda R1–R4 henüz yok; ana sayfa bugünkü veriyle çalışır, sonradan dolacak alanlar boş kart olarak çizilmez. |
 | 23:00–03:30 | **Önizleme sayfası (artifact):** yeni Ana Sayfa + yeni Sidebar. Gerçek veri şekliyle sahte veri kullanılır (gerçek öğrenci adı yok). Açık/koyu tema ve mobil uyumlu. Gerekirse A/B iki varyant. |
 | 03:30–06:30 | Cilalama, erişilebilirlik, mobil. G2'nin veri alanları tasarımla birebir eşleştirilir. Tasarımda olup veride karşılığı olmayan alan kalmaz, varsa "veri yok" diye işaretlenir. |
 | 06:30–08:00 | Sabah raporu: önizleme linki, agy'nin bitirdikleri (doğrulanmış), kullanıcıdan beklenen kararlar. |
