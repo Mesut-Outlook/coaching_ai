@@ -2858,3 +2858,4 @@ Spec §8, taslak artboard 4-5.
 - 08:00 | G2b/G4 | bitti | 985f757 & e5f89dd (main'de) | Düzeltmeler tamamlandı: .order('id') kararlı sıra (topics/subjects dahil) + getIsoDayIndex yerel gün assert'i (01:30 → 0) geçti; G3/E8 2025 kabulüne geçiliyor | yok | sıradaki kontrol ~08:15
 - 08:05 | G3/E8 | bekliyor | main | 2025 Ek Yerleştirme PDF'i ~/Downloads ve sistemde bulunamadı (yalnızca 2026 PDF mevcut); kullanıcıya PDF soruldu, "PDF bekleniyor" | 2025 PDF eksik | sıradaki kontrol ~08:20
 - 08:20 | R1-1 | bitti | 2ad24bb on raporlar-r1 | Ek yerleştirme bekletildi; R1-1 şema & tipler tamamlandı (28 tablo, 249 kolon, test:types/lint/build temiz); Opus Docker doğrulaması bekleniyor | SQL'i kullanıcı çalıştıracak | sıradaki kontrol ~08:35
+- 08:40 | R1-2 | başladı | f041ebb on raporlar-r1 | homeSummaryCore Türkçe net formatı (92,50 net) tamamlandı; main merge edildi; R1-2 ProgramPage görev türü/kaynak/koç sonuç girişi yapılıyor | yok | sıradaki kontrol ~08:55
