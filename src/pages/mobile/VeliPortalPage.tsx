@@ -1,13 +1,19 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
-import MobileBottomNav from '../../components/mobile/MobileBottomNav'
+import MobileBottomNav, { type PortalNavTab } from '../../components/mobile/MobileBottomNav'
 import ExamSectionsTable from '../../components/exams/ExamSectionsTable'
 import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../../lib/attendance'
 import { PORTAL_THEME, roleBadgeStyle, roleTopBarStyle } from '../../lib/portalTheme'
 import type { AbsenceStatus, ExcuseType, SessionType } from '../../types/database'
 import StudentExamAnalysisView from '../../components/exams/StudentExamAnalysisView'
 import { PORTAL_PARENT_PALETTE } from '../../components/charts/chartPalette'
+import ParentSummaryCard from '../../components/reports/ParentSummaryCard'
+import {
+  computeSummaryStats,
+  generateParentSupportTips,
+  formatWeekRangeFromKey,
+} from '../../lib/parentSummaryCore'
 import {
   clearPortalSession,
   getPortalSession,
@@ -18,11 +24,11 @@ import {
 } from '../../lib/portal'
 
 const card = {
-  backgroundColor: '#ffffff',
+  backgroundColor: 'var(--surface)',
   borderRadius: 16,
   padding: 18,
   border: '1px solid var(--border)',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+  boxShadow: 'var(--shadow-card)',
 } as const
 
 export default function VeliPortalPage() {
@@ -30,7 +36,7 @@ export default function VeliPortalPage() {
   const [data, setData] = useState<PortalDashboard | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'tasks' | 'exams' | 'goals' | 'attendance'>('tasks')
+  const [activeTab, setActiveTab] = useState<PortalNavTab>('tasks')
   const [openExamId, setOpenExamId] = useState<string | null>(null)
   const [examSubTab, setExamSubTab] = useState<'analysis' | 'list'>('analysis')
   const [examReportData, setExamReportData] = useState<PortalExamReportData | null>(null)
@@ -87,9 +93,40 @@ export default function VeliPortalPage() {
     navigate('/portal')
   }
 
+  // Summary stats for the parent weekly card
+  const summaryStats = useMemo(() => {
+    if (!data) return null
+    return computeSummaryStats({
+      tasks: data.tasks,
+      latestExam: data.exams[0] ?? null,
+      previousExam: data.exams[1] ?? null,
+      attendanceRecords: data.attendance,
+      targetNet: data.my_week?.target_net ?? null,
+    })
+  }, [data])
+
+  // Support tips for the parent
+  const tips = useMemo(() => {
+    if (!summaryStats) return []
+    return generateParentSupportTips({
+      completionPct: summaryStats.completionPct,
+      hasSignificantExamDrop: summaryStats.hasExamDrop,
+      hasAttendanceIssue: summaryStats.attendanceCount > 0,
+    })
+  }, [summaryStats])
+
+  const coachNote =
+    data?.my_week?.coach_latest_note ||
+    examReportData?.exams?.[0]?.coach_note ||
+    null
+
+  const weekRangeText = data?.week_start
+    ? formatWeekRangeFromKey(data.week_start)
+    : 'Bu Hafta'
+
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink)' }}>
         Yükleniyor...
       </div>
     )
@@ -98,7 +135,7 @@ export default function VeliPortalPage() {
   if (loadError) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14, textAlign: 'center' }}>
-        <AlertTriangle size={32} style={{ color: '#dc2626' }} />
+        <AlertTriangle size={32} style={{ color: 'var(--critical)' }} />
         <div style={{ fontSize: 15, color: 'var(--ink)' }}>{loadError}</div>
         <button type="button" className="btn btn-primary" onClick={() => navigate('/portal')}>
           Giriş ekranına dön
@@ -107,23 +144,18 @@ export default function VeliPortalPage() {
     )
   }
 
-  if (!data) return null
+  if (!data || !summaryStats) return null
 
   const theme = PORTAL_THEME.veli
-  const { student, tasks, exams, attendance, week_start, is_current_week } = data
-  const completedCount = tasks.filter((t) => t.completed).length
-  const totalCount = tasks.length
-  const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
-  const latestExam = exams[0] ?? null
-  const unexcusedAbsences = attendance.filter((a) => a.excuse_type === 'yok').length
+  const { student, exams, attendance, week_start, is_current_week } = data
 
   return (
-    <div className="portal-page" style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: 90 }}>
+    <div className="portal-page" style={{ minHeight: '100vh', backgroundColor: 'var(--paper)', paddingBottom: 90 }}>
       <div style={{ position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={roleTopBarStyle(theme)} />
         <header
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: 'var(--surface)',
             padding: '14px 20px',
             borderBottom: '1px solid var(--border)',
             display: 'flex',
@@ -145,61 +177,20 @@ export default function VeliPortalPage() {
       <main style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
         {activeTab === 'tasks' && (
           <>
-            <div style={card}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase' }}>
-                Haftalık Çalışma İlerlemesi
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: theme.accentStrong, marginTop: 4 }}>
-                %{completionPct}
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
-                {completedCount} / {totalCount} görev tamamlandı
-              </div>
-              {week_start && !is_current_week && (
-                <div style={{ marginTop: 10, fontSize: 12, color: '#b45309', backgroundColor: '#fffbeb', padding: '8px 10px', borderRadius: 8 }}>
-                  Bu hafta için henüz program girilmemiş. Yukarıdaki oran {formatDateTr(week_start)} haftasına ait.
-                </div>
-              )}
-            </div>
+            {/* R3-6: Salt-okunur Veli Haftalık Özeti ve Koç Notu Kartı */}
+            <ParentSummaryCard
+              studentName={student.full_name}
+              weekRangeText={weekRangeText}
+              stats={summaryStats}
+              tips={tips}
+              coachNote={coachNote}
+            />
 
-            <div style={card}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase' }}>
-                Son Kayıtlı Deneme
+            {week_start && !is_current_week && (
+              <div style={{ fontSize: 12, color: 'var(--warning-text)', backgroundColor: 'var(--warning-bg)', padding: '10px 14px', borderRadius: 'var(--radius-md, 12px)', border: '1px solid var(--border-soft)' }}>
+                Bu hafta için henüz yeni program girilmemiş. Yukarıdaki oran {formatDateTr(week_start)} haftasına aittir.
               </div>
-              {latestExam ? (
-                <div style={{ marginTop: 6 }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ink)' }}>{latestExam.name}</div>
-                  <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
-                    {latestExam.exam_type}
-                    {latestExam.publisher ? ` · ${latestExam.publisher}` : ''} · {formatDateTr(latestExam.exam_date)}
-                  </div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: theme.accentStrong, marginTop: 6 }}>
-                    {Math.round(Number(latestExam.total_net) * 100) / 100} <span style={{ fontSize: 13, color: 'var(--ink-soft)', fontWeight: 600 }}>net</span>
-                  </div>
-                  {examReportData?.exams?.[0]?.coach_note && (
-                    <div style={{ marginTop: 10, padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12.5, color: '#334155', fontStyle: 'italic' }}>
-                      Koç Notu: "{examReportData.exams[0].coach_note}"
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div style={{ fontSize: 14, color: 'var(--ink-soft)', marginTop: 6 }}>
-                  Henüz girilmiş deneme sonucu yok.
-                </div>
-              )}
-            </div>
-
-            <div style={card}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase' }}>
-                Devamsızlık & Katılım
-              </div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: unexcusedAbsences > 0 ? '#dc2626' : '#10b981', marginTop: 4 }}>
-                {unexcusedAbsences === 0 ? '✓ Mazeretsiz devamsızlık yok' : `${unexcusedAbsences} mazeretsiz devamsızlık`}
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
-                Toplam kayıtlı devamsızlık: {attendance.length}
-              </div>
-            </div>
+            )}
 
             {student.target_program && (
               <div style={card}>
@@ -222,7 +213,7 @@ export default function VeliPortalPage() {
         {activeTab === 'exams' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ display: 'flex', gap: 4, background: '#e2e8f0', padding: 3, borderRadius: 10 }}>
+              <div style={{ display: 'flex', gap: 4, background: 'var(--surface-alt)', border: '1px solid var(--border-soft)', padding: 3, borderRadius: 10 }}>
                 <button
                   type="button"
                   onClick={() => setExamSubTab('analysis')}
@@ -233,9 +224,9 @@ export default function VeliPortalPage() {
                     fontSize: 13,
                     fontWeight: 700,
                     cursor: 'pointer',
-                    background: examSubTab === 'analysis' ? '#ffffff' : 'transparent',
+                    background: examSubTab === 'analysis' ? 'var(--surface)' : 'transparent',
                     color: examSubTab === 'analysis' ? theme.accentStrong : 'var(--ink-soft)',
-                    boxShadow: examSubTab === 'analysis' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    boxShadow: examSubTab === 'analysis' ? 'var(--shadow-card)' : 'none',
                   }}
                 >
                   Analiz & Özet
@@ -250,9 +241,9 @@ export default function VeliPortalPage() {
                     fontSize: 13,
                     fontWeight: 700,
                     cursor: 'pointer',
-                    background: examSubTab === 'list' ? '#ffffff' : 'transparent',
+                    background: examSubTab === 'list' ? 'var(--surface)' : 'transparent',
                     color: examSubTab === 'list' ? theme.accentStrong : 'var(--ink-soft)',
-                    boxShadow: examSubTab === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    boxShadow: examSubTab === 'list' ? 'var(--shadow-card)' : 'none',
                   }}
                 >
                   Geçmiş Denemeler ({exams.length})
@@ -274,7 +265,7 @@ export default function VeliPortalPage() {
                     initialCatalog={examReportData.catalog}
                     initialExams={examReportData.exams}
                   />
-                  <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11.5, color: '#8A86A3', padding: '12px 16px' }}>
+                  <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11.5, color: 'var(--ink-faint)', padding: '12px 16px' }}>
                     Sayılar girilen deneme sonuçlarından hesaplanır; konusu girilmemiş denemeler konu analizinde yer almaz.
                   </div>
                 </div>
@@ -340,7 +331,7 @@ export default function VeliPortalPage() {
 
         {activeTab === 'goals' && (
           <>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>Devamsızlık Geçmişi</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>Devamsızlık Geçmişi</h3>
             {attendance.length === 0 ? (
               <div style={{ ...card, textAlign: 'center', padding: 30, color: 'var(--ink-soft)' }}>
                 Kayıtlı devamsızlık yok. 👏
@@ -349,7 +340,14 @@ export default function VeliPortalPage() {
               attendance.map((a) => {
                 const unexcused = a.excuse_type === 'yok'
                 return (
-                  <div key={a.id} style={{ ...card, padding: 14, borderLeft: `4px solid ${unexcused ? '#dc2626' : '#f59e0b'}` }}>
+                  <div
+                    key={a.id}
+                    style={{
+                      ...card,
+                      padding: 14,
+                      borderLeft: `4px solid ${unexcused ? 'var(--critical)' : 'var(--warning)'}`,
+                    }}
+                  >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                       <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
                         {formatDateTr(a.absence_date)}
@@ -360,8 +358,8 @@ export default function VeliPortalPage() {
                           fontWeight: 700,
                           padding: '3px 9px',
                           borderRadius: 12,
-                          backgroundColor: unexcused ? '#fef2f2' : '#fffbeb',
-                          color: unexcused ? '#dc2626' : '#b45309',
+                          backgroundColor: unexcused ? 'var(--critical-bg)' : 'var(--warning-bg)',
+                          color: unexcused ? 'var(--critical-text)' : 'var(--warning-text)',
                         }}
                       >
                         {unexcused ? 'Mazeretsiz' : EXCUSE_LABELS[a.excuse_type as ExcuseType]}

@@ -337,6 +337,26 @@ export type WeeklyTask = {
   source?: string | null
   origin_kind?: TaskOriginKind
   origin_exam_topic_id?: number | null
+  duration_min?: number | null
+}
+
+export type ParentSummaryLog = {
+  id: string
+  student_id: string
+  week_start: string
+  opened_at: string
+  opened_by?: string | null
+  channel: string
+}
+
+export type TopicWeight = {
+  id: number
+  exam_type: ExamType
+  exam_topic_id: number
+  avg_questions: number
+  source: string
+  year_from?: number | null
+  year_to?: number | null
 }
 
 export type ExamCalendar = {
@@ -486,6 +506,8 @@ export type Database = {
       vakif_ogrenim_ucretleri: TableDef<VakifOgrenimUcreti>
       ogrenci_tercih_listeleri: TableDef<OgrenciTercihListesi>
       exam_calendar: TableDef<ExamCalendar>
+      parent_summary_log: TableDef<ParentSummaryLog>
+      topic_weights: TableDef<TopicWeight>
     }
     Views: {
       topic_exam_measurements: ViewDef<TopicExamMeasurement>

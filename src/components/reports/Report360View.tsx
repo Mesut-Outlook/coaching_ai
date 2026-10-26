@@ -8,6 +8,8 @@ import {
   RefreshCw,
   AlertCircle,
   HelpCircle,
+  Users,
+  Clock,
 } from 'lucide-react'
 import { gradeCurriculum } from '../../lib/curriculum'
 import { loadReport360Data, type Report360Data } from '../../lib/report360'
@@ -17,6 +19,9 @@ import PriorityMatrixChart from '../charts/PriorityMatrixChart'
 import ErrorProfileChart from '../charts/ErrorProfileChart'
 import ConsistencyDumbbellChart from '../charts/ConsistencyDumbbellChart'
 import CurriculumProgressChart from '../charts/CurriculumProgressChart'
+import ErrorReasonDonutChart from '../charts/ErrorReasonDonutChart'
+import ReviewTimingCard from './ReviewTimingCard'
+import InterventionImpactCard from './InterventionImpactCard'
 import AddToProgramPopover from '../program/AddToProgramPopover'
 import type { ExamType, Grade, TaskType } from '../../types/database'
 
@@ -315,6 +320,65 @@ export default function Report360View({
                 Yeterli seviyedeki konular
               </span>
             </div>
+
+            {/* 6. Kurum İçi Anonim Karşılaştırma (R4-2) */}
+            <div className="card" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 11, color: 'var(--ink-faint)', fontWeight: 700, textTransform: 'uppercase' }}>
+                  Kurum İçi Sıra
+                </span>
+                <Users size={15} style={{ color: 'var(--c-brand, var(--indigo-600))' }} />
+              </div>
+              {data.kpi.peerComparison?.hasEnoughStudents ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--ink)' }}>
+                      İlk %{data.kpi.peerComparison.topPercentile ?? data.kpi.peerComparison.percentile}
+                    </span>
+                    <span style={{ fontSize: 11.5, color: 'var(--ink-soft)' }}>
+                      ({data.kpi.peerComparison.rank}. sıra)
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 10.5, color: 'var(--ink-faint)' }}>
+                    {data.kpi.peerComparison.totalStudents} öğrenci arasında (son 30 gün)
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--ink-faint)' }}>
+                      —
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 10.5, color: 'var(--ink-faint)', lineHeight: 1.3 }}>
+                    {data.kpi.peerComparison?.message || 'Karşılaştırma için en az 5 öğrenci gerekli'}
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* 7. Çalışma Hızı / Soru Başına Süre (R4-3) */}
+            {data.kpi.timePerQuestionSec !== null && data.kpi.timePerQuestionSec !== undefined && (
+              <div className="card" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 11, color: 'var(--ink-faint)', fontWeight: 700, textTransform: 'uppercase' }}>
+                    Soru Başına Süre
+                  </span>
+                  <Clock size={15} style={{ color: 'var(--c-teal, #0D9488)' }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--ink)' }}>
+                    {data.kpi.timePerQuestionSec}
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-soft)' }}>
+                    sn / soru
+                  </span>
+                </div>
+                <span style={{ fontSize: 10.5, color: 'var(--ink-faint)' }}>
+                  Süre girilen ödevlerden hesaplandı
+                </span>
+              </div>
+            )}
           </div>
 
           {/* B2: HEDEF YOLU & B4: NET KAYBI PARETO */}
@@ -346,6 +410,13 @@ export default function Report360View({
             />
           </div>
 
+          {/* R4-4: YANLIŞ NEDENLERİ DAĞILIMI */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 16 }}>
+            <ErrorReasonDonutChart
+              data={data.errorReasons}
+            />
+          </div>
+
           {/* B7: MÜFREDAT İLERLEMESİ & B6: TUTARLILIK */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 16 }}>
             <CurriculumProgressChart
@@ -358,6 +429,21 @@ export default function Report360View({
               onAddToProgram={(topicId, topicName, suggestedType) =>
                 setPopoverTopic({ topicId, topicName, suggestedType })
               }
+            />
+          </div>
+
+          {/* B8: TEKRAR ZAMANI & B9: MÜDAHALE ETKİSİ */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 16 }}>
+            <ReviewTimingCard
+              data={data.reviewTiming}
+              studentId={studentId}
+              studentName={studentName}
+              studentGrade={studentGrade}
+              onTaskAdded={loadData}
+            />
+
+            <InterventionImpactCard
+              data={data.interventionImpact}
             />
           </div>
         </>

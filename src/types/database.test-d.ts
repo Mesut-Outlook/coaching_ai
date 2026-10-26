@@ -148,6 +148,8 @@ export type _tableNames = Expect<
     | 'vakif_ogrenim_ucretleri'
     | 'ogrenci_tercih_listeleri'
     | 'exam_calendar'
+    | 'parent_summary_log'
+    | 'topic_weights'
   >
 >
 
@@ -196,6 +198,7 @@ export type _insWeeklyTasks = Expect<
     | 'source'
     | 'origin_kind'
     | 'origin_exam_topic_id'
+    | 'duration_min'
   >
 >
 export type _insAttendance = Expect<

@@ -64,6 +64,21 @@ export type PortalAttendance = {
   excuse_note: string | null
 }
 
+export type PortalMyWeek = {
+  total_tasks: number
+  completed_tasks: number
+  target_net: number | null
+  latest_net: number | null
+  latest_exam_type?: string | null
+  days_to_exam: number | null
+  coach_latest_note: string | null
+  focus_topics: string[]
+  improved_topics: Array<{
+    topic_name: string
+    subject_name: string | null
+  }>
+}
+
 export type PortalDashboard = {
   role: PortalRole
   student: PortalStudent
@@ -72,6 +87,7 @@ export type PortalDashboard = {
   tasks: PortalTask[]
   exams: PortalExam[]
   attendance: PortalAttendance[]
+  my_week?: PortalMyWeek
 }
 
 export type PortalExamReportData = {
@@ -140,6 +156,7 @@ export async function portalDashboard(
       tasks: (res.tasks as PortalTask[]) ?? [],
       exams: (res.exams as PortalExam[]) ?? [],
       attendance: (res.attendance as PortalAttendance[]) ?? [],
+      my_week: res.my_week as PortalMyWeek | undefined,
     },
   }
 }

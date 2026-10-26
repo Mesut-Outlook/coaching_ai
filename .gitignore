@@ -43,3 +43,7 @@ backups/
 
 # Supabase CLI geçici dosyaları (link edilen proje ref, sürüm önbelleği)
 supabase/.temp/
+
+# Test seed çıktı dosyası
+data/test-seed/
+

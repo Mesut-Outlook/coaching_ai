@@ -1,9 +1,11 @@
-import { CalendarDays, CheckSquare, FileText, LogOut, Target, UserX } from 'lucide-react'
+import { CalendarDays, CheckSquare, FileText, LogOut, Sparkles, UserX } from 'lucide-react'
 import { PORTAL_THEME } from '../../lib/portalTheme'
 
+export type PortalNavTab = 'my_week' | 'tasks' | 'exams' | 'goals' | 'attendance'
+
 interface MobileBottomNavProps {
-  activeTab: 'tasks' | 'exams' | 'goals' | 'attendance'
-  setActiveTab: (tab: 'tasks' | 'exams' | 'goals' | 'attendance') => void
+  activeTab: PortalNavTab
+  setActiveTab: (tab: PortalNavTab) => void
   role: 'ogrenci' | 'veli'
   onLogout: () => void
 }
@@ -33,68 +35,137 @@ export default function MobileBottomNav({
         boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.05)',
       }}
     >
-      <button
-        type="button"
-        onClick={() => setActiveTab('tasks')}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 3,
-          background: 'none',
-          border: 'none',
-          color: activeTab === 'tasks' ? accent : 'var(--ink-soft)',
-          fontSize: 11,
-          fontWeight: activeTab === 'tasks' ? 700 : 500,
-          cursor: 'pointer',
-          flex: 1,
-        }}
-      >
-        {role === 'ogrenci' ? <CheckSquare size={20} /> : <CalendarDays size={20} />}
-        <span>{role === 'ogrenci' ? 'Program' : 'Özet'}</span>
-      </button>
+      {role === 'ogrenci' ? (
+        <>
+          <button
+            type="button"
+            onClick={() => setActiveTab('my_week')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              background: 'none',
+              border: 'none',
+              color: activeTab === 'my_week' ? accent : 'var(--ink-soft)',
+              fontSize: 11,
+              fontWeight: activeTab === 'my_week' ? 700 : 500,
+              cursor: 'pointer',
+              flex: 1,
+            }}
+          >
+            <Sparkles size={20} />
+            <span>Haftam</span>
+          </button>
 
-      <button
-        type="button"
-        onClick={() => setActiveTab('exams')}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 3,
-          background: 'none',
-          border: 'none',
-          color: activeTab === 'exams' ? accent : 'var(--ink-soft)',
-          fontSize: 11,
-          fontWeight: activeTab === 'exams' ? 700 : 500,
-          cursor: 'pointer',
-          flex: 1,
-        }}
-      >
-        <FileText size={20} />
-        <span>Denemeler</span>
-      </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('tasks')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              background: 'none',
+              border: 'none',
+              color: activeTab === 'tasks' ? accent : 'var(--ink-soft)',
+              fontSize: 11,
+              fontWeight: activeTab === 'tasks' ? 700 : 500,
+              cursor: 'pointer',
+              flex: 1,
+            }}
+          >
+            <CheckSquare size={20} />
+            <span>Program</span>
+          </button>
 
-      <button
-        type="button"
-        onClick={() => setActiveTab('goals')}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 3,
-          background: 'none',
-          border: 'none',
-          color: activeTab === 'goals' ? accent : 'var(--ink-soft)',
-          fontSize: 11,
-          fontWeight: activeTab === 'goals' ? 700 : 500,
-          cursor: 'pointer',
-          flex: 1,
-        }}
-      >
-        {role === 'ogrenci' ? <Target size={20} /> : <UserX size={20} />}
-        <span>{role === 'ogrenci' ? 'Hedefler' : 'Devamsızlık'}</span>
-      </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('exams')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              background: 'none',
+              border: 'none',
+              color: activeTab === 'exams' ? accent : 'var(--ink-soft)',
+              fontSize: 11,
+              fontWeight: activeTab === 'exams' ? 700 : 500,
+              cursor: 'pointer',
+              flex: 1,
+            }}
+          >
+            <FileText size={20} />
+            <span>Denemeler</span>
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => setActiveTab('tasks')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              background: 'none',
+              border: 'none',
+              color: activeTab === 'tasks' ? accent : 'var(--ink-soft)',
+              fontSize: 11,
+              fontWeight: activeTab === 'tasks' ? 700 : 500,
+              cursor: 'pointer',
+              flex: 1,
+            }}
+          >
+            <CalendarDays size={20} />
+            <span>Özet</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('exams')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              background: 'none',
+              border: 'none',
+              color: activeTab === 'exams' ? accent : 'var(--ink-soft)',
+              fontSize: 11,
+              fontWeight: activeTab === 'exams' ? 700 : 500,
+              cursor: 'pointer',
+              flex: 1,
+            }}
+          >
+            <FileText size={20} />
+            <span>Denemeler</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('goals')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              background: 'none',
+              border: 'none',
+              color: activeTab === 'goals' ? accent : 'var(--ink-soft)',
+              fontSize: 11,
+              fontWeight: activeTab === 'goals' ? 700 : 500,
+              cursor: 'pointer',
+              flex: 1,
+            }}
+          >
+            <UserX size={20} />
+            <span>Devamsızlık</span>
+          </button>
+        </>
+      )}
 
       <button
         type="button"

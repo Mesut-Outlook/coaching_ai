@@ -1428,7 +1428,7 @@ language plpgsql
 security definer
 set search_path = public, pg_temp
 stable
-as $$
+as $fn$
 declare
   v_student_id uuid;
   v_role text;
@@ -1460,6 +1460,67 @@ begin
         'id', s.id, 'full_name', s.full_name, 'grade', s.grade, 'track', s.track,
         'target_program', s.target_program, 'target_ranking', s.target_ranking,
         'photo_url', s.photo_url
+      ) from students s where s.id = v_student_id
+    ),
+    'my_week', (
+      select json_build_object(
+        'total_tasks', coalesce((select count(*) from weekly_tasks wt where wt.student_id = v_student_id and wt.week_start = v_week), 0),
+        'completed_tasks', coalesce((select count(*) from weekly_tasks wt where wt.student_id = v_student_id and wt.week_start = v_week and wt.completed = true), 0),
+        'target_net', case
+          when s.grade in ('7. Sınıf', '8. Sınıf') then s.target_net_lgs
+          else coalesce(s.target_net_tyt, s.target_net_ayt)
+        end,
+        'latest_net', (
+          select sum(ms.net)
+          from mock_exams me
+          join mock_exam_sections ms on ms.mock_exam_id = me.id
+          where me.student_id = v_student_id
+            and me.id = (
+              select me2.id from mock_exams me2
+              where me2.student_id = v_student_id
+              order by me2.exam_date desc, me2.created_at desc
+              limit 1
+            )
+        ),
+        'latest_exam_type', (
+          select me.exam_type
+          from mock_exams me
+          where me.student_id = v_student_id
+          order by me.exam_date desc, me.created_at desc
+          limit 1
+        ),
+        'days_to_exam', (
+          select (ec.exam_date - current_date)
+          from exam_calendar ec
+          where ec.exam = case when s.grade in ('7. Sınıf', '8. Sınıf') then 'LGS' else 'YKS' end
+          limit 1
+        ),
+        'coach_latest_note', (
+          select cd.note
+          from coach_decisions cd
+          where cd.student_id = v_student_id
+            and coalesce(btrim(cd.note), '') <> ''
+          order by cd.decided_at desc
+          limit 1
+        ),
+        'focus_topics', coalesce((
+          select json_agg(distinct coalesce(wt.custom_label, tp.name, 'Görev'))
+          from weekly_tasks wt
+          left join topics tp on tp.id = wt.topic_id
+          where wt.student_id = v_student_id and wt.week_start = v_week
+        ), '[]'::json),
+        'improved_topics', coalesce((
+          select json_agg(distinct json_build_object('topic_name', tp.name, 'subject_name', sb.name))
+          from weekly_tasks wt
+          join topics tp on tp.id = wt.topic_id
+          left join subjects sb on sb.id = tp.subject_id
+          where wt.student_id = v_student_id
+            and wt.week_start = v_week
+            and wt.completed = true
+            and wt.correct_count is not null
+            and wt.question_count > 0
+            and (wt.correct_count::numeric / wt.question_count) >= 0.7
+        ), '[]'::json)
       ) from students s where s.id = v_student_id
     ),
     'tasks', coalesce((
@@ -1506,7 +1567,7 @@ begin
 
   return v_result;
 end;
-$$;
+$fn$;
 grant execute on function portal_dashboard(text) to anon, authenticated;
 
 create or replace function portal_set_task_completed(p_code text, p_task_id uuid, p_completed boolean)
@@ -2444,3 +2505,82 @@ create policy "exam_calendar: yalnız sistem admini yönetir" on exam_calendar
   for all to authenticated
   using (is_system_admin())
   with check (is_system_admin());
+
+-- ===========================================================================
+-- Raporlar 2.0 · R3-0 — Şema ve Veri Modeli Genişletmeleri (Idempotent)
+-- ===========================================================================
+
+-- 1. weekly_tasks: duration_min kolonu (R4-3)
+alter table weekly_tasks add column if not exists duration_min smallint;
+
+-- 2. parent_summary_log: Veli özeti görüntüleme ve WhatsApp logu (R3-6)
+create table if not exists parent_summary_log (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students(id) on delete cascade,
+  week_start date not null,
+  opened_at timestamptz not null default now(),
+  opened_by uuid default auth.uid(),
+  channel text not null default 'whatsapp'
+);
+
+create index if not exists parent_summary_log_student_week_idx on parent_summary_log(student_id, week_start desc);
+
+alter table parent_summary_log enable row level security;
+
+drop policy if exists "parent_summary_log: öğrenciyi görebilen koç okur" on parent_summary_log;
+create policy "parent_summary_log: öğrenciyi görebilen koç okur" on parent_summary_log
+  for select to authenticated using (
+    (select is_system_admin()) or exists (
+      select 1 from students s
+      where s.id = parent_summary_log.student_id
+    )
+  );
+
+drop policy if exists "parent_summary_log: öğrenciyi görebilen koç ekler" on parent_summary_log;
+create policy "parent_summary_log: öğrenciyi görebilen koç ekler" on parent_summary_log
+  for insert to authenticated with check (
+    (select is_system_admin()) or exists (
+      select 1 from students s
+      where s.id = parent_summary_log.student_id
+    )
+  );
+
+-- 3. topic_weights: ÖSYM / MEB konu soru dağılım ağırlıkları (R4-1)
+create table if not exists topic_weights (
+  id serial primary key,
+  exam_type text not null check (exam_type in ('TYT', 'AYT', 'LGS')),
+  exam_topic_id int not null references exam_topics(id) on delete cascade,
+  avg_questions numeric(5,2) not null,
+  source text not null,
+  year_from int,
+  year_to int,
+  unique (exam_type, exam_topic_id, source)
+);
+
+create index if not exists topic_weights_exam_topic_idx on topic_weights(exam_type, exam_topic_id);
+
+alter table topic_weights enable row level security;
+
+drop policy if exists "topic_weights: herkes okur" on topic_weights;
+create policy "topic_weights: herkes okur" on topic_weights
+  for select to authenticated using (true);
+
+drop policy if exists "topic_weights: yetkili koç ekler" on topic_weights;
+create policy "topic_weights: yetkili koç ekler" on topic_weights
+  for insert to authenticated with check (
+    (select is_system_admin()) or (select user_has_any_permission('curriculum.manage'))
+  );
+
+drop policy if exists "topic_weights: yetkili koç günceller" on topic_weights;
+create policy "topic_weights: yetkili koç günceller" on topic_weights
+  for update to authenticated using (
+    (select is_system_admin()) or (select user_has_any_permission('curriculum.manage'))
+  ) with check (
+    (select is_system_admin()) or (select user_has_any_permission('curriculum.manage'))
+  );
+
+drop policy if exists "topic_weights: yetkili koç siler" on topic_weights;
+create policy "topic_weights: yetkili koç siler" on topic_weights
+  for delete to authenticated using (
+    (select is_system_admin()) or (select user_has_any_permission('curriculum.manage'))
+  );

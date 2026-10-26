@@ -1,7 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle2, Circle, Plus, AlertTriangle } from 'lucide-react'
-import MobileBottomNav from '../../components/mobile/MobileBottomNav'
+import {
+  CheckCircle2,
+  Circle,
+  Plus,
+  AlertTriangle,
+  Calendar,
+  Sparkles,
+  Target,
+  MessageSquareQuote,
+  ArrowRight,
+} from 'lucide-react'
+import MobileBottomNav, { type PortalNavTab } from '../../components/mobile/MobileBottomNav'
 import ExamSectionsTable from '../../components/exams/ExamSectionsTable'
 import { getExamSections, sectionNet, weightedNet } from '../../lib/examSections'
 import { gradeCurriculum } from '../../lib/curriculum'
@@ -53,7 +63,7 @@ export default function OgrenciPortalPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'tasks' | 'exams' | 'goals' | 'attendance'>('tasks')
+  const [activeTab, setActiveTab] = useState<PortalNavTab>('my_week')
   const [showExamModal, setShowExamModal] = useState(false)
   const [openExamId, setOpenExamId] = useState<string | null>(null)
   const [examSubTab, setExamSubTab] = useState<'analysis' | 'list'>('analysis')
@@ -114,12 +124,35 @@ export default function OgrenciPortalPage() {
     const next = !task.completed
     setActionError(null)
     // İyimser güncelleme — sunucu reddederse geri alınıyor.
-    setData({ ...data, tasks: data.tasks.map((t) => (t.id === task.id ? { ...t, completed: next } : t)) })
+    const updatedTasks = data.tasks.map((t) => (t.id === task.id ? { ...t, completed: next } : t))
+    const updatedCompletedTasks = updatedTasks.filter((t) => t.completed).length
+
+    setData({
+      ...data,
+      tasks: updatedTasks,
+      my_week: data.my_week
+        ? {
+            ...data.my_week,
+            completed_tasks: updatedCompletedTasks,
+          }
+        : undefined,
+    })
 
     const res = await portalSetTaskCompleted(session.code, task.id, next)
     if (!res.ok) {
       setData((prev) =>
-        prev ? { ...prev, tasks: prev.tasks.map((t) => (t.id === task.id ? { ...t, completed: !next } : t)) } : prev
+        prev
+          ? {
+              ...prev,
+              tasks: prev.tasks.map((t) => (t.id === task.id ? { ...t, completed: !next } : t)),
+              my_week: prev.my_week
+                ? {
+                    ...prev.my_week,
+                    completed_tasks: prev.tasks.filter((t) => (t.id === task.id ? !next : t.completed)).length,
+                  }
+                : undefined,
+            }
+          : prev
       )
       setActionError(res.error ?? 'Görev güncellenemedi.')
     }
@@ -153,11 +186,13 @@ export default function OgrenciPortalPage() {
   if (!data) return null
 
   const theme = PORTAL_THEME.ogrenci
-  const { student, tasks, exams, week_start, is_current_week } = data
-  const completedCount = tasks.filter((t) => t.completed).length
-  const totalCount = tasks.length
+  const { student, tasks, exams, week_start, is_current_week, my_week } = data
+  const completedCount = my_week?.completed_tasks ?? tasks.filter((t) => t.completed).length
+  const totalCount = my_week?.total_tasks ?? tasks.length
   const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
   const today = todayDayIndex()
+  const curriculum = gradeCurriculum(student.grade)
+  const examName = curriculum === 'LGS' ? 'LGS' : 'YKS'
 
   // Görevleri gün gün grupla; bugün varsa en üste al.
   const days = [...new Set(tasks.map((t) => t.day_index))].sort((a, b) => {
@@ -167,6 +202,12 @@ export default function OgrenciPortalPage() {
     }
     return a - b
   })
+
+  // Sıradaki odak listesi: my_week.focus_topics varsa o, yoksa tamamlanmamış görev etiketleri
+  const focusTopics =
+    my_week?.focus_topics && my_week.focus_topics.length > 0
+      ? my_week.focus_topics
+      : tasks.filter((t) => !t.completed).map((t) => t.label)
 
   return (
     <div className="portal-page" style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: 90 }}>
@@ -201,43 +242,333 @@ export default function OgrenciPortalPage() {
         </div>
       )}
 
-      {/* Haftalık ilerleme */}
-      <div style={{ padding: '16px 20px 0 20px' }}>
-        <div style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }}>
-              Haftalık Program İlerlemesi
-            </span>
-            <span style={{ fontSize: 14, fontWeight: 800, color: theme.accentStrong }}>%{completionPct}</span>
-          </div>
-
-          <div style={{ width: '100%', height: 10, borderRadius: 5, backgroundColor: '#e2e8f0', overflow: 'hidden' }}>
-            <div
-              style={{
-                width: `${completionPct}%`,
-                height: '100%',
-                backgroundColor: theme.accent,
-                transition: 'width 0.3s ease',
-              }}
-            />
-          </div>
-
-          <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-soft)', display: 'flex', gap: 12 }}>
-            <span>Tamamlanan: <strong>{completedCount}</strong></span>
-            <span>Bekleyen: <strong>{totalCount - completedCount}</strong></span>
-          </div>
-
-          {week_start && !is_current_week && (
-            <div style={{ marginTop: 10, fontSize: 12, color: '#b45309', backgroundColor: '#fffbeb', padding: '8px 10px', borderRadius: 8 }}>
-              Bu hafta için henüz program yok. Aşağıda <strong>{formatDayMonth(dayDate(week_start, 0))} – {formatDayMonth(dayDate(week_start, 6))}</strong> haftası gösteriliyor.
-            </div>
-          )}
+      {week_start && !is_current_week && (
+        <div style={{ margin: '16px 20px 0 20px', fontSize: 12, color: '#b45309', backgroundColor: '#fffbeb', padding: '10px 14px', borderRadius: 10, border: '1px solid #fef3c7' }}>
+          Bu hafta için henüz program yok. <strong>{formatDayMonth(dayDate(week_start, 0))} – {formatDayMonth(dayDate(week_start, 6))}</strong> haftası gösteriliyor.
         </div>
-      </div>
+      )}
 
       <main style={{ padding: 20 }}>
+        {/* ================================================================= */}
+        {/* 1. SEKME: HAFTAM                                                  */}
+        {/* ================================================================= */}
+        {activeTab === 'my_week' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Üst Kart: Sınava Kalan Gün & Hedefe Yolculuk */}
+            <div style={card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--ink-soft)' }}>
+                    Hedefe Yolculuk
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink)', marginTop: 2 }}>
+                    {student.target_program || 'Hedef Program Belirlenmedi'}
+                  </div>
+                  {student.target_ranking && (
+                    <div style={{ fontSize: 12, fontWeight: 600, color: theme.accentStrong, marginTop: 2 }}>
+                      Hedef Sıralama: #{student.target_ranking}
+                    </div>
+                  )}
+                </div>
+
+                {my_week?.days_to_exam !== null && my_week?.days_to_exam !== undefined && (
+                  <div
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 20,
+                      backgroundColor: theme.tint,
+                      color: theme.tintText,
+                      fontWeight: 800,
+                      fontSize: 12.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Calendar size={14} />
+                    <span>
+                      {my_week.days_to_exam > 0
+                        ? `${examName}'ye ${my_week.days_to_exam} Gün`
+                        : my_week.days_to_exam === 0
+                        ? `${examName} Bugün!`
+                        : `${examName} Tamamlandı`}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Hedef Net ve Son Net Karşılaştırma Barı */}
+              {(() => {
+                const targetNet = my_week?.target_net ?? null
+                const latestNet = my_week?.latest_net ?? (exams.length > 0 ? Number(exams[0].total_net) : null)
+                if (targetNet !== null && targetNet > 0) {
+                  const ratio = Math.min(100, Math.max(0, Math.round(((latestNet ?? 0) / targetNet) * 100)))
+                  const remainingNet = Math.max(0, Math.round((targetNet - (latestNet ?? 0)) * 10) / 10)
+                  return (
+                    <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                        <span style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600 }}>
+                          Son Net:{' '}
+                          <strong style={{ color: 'var(--ink)', fontSize: 14 }}>
+                            {latestNet !== null ? Math.round(latestNet * 10) / 10 : '—'}
+                          </strong>
+                          {(my_week?.latest_exam_type === 'LGS' || curriculum === 'LGS') && (
+                            <span style={{ fontSize: 10, color: 'var(--ink-faint)', marginLeft: 4 }}>
+                              (LGS ham neti)
+                            </span>
+                          )}
+                        </span>
+                        <span style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600 }}>
+                          Hedef:{' '}
+                          <strong style={{ color: theme.accentStrong, fontSize: 14 }}>
+                            {targetNet} Net
+                          </strong>
+                        </span>
+                      </div>
+
+                      <div style={{ width: '100%', height: 10, borderRadius: 5, backgroundColor: '#e2e8f0', overflow: 'hidden' }}>
+                        <div
+                          style={{
+                            width: `${ratio}%`,
+                            height: '100%',
+                            backgroundColor: ratio >= 100 ? '#10b981' : theme.accent,
+                            transition: 'width 0.4s ease',
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, fontSize: 11, color: 'var(--ink-soft)' }}>
+                        <span>Hedef ilerlemesi: %{ratio}</span>
+                        {ratio >= 100 ? (
+                          <span style={{ color: '#10b981', fontWeight: 700 }}>🎉 Hedefe Ulaşıldı!</span>
+                        ) : (
+                          <span>
+                            Hedefe <strong>{remainingNet}</strong> net kaldı
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                }
+                return null
+              })()}
+            </div>
+
+            {/* Görev İlerlemesi */}
+            <div style={card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <CheckCircle2 size={16} style={{ color: theme.accentStrong }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>
+                    Görev İlerlemesi
+                  </span>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 800, color: theme.accentStrong }}>
+                  {completedCount} / {totalCount} Görev Tamamlandı
+                </span>
+              </div>
+
+              <div style={{ width: '100%', height: 10, borderRadius: 5, backgroundColor: '#e2e8f0', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${completionPct}%`,
+                    height: '100%',
+                    backgroundColor: completionPct === 100 ? '#10b981' : theme.accent,
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--ink-soft)' }}>
+                <span>%{completionPct} Tamamlandı</span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('tasks')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: theme.accentStrong,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontSize: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                  }}
+                >
+                  Programı Aç <ArrowRight size={13} />
+                </button>
+              </div>
+            </div>
+
+            {/* Bu Hafta İyi Gidenler */}
+            <div style={card}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Sparkles size={18} style={{ color: '#eab308' }} />
+                <div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
+                    Bu Hafta İyi Gidenler
+                  </h3>
+                  <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 1 }}>
+                    Haftalık görevlerde %70 ve üzeri doğruluk sağlanan konular
+                  </div>
+                </div>
+              </div>
+
+              {my_week?.improved_topics && my_week.improved_topics.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {my_week.improved_topics.map((item, idx) => (
+                    <div
+                      key={`${item.topic_name}-${idx}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>
+                          {item.topic_name}
+                        </div>
+                        {item.subject_name && (
+                          <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 2 }}>
+                            {item.subject_name}
+                          </div>
+                        )}
+                      </div>
+                      <span
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: 999,
+                          backgroundColor: '#dcfce7',
+                          color: '#15803d',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                        }}
+                      >
+                        ↑ Gelişti
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', textAlign: 'center', padding: '16px 8px', lineHeight: 1.5 }}>
+                  Bu hafta tamamlanan testler analiz edildikçe gelişim gösterdiğin konular burada listelenecek. ✨
+                </div>
+              )}
+            </div>
+
+            {/* Sıradaki Odak */}
+            <div style={card}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Target size={18} style={{ color: theme.accentStrong }} />
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
+                  Sıradaki Odak
+                </h3>
+              </div>
+
+              {focusTopics.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {focusTopics.map((topicName, idx) => (
+                    <div
+                      key={`${topicName}-${idx}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          backgroundColor: theme.accent,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>
+                        {topicName}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', textAlign: 'center', padding: '16px 8px', lineHeight: 1.5 }}>
+                  Bu hafta için bekleyen odak konusu kalmadı! Harika gidiyorsun. 🎉
+                </div>
+              )}
+            </div>
+
+            {/* Koçunun Notu */}
+            {my_week?.coach_latest_note && my_week.coach_latest_note.trim() && (
+              <div
+                style={{
+                  ...card,
+                  borderLeft: `4px solid ${theme.accent}`,
+                  backgroundColor: '#faf5ff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <MessageSquareQuote size={18} style={{ color: theme.accentStrong }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: theme.accentStrong }}>
+                    Koçunun Notu
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: 13.5, color: '#1e1b4b', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                  {my_week.coach_latest_note}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================================================================= */}
+        {/* 2. SEKME: PROGRAM (GÖREVLER)                                      */}
+        {/* ================================================================= */}
         {activeTab === 'tasks' && (
           <div>
+            <div style={{ ...card, marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 10 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }}>
+                  Haftalık Program İlerlemesi
+                </span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: theme.accentStrong }}>%{completionPct}</span>
+              </div>
+
+              <div style={{ width: '100%', height: 10, borderRadius: 5, backgroundColor: '#e2e8f0', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${completionPct}%`,
+                    height: '100%',
+                    backgroundColor: theme.accent,
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-soft)', display: 'flex', gap: 12 }}>
+                <span>Tamamlanan: <strong>{completedCount}</strong></span>
+                <span>Bekleyen: <strong>{totalCount - completedCount}</strong></span>
+              </div>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700 }}>Program Görevlerim</h3>
               <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{tasks.length} Görev</span>
@@ -332,6 +663,9 @@ export default function OgrenciPortalPage() {
           </div>
         )}
 
+        {/* ================================================================= */}
+        {/* 3. SEKME: DENEMELER                                               */}
+        {/* ================================================================= */}
         {activeTab === 'exams' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
@@ -460,6 +794,7 @@ export default function OgrenciPortalPage() {
           </div>
         )}
 
+        {/* Hedefler sekmesi yedek olarak tutuluyor (tab doğrudan çağrılırsa) */}
         {activeTab === 'goals' && (
           <div>
             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Hedeflerim & Bilgilerim</h3>
