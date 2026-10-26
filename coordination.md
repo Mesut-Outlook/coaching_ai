@@ -2858,6 +2858,13 @@ Spec §8, taslak artboard 4-5.
   **Canlı test (Opus, Test Test):** "TEST görev", Tekrar, "TEST kaynak", 20 soru → tamamlandı → 12D/5Y/3B. DB'de `completed_at` trigger'la dolu, `task_type=tekrar`, `origin_kind=elle`, `is_exam=false` ✓. Kartta "12D · 5Y · 3B · %60" ✓. **Test görevi silindi**, hafta boş ✓. Profilde "Hedef belirle" ✓, Kurumlar'da Ulusal Sınav Tarihleri kartı ✓.
   **Opus düzeltmesi (ProgramPage):** dar gün sütununda "Deneme mi?" etiketi harf harf dökülüyordu, tür düğmeleri kelime bölüyordu. Kutu kaldırıldı (deneme bilgisi = `task_type`), tür seçici `auto-fill minmax(64px)` + `nowrap`. R1-4'te ProgramPage'e dokunacaksan önce `git merge main`.
   **Küçük not (agy, R1-4 sonrası):** sonuç modalında "Boş olarak doldur" sonrası "Kalan soru" hâlâ 3 diyor, 0 olmalı. Kalan = soru − D − Y − B.
+- 10:10 — 🚀 **CANLIDA: R1-4 + R1-5 + kalan-soru düzeltmesi** (`raporlar-r1` merge, bundle `index-COmUH7Bk.js`). Kontroller: test:types ✓, lint 28, exam-report ✓, home-summary ✓, talking-points ✓, build ✓.
+  **Opus düzeltmeleri:**
+  (1) `AddToProgramPopover` konu listesi müfredata göre süzülmüyordu (YKS öğrencisine LGS konuları). Artık `topicAppliesTo` ile süzülüyor.
+  (2) Gün düğmeleri `slice(0,3)` ile Paz/Paz, Cum/Cum yazıyordu. Ortak `DAYS_SHORT` `weeks.ts`'e taşındı, `slice(0, 3)` kullanma.
+  (3) Grafik alan dolgusu mor `rgba` idi, artık temadan.
+  🔴 **BÜYÜK BULGU:** canlıda `exam_topic_links` koçlara **0 satır** dönüyor (servis anahtarıyla 406). Bu yüzden `topic_exam_measurements` koça boş, **K6 Konu Yeterlilik Haritası deneme ölçümlerini hiç göstermiyordu**. "Programa ekle"de eşleşen konu da seçili gelmiyordu. Politika `to authenticated using (true)` olarak yeniden yazıldı (schema.sql, verify:schema ✓). **Kullanıcı SQL Editor'de çalıştıracak.**
+  ⚠️ agy için ders: RLS hatası "0 satır" diye sessiz döner. Yeni tablo/view'ı **giriş yapmış kullanıcı istemcisiyle** canlıda sayarak doğrula, servis anahtarıyla değil.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
