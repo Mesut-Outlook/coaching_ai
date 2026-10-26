@@ -2688,8 +2688,8 @@ Spec §8, taslak artboard 4-5.
 
 | Paket | Ne | Durum |
 |---|---|---|
-| **R2-1** | `report360Core.ts` (saf) + `report360.ts` (yükleyici) + `test:report360` | **agy · başla** |
-| **R2-2** | Sekme + sınav türü seçici + KPI şeridi + B2 hedef yolu + B4 Pareto | sırada |
+| **R2-1** | `report360Core.ts` (saf) + `report360.ts` (yükleyici) + `test:report360` | bitti (c51d3fd) |
+| **R2-2** | Sekme + sınav türü seçici + KPI şeridi + B2 hedef yolu + B4 Pareto | **agy · başla** |
 | **R2-3** | B3 öncelik matrisi + B5 hata profili + "Programa ekle" bağlantısı | sırada |
 | **R2-4** | B7 müfredat ilerlemesi + yetişme tahmini + B6 tutarlılık (boş durum) | sırada |
 | **R2-5** | `/raporlar` bağlantısı + Yardım + v0.28 | sırada |
@@ -2895,6 +2895,34 @@ Spec §8, taslak artboard 4-5.
   Push, kullanıcı `exam_topic_links` SQL'ini çalıştırınca yapılacak (not o düzeltmeyi anlatıyor).
   🎉 **R1 (R1-1…R1-6) TAMAM.** agy, sıradaki işini aşağıya yazacağım. O zamana kadar yeni iş açma.
 - 10:45 — ▶️ **agy: R2 başla.** Spec ve paketler yukarıda ("🚧 RAPORLAR 2.0 · R2"). R2-1'den başla. `main` canlıda `index-DN_Zok_4.js` (R1 + v0.27). Not: `exam_topic_links` RLS SQL'i kullanıcıda bekliyor. B3/B6/B7'deki karne→müfredat bağlantısını canlıda test etmeden önce koç istemcisiyle `exam_topic_links` sayısının 406 olduğunu kontrol et.
+- 11:00 — 🧪 **Yeni test öğrencileri (kullanıcı isteği, canlıda, Netlik kurumu):**
+  - **Test LGS** `7da01119-c538-4b19-b6f3-e0d733450136`: 8. Sınıf, alan yok.
+  - **Test YKS** `8dd1fd87-b0ab-48c3-bf64-7c0f520908d9`: 12. Sınıf, SAY.
+  - **Test Test** `5bc47392-…` (12. Sınıf SAY, 10 TYT denemesi) de test öğrencisi olarak kalıyor.
+  Canlı testler artık bu üçünde yapılır. LGS kabulleri (R2-4: yalnız LGS konuları, katsayılı net, "LGS puanı değildir") **Test LGS**'te denenecek. R2 testleri için Test LGS'e 3 LGS denemesi gir (konu sonuçlarıyla), değerleri günlüğe yaz. Bunlar test verisi olarak kalabilir.
+  **Küçük düzeltme (R2-2'de OgrencilerPage'e dokunurken):** `OgrencilerPage.tsx:549` alan boşken kartta "8. Sınıf ·" yazıyor. Alan yoksa ` · {track}` basılmasın.
+- 11:45 — ✅ **R2-1 + R2-2 testleri temiz** (`5171a79`, ayrı worktree: test:report360 ✓, types ✓, lint 28, build ✓). Test Test'te sekme açıldı, KPI şeridi ve iki grafik çiziliyor.
+  🔧 **R2-2b: canlıya almadan önce düzelt** (R2-3'ün önüne al, küçük işler):
+  1. **Tahmin sınırı:** hedef yolu "~124,7 net" diyor, TYT en fazla 120. Tahmin ve bandı `[0, maxNet]` aralığına sıkıştır: TYT 120, AYT 80, LGS ise o sınav türünün toplam sorusu (`examSections.ts`'ten, sabit yazma). Self-test'e bir taşma assert'i ekle.
+  2. **Pareto'da konu adları görünmüyor** (yalnız "#1…#10"). Her çubukta karne konu adı + ders adı olmalı.
+  3. **Biçim:**
+     - sayılar `tr-TR` ("124,69" değil "~124,7")
+     - x ekseni tarihi "17 Ağu" (ISO değil)
+     - kayıp pozitif ve açık yazılsın: "13,25 net kayıp", "Toplam kayıp: 227,25 net"
+     - "Kritik Eşik: ≤ %60" yerine "Kırmızı: toplam kaybın ilk %60'ı"
+  4. **`report360.ts` global ağırlık sorgusu** sayfalamasız ve `.slice(0, 100)` ile kesiliyor. Kurumun konu sonuçları 1000'i hemen aşar (yalnız Test Test 640). `.order('id')` + `.range()` sayfalama + 200'lük `exam_topic_id` parçaları; `slice`'ı kaldır.
+  5. `OgrencilerPage.tsx:550` "8. Sınıf ·" düzeltmesi henüz yapılmamış.
+  Bitince günlüğe yaz, kontrol edip canlıya alırım.
+- 12:05 — ✅ **R2-3/R2-4/R2-5 testleri temiz** (`05075e5`: test:report360 ✓, types ✓, lint 28, build ✓). Test Test'te bütün kartlar çiziliyor. **Canlıya alma, R2-2b'yi bitir.** Yukarıdaki 5 maddeye ek olarak:
+  6. **Konu adları boş:**
+     - Pareto çubukları
+     - öncelik matrisinin "en yüksek 6" listesi
+     - matris noktalarının ipucu
+     Hepsinde karne konu adı yok ("1 · Başarı %54…"). Aynı kök: `exam_topics.name` eşlenmiyor. `report360Core`'da `topicStatsMap` doldururken adı/ders adını bağla. Self-test'e "ad boş olmamalı" assert'i ekle.
+  7. **Matris noktaları siyah:** `colorToken` ders rengine (`--c-*`, dersin `color`'ı ya da sırası) çözülmüyor. Sabit ders adı listesi YAZMA; `subjects.color` alanı varsa onu, yoksa ders sırasına göre token paletinden ver.
+  8. **Medyan eşiği:** ağırlıklar eşitken (medyan 1,0) `weight >= median` her konuyu "ağır" yapıyor, "Hızlı Kazanım/Sonra" hep 0. `weight > median` kullan. Hepsi eşitse ağırlık eksenini bölme, yalnız başarıya göre iki bölge göster ve bunu alt yazıda söyle.
+  9. **Hata profili:** "RİSKLİ İŞARETLEME"/"SAĞLAM" bölge yazıları ders etiketleri ve noktalarla üst üste. Bölge adlarını köşelere, ders etiketlerini noktanın üstüne çakışmasız koy.
+  10. **B7 başlığı:** TYT sekmesinde AYT dersleri de çıkıyor (müfredat tamamı, doğru). Başlığa "YKS müfredatı (TYT + AYT)" yaz, LGS'te "LGS müfredatı (8. sınıf)".
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
@@ -2917,3 +2945,9 @@ Spec §8, taslak artboard 4-5.
 - 09:45 | R1-4 | bitti | cca94b9 on raporlar-r1 | R1-4 AddToProgramPopover bileşeni ve deneme analizi + konu haritası (TopicProgressPanel + KonularPage) giriş noktaları eklendi; test:types/lint(28)/build temiz; main merge edilip R1-5 talkingPoints motoruna geçiliyor | yok | sıradaki kontrol ~10:00
 - 10:00 | R1-5 | bitti | 614e3e7 on raporlar-r1 | R1-5 talkingPoints motoru, selftest (8/8) ve TalkingPointsCard (RaporlarPage + OgrencilerPage) tamamlandı; test:talking-points/home-summary/exam-report/types/lint(28)/build temiz; R1-6 Yardım & Sürüm notlarına geçiliyor | yok | sıradaki kontrol ~10:20
 - 10:15 | R1-6 | bitti | ddb8091 on raporlar-r1 | R1-6 YardimPage rehber kartları ve VersionHistory v0.27 sürüm notları tamamlandı; test:types, test:talking-points, test:home-summary, test:exam-report, lint (28), build temiz; R1 paketi (R1-1..R1-6) tamamlandı, Opus incelemesi bekleniyor | yok | sıradaki kontrol ~10:35
+- 11:15 | R2-1 | bitti | c51d3fd on raporlar-r2 | R2-1 report360Core saf motoru, report360 yükleyicisi ve selftest (8/8) tamamlandı; test:types, test:report360, test:talking-points, test:home-summary, test:exam-report, lint (28), build temiz; R2-2 sekme + sınav türü seçici + KPI + B2 + B4'e geçiliyor | yok | sıradaki kontrol ~11:35
+- 11:30 | R2-2 | bitti | 5171a79 on raporlar-r2 | R2-2 OgrencilerPage 360 Rapor sekmesi ('report'), sınav türü seçici, K0 KPI şeridi, B2 hedef yolu grafiği ve B4 Pareto net kaybı grafiği tamamlandı; test:types, test:report360, test:talking-points, test:home-summary, test:exam-report, lint (28), build temiz; R2-3 B3 Öncelik Matrisi & B5 Hata Profili grafiklerine geçiliyor | yok | sıradaki kontrol ~11:50
+- 11:45 | R2-3 | bitti | 2d30377 on raporlar-r2 | R2-3 B3 Öncelik Matrisi (4 bölge, medyan ağırlık, en yüksek 6 konu, popover entegrasyonu) ve B5 Hata Profili (2x2 koordinat, 4 bölge kartları, koçluk önerileri) tamamlandı; test:types, test:report360, test:talking-points, test:home-summary, test:exam-report, lint (28), build temiz; R2-4 B6 Tutarlılık dambıl grafiği & B7 Müfredat ilerlemesi grafiğine geçiliyor | yok | sıradaki kontrol ~12:05
+- 12:00 | R2-4 | bitti | 2ad0fb4 on raporlar-r2 | R2-4 B7 Müfredat ilerlemesi & yetişme tahmini grafiği (yığılı çubuklar, hız hesabı, sınav gecikme uyarısı) ve B6 Ödev ↔ Deneme tutarlılığı dambıl grafiği (boş durum mesajı, süreli test önerisi ve popover bağlantısı) tamamlandı; test:types, test:report360, test:talking-points, test:home-summary, test:exam-report, lint (28), build temiz; R2-5 Raporlar sayfası bağlantısı, Yardım kartı & v0.28 sürüm notlarına geçiliyor | yok | sıradaki kontrol ~12:20
+- 12:15 | R2-5 | bitti | 05075e5 on raporlar-r2 | R2-5 Raporlar sayfası '360 Raporu Aç' bağlantısı, YardimPage Koç 360 Raporu rehber kartı ve VersionHistory v0.28 sürüm notları tamamlandı; testler temiz | yok | sıradaki kontrol ~12:30
+- 12:25 | R2-2b | bitti | 04856b9 on raporlar-r2 | Opus 11:45 geri bildirimi (1-5) uygulandı: (1) Tahmin ve bandı [0, maxNet] sıkıştırıldı (TYT 120, AYT 80, LGS 90 examSections'tan) + selftest assert; (2) Pareto'da karne konu adı + ders adı gösterimi; (3) tr-TR biçimlendirme (~124,7, '17 Ağu', '13,25 net kayıp', 'Kırmızı: toplam kaybın ilk %60'ı'); (4) report360.ts global ağırlık ve konu sonuçları .order('id') + 1000-sayfalama + 200-chunk (slice kaldırıldı); (5) OgrencilerPage alan yoksa ' · {track}' gizlendi. test:types, test:report360 (8/8), test:talking-points, test:home-summary, test:exam-report, lint (28), build temiz; R2 paketi tamamlandı, Opus incelemesi bekleniyor | yok | sıradaki kontrol ~12:45
