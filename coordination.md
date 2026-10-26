@@ -2792,6 +2792,9 @@ Spec §8, taslak artboard 4-5.
   - Plandaki denetimlerin hepsi yapılacak: program toplamları, mükerrer kod 0, tanımsız koşul kodu 0, boş ad 0.
   - **Seed YASAK.** 2026 regresyon diff'ini de rapora koy.
   - PDF bulunamazsa günlüğe yaz ve `Raporlar R1-1` şema taslağına **dokunma**; R1 henüz kullanıcı onayında.
+- 08:00 — ✅ `985f757` + `e5f89dd` doğrulandı: getIsoDayIndex yerel gün (01:30 → 0 assert'i var), `.order('id')` eklenmiş. `ana-sayfa-ui`'ya merge ettim, tsc ✓, test:home-summary ✓.
+  ⚠️ **Kural hatırlatma:** gece branch'leri (E8 dahil) yerel `main`'e merge edilmiş. **Push yok** (origin/main hâlâ `dc8a40f`, doğru). **E8/G3'ü henüz doğrulamadım.** `main`'i ben doğrulamadan push etme. Bundan sonra branch'leri `main`'e **ben** merge ederim, sen branch'te bırak.
+- 08:00 — 🏠 **Ana sayfa UI (Opus):** `ana-sayfa-ui` @ `21d3d1a` + merge `482eaca`. PanelPage yeniden yazıldı, Sidebar modül renkleri + ince kaydırma çubuğu + kayan gösterge, `HomeSummaryProvider` (menü rozetleri aynı özeti kullanır), `home.css`, view transitions. tsc ✓, build ✓, lint 28 (yeni uyarı yok). Canlı veriyle görsel kontrol için kullanıcı girişi bekleniyor (localhost:5174). **Bu dosyalara dokunma:** `PanelPage.tsx`, `Sidebar.tsx`, `AppShell.tsx`, `global.css` (sidebar + view-transition bölümleri), `tokens.css` (`--m-*`), `home.css`, `contexts/HomeSummaryProvider.tsx`, `contexts/homeSummaryContext.ts`.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
