@@ -2659,6 +2659,29 @@ Spec §8, taslak artboard 4-5.
 
 ---
 
+## 🚧 RAPORLAR 2.0 · R1 — veri + tek tık aksiyon (kullanıcı onayı 2026-10-26 sabah) — Opus planı, agy uygular
+
+**Spec:** `docs/superpowers/specs/2026-10-26-raporlar-r1-design.md`. Kararlar: (1) görev sonucunu koç girer; (2) hedef neti koç girer; (3) öneri motoru önce liste, sonra taslak (R3).
+
+| Paket | Ne | Bağımlılık | Durum |
+|---|---|---|---|
+| **R1-1** | `weekly_tasks` 8 kolon + `completed_at` trigger'ı + sonuç constraint'i; `students` hedef net kolonları; `exam_calendar` + RLS; tipler + `test:types` | — | **agy · başla** |
+| **R1-2** | Program: tür, kaynak, koç sonuç girişi, kart gösterimi | R1-1 canlıda | sırada |
+| **R1-3** | Hedef net (modal + profil başlığı) + sınav tarihleri kartı | R1-1 canlıda | sırada |
+| **R1-4** | `AddToProgramPopover` + deneme analizi ve konu haritası giriş noktaları | R1-1 canlıda | sırada |
+| **R1-5** | `talkingPoints` motoru + self-test + "Görüşmede konuşulacaklar" kartı | R1-4 | sırada |
+| **R1-6** | Yardım + sürüm notu (ana sayfa ile birlikte v0.27) | hepsi | sırada |
+
+**R1-1 için kurallar:**
+- Var olan tablolara her kolon `alter table … add column if not exists` ile eklenir. Constraint/indeks/trigger bu satırların **altında** olur. Trigger: `create or replace function` + `drop trigger if exists` + `create trigger`.
+- `exam_calendar` RLS: select `authenticated`; insert/update/delete yalnız `is_system_admin()`.
+- `portal_dashboard` D/Y/B kolonlarını **döndürmez** (karar 1). Dönüş listesi açıkça yazılıysa dokunma. `*` ile dönüyorsa açık listeye çevir.
+- **SQL'i çalıştırma.** Bitince günlüğe yaz. Opus Docker'da eski şema → yeni şema → yeni şema (tekrar) sırasıyla doğrular, kullanıcıya SQL Editor'de çalıştırtır.
+- Kabul: `npm run test:types`, `npm run build`, `npm run lint` (yeni uyarı yok).
+- **R1-1 canlıya girene kadar** R1-2/3/4'ün UI iskeletini yazabilirsin (aynı branch, ayrı commit'ler). Yeni kolonlar tiplerde var, ama canlıda test edilemez.
+
+---
+
 ## 🌙 GECE PLANI — 2026-10-25 20:45 → 2026-10-26 08:00 (Opus planladı, kullanıcı talimatı)
 
 **Kullanıcının bu gece istedikleri:**
@@ -2807,6 +2830,12 @@ Spec §8, taslak artboard 4-5.
   - `YardimPage`'de "Panel" kartı "Ana Sayfa" olsun. İçerik: ilgi bekleyenler ve nedenleri, bu hafta, modül kartları, menü rozetleri.
   - `VersionHistory`'ye v0.27 notu: Ana Sayfa + menü yenilendi, 1000 satır/sayfalama düzeltmeleri, sayaç düzeltmesi, ek yerleştirme parser'ı yıldan bağımsız.
   - Ekran görüntüsü ekleme, onu ben yaparım.
+- 08:15 — 🔁 **ÖNCELİK DEĞİŞTİ (kullanıcı, 08:05):** "Ek yerleştirme geliştirmelerini şimdilik bekletelim. Raporlar, denemeler ve ana sayfa tasarımını en öncelikli bitirelim."
+  - **E8 2025 kabulü DURDU.** PDF beklenmiyor. `gece/e8-parser` olduğu gibi kalsın.
+  - **Y2 (yardım v0.27) İPTAL.** Yardım notunu ana sayfa ve R1 bitince birlikte yazarız.
+  - **Y1 (1000 satır denetimi):** yalnız `denemeler`/`exams` ekranlarına dokunan kısmı kalsın, gerisini sonraya bırak.
+  - **Yeni ana işin: Raporlar 2.0 · R1.** Spec: `docs/superpowers/specs/2026-10-26-raporlar-r1-design.md` (onaylı). Paketler aşağıda "🚧 RAPORLAR 2.0 · R1" bölümünde. **R1-1 ile başla.** Branch `raporlar-r1`, worktree `../Coching_AI-r1`.
+  - Ana sayfa (PanelPage/Sidebar/AppShell/home.css/HomeSummary*) Opus'ta kalıyor, dokunma.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
