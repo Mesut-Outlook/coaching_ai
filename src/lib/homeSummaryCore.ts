@@ -208,6 +208,15 @@ export function round2(val: number): number {
   return Math.round((val + Number.EPSILON) * 100) / 100
 }
 
+const trNetFormatter = new Intl.NumberFormat('tr-TR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
+export function formatNetTr(val: number): string {
+  return trNetFormatter.format(round2(val))
+}
+
 /**
  * Diziyi verilen boyutta alt parçalara böler (URL uzunluğu veya sorgu sınırını aşmamak için).
  */
@@ -743,7 +752,7 @@ export function buildHomeSummary(rawData: HomeSummaryRawData): HomeSummary {
       kind: 'exam',
       at: e.created_at || e.exam_date,
       studentName: student.full_name,
-      text: `${e.name} (${e.exam_type}) — ${round2(e.totalNet)} net`,
+      text: `${e.name} (${e.exam_type}) — ${formatNetTr(e.totalNet)} net`,
     })
   }
 
