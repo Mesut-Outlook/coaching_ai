@@ -4,9 +4,10 @@ import { BookOpen, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 
 export interface CurriculumProgressChartProps {
   data: CurriculumProgressData
+  curriculumTitle?: string
 }
 
-export default function CurriculumProgressChart({ data }: CurriculumProgressChartProps) {
+export default function CurriculumProgressChart({ data, curriculumTitle }: CurriculumProgressChartProps) {
   const { subjects, totalSufficient, totalTopics, overallSufficientPct, velocity } = data
   const [hoveredSubjectId, setHoveredSubjectId] = useState<number | null>(null)
 
@@ -48,7 +49,7 @@ export default function CurriculumProgressChart({ data }: CurriculumProgressChar
             <span>Müfredat İlerlemesi & Yetişme Tahmini (B7)</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
-            Toplam: %{overallSufficientPct} yeterlilik ({totalSufficient} / {totalTopics} konu tamamlandı)
+            {curriculumTitle ? `${curriculumTitle} · ` : ''}%{overallSufficientPct} yeterlilik ({totalSufficient} / {totalTopics} konu tamamlandı)
           </div>
         </div>
 

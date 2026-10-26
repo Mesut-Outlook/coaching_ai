@@ -190,17 +190,19 @@ export async function loadReport360Data(
   for (const chunk of topicIdChunks) {
     const { data: ets } = await supabase
       .from('exam_topics')
-      .select('id, name, exam_subjects(label, section_name)')
+      .select('id, name, exam_subjects(label, section_name, subjects(color, sort_order))')
       .in('id', chunk)
       .order('id', { ascending: true })
 
     for (const et of ets || []) {
       const s = et.exam_subjects as any
+      const subj = s?.subjects as any
       const subjName = s?.label || s?.section_name || ''
+      const subjColor = subj?.color || getSubjectColorToken(subjName)
       examTopicMetaMap.set(et.id, {
         name: et.name,
         subjectName: subjName,
-        colorToken: getSubjectColorToken(subjName),
+        colorToken: subjColor,
       })
     }
   }

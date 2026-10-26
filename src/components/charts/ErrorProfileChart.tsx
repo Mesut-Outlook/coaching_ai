@@ -187,46 +187,46 @@ export default function ErrorProfileChart({ data }: ErrorProfileChartProps) {
               fillOpacity={0.06}
             />
 
-            {/* Bölge İsimleri Filigranı */}
+            {/* Bölge İsimleri Filigranı (Köşelerde çakışmasız) */}
             <text
-              x={padLeft + 10}
-              y={padTop + plotHeight - 12}
+              x={padLeft + 8}
+              y={padTop + plotHeight - 6}
               fill="var(--success-text)"
-              fontSize="10"
+              fontSize="9"
               fontWeight="700"
-              opacity={0.7}
+              opacity={0.45}
             >
               SAĞLAM
             </text>
             <text
-              x={padLeft + plotWidth - 10}
-              y={padTop + plotHeight - 12}
+              x={padLeft + plotWidth - 8}
+              y={padTop + plotHeight - 6}
               textAnchor="end"
               fill="var(--warning-text)"
-              fontSize="10"
+              fontSize="9"
               fontWeight="700"
-              opacity={0.7}
+              opacity={0.45}
             >
               RİSKLİ İŞARETLEME
             </text>
             <text
-              x={padLeft + 10}
-              y={padTop + 20}
+              x={padLeft + 8}
+              y={padTop + 14}
               fill="var(--measured-text)"
-              fontSize="10"
+              fontSize="9"
               fontWeight="700"
-              opacity={0.7}
+              opacity={0.45}
             >
               SÜRE / STRATEJİ
             </text>
             <text
-              x={padLeft + plotWidth - 10}
-              y={padTop + 20}
+              x={padLeft + plotWidth - 8}
+              y={padTop + 14}
               textAnchor="end"
               fill="var(--critical-text)"
-              fontSize="10"
+              fontSize="9"
               fontWeight="700"
-              opacity={0.7}
+              opacity={0.45}
             >
               KONU EKSİĞİ
             </text>
@@ -349,14 +349,18 @@ export default function ErrorProfileChart({ data }: ErrorProfileChartProps) {
                     stroke="#ffffff"
                     strokeWidth={2}
                   />
-                  {/* Kısa Ders Adı */}
+                  {/* Kısa Ders Adı (Konturlu ve çakışmasız) */}
                   <text
                     x={cx}
-                    y={cy - 10}
+                    y={cy < padTop + 18 ? cy + 16 : cy - 8}
                     textAnchor="middle"
                     fontSize="10"
-                    fontWeight="600"
+                    fontWeight="700"
                     fill="var(--ink)"
+                    stroke="var(--surface)"
+                    strokeWidth="3"
+                    paintOrder="stroke"
+                    strokeLinejoin="round"
                   >
                     {p.sectionName.split(' ')[0]}
                   </text>
