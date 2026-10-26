@@ -19,13 +19,16 @@ const HISTORY: DateGroup[] = [
     entries: [
       {
         version: 'v0.27',
-        title: 'Raporlar 2.0 (R1): Hedef Net, Görev Sonuçları, Çoklu Programa Ekleme & Görüşme Maddeleri',
+        title: 'Yeni Ana Sayfa, petrol tema ve Raporlar 2.0 (R1): hedef net, görev sonuçları, programa ekle, görüşme maddeleri',
         items: [
-          'Görev Türleri ve Kaynak Önerisi: Haftalık plana eklenen görevler artık 5 temel pedagojik türe (Konu, Tekrar, Rutin, Süreli Test, Deneme) ayrılabiliyor. Görev eklerken kaynak alanı öğrencinin son kullandığı kaynaklardan otomatik öneri sunuyor.',
-          'Koç Görev Sonuç Girişi: Tamamlanan görevler için Doğru, Yanlış ve Boş sayıları girilebiliyor; soru kartlarında sonuç ve başarı yüzdesi rozetleri renk kodlu olarak gösteriliyor.',
-          'Hedef Net ve Sınav Tarihleri: Öğrenci profillerine TYT, AYT ve LGS hedef netleri eklendi. Profil başlığında hedefe kalan net ve sınava kadar haftalık gereken artış hızı otomatik hesaplanıyor. Kurum yönetiminde ulusal YKS ve LGS sınav tarihleri kartı eklendi.',
-          'Gelişmiş Programa Ekleme (AddToProgramPopover): Deneme analizi zayıf konularından ve Konu Haritası\'ndan tek tıkla haftalık programa çoklu gün ve kaynak seçimiyle görev eklenebiliyor.',
-          'Görüşmede Konuşulacaklar (Talking Points): Haftalık Görüşme sayfasında ve öğrenci profilinde veri odaklı 5 kritik gündem maddesi (Kritik konular, Ödev tamamlama, Tutarsızlık tespiti, Tekrar ihtiyacı, İlerleme takibi) otomatik listeleniyor; ilgili aksiyon düğmeleriyle doğrudan programa görev açılabiliyor.',
+          'Yeni Ana Sayfa: "Bugün ilgi bekleyenler" listesi öğrencileri nedenleriyle (kritik konu, net düşüşü, devamsızlık, program, deneme yok) sıralar ve her birinin yanında tek bir sonraki adım gösterir. Altında bu haftanın görev tamamlaması, beş modül kartı (Öğrenciler, Denemeler, Program, Devamsızlık, Raporlar), son denemeler ve son hareketler yer alır.',
+          'Sol menü ve tema: Panel artık "Ana Sayfa". Menüde modül renkleri, konusu girilmemiş deneme ve takip gereken öğrenci sayaçları, ince kaydırma çubuğu ve sayfa geçiş efekti var. Uygulamanın rengi mordan petrole geçti; Konsept kurumu menüde gold tonuyla ayrışıyor.',
+          'Görev türü ve kaynak: Haftalık programdaki görevler Konu, Tekrar, Rutin, Süreli Test ya da Deneme olarak işaretlenir. Kaynak alanı öğrencinin son kullandığı kaynakları önerir. "Deneme mi?" kutusu kalktı, deneme artık bir görev türü.',
+          'Görev sonucu: Tamamlanan görevde "Sonuç gir" ile Doğru, Yanlış ve Boş girilir; kartta "12D · 5Y · 3B · %60" gibi bir rozet görünür. Görevin tamamlandığı an otomatik kaydedilir.',
+          'Hedef net ve sınav tarihleri: Öğrenciye TYT, AYT ya da LGS hedef neti girilir; profil başlığında hedefe kalan net görünür. Sınav tarihleri Kurumlar ekranından girilir; tarih girilince kalan hafta ve haftalık gereken artış da hesaplanır.',
+          'Programa ekle: Deneme analizindeki konu tablosundan ve Konu Yeterlilik Haritası\'ndan bir konuyu tek pencerede birden fazla güne görev olarak ekleyebilirsin. Liste yalnız öğrencinin müfredatındaki konuları gösterir.',
+          'Görüşmede konuşulacaklar: Haftalık Görüşme (Raporlar) sayfasında ve öğrenci profilinin Genel Bakış sekmesinde en fazla 5 madde (kritik konu, ödev temposu, tutarsızlık, tekrar, ilerleme) otomatik listelenir; maddenin yanındaki düğmeyle doğrudan programa görev eklenir.',
+          'Düzeltmeler: "Konusu girilmemiş deneme" sayacı artık gerçekten konu sonucuna bakıyor. Çok denemeli öğrencilerde 1000 satır sınırı nedeniyle eksik görünen bölüm ve konu sonuçları tam yükleniyor. Deneme girişinde seçmeli ders kutusu (Din Kültürü) Net/Başarı sütununu kartın dışına itiyordu. Konu Yeterlilik Haritası deneme ölçümlerini bir izin hatası yüzünden göstermiyordu.',
         ],
       },
     ],

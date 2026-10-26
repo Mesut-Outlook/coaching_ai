@@ -20,10 +20,10 @@ interface GuideItem {
 const GUIDE: GuideItem[] = [
   {
     to: '/panel',
-    label: 'Koç Paneli',
+    label: 'Ana Sayfa',
     icon: LayoutGrid,
     step: '1 · Güne Başlarken',
-    body: 'Tüm öğrencilerini tek bakışta görürsün: kritik konu sayısı, son 5 deneme neti, haftalık görev tamamlama oranı. Yeni öğrenci kaydı da buradaki "Öğrenci Ekle" ile açılır.',
+    body: 'Güne buradan başlarsın. "Bugün ilgi bekleyenler" listesi öğrencileri nedenleriyle sıralar: kritik konu, net düşüşü, devamsızlık, yarım kalan ya da hiç olmayan program, uzun süredir deneme girilmemesi. Her öğrencinin yanında en önemli nedenine göre tek bir düğme durur (deneme analizini aç, programı aç, deneme gir…). Sağda bu haftanın görev tamamlaması gün gün görünür; altta beş modül kartı ilgili ekranlara götürür, son denemeler ve son hareketler listelenir. Sol menüdeki kırmızı sayaçlar konusu girilmemiş denemeleri ve takip gereken öğrencileri gösterir. Yeni öğrenci kaydı ve deneme girişi sağ üstteki düğmelerden açılır.',
     usage: 'Her gün işe başlarken — bugün önce kime bakmalıyım?',
   },
   {
@@ -31,7 +31,7 @@ const GUIDE: GuideItem[] = [
     label: 'Öğrenciler',
     icon: Users,
     step: '2 · Öğrenciyi Tanı',
-    body: 'Tüm öğrenci listesi ve her birinin profili burada — hedef program, net gelişim grafiği, deneme geçmişi, konu yeterliliği ve görevler sekmelerde. Profil başlığında hedef net (TYT, AYT veya LGS), hedefe kalan net ve sınava kadar haftalık gereken artış hızı otomatik hesaplanır. "Özet" sekmesinde görüşmede konuşulacak 5 veri odaklı gündem maddesi yer alır. Profil başlığında telefonların yanında devamsızlık sayısı da görünür (tıklayınca Devamsızlık ekranına gider). "Deneme Geçmişi" sekmesinde bir denemeye tıklayınca bölüm bazlı doğru/yanlış/boş/net tablosu açılır ve sonucu oradan WhatsApp ile paylaşabilirsin. Kart üzerindeki "..." menüsünden bilgileri düzenleyebilir, profil fotoğrafı yükleyebilir, öğrenci ve veli telefonu ekleyebilir, öğrenciyi arşivleyebilir ya da kalıcı silebilirsin. Öğrenci ekleme/düzenleme formunda sınıf artık 7. Sınıf\'tan 12. Sınıf\'a kadar (+ Mezun) seçilebiliyor.',
+    body: 'Tüm öğrenci listesi ve her birinin profili burada — hedef program, net gelişim grafiği, deneme geçmişi, konu yeterliliği ve görevler sekmelerde. Profil başlığında hedef net (TYT, AYT ya da LGS) ve hedefe kalan net görünür; sınav tarihi girildiyse haftalık gereken artış da hesaplanır. "Genel Bakış" sekmesinin başında "Görüşmede konuşulacaklar" kartı en fazla 5 madde listeler. Profil başlığında telefonların yanında devamsızlık sayısı da görünür (tıklayınca Devamsızlık ekranına gider). "Deneme Geçmişi" sekmesinde bir denemeye tıklayınca bölüm bazlı doğru/yanlış/boş/net tablosu açılır ve sonucu oradan WhatsApp ile paylaşabilirsin. Kart üzerindeki "..." menüsünden bilgileri düzenleyebilir, profil fotoğrafı yükleyebilir, öğrenci ve veli telefonu ekleyebilir, öğrenciyi arşivleyebilir ya da kalıcı silebilirsin. Öğrenci ekleme/düzenleme formunda sınıf artık 7. Sınıf\'tan 12. Sınıf\'a kadar (+ Mezun) seçilebiliyor.',
     usage: 'Bir öğrenciyi aramak, bilgilerini güncellemek ya da geçmişini detaylı incelemek istediğinde.',
   },
   {
@@ -63,7 +63,7 @@ const GUIDE: GuideItem[] = [
     label: 'Haftalık Program',
     icon: Calendar,
     step: '5 · Haftayı Planla',
-    body: 'Haftalık plan gün gün bir pano şeklinde. Görevler artık 5 temel pedagojik türe (Konu, Tekrar, Rutin, Süreli Test, Deneme) ayrılır ve kaynak alanı son kullanılan kaynaklardan otomatik tamamlama sunar. Bir görevi sürükleyip başka güne taşıyabilir, tamamlanan görevlerde koç Doğru/Yanlış/Boş sonuçlarını girip kart rozetlerinde görüntüleyebilir. Bir görevin konu adına tıklarsan o konunun gelişim paneli açılır. Sağ üstteki "Yazdır / PDF" ile programı tek sayfaya sığacak şekilde yazdırabilir, "WhatsApp ile Gönder" ile öğrenciye, veliye ya da her ikisine birden iletebilirsin.',
+    body: 'Haftalık plan gün gün bir pano şeklinde. Görevler artık beş türe ayrılır (Konu, Tekrar, Rutin, Süreli Test, Deneme) ve kaynak alanı son kullanılan kaynaklardan otomatik tamamlama sunar. Bir görevi sürükleyip başka güne taşıyabilir, tamamlanan görevlerde koç Doğru/Yanlış/Boş sonuçlarını girip kart rozetlerinde görüntüleyebilir. Bir görevin konu adına tıklarsan o konunun gelişim paneli açılır. Sağ üstteki "Yazdır / PDF" ile programı tek sayfaya sığacak şekilde yazdırabilir, "WhatsApp ile Gönder" ile öğrenciye, veliye ya da her ikisine birden iletebilirsin.',
     usage: 'Hafta başında planlarken, görev sonuçlarını girerken ya da hazırladığın programı öğrenciyle/veliyle paylaşman gerektiğinde.',
   },
   {
@@ -79,7 +79,7 @@ const GUIDE: GuideItem[] = [
     label: 'Haftalık Görüşme',
     icon: BarChart2,
     step: '6 · Haftayı Kapat',
-    body: 'Geçen haftanın özeti, öne çıkan kritik konular ve gelecek haftaya doğrudan görev atayabileceğin planlama alanı aynı ekranda. En üstte yer alan "Görüşmede Konuşulacaklar" kartı, öğrencinin son deneme, görev ve konu ölçümlerinden türetilen 5 kritik gündem maddesini (Kritik, Ödev, Tutarsızlık, Tekrar, İlerleme) otomatik listeler ve doğrudan programa görev ekleme aksiyonu sunar.',
+    body: 'Geçen haftanın özeti, öne çıkan kritik konular ve gelecek haftaya doğrudan görev atayabileceğin planlama alanı aynı ekranda. En üstte yer alan "Görüşmede Konuşulacaklar" kartı, öğrencinin son deneme, görev ve konu ölçümlerinden türetilen en fazla 5 maddeyi (Kritik, Ödev, Tutarsızlık, Tekrar, İlerleme) otomatik listeler; maddenin yanındaki düğmeyle doğrudan programa görev eklenir.',
     usage: 'Haftalık birebir görüşmelerde, öğrenciyle karşılıklı otururken.',
   },
   {
