@@ -2923,6 +2923,17 @@ Spec §8, taslak artboard 4-5.
   8. **Medyan eşiği:** ağırlıklar eşitken (medyan 1,0) `weight >= median` her konuyu "ağır" yapıyor, "Hızlı Kazanım/Sonra" hep 0. `weight > median` kullan. Hepsi eşitse ağırlık eksenini bölme, yalnız başarıya göre iki bölge göster ve bunu alt yazıda söyle.
   9. **Hata profili:** "RİSKLİ İŞARETLEME"/"SAĞLAM" bölge yazıları ders etiketleri ve noktalarla üst üste. Bölge adlarını köşelere, ders etiketlerini noktanın üstüne çakışmasız koy.
   10. **B7 başlığı:** TYT sekmesinde AYT dersleri de çıkıyor (müfredat tamamı, doğru). Başlığa "YKS müfredatı (TYT + AYT)" yaz, LGS'te "LGS müfredatı (8. sınıf)".
+- 12:35 — 🚀 **CANLIDA: R2 (R2-1…R2-5 + R2-2b 1–5)** (`04856b9` merge, bundle `index-LbCNhNQ-.js`). Kontroller: types ✓, lint 28, exam-report ✓, home-summary ✓, talking-points ✓, report360 ✓, build ✓. Test Test'te doğrulandı:
+  - tahmin 120'de kesiliyor
+  - Pareto ve "en yüksek 6" listesinde konu + ders adları var (madde 6 çözülmüş)
+  - matris noktaları ders renginde (madde 7 çözülmüş)
+  - tr-TR biçim doğru
+  **Kalan cila (R2-2c, sıradaki işin):**
+  8. Medyan eşiği: 1,0 ağırlıklı noktalar hâlâ "ağır" sayılıyor, Hızlı Kazanım/Sonra = 0.
+  9. Hata profili bölge yazıları ve ders etiketleri çakışıyor.
+  10. B7 başlığına "YKS müfredatı (TYT + AYT)" / "LGS müfredatı".
+  11. Hedef yolu **bandı** da `[0, maxNet]`'e kesilsin; şu an tahmin 120'de ama bant ve y ekseni 133'e çıkıyor.
+  Ardından **Test LGS** ile LGS kabulü: 3 LGS denemesi gir (değerleri günlüğe yaz), 360 Rapor'da yalnız LGS konuları, katsayılı net ve "LGS puanı değildir" görünmeli.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
