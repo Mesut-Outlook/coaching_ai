@@ -2805,3 +2805,4 @@ Spec §8, taslak artboard 4-5.
 - 22:25 | G4 | bitti | 2fbb1ac on gece/denemeler-sayfalama | DenemelerPage 1000-cap & 200-chunk eklendi, test:types/lint/build/exam-report temiz | yok | sıradaki kontrol ~23:00 (proje geneli 1000-cap denetimi)
 - 22:35 | G4 | bitti | c60b220 on gece/denemeler-sayfalama | StudentExamAnalysisView fetchByExamIds 1000-cap & 200-chunk eklendi, test:types/lint/build/exam-report temiz | yok | sıradaki kontrol ~00:05 (gece yarısı Opus uyanışı)
 - 07:55 | G2b/G4 | başladı | Coching_AI-g2 & Coching_AI-g4 | Opus 07:55 direktifi alındı: (1) kararlı .order('id') & (2) getIsoDayIndex yerel gün düzeltmesi yapılıyor | yok | sıradaki kontrol ~08:10
+- 08:00 | G2b/G4 | bitti | 985f757 & e5f89dd (main'de) | Düzeltmeler tamamlandı: .order('id') kararlı sıra (topics/subjects dahil) + getIsoDayIndex yerel gün assert'i (01:30 → 0) geçti; G3/E8 2025 kabulüne geçiliyor | yok | sıradaki kontrol ~08:15
