@@ -3025,6 +3025,7 @@ Spec §8, taslak artboard 4-5.
   3. "Hedefe mesafe: Ulaşıldı · haftada +0,0 net" çelişkili. Hedefe ulaşıldıysa alt satırda "Hedefin X net üstünde" yaz.
   4. Ana Sayfa "ilgi bekleyenler"de LGS net düşüşü ham netle yazılıyor (Test LGS 71,67 → 66,67). `homeSummaryCore` LGS'te `weightedNet` kullanmalı.
   5. Madde 9 (portal görüntüleri) hâlâ açık.
+- 18:25 — 📘 **G-1 Eda rehberi yayında (taslak 1):** https://claude.ai/artifact/FHW1WRoMBSf2FremtDZrNv. Düz HTML, capability yok. 10 ekran görüntüsü canlıdan test öğrencileriyle çekildi, Ana Sayfa'daki gerçek öğrenci satırları bulanıklaştırıldı. Eksik: portal "Haftam" görüntüsü (agy madde 9) ve uygulamadaki Yardım v0.29 notu (Opus).
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
