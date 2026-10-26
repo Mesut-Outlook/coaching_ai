@@ -18,6 +18,21 @@ const HISTORY: DateGroup[] = [
     date: '26 Ekim 2026',
     entries: [
       {
+        version: 'v0.28',
+        title: 'Raporlar 2.0 (R2) — Koç 360 Raporu: hedef yolu, öncelik matrisi, net kaybı Pareto, hata profili, tutarlılık ve müfredat yetişme',
+        items: [
+          '360 Rapor Sekmesi: Öğrenci profilinde Genel Bakış\'ın hemen yanına açılan yeni "360 Rapor" sekmesi, öğrencinin sınav hazırlığını altı analitik eksende inceler. Sınav türü seçicisi (TYT, AYT ya da LGS) öğrencinin sınıf müfredatına göre otomatik filtrelenir.',
+          'K0 KPI Şeridi: Son deneme neti ve değişimi (Δ), hedefe kalan net ve gereken haftalık artış, son 4 haftalık ödev tamamlama oranı, son 4 haftalık ödev doğruluğu ve müfredat kapsamı tek bakışta sunulur.',
+          'B2 Hedef Yolu: Doğrusal regresyonla son deneme eğilimi sınav gününe uzatılır ve artıkların standart sapmasıyla güven/belirsizlik bandı çizilir. Sınav günündeki tahmini net ile hedef arasındaki fark özetlenir.',
+          'B3 Konu Öncelik Matrisi: Soru ağırlığı (koç geneli ortalama soru sayısı) ve öğrenci başarı oranına göre konular 4 analitik bölgeye ayrılır: Hemen Çalış, Koru, Hızlı Kazanım ve Sonra. En yüksek öncelikli 6 konu listelenir ve tek tıkla haftalık programa atanabilir.',
+          'B4 Net Kaybı Pareto Analizi: Yanlış ve boşlardan kaynaklanan net kayıpları azalan sırada listelenir. Toplam kaybın ilk %60\'ını oluşturan kritik konular vurgulanır ve doğrudan programa eklenebilir.',
+          'B5 Ders Hata Profili: Son 3 denemenin ders bazında yanlış ve boş oranları (eşik: %15) 4 stratejik bölgede eşleştirilir: Sağlam, Riskli İşaretleme, Süre/Strateji ve Konu Eksiği. Her bölgeye özel koçluk eylem önerileri sunulur.',
+          'B6 Ödev ↔ Deneme Tutarlılığı: En az 20 ödev sorusu çözülmüş konularda ödev doğruluğu ile deneme başarısı arasındaki 15 puan ve üzeri farklar dambıl grafiğiyle gösterilir; "Süreli test ekle" veya "Kaynağı zorlaştır" önerileri üretilir.',
+          'B7 Müfredat İlerlemesi & Yetişme Tahmini: Ders bazında Yeterli, Gelişiyor, Çalışıldı ve Başlanmadı konu durumları yığılı çubuklarla izlenir. Son 6 haftalık konu yeterlilik hızı hesaplanarak sınav tarihine yetişme projeksiyonu yapılır.',
+          'Haftalık Görüşme Bağlantısı: Raporlar ekranındaki öğrenci seçici yanına "360 Raporu Aç" bağlantısı eklendi.',
+        ],
+      },
+      {
         version: 'v0.27',
         title: 'Yeni Ana Sayfa, petrol tema ve Raporlar 2.0 (R1): hedef net, görev sonuçları, programa ekle, görüşme maddeleri',
         items: [
