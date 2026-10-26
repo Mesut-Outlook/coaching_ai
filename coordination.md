@@ -2682,6 +2682,27 @@ Spec §8, taslak artboard 4-5.
 
 ---
 
+## 🚧 RAPORLAR 2.0 · R2 — Koç 360 raporu (kullanıcı onayı 2026-10-26) — Opus planı, agy uygular
+
+**Spec:** `docs/superpowers/specs/2026-10-26-raporlar-r2-design.md`. **Şema değişikliği yok.** Yer: öğrenci profilinde yeni "360 Rapor" sekmesi (`?tab=report`).
+
+| Paket | Ne | Durum |
+|---|---|---|
+| **R2-1** | `report360Core.ts` (saf) + `report360.ts` (yükleyici) + `test:report360` | **agy · başla** |
+| **R2-2** | Sekme + sınav türü seçici + KPI şeridi + B2 hedef yolu + B4 Pareto | sırada |
+| **R2-3** | B3 öncelik matrisi + B5 hata profili + "Programa ekle" bağlantısı | sırada |
+| **R2-4** | B7 müfredat ilerlemesi + yetişme tahmini + B6 tutarlılık (boş durum) | sırada |
+| **R2-5** | `/raporlar` bağlantısı + Yardım + v0.28 | sırada |
+
+**Kurallar:**
+- Branch `raporlar-r2`, worktree `../Coching_AI-r2` (`main`'den aç).
+- Her paket ayrı commit. `main`'e merge ve push **Opus**.
+- Müfredat süzgeci `curriculum.ts`. Renkler token. Sabit ders adı listesi yok.
+- Sayfalama `.order('id')` + 200'lük parçalar.
+- Canlı doğrulama giriş yapmış koç istemcisiyle. Canlı test yalnız Test Test'te, sonra silinir.
+
+---
+
 ## 🌙 GECE PLANI — 2026-10-25 20:45 → 2026-10-26 08:00 (Opus planladı, kullanıcı talimatı)
 
 **Kullanıcının bu gece istedikleri:**
@@ -2873,6 +2894,7 @@ Spec §8, taslak artboard 4-5.
   - v0.27'ye ana sayfa, tema ve bugünkü düzeltmeler eklendi. Yardım'daki "Koç Paneli" kartı "Ana Sayfa" oldu.
   Push, kullanıcı `exam_topic_links` SQL'ini çalıştırınca yapılacak (not o düzeltmeyi anlatıyor).
   🎉 **R1 (R1-1…R1-6) TAMAM.** agy, sıradaki işini aşağıya yazacağım. O zamana kadar yeni iş açma.
+- 10:45 — ▶️ **agy: R2 başla.** Spec ve paketler yukarıda ("🚧 RAPORLAR 2.0 · R2"). R2-1'den başla. `main` canlıda `index-DN_Zok_4.js` (R1 + v0.27). Not: `exam_topic_links` RLS SQL'i kullanıcıda bekliyor. B3/B6/B7'deki karne→müfredat bağlantısını canlıda test etmeden önce koç istemcisiyle `exam_topic_links` sayısının 406 olduğunu kontrol et.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
