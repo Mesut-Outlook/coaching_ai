@@ -35,7 +35,7 @@ const QUADRANT_LABELS: Record<PriorityQuadrant, { label: string; desc: string; c
 }
 
 export default function PriorityMatrixChart({ data, onAddToProgram }: PriorityMatrixChartProps) {
-  const { points, medianWeight } = data
+  const { points, medianWeight, allWeightsEqual } = data
   const [hoveredPoint, setHoveredPoint] = useState<PriorityMatrixPoint | null>(null)
   const [selectedQuadrant, setSelectedQuadrant] = useState<PriorityQuadrant | 'all'>('all')
   const chartId = useId()
@@ -109,7 +109,9 @@ export default function PriorityMatrixChart({ data, onAddToProgram }: PriorityMa
             <span>Konu Öncelik Matrisi (B3)</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
-            x: Başarı (%70 eşiği) · y: Soru Ağırlığı (medyan: {medianWeight.toFixed(1).replace('.', ',')} soru)
+            {allWeightsEqual
+              ? `x: Başarı (%70 eşiği) · Tüm konuların soru ağırlığı eşit (${medianWeight.toFixed(1).replace('.', ',')} soru); başarıya göre 2 bölge (Hemen Çalış / Koru)`
+              : `x: Başarı (%70 eşiği) · y: Soru Ağırlığı (medyan: ${medianWeight.toFixed(1).replace('.', ',')} soru)`}
           </div>
         </div>
 
@@ -247,16 +249,18 @@ export default function PriorityMatrixChart({ data, onAddToProgram }: PriorityMa
             strokeWidth="1.5"
             strokeDasharray="4 3"
           />
-          {/* Yatay Eşik (Ağırlık Medyan) */}
-          <line
-            x1={padLeft}
-            y1={thresholdY}
-            x2={padLeft + plotWidth}
-            y2={thresholdY}
-            stroke="var(--border)"
-            strokeWidth="1.5"
-            strokeDasharray="4 3"
-          />
+          {/* Yatay Eşik (Ağırlık Medyan - yalnızca ağırlıklar farklıysa çizilir) */}
+          {!allWeightsEqual && (
+            <line
+              x1={padLeft}
+              y1={thresholdY}
+              x2={padLeft + plotWidth}
+              y2={thresholdY}
+              stroke="var(--border)"
+              strokeWidth="1.5"
+              strokeDasharray="4 3"
+            />
+          )}
 
           {/* Eksen Çizgileri */}
           <line

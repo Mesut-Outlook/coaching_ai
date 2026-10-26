@@ -350,6 +350,7 @@ export default function Report360View({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 16 }}>
             <CurriculumProgressChart
               data={data.curriculum}
+              curriculumTitle={isLgsStudent ? 'LGS müfredatı (8. sınıf)' : 'YKS müfredatı (TYT + AYT)'}
             />
 
             <ConsistencyDumbbellChart

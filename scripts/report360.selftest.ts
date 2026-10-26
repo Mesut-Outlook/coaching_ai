@@ -289,6 +289,7 @@ console.log('▶ R2-1 Koç 360 Raporu Motoru Öz-Testi Başlatılıyor...\n')
 
   assert.equal(p1.curriculumTopicId, 101, 'is_primary bağlantısı aktarılmalı')
   assert.equal(pts[0].examTopicId, 1, 'En yüksek öncelik puanlı konu ilk sırada olmalı')
+  assert.ok(pts.every((p) => p.examTopicName && p.examTopicName.length > 0), 'Öncelik matrisi konu adları dolu olmalı')
 
   console.log('✓ 4. B3 (Öncelik Matrisi & 4 bölge) doğrulandı.')
 }
@@ -323,6 +324,7 @@ console.log('▶ R2-1 Koç 360 Raporu Motoru Öz-Testi Başlatılıyor...\n')
   assert.equal(pareto.totalLossNet, 15.5) // 11 + 3.5 + 1.0 = 15.5
   assert.equal(pareto.bars[0].examTopicName, 'Problemler')
   assert.equal(pareto.bars[0].isCritical, true, 'İlk konu toplam kaybın çoğunluğunu oluşturduğu için kritik olmalı')
+  assert.ok(pareto.bars.every((b) => b.examTopicName && b.examTopicName.length > 0), 'Pareto çubuk konu adları dolu olmalı')
   assert.ok(pareto.summaryText.includes('konu, toplam kaybın %'))
 
   console.log('✓ 5. B4 (Net Kaybı Pareto) doğrulandı.')
