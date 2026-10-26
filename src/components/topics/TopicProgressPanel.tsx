@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Save, CheckCircle2, AlertTriangle, XCircle, HelpCircle } from 'lucide-react'
+import { Save, CheckCircle2, AlertTriangle, XCircle, HelpCircle, Plus } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import Sparkline from '../charts/Sparkline'
@@ -22,6 +22,8 @@ type Props = {
   onSaved?: () => void
   /** Koç kararı kaydedildiğinde ya da İptal'e basıldığında çağrılır. */
   onClose?: () => void
+  /** Haftalık programa ekleme modalını açar */
+  onAddToProgram?: () => void
 }
 
 export default function TopicProgressPanel({
@@ -32,6 +34,7 @@ export default function TopicProgressPanel({
   topicHint,
   onSaved,
   onClose,
+  onAddToProgram,
 }: Props) {
   const { user } = useAuth()
   const [measurements, setMeasurements] = useState<TopicMeasurement[]>([])
@@ -204,20 +207,33 @@ export default function TopicProgressPanel({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div>
-        {subjectName && (
-          <span style={{ fontSize: 10.5, color: 'var(--ink-faint)', fontWeight: 700, textTransform: 'uppercase' }}>
-            {subjectName}
-          </span>
-        )}
-        <h3 style={{ fontSize: 15, marginTop: 4 }}>{topicName}</h3>
-        {topicHint && (
-          <div style={{ marginTop: 6, fontSize: 11.5, color: 'var(--ink-soft)', background: 'var(--surface-alt)', padding: '6px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <HelpCircle size={13} style={{ flexShrink: 0, color: 'var(--ink-faint)' }} />
-            <span>{topicHint}</span>
-          </div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+        <div>
+          {subjectName && (
+            <span style={{ fontSize: 10.5, color: 'var(--ink-faint)', fontWeight: 700, textTransform: 'uppercase' }}>
+              {subjectName}
+            </span>
+          )}
+          <h3 style={{ fontSize: 15, marginTop: 4 }}>{topicName}</h3>
+        </div>
+        {onAddToProgram && (
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={onAddToProgram}
+            style={{ fontSize: 11, padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
+            title="Bu konuyu haftalık programa ekle"
+          >
+            <Plus size={13} /> Programa Ekle
+          </button>
         )}
       </div>
+      {topicHint && (
+        <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', background: 'var(--surface-alt)', padding: '6px 10px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <HelpCircle size={13} style={{ flexShrink: 0, color: 'var(--ink-faint)' }} />
+          <span>{topicHint}</span>
+        </div>
+      )}
 
       {/* Ölçüm geçmişi + ortalama */}
       <div style={{ padding: 10, background: 'var(--surface-alt)', borderRadius: 8, border: '1px solid var(--border-soft)', fontSize: 12 }}>

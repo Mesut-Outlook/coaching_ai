@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, ChevronDown, ChevronUp, Info } from 'lucide-react'
+import { Search, ChevronDown, ChevronUp, Info, Plus } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import TopicProgressPanel from '../components/topics/TopicProgressPanel'
+import AddToProgramPopover from '../components/program/AddToProgramPopover'
 import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -39,6 +40,8 @@ export default function KonularPage() {
   
   // Seçili konu — detay/gelişim paneli (panelin kendi state'i bileşenin içinde)
   const [editingTopicId, setEditingTopicId] = useState<number | null>(null)
+  // Programa ekleme popover state'i
+  const [programPopoverTopic, setProgramPopoverTopic] = useState<{ topicId: number; topicName: string } | null>(null)
 
   // Sync selectedStudentId with query parameters
   const handleStudentChange = (id: string) => {
@@ -335,10 +338,17 @@ export default function KonularPage() {
                             const isEditing = editingTopicId === topic.id
                             
                             return (
-                              <button
+                              <div
                                 key={topic.id}
-                                type="button"
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => openEditDrawer(topic.id)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault()
+                                    openEditDrawer(topic.id)
+                                  }
+                                }}
                                 style={{
                                   display: 'flex',
                                   alignItems: 'center',
@@ -382,8 +392,31 @@ export default function KonularPage() {
                                     {status === 'kritik' && 'Kritik'}
                                     {status === 'olculmedi' && 'Girilmedi'}
                                   </span>
+                                  <button
+                                    type="button"
+                                    className="btn btn-ghost"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setProgramPopoverTopic({ topicId: topic.id, topicName: topic.name })
+                                    }}
+                                    title="Bu konuyu haftalık programa ekle"
+                                    style={{
+                                      padding: '2px 6px',
+                                      fontSize: 10,
+                                      fontWeight: 600,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 3,
+                                      color: 'var(--primary)',
+                                      border: '1px solid var(--border-soft)',
+                                      borderRadius: 6,
+                                      background: 'var(--surface)',
+                                    }}
+                                  >
+                                    <Plus size={11} /> Program
+                                  </button>
                                 </div>
-                              </button>
+                              </div>
                             )
                           })}
                         </div>
@@ -419,6 +452,7 @@ export default function KonularPage() {
                   topicHint={getTopicHint(topic.id)}
                   onSaved={loadStudentData}
                   onClose={() => setEditingTopicId(null)}
+                  onAddToProgram={() => setProgramPopoverTopic({ topicId: topic.id, topicName: topic.name })}
                 />
               )
             })()}
@@ -426,6 +460,20 @@ export default function KonularPage() {
 
         </div>
         )
+      )}
+
+      {programPopoverTopic && selectedStudentId && (
+        <AddToProgramPopover
+          studentId={selectedStudentId}
+          studentName={selectedStudent?.full_name}
+          topicId={programPopoverTopic.topicId}
+          originKind="konu_haritasi"
+          suggestedType="tekrar"
+          onClose={() => setProgramPopoverTopic(null)}
+          onSuccess={() => {
+            setProgramPopoverTopic(null)
+          }}
+        />
       )}
     </section>
   )

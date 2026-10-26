@@ -11,6 +11,7 @@ import {
   AlertCircle,
   CheckCircle,
   Lightbulb,
+  Plus,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type {
@@ -39,9 +40,11 @@ import LossBarChart from '../charts/LossBarChart'
 import StackedBarChart from '../charts/StackedBarChart'
 import Sparkline from '../charts/Sparkline'
 import { type ChartPalette, DEFAULT_CHART_PALETTE } from '../charts/chartPalette'
+import AddToProgramPopover from '../program/AddToProgramPopover'
 
 export interface StudentExamAnalysisViewProps {
   studentId: string
+  studentName?: string
   palette?: Partial<ChartPalette>
   role?: 'coach' | 'student' | 'parent'
   initialExamType?: ExamType
@@ -83,6 +86,7 @@ async function fetchByExamIds<T>(
 
 export default function StudentExamAnalysisView({
   studentId,
+  studentName,
   palette,
   role = 'coach',
   initialExamType,
@@ -104,6 +108,11 @@ export default function StudentExamAnalysisView({
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | 'ALL'>('ALL')
   const [showFormulaModal, setShowFormulaModal] = useState(false)
   const [expandedTopicId, setExpandedTopicId] = useState<number | null>(null)
+  const [programPopoverTarget, setProgramPopoverTarget] = useState<{
+    examTopicId: number
+    examTopicName: string
+    suggestedType?: 'konu' | 'tekrar' | 'rutin' | 'sureli_test' | 'deneme'
+  } | null>(null)
 
   // Veri yükleme
   useEffect(() => {
@@ -866,6 +875,7 @@ export default function StudentExamAnalysisView({
                   <th style={{ textAlign: 'center', padding: '8px' }}>Σ %</th>
                   <th style={{ textAlign: 'center', padding: '8px' }}>Eğilim</th>
                   <th style={{ textAlign: 'center', padding: '8px' }}>Durum</th>
+                  <th style={{ textAlign: 'center', padding: '8px' }}>İşlem</th>
                 </tr>
               </thead>
               <tbody>
@@ -978,6 +988,36 @@ export default function StudentExamAnalysisView({
                               : 'Ölçülmedi'}
                           </span>
                         </td>
+
+                        {/* İşlem (Programa Ekle) */}
+                        <td style={{ textAlign: 'center', padding: '6px' }}>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() =>
+                              setProgramPopoverTarget({
+                                examTopicId: row.exam_topic_id,
+                                examTopicName: row.name,
+                                suggestedType: 'sureli_test',
+                              })
+                            }
+                            style={{
+                              padding: '2px 8px',
+                              fontSize: 11,
+                              fontWeight: 600,
+                              color: row.status_badge === 'weak' ? 'var(--critical-text)' : 'var(--indigo-600)',
+                              background: row.status_badge === 'weak' ? 'var(--critical-bg)' : 'transparent',
+                              border: row.status_badge === 'weak' ? '1px solid color-mix(in srgb, var(--critical-text) 25%, transparent)' : 'none',
+                              whiteSpace: 'nowrap',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 3,
+                            }}
+                            title="Bu konuyu haftalık programa ekle"
+                          >
+                            <Plus size={12} /> Programa Ekle
+                          </button>
+                        </td>
                       </tr>
                     )
                   })}
@@ -985,6 +1025,19 @@ export default function StudentExamAnalysisView({
             </table>
           </div>
         </div>
+      )}
+
+      {programPopoverTarget && (
+        <AddToProgramPopover
+          studentId={studentId}
+          studentName={studentName}
+          examTopicId={programPopoverTarget.examTopicId}
+          examTopicName={programPopoverTarget.examTopicName}
+          originKind="deneme_analizi"
+          suggestedType={programPopoverTarget.suggestedType || 'sureli_test'}
+          onClose={() => setProgramPopoverTarget(null)}
+          onSuccess={(cnt) => alert(`${cnt} görev başarıyla haftalık plana eklendi!`)}
+        />
       )}
     </div>
   )
