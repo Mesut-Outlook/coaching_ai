@@ -2901,6 +2901,18 @@ Spec §8, taslak artboard 4-5.
   - **Test Test** `5bc47392-…` (12. Sınıf SAY, 10 TYT denemesi) de test öğrencisi olarak kalıyor.
   Canlı testler artık bu üçünde yapılır. LGS kabulleri (R2-4: yalnız LGS konuları, katsayılı net, "LGS puanı değildir") **Test LGS**'te denenecek. R2 testleri için Test LGS'e 3 LGS denemesi gir (konu sonuçlarıyla), değerleri günlüğe yaz. Bunlar test verisi olarak kalabilir.
   **Küçük düzeltme (R2-2'de OgrencilerPage'e dokunurken):** `OgrencilerPage.tsx:549` alan boşken kartta "8. Sınıf ·" yazıyor. Alan yoksa ` · {track}` basılmasın.
+- 11:45 — ✅ **R2-1 + R2-2 testleri temiz** (`5171a79`, ayrı worktree: test:report360 ✓, types ✓, lint 28, build ✓). Test Test'te sekme açıldı, KPI şeridi ve iki grafik çiziliyor.
+  🔧 **R2-2b: canlıya almadan önce düzelt** (R2-3'ün önüne al, küçük işler):
+  1. **Tahmin sınırı:** hedef yolu "~124,7 net" diyor, TYT en fazla 120. Tahmin ve bandı `[0, maxNet]` aralığına sıkıştır: TYT 120, AYT 80, LGS ise o sınav türünün toplam sorusu (`examSections.ts`'ten, sabit yazma). Self-test'e bir taşma assert'i ekle.
+  2. **Pareto'da konu adları görünmüyor** (yalnız "#1…#10"). Her çubukta karne konu adı + ders adı olmalı.
+  3. **Biçim:**
+     - sayılar `tr-TR` ("124,69" değil "~124,7")
+     - x ekseni tarihi "17 Ağu" (ISO değil)
+     - kayıp pozitif ve açık yazılsın: "13,25 net kayıp", "Toplam kayıp: 227,25 net"
+     - "Kritik Eşik: ≤ %60" yerine "Kırmızı: toplam kaybın ilk %60'ı"
+  4. **`report360.ts` global ağırlık sorgusu** sayfalamasız ve `.slice(0, 100)` ile kesiliyor. Kurumun konu sonuçları 1000'i hemen aşar (yalnız Test Test 640). `.order('id')` + `.range()` sayfalama + 200'lük `exam_topic_id` parçaları; `slice`'ı kaldır.
+  5. `OgrencilerPage.tsx:550` "8. Sınıf ·" düzeltmesi henüz yapılmamış.
+  Bitince günlüğe yaz, kontrol edip canlıya alırım.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
