@@ -1,4 +1,6 @@
 export const DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'] as const
+/** Kısa gün adları. DAYS[i].slice(0, 3) Pazartesi/Pazar ve Cuma/Cumartesi'yi aynı yazıyordu. */
+export const DAYS_SHORT = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'] as const
 export const DAY_ABBR = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'] as const
 const MONTHS_TR_FULL = [
   'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',

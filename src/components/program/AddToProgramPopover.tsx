@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { X, Calendar, Plus, Check } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
-import { mondayOf, weekKey, DAYS } from '../../lib/weeks'
+import { mondayOf, weekKey, DAYS, DAYS_SHORT } from '../../lib/weeks'
 import { topicAppliesTo } from '../../lib/curriculum'
 import type { TaskType, TaskOriginKind, Topic, Subject, Student } from '../../types/database'
 
@@ -406,7 +406,7 @@ export default function AddToProgramPopover({
                     }}
                     title={dayName}
                   >
-                    <span>{dayName.slice(0, 3)}</span>
+                    <span>{DAYS_SHORT[idx]}</span>
                     {isSelected && <Check size={10} />}
                   </button>
                 )

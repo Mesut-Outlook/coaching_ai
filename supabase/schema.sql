@@ -1300,10 +1300,12 @@ create policy "exam_topics: yetkili koç siler" on exam_topics for delete using 
 
 alter table exam_topic_links enable row level security;
 
+-- 2026-10-26: canlıda bu politika etkisizdi (koç 0 satır görüyordu, servis anahtarı 406).
+-- Sonuç: topic_exam_measurements (security_invoker) koça boş dönüyor, Konu Yeterlilik Haritası
+-- deneme ölçümlerini hiç göstermiyordu. exam_calendar'daki gibi rol hedefli yazıldı.
 drop policy if exists "exam_topic_links: herkes okur" on exam_topic_links;
-create policy "exam_topic_links: herkes okur" on exam_topic_links for select using (
-  auth.role() = 'authenticated'
-);
+create policy "exam_topic_links: herkes okur" on exam_topic_links
+  for select to authenticated using (true);
 
 drop policy if exists "exam_topic_links: yetkili koç ekler" on exam_topic_links;
 create policy "exam_topic_links: yetkili koç ekler" on exam_topic_links for insert with check (

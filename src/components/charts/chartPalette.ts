@@ -12,7 +12,7 @@ export type ChartPalette = {
 
 export const DEFAULT_CHART_PALETTE: ChartPalette = {
   primary: 'var(--indigo-600)',
-  primaryArea: 'rgba(76, 67, 168, 0.12)',
+  primaryArea: 'color-mix(in srgb, var(--indigo-600) 12%, transparent)',
   averageLine: 'var(--ink-faint)',
   success: 'var(--success)',
   warning: 'var(--warning)',

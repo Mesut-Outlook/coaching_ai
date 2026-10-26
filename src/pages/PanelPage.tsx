@@ -19,10 +19,7 @@ import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useHomeSummary } from '../contexts/homeSummaryContext'
 import { isSupabaseConfigured } from '../lib/supabase'
-import { DAYS } from '../lib/weeks'
-
-/** DAYS[i].slice(0, 3) Pazartesi/Pazar ve Cuma/Cumartesi'yi aynı yazıyordu. */
-const DAY_SHORT = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
+import { DAYS, DAYS_SHORT as DAY_SHORT } from '../lib/weeks'
 import {
   getIsoDayIndex,
   type AttentionReason,
