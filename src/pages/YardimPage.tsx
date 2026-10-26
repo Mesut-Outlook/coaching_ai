@@ -51,6 +51,14 @@ const GUIDE: GuideItem[] = [
     usage: 'Öğrenciyle haftalık görüşmede veya veli bilgilendirmesinde deneme gelişimini ve eksik konuları netleştirmek istediğinde.',
   },
   {
+    to: '/ogrenciler',
+    label: 'Koç 360 Raporu',
+    icon: Compass,
+    step: '360° Analiz',
+    body: 'Öğrenci profilindeki "360 Rapor" sekmesi, öğrencinin sınav hazırlığını altı analitik eksende değerlendirir: (1) Hedef Yolu: Doğrusal regresyonla sınav günündeki tahmini net ve belirsizlik bandı; (2) Konu Öncelik Matrisi: Soru ağırlığı ve başarı oranına göre 4 bölge (Hemen Çalış, Koru, Hızlı Kazanım, Sonra); (3) Net Kaybı Pareto Analizi: En çok net kaybına yol açan ilk %60 kritik konular; (4) Ders Hata Profili: Yanlış ve boş oranlarına göre 4 strateji bölgesi (Sağlam, Riskli İşaretleme, Süre/Strateji, Konu Eksiği); (5) Ödev ↔ Deneme Tutarlılığı: Görev sonuçları ile deneme başarısı arasındaki farkları yakalayan dambıl analizi; (6) Müfredat İlerlemesi ve Yetişme Tahmini: Konu tamamlama hızı ve sınav tarihine yetişme projeksiyonu. Her grafik üzerinden tek tıkla haftalık programa görev atanabilir.',
+    usage: 'Öğrenci veya veliyle yapılan detaylı performans değerlendirmelerinde ve sınav stratejisi belirlerken.',
+  },
+  {
     to: '/konular',
     label: 'Konu Yeterlilik Haritası',
     icon: Layers,
