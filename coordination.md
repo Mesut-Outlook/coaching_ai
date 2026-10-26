@@ -2978,6 +2978,29 @@ Spec §8, taslak artboard 4-5.
   **Tüm testler** (`raporlar-r3`): types, permissions, exam-report, home-summary, recommend, talking-points, parent-summary, report360 ✓, lint 28, build ✓.
   🔴 **`test:audit` kırmızıydı, `main`'de de.** Sebep R1-1: `completed_at` trigger'ı her işaretlemede denetim kaydına gürültü yazıyordu. Opus `audit_row`'da `completed_at`'i gürültü saydı (main `fix(denetim)`), test 10/10 ✓. Ders: şema işinde `test:audit` de koşulur.
   **Kullanıcıya SQL verildi:** `audit_row` + `portal_dashboard` + R3-0 bloğu, `$fn$`, eski şemada 2 kez ✓. SQL çalışınca kod incelemesi, test verisi ve canlıya alma.
+- 16:40 — 🚀 **CANLIDA: R3 + R4 + T-1** (`raporlar-r3` merge, bundle `index-BlXNDyLu.js`).
+  - Kullanıcı R3 SQL'ini çalıştırdı (`supabase/2026-10-26-r3.sql`). Koç istemcisiyle yeni tablolar ✓.
+  - **Test verisi yazıldı** (kullanıcı onayıyla `--yaz`):
+    - Test YKS: 12 deneme / 59 görev / 10 karar / 3 devamsızlık
+    - Test LGS: 6 / 61 / 8 / 2
+    - Test Test: 10 / 42 / 6
+    - Başka öğrenciye kayıt 0 ✓
+  - Testler: types, permissions, exam-report, home-summary, recommend, talking-points, parent-summary, report360, audit ✓, lint 28, build ✓.
+  🔧 **R3-V1 — görsel kontrolde bulunanlar (öncelik sırasıyla):**
+  1. **LGS ölçeği karışık:**
+     - KPI "Son net 231,33" katsayılı, hedef yolu ham (y ekseni 90'da kesiliyor), hedef 75 ham. Sonuç "231 > 75 → Ulaşıldı" anlamsız.
+     - LGS'te **her yerde katsayılı net** (`weightedNet`): KPI, hedef yolu noktaları, tahmin üst sınırı (en fazla 270), "Haftam" son net.
+     - Öğrenci formundaki "katsayılı toplam net (en fazla 90)" notu ve doğrulama → **270**.
+     - Self-test'e LGS ölçek tutarlılığı assert'i.
+  2. **Tekrar zamanı:** "1 tekrar bekliyor" diyor ama listede "0 haftadır boş" konular da var. Varsayılan liste yalnız zamanı gelenler (≥ 3 hafta); kalanlar katlanır "Yakında" bölümünde. "0. tekrar tamamlandı" yerine "Henüz tekrar edilmedi" / "1. tekrar yapıldı".
+  3. **B7 uyarısı:** "Bu tempoyla müfredat sınavdan 476 hafta sonra bitiyor" absürt. 52 haftayı aşınca "Bu tempoyla sınava yetişmiyor; haftada en az N konu yeterliye geçmeli" yaz (N = kalan / hafta).
+  4. **Test verisi gerçekçi değil:**
+     - Test YKS konu başarılarının hepsi ≥ %70: öncelik matrisinde "Hemen Çalış 0", demo boş görünüyor. Konu başarıları %30–95 dağılsın, 6–8 konu zayıf olsun.
+     - **Müdahale etkisi kartı boş.** `origin_kind ≠ elle` görevlerden bir kısmı, sonrasında konu sonucu olan bir denemeden **önce** tamamlanmış olsun (önce/sonra ölçümü oluşsun, çoğu yükselsin, 1–2'si düşsün).
+     - LGS için de aynısı.
+     - Seed'i `--sil` sonra `--yaz` ile yeniden koşmak **Opus'ta**; sen yalnız script'i düzelt, kuru çalışma çıktısını günlüğe yaz.
+  5. **B6 dambılı:** deneme noktası (sağdaki) beyaz, görünmüyor. Lejanttaki renkle aynı token'ı kullan.
+  Bunları bitirince günlüğe yaz. Ben bu sırada portal "Haftam", veli özeti, öneri paneli ve CSV kartına bakıyorum.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
