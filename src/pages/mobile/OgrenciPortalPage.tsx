@@ -301,7 +301,11 @@ export default function OgrenciPortalPage() {
               {/* Hedef Net ve Son Net Karşılaştırma Barı */}
               {(() => {
                 const targetNet = my_week?.target_net ?? null
-                const latestNet = my_week?.latest_net ?? (exams.length > 0 ? Number(exams[0].total_net) : null)
+                const isLgsExam = my_week?.latest_exam_type === 'LGS' || curriculum === 'LGS'
+                const fallbackNet = exams.length > 0
+                  ? (isLgsExam && exams[0].sections ? weightedNet(exams[0].sections) : Number(exams[0].total_net))
+                  : null
+                const latestNet = my_week?.latest_net ?? fallbackNet
                 if (targetNet !== null && targetNet > 0) {
                   const ratio = Math.min(100, Math.max(0, Math.round(((latestNet ?? 0) / targetNet) * 100)))
                   const remainingNet = Math.max(0, Math.round((targetNet - (latestNet ?? 0)) * 10) / 10)
@@ -313,9 +317,9 @@ export default function OgrenciPortalPage() {
                           <strong style={{ color: 'var(--ink)', fontSize: 14 }}>
                             {latestNet !== null ? Math.round(latestNet * 10) / 10 : '—'}
                           </strong>
-                          {(my_week?.latest_exam_type === 'LGS' || curriculum === 'LGS') && (
+                          {isLgsExam && (
                             <span style={{ fontSize: 10, color: 'var(--ink-faint)', marginLeft: 4 }}>
-                              (LGS ham neti)
+                              (katsayılı net)
                             </span>
                           )}
                         </span>

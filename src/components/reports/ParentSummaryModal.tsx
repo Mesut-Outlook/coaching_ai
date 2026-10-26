@@ -16,6 +16,7 @@ import {
 } from '../../lib/parentSummary'
 import type { AttendanceRecord, MockExam, Student, WeeklyTask } from '../../types/database'
 import type { PortalAttendance, PortalExam, PortalStudent, PortalTask } from '../../lib/portal'
+import { weightedNet } from '../../lib/examSections'
 
 export type ParentSummaryModalProps = {
   isOpen: boolean
@@ -97,18 +98,31 @@ export default function ParentSummaryModal({
           setTasks(propTasks)
         }
 
-        // 3. Denemeler eksikse son 2 denemeyi çek
+        // 3. Denemeler eksikse son 2 denemeyi bölümleriyle birlikte çek
         if (propLatestExam === undefined) {
           promises.push((async () => {
             const { data } = await supabase
               .from('mock_exams')
-              .select('*')
+              .select('*, mock_exam_sections(section_name, net)')
               .eq('student_id', student.id)
               .order('exam_date', { ascending: false })
               .limit(2)
             if (!cancelled && data) {
-              setLatestExam(data[0] ?? null)
-              setPreviousExam(data[1] ?? null)
+              const enrich = (raw: any) => {
+                if (!raw) return null
+                const secs = (raw.mock_exam_sections || []).map((s: any) => ({
+                  section_name: s.section_name,
+                  net: Number(s.net) || 0,
+                }))
+                const isLgs = raw.exam_type === 'LGS'
+                const totalNet = isLgs ? weightedNet(secs) : secs.reduce((sum: number, s: any) => sum + s.net, 0)
+                return {
+                  ...raw,
+                  total_net: Math.round(totalNet * 100) / 100,
+                }
+              }
+              setLatestExam(enrich(data[0]))
+              setPreviousExam(enrich(data[1]))
             }
           })())
         } else {

@@ -97,11 +97,11 @@ export default function ConsistencyDumbbellChart({
         {/* Lejant */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: 'var(--ink-soft)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--indigo-600)' }} />
+            <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--indigo-600, #4f46e5)' }} />
             <span>Ödev Doğruluğu</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--teal-600)' }} />
+            <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--teal, #1D8FA6)' }} />
             <span>Deneme Başarısı</span>
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function ConsistencyDumbbellChart({
                     left: `${leftPct}%`,
                     width: `${spanWidth}%`,
                     height: 4,
-                    background: isTaskHigher ? 'var(--warning)' : 'var(--teal-600)',
+                    background: isTaskHigher ? 'var(--warning, #f59e0b)' : 'var(--teal, #1D8FA6)',
                     borderRadius: 2,
                   }}
                 />
@@ -219,8 +219,8 @@ export default function ConsistencyDumbbellChart({
                     width: 14,
                     height: 14,
                     borderRadius: '50%',
-                    background: 'var(--indigo-600)',
-                    border: '2px solid #ffffff',
+                    background: 'var(--indigo-600, #4f46e5)',
+                    border: '2px solid var(--surface, #ffffff)',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                     zIndex: 2,
                   }}
@@ -236,8 +236,8 @@ export default function ConsistencyDumbbellChart({
                     width: 14,
                     height: 14,
                     borderRadius: '50%',
-                    background: 'var(--teal-600)',
-                    border: '2px solid #ffffff',
+                    background: 'var(--teal, #1D8FA6)',
+                    border: '2px solid var(--surface, #ffffff)',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                     zIndex: 2,
                   }}
@@ -248,10 +248,10 @@ export default function ConsistencyDumbbellChart({
               {/* Değerler ve Öneri */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11 }}>
                 <div style={{ display: 'flex', gap: 14 }}>
-                  <span style={{ color: 'var(--indigo-600)', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--indigo-600, #4f46e5)', fontWeight: 600 }}>
                     Ödev: %{item.taskAccuracyPct}
                   </span>
-                  <span style={{ color: 'var(--teal-700)', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--teal-text, #0F6478)', fontWeight: 600 }}>
                     Deneme: %{item.examAccuracyPct}
                   </span>
                 </div>

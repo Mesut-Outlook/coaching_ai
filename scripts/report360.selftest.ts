@@ -21,6 +21,7 @@ import {
   calculateLinearRegression,
   calculateMedian,
   buildReport360,
+  getMaxNetForExamType,
   type Report360Input,
 } from '../src/lib/report360Core'
 
@@ -202,7 +203,26 @@ console.log('▶ R2-1 Koç 360 Raporu Motoru Öz-Testi Başlatılıyor...\n')
   assert.equal(resOverflow.trajectory.prediction.predictedNetAtExam, 120, 'TYT tahmin neti 120 sınırını aşmamalı')
   assert.equal(resOverflow.trajectory.maxNet, 120, 'TYT maxNet 120 olmalı')
 
-  console.log('✓ 3. B2 (Hedef Yolu regresyon & tahmin) doğrulandı.')
+  // 3.4 LGS ölçek tutarlılığı (katsayılı net sınırı 270, netler 90'da kesilmemeli)
+  const inputLgs: Report360Input = {
+    ...inputFewExams,
+    examType: 'LGS',
+    targetNet: 245.0,
+    examDate: '2027-06-06',
+    exams: [
+      { id: '1', name: 'LGS 1', exam_date: '2026-10-01', exam_type: 'LGS', net: 210.0 },
+      { id: '2', name: 'LGS 2', exam_date: '2026-10-11', exam_type: 'LGS', net: 220.0 },
+      { id: '3', name: 'LGS 3', exam_date: '2026-10-21', exam_type: 'LGS', net: 231.33 },
+    ],
+  }
+  const resLgs = buildReport360(inputLgs)
+  assert.equal(resLgs.trajectory.maxNet, 270, 'LGS maxNet 270 olmalı (katsayılı net ölçeği)')
+  assert.equal(getMaxNetForExamType('LGS'), 270, 'getMaxNetForExamType("LGS") 270 dönmeli')
+  assert.ok(resLgs.trajectory.prediction.predictedNetAtExam! > 230, 'LGS tahmini 90 nete sıkışmamalı, 230 üzeri olmalı')
+  assert.ok(resLgs.trajectory.prediction.predictedNetAtExam! <= 270, 'LGS tahmini 270 neti aşmamalı')
+  assert.equal(resLgs.kpi.lastNet, 231.33, 'KPI son net katsayılı neti (231.33) korumalı')
+
+  console.log('✓ 3. B2 (Hedef Yolu regresyon & tahmin) ve LGS ölçek tutarlılığı doğrulandı.')
 }
 
 // ---------------------------------------------------------------------------
@@ -470,7 +490,28 @@ console.log('▶ R2-1 Koç 360 Raporu Motoru Öz-Testi Başlatılıyor...\n')
   const vel = cur.velocity
   assert.ok(vel.weeklyRate > 0)
 
-  console.log('✓ 8. B7 (Müfredat ilerlemesi & yetişme tahmini) doğrulandı.')
+  // 8.2 52 haftayı aşınca "Bu tempoyla sınava yetişmiyor; haftada en az N konu yeterliye geçmeli"
+  const inputLateCurriculum: Report360Input = {
+    ...inputCurriculum,
+    examDate: '2026-11-09', // 2 hafta sonra
+    curriculumTopics: Array.from({ length: 100 }, (_, i) => ({
+      id: i + 1,
+      name: `T${i + 1}`,
+      subject_id: 10,
+      subject_name: 'Türkçe',
+    })),
+    // 2 karar -> hız = 2/6 = 0.33, kalan = 98 -> ~297 hafta needed, 2 weeks left -> 295 weeks late (>52)
+    coachDecisions: [
+      { topic_id: 1, state: 'yeterli', decided_at: '2026-10-10' },
+      { topic_id: 2, state: 'yeterli', decided_at: '2026-10-12' },
+    ],
+  }
+  const resLate = buildReport360(inputLateCurriculum)
+  assert.equal(resLate.curriculum.velocity.isLate, true)
+  assert.ok(resLate.curriculum.velocity.weeksLate! > 52)
+  assert.ok(resLate.curriculum.velocity.summaryText.includes('haftada en az'), '52 haftadan büyük gecikmede haftada en az N konu önerisi yapılmalı')
+
+  console.log('✓ 8. B7 (Müfredat ilerlemesi & yetişme tahmini) ve 52 hafta uyarısı doğrulandı.')
 }
 
 // ---------------------------------------------------------------------------

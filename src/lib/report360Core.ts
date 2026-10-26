@@ -10,7 +10,8 @@ export function getMaxNetForExamType(examType: ExamType): number {
     return 80 // SAY/EA/SÖZ 40 + 40
   }
   if (examType === 'LGS') {
-    return SECTIONS_CONFIG.LGS.reduce((sum, s) => sum + s.max, 0)
+    // LGS katsayılı net: Türkçe(20*4) + Mat(20*4) + Fen(20*4) + İnkılap(10*1) + Din(10*1) + İng(10*1) = 270
+    return 270
   }
   return 120
 }
@@ -1125,7 +1126,13 @@ export function buildReport360(input: Report360Input): Report360Data {
       if (weeksNeeded > weeksLeft) {
         isLate = true
         weeksLate = weeksNeeded - weeksLeft
-        velocitySummary = `Bu tempoyla müfredat sınavdan ${weeksLate} hafta sonra bitiyor.`
+        if (weeksLate > 52) {
+          const minRequiredRate = Math.max(1, Math.ceil((remainingTopicsToSufficient / Math.max(1, weeksLeft)) * 10) / 10)
+          const formattedRate = minRequiredRate.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+          velocitySummary = `Bu tempoyla sınava yetişmiyor; haftada en az ${formattedRate} konu yeterliye geçmeli.`
+        } else {
+          velocitySummary = `Bu tempoyla müfredat sınavdan ${weeksLate} hafta sonra bitiyor.`
+        }
       } else {
         velocitySummary = `Bu tempoyla müfredat sınava ${weeksLeft - weeksNeeded} hafta kala tamamlanıyor.`
       }
@@ -1220,7 +1227,7 @@ export function buildReport360(input: Report360Input): Report360Data {
     }
 
     const weeksInactive = Math.max(0, Math.floor((refTimeMs - latestActivityMs) / (7 * 86400000)))
-    const isDue = weeksInactive >= Math.min(3, targetIntervalWeeks)
+    const isDue = weeksInactive >= 3 && weeksInactive >= targetIntervalWeeks
 
     reviewTimingItems.push({
       topicId: ct.id,
