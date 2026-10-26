@@ -411,7 +411,13 @@ a { color: inherit; }
 .sidebar-netlik  { --sidebar-bg: #0F3D47; --sidebar-accent: #3FB6CC; --coach-a: #4FBFD1; --coach-b: #1D7F93; }  /* petrol */
 :root[data-theme="dark"] .sidebar-netlik { --sidebar-bg: #0A262D; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sidebar-netlik { --sidebar-bg: #0A262D; } }
-.sidebar-konsept { --sidebar-bg: #123A3A; --sidebar-accent: #4FB3A4; }  /* teal   */
+.sidebar-konsept {
+  --sidebar-bg: #3A2C0B; --sidebar-accent: #D9B24C; --coach-a: #E2C46A; --coach-b: #9C7A1E;
+  /* gold zeminde petrol yazı tonları soğuk kalıyordu: sıcak, aynı kontrastta tonlar */
+  --sb-ink: #EADFC2; --sb-faint: #B9A877; --sb-sub: #D4C69B; --sb-ic: #E3D3A6;
+}  /* gold — Netlik'in petrolünden belirgin ayrışsın */
+:root[data-theme="dark"] .sidebar-konsept { --sidebar-bg: #2B2108; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sidebar-konsept { --sidebar-bg: #2B2108; } }
 
 /* Netlik/Konsept dışındaki kurumlar: id'den türeyen sabit paletten biri */
 .sidebar-diger-1 { --sidebar-bg: #3A2145; --sidebar-accent: #B98AD1; }  /* plum   */
