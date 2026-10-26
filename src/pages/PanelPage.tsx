@@ -18,7 +18,7 @@ import AddStudentModal from '../components/students/AddStudentModal'
 import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useHomeSummary } from '../contexts/homeSummaryContext'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { DAYS, DAYS_SHORT as DAY_SHORT } from '../lib/weeks'
 import {
   getIsoDayIndex,
@@ -759,9 +759,30 @@ export default function PanelPage() {
     refresh()
   }, [refresh])
 
+  // Sınav sayaçları: tarih Kurumlar ekranındaki "Ulusal Sınav Tarihleri"nden gelir; girilmemişse hiç çizilmez.
+  const [examDates, setExamDates] = useState<{ exam: 'YKS' | 'LGS'; exam_date: string }[]>([])
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    supabase
+      .from('exam_calendar')
+      .select('exam, exam_date')
+      .then(({ data }) => setExamDates((data ?? []) as { exam: 'YKS' | 'LGS'; exam_date: string }[]))
+  }, [])
+
   const now = new Date()
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? ''
   const planned = s ? s.program.toDate.planned > 0 : false
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const countdowns = examDates
+    // Yalnız kurumda o müfredattan öğrenci varsa (LGS öğrencisi yokken LGS sayacı gürültü olur)
+    .filter((e) => !s || (e.exam === 'YKS' ? s.students.yksCount > 0 : s.students.lgsCount > 0))
+    .map((e) => {
+      const [y, m, d] = e.exam_date.split('-').map(Number)
+      const days = Math.round((new Date(y, m - 1, d).getTime() - today.getTime()) / 86400000)
+      return { ...e, year: y, days, label: new Date(y, m - 1, d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) }
+    })
+    .filter((e) => e.days >= 0)
+    .sort((a, b) => a.days - b.days)
 
   return (
     <section className="screen h-page">
@@ -791,6 +812,16 @@ export default function PanelPage() {
             </p>
           )}
         </div>
+        <div className="h-hello-right">
+        {countdowns.length > 0 && (
+          <div className="h-count-row">
+            {countdowns.map((c) => (
+              <span key={c.exam} className="h-cd" title={`${c.exam} ${c.label}`}>
+                {c.exam} {c.year}'ye <b className="tnum"><CountUp value={c.days} /></b> gün
+              </span>
+            ))}
+          </div>
+        )}
         <div className="h-actions">
           {can('exams.view') && (
             <Link to="/denemeler" className="btn btn-ghost" viewTransition>
@@ -802,6 +833,7 @@ export default function PanelPage() {
               <Plus size={14} /> Öğrenci ekle
             </button>
           )}
+        </div>
         </div>
       </header>
 
