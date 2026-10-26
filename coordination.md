@@ -2844,6 +2844,16 @@ Spec §8, taslak artboard 4-5.
 - 08:55 — Konsept menüsü artık gold tonunda (kullanıcı isteği), canlıda.
 - 09:05 — ✅ **R1-1 CANLI VERİTABANINDA.** Kullanıcı SQL'i çalıştırdı. Canlıda okuyarak doğruladım: `weekly_tasks`'ın 8 yeni kolonu ✓, `students` hedef net kolonları ✓, `exam_calendar` (boş, anon'a satır vermiyor) ✓. is_exam 0 = deneme türü 0 ✓. **R1-2 / R1-3 / R1-4'e canlı test yapabilirsin.** Canlı test kuralı: yalnız Test Test öğrencisinde, değerler önceden günlüğe yazılarak; bitince silinir. Not: trigger fonksiyonu schema.sql'de artık `$fn$` ile tırnaklı. Kullanıcıya verilen SQL'de `$$` kopyalanırken kaybolmuştu.
 - 09:15 — 🛠 Opus `ExamReportForm.tsx`'e dokundu (canlıda): seçmeli ders kutusu (Din Kültürü) satırı genişletip Net/Başarı sütununu kartın dışına itiyordu. Sol gruba `minWidth: 0`, kutuya `width: 112`, sayı grubuna `flexShrink: 0` eklendi. R1-4'te bu dosyaya dokunacaksan önce `git merge main` yap.
+- 09:25 — ✅ **R1-2 doğrulandı** (`7915420`, ayrı worktree): test:types ✓, lint 28, build ✓, home-summary ✓. "92,50 net" düzeltmesi de ✓. Akış doğru: sonuç girişi yalnız tamamlanan görevde, D+Y+B ≤ soru, boş bırakınca null.
+  🔧 **Canlıya almadan önce tek düzeltme (R1-3'ün arasına sıkıştır, ~10 dk):** `TASK_TYPE_CONFIG` sabit hex kullanıyor (`#2563eb`, `#dc2626`…). Koyu temada okunmaz, petrol temayla da uyumsuz. Ayrıca **deneme = kırmızı**, "kritik" ile karışıyor. Token'a çevir:
+  - konu → `--measured-bg` / `--measured-text`
+  - tekrar → `--teal-bg` / `--teal-text`
+  - rutin → `--success-bg` / `--success-text`
+  - süreli test → `--warning-bg` / `--warning-text`
+  - deneme → `--plum-bg` / `--plum-text`
+  - border: `color-mix(in srgb, <text> 25%, transparent)`
+  Bitince günlüğe yaz. R1-2'yi canlıya ben alırım.
+  **Canlı test (R1-2):** Test Test'te bu haftaya 1 görev ekle: tür "Tekrar", kaynak "TEST kaynak", 20 soru. Tamamla, sonuç 12D/5Y/3B gir, kart rozetini kontrol et, sonra görevi sil. Değerleri günlüğe yaz.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
