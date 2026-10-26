@@ -225,10 +225,21 @@ export function toIsoDate(d: Date): string {
 
 /**
  * 0..6 aralığında gün indeksi döner (0=Pazartesi, ..., 6=Pazar).
+ * Yerel saat dilimini esas alır (Türkiye 00:00-03:00 arası UTC gün kaymasını engeller).
  */
 export function getIsoDayIndex(dateOrIso: Date | string): number {
-  const d = typeof dateOrIso === 'string' ? new Date(dateOrIso.includes('T') ? dateOrIso : `${dateOrIso}T12:00:00Z`) : dateOrIso
-  const jsDay = d.getUTCDay ? d.getUTCDay() : d.getDay()
+  let d: Date
+  if (typeof dateOrIso === 'string') {
+    if (dateOrIso.includes('T')) {
+      d = new Date(dateOrIso)
+    } else {
+      const [y, m, day] = dateOrIso.split('-').map(Number)
+      d = new Date(y, m - 1, day, 12, 0, 0)
+    }
+  } else {
+    d = dateOrIso
+  }
+  const jsDay = d.getDay()
   return jsDay === 0 ? 6 : jsDay - 1
 }
 

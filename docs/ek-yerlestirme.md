@@ -81,6 +81,28 @@ Tablo 3/4 kolonları, başlıkta `(1)…(11)` etiketli: kod, ad, öğrenim süre
 - Koşul sayısı (2026: 187) ve programlardaki her koşul no'sunun koşul tablosunda bulunması.
 - Örnek veri regresyonu: `data/ek-yerlestirme/2026-ornek.json`'daki 26 satır parser çıktısıyla birebir aynı olmalı (ikisi tutmazsa hangisinin yanlış olduğuna PDF görüntüsüne bakarak karar ver).
 
+## Yeni Yıl Ekleme Adımları (E8)
+
+Yeni bir yılın Ek Yerleştirme Kılavuzu yayımlandığında (veya geriye dönük 2025 kılavuzu eklendiğinde) izlenecek adımlar:
+
+1. **PDF İndir:** ÖSYM sitesinden (veya arşivden) ilgili yılın Yükseköğretim Programları Ek Yerleştirme Kılavuzu PDF'i indirilir (örn. `~/Downloads/<YIL>-ek-yerlestirme-kilavuzu.pdf`).
+2. **Parser'ı Koştur:**
+   ```bash
+   python3 scripts/parseEkKilavuz.py --yil <YIL> /yol/to/<YIL>-ek-yerlestirme-kilavuzu.pdf
+   ```
+   *Not:* Parser sayfa aralıklarını (`TABLO-3`, `TABLO-4`, Koşul 1/2. Kısım, Vakıf Ücretleri) otomatik tanır. Gerekirse kaçış kapısı olarak `--sayfalar tablo3=S-E,tablo4=S-E,k1=S-E,k2=S-E,ucret=S-E` elle verilebilir.
+3. **Doğrulama Raporunu İncele:** `data/ek-yerlestirme/<YIL>-rapor.md` dosyasındaki denetimleri kontrol et:
+   - Mükerrer program kodu = 0 olmalı.
+   - Tanımsız koşul kodu = 0 olmalı.
+   - Boş üniversite adı = 0 olmalı.
+   - Şüpheli adlar ve eşlenemeyen ücret satırları makul sınırlar içinde olmalı.
+4. **Veritabanına Yükle (Seed — Yalnız Kullanıcı Onayıyla):**
+   ```bash
+   npm run seed:ek -- --yil <YIL> --dosya data/ek-yerlestirme/<YIL>.json --ucret-temizle
+   ```
+   *Not:* Script `.env.local` üzerinden Supabase'e yazar; idempotent çalışır ve mevcut tercih listelerine zarar vermez.
+5. **Arayüzde Doğrula:** `/ek-yerlestirme` sayfasında yıl seçicide yeni yıl görünür; programlar, kontenjanlar, taban puanlar ve vakıf ücretleri yıla göre filtrelenerek görüntülenir.
+
 ## Yıllık takvim (asıl + ek yerleştirme)
 
 | Zaman | Olay | Yapılacak |

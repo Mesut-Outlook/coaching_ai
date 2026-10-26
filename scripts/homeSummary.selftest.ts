@@ -40,6 +40,7 @@ import assert from 'node:assert/strict'
 import {
   buildHomeSummary,
   chunkArray,
+  getIsoDayIndex,
   type EnrichedMockExam,
   type SubjectInfo,
   type TopicInfo,
@@ -592,7 +593,13 @@ const sampleList = [1, 2, 3, 4, 5, 6, 7]
 const chunks = chunkArray(sampleList, 3)
 assert.deepEqual(chunks, [[1, 2, 3], [4, 5, 6], [7]], 'chunkArray 3 elemanlık alt parçalara bölmeli')
 
-console.log('✓ 8. İlave uç durumlar, attention sıralaması ve chunkArray başarıyla doğrulandı.')
+// E. getIsoDayIndex yerel gün testi (00:00-03:00 UTC sınır kayması kontrolü)
+const mondayEarlyLocal = new Date(2026, 9, 19, 1, 30, 0) // Pazartesi 01:30
+assert.equal(getIsoDayIndex(mondayEarlyLocal), 0, 'Pazartesi 01:30 yerel saatte 0 (Pazartesi) olmalı')
+assert.equal(getIsoDayIndex('2026-10-19'), 0, '2026-10-19 ISO dizesi yerel öğlen çözülüp 0 (Pazartesi) olmalı')
+assert.equal(getIsoDayIndex('2026-10-25'), 6, '2026-10-25 Pazar dizesi 6 (Pazar) olmalı')
+
+console.log('✓ 8. İlave uç durumlar, attention sıralaması, chunkArray ve getIsoDayIndex başarıyla doğrulandı.')
 
 console.log('\n==============================================')
 console.log('✅ TÜM G2 + G2b ÖZ-TESTLERİ BAŞARIYLA GEÇTİ!')

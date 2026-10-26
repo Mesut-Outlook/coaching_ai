@@ -75,15 +75,17 @@ export async function loadHomeSummary(scope: StudentScope): Promise<HomeSummary>
   const lastMon = new Date(thisMon.getTime() - 7 * 86400000)
   const lastWeekStr = weekKey(lastMon)
 
-  // 2. Konu ve Ders referans listelerini çek (join/raporlar için)
-  const [topicsRes, subjectsRes] = await Promise.all([
-    supabase.from('topics').select('id, name, subject_id'),
-    supabase.from('subjects').select('id, name'),
+  // 2. Konu ve Ders referans listelerini çek (join/raporlar için, sayfalamalı + kararlı sıra)
+  const [topics, subjects] = await Promise.all([
+    fetchAllWithPagination<TopicInfo>((from, to) =>
+      supabase.from('topics').select('id, name, subject_id').order('id').range(from, to)
+    ),
+    fetchAllWithPagination<SubjectInfo>((from, to) =>
+      supabase.from('subjects').select('id, name').order('id').range(from, to)
+    ),
   ])
-  const topics: TopicInfo[] = (topicsRes.data as TopicInfo[]) || []
-  const subjects: SubjectInfo[] = (subjectsRes.data as SubjectInfo[]) || []
 
-  // 3. Öğrenci verilerini çek (1000 satır sınırına karşı sayfalama ile)
+  // 3. Öğrenci verilerini çek (1000 satır sınırına karşı sayfalama ve kararlı sıra ile)
   // Bu hafta ve geçen haftanın görevlerini birlikte çekiyoruz
   const [tasks, rawExams, decisions, attendance] = await Promise.all([
     fetchAllWithPagination<WeeklyTask>((from, to) =>
@@ -92,6 +94,7 @@ export async function loadHomeSummary(scope: StudentScope): Promise<HomeSummary>
         .select('*')
         .in('student_id', studentIds)
         .in('week_start', [thisWeekStr, lastWeekStr])
+        .order('id')
         .range(from, to)
     ),
     fetchAllWithPagination<MockExam>((from, to) =>
@@ -100,6 +103,7 @@ export async function loadHomeSummary(scope: StudentScope): Promise<HomeSummary>
         .select('*')
         .in('student_id', studentIds)
         .order('exam_date', { ascending: false })
+        .order('id')
         .range(from, to)
     ),
     fetchAllWithPagination<CoachDecision>((from, to) =>
@@ -108,6 +112,7 @@ export async function loadHomeSummary(scope: StudentScope): Promise<HomeSummary>
         .select('*')
         .in('student_id', studentIds)
         .eq('state', 'kritik')
+        .order('id')
         .range(from, to)
     ),
     fetchAllWithPagination<AttendanceRecord>((from, to) =>
@@ -116,11 +121,12 @@ export async function loadHomeSummary(scope: StudentScope): Promise<HomeSummary>
         .select('*')
         .in('student_id', studentIds)
         .order('absence_date', { ascending: false })
+        .order('id')
         .range(from, to)
     ),
   ])
 
-  // 4. Denemelerin bölümlerini ve konu sayılarını 200'lük parçalar halinde çek (URL sınırı koruması)
+  // 4. Denemelerin bölümlerini ve konu sayılarını 200'lük parçalar halinde çek (URL sınırı koruması + kararlı sıra)
   const examIds = rawExams.map((e) => e.id)
   let sections: MockExamSection[] = []
   const topicCountsByExam: Record<string, number> = {}
@@ -135,6 +141,7 @@ export async function loadHomeSummary(scope: StudentScope): Promise<HomeSummary>
             .from('mock_exam_sections')
             .select('*')
             .in('mock_exam_id', chunk)
+            .order('id')
             .range(from, to)
         ),
         fetchAllWithPagination<{ mock_exam_id: string }>((from, to) =>
@@ -142,6 +149,7 @@ export async function loadHomeSummary(scope: StudentScope): Promise<HomeSummary>
             .from('mock_exam_topic_results')
             .select('mock_exam_id')
             .in('mock_exam_id', chunk)
+            .order('id')
             .range(from, to)
         ),
       ])
