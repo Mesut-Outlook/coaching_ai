@@ -13,6 +13,7 @@ import ExamShareButtons from '../components/exams/ExamShareButtons'
 import StudentExamAnalysisView from '../components/exams/StudentExamAnalysisView'
 import TalkingPointsCard from '../components/reports/TalkingPointsCard'
 import Report360View from '../components/reports/Report360View'
+import ParentSummaryModal from '../components/reports/ParentSummaryModal'
 import { formatPhoneForWhatsApp, openWhatsAppChat } from '../lib/whatsapp'
 import { ensureStudentAccessCodes } from '../lib/accessCode'
 import { fetchStudents } from '../lib/students'
@@ -85,6 +86,7 @@ export default function OgrencilerPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab') as ActiveTab | null
   const [studentData, setStudentData] = useState<StudentData | null>(null)
+  const [showParentSummaryModal, setShowParentSummaryModal] = useState(false)
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
     if (tabParam && ['overview', 'report', 'exams', 'analysis', 'subjects', 'tasks', 'attendance'].includes(tabParam)) {
       return tabParam
@@ -816,6 +818,14 @@ export default function OgrencilerPage() {
           </button>
           <button
             type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => setShowParentSummaryModal(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <MessageCircle size={14} style={{ color: 'var(--success)' }} /> Veliye Haftalık Özet
+          </button>
+          <button
+            type="button"
             className="btn btn-ghost btn-sm"
             onClick={() => setEditingStudent(student)}
           >
@@ -1347,6 +1357,19 @@ export default function OgrencilerPage() {
           )}
         </div>
         )
+      )}
+
+      {showParentSummaryModal && studentData && (
+        <ParentSummaryModal
+          isOpen={showParentSummaryModal}
+          onClose={() => setShowParentSummaryModal(false)}
+          student={studentData.student}
+          weeklyTasks={studentData.tasks}
+          latestExam={studentData.exams[0] ?? null}
+          previousExam={studentData.exams[1] ?? null}
+          attendanceRecords={studentData.attendanceRecords}
+          targetNet={studentData.student.target_net_value}
+        />
       )}
     </section>
   )

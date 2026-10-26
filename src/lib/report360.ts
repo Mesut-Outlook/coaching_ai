@@ -18,11 +18,12 @@ import {
   type RawTopicLinkItem,
   type RawCoachDecisionItem,
   type RawTaskItem,
+  type RawMeasurementItem,
   type RawCurriculumTopicItem,
   type GlobalExamTopicWeight,
   buildReport360,
 } from './report360Core'
-import type { ExamType } from '../types/database'
+import type { ExamType, ErrorBasketItem } from '../types/database'
 
 export * from './report360Core'
 
@@ -252,7 +253,7 @@ export async function loadReport360Data(
   // 8. Haftalık Görevler (weekly_tasks)
   const { data: tasksData } = await supabase
     .from('weekly_tasks')
-    .select('id, topic_id, task_type, completed, completed_at, created_at, correct_count, wrong_count, blank_count, question_count')
+    .select('id, topic_id, task_type, completed, completed_at, created_at, correct_count, wrong_count, blank_count, question_count, origin_kind, duration_min')
     .eq('student_id', studentId)
     .order('created_at', { ascending: false })
 
@@ -267,7 +268,41 @@ export async function loadReport360Data(
     wrong_count: t.wrong_count ?? null,
     blank_count: t.blank_count ?? null,
     question_count: t.question_count,
+    origin_kind: t.origin_kind ?? null,
+    duration_min: t.duration_min ?? null,
   }))
+
+  // 8b. Konu Ölçüm Geçmişi (topic_exam_measurements + topic_measurements)
+  const rawMeasurements: RawMeasurementItem[] = []
+  const { data: mExamData } = await supabase
+    .from('topic_exam_measurements')
+    .select('topic_id, accuracy_pct, measured_at, source_label')
+    .eq('student_id', studentId)
+    .order('measured_at', { ascending: true })
+
+  for (const m of mExamData || []) {
+    rawMeasurements.push({
+      topic_id: m.topic_id,
+      accuracy_pct: Number(m.accuracy_pct) || 0,
+      measured_at: m.measured_at,
+      source_label: m.source_label || 'Deneme',
+    })
+  }
+
+  const { data: mData } = await supabase
+    .from('topic_measurements')
+    .select('topic_id, accuracy_pct, measured_at, source')
+    .eq('student_id', studentId)
+    .order('measured_at', { ascending: true })
+
+  for (const m of mData || []) {
+    rawMeasurements.push({
+      topic_id: m.topic_id,
+      accuracy_pct: Number(m.accuracy_pct) || 0,
+      measured_at: m.measured_at,
+      source_label: m.source || 'Ölçüm',
+    })
+  }
 
   // 9. Öğrencinin sınıfına uyan Müfredat Konuları (topics + subjects)
   const { data: allSubjects } = await supabase
@@ -300,9 +335,24 @@ export async function loadReport360Data(
     }
   }
 
-  // 10. Global / Kurum Geneli Konu Soru Ağırlıkları (İsteğe bağlı stabil ağırlık)
+  // 10. Global / Kurum Geneli Konu Soru Ağırlıkları (R4-1: ÖSYM / MEB resmi dağılımları öncelikli)
   const globalWeights: GlobalExamTopicWeight[] = []
-  if (examTopicIdArray.length > 0) {
+
+  // Önce topic_weights tablosunu kontrol et
+  const { data: dbWeights, error: weightsErr } = await supabase
+    .from('topic_weights')
+    .select('exam_topic_id, avg_questions, source')
+    .eq('exam_type', examType)
+
+  if (!weightsErr && dbWeights && dbWeights.length > 0) {
+    for (const w of dbWeights) {
+      globalWeights.push({
+        exam_topic_id: w.exam_topic_id,
+        avg_questions: Number(w.avg_questions) || 0,
+        source: w.source,
+      })
+    }
+  } else if (examTopicIdArray.length > 0) {
     const countMap = new Map<number, { sumQ: number; cnt: number }>()
     const PAGE_SIZE = 1000
 
@@ -343,7 +393,72 @@ export async function loadReport360Data(
     }
   }
 
-  // 11. Saf motoru çalıştır
+  // 11. Hata Sepeti / Yanlış Nedenleri (error_basket_items)
+  const rawErrorBasketItems: ErrorBasketItem[] = []
+  if (examIds.length > 0) {
+    for (const chunk of examChunks) {
+      const { data: eItems, error: eErr } = await supabase
+        .from('error_basket_items')
+        .select('id, mock_exam_id, topic_id, error_type, created_at')
+        .in('mock_exam_id', chunk)
+        .order('created_at', { ascending: false })
+
+      if (eErr) {
+        console.error('Report360: Error basket items error', eErr)
+      }
+      if (eItems) {
+        rawErrorBasketItems.push(...(eItems as ErrorBasketItem[]))
+      }
+    }
+  }
+
+  // 12. Kurum içi anonim karşılaştırma (R4-2: son 30 günün en iyi netleri)
+  let peerComparisonInput: { studentBestNet: number | null; peerBestNets: number[] } | undefined = undefined
+  const thirtyDaysAgo = new Date(referenceDate.getTime() - 30 * 86400000).toISOString().split('T')[0]
+  const { data: recentExamsData, error: recentExamsError } = await supabase
+    .from('mock_exams')
+    .select('id, student_id')
+    .eq('exam_type', examType)
+    .gte('exam_date', thirtyDaysAgo)
+
+  if (recentExamsError) {
+    console.error('Report360: Recent exams peer comparison error', recentExamsError)
+  }
+
+  if (recentExamsData && recentExamsData.length > 0) {
+    const recentExamIds = recentExamsData.map((e) => e.id)
+    const recentChunks = chunkArray(recentExamIds, 200)
+    const examNetMap = new Map<string, number>()
+
+    for (const chunk of recentChunks) {
+      const { data: secs } = await supabase
+        .from('mock_exam_sections')
+        .select('mock_exam_id, net')
+        .in('mock_exam_id', chunk)
+
+      if (secs) {
+        for (const s of secs) {
+          examNetMap.set(s.mock_exam_id, (examNetMap.get(s.mock_exam_id) || 0) + (Number(s.net) || 0))
+        }
+      }
+    }
+
+    const studentBestNetMap = new Map<string, number>()
+    for (const ex of recentExamsData) {
+      const net = examNetMap.get(ex.id) || 0
+      const currentBest = studentBestNetMap.get(ex.student_id)
+      if (currentBest === undefined || net > currentBest) {
+        studentBestNetMap.set(ex.student_id, net)
+      }
+    }
+
+    peerComparisonInput = {
+      studentBestNet: studentBestNetMap.get(studentId) ?? null,
+      peerBestNets: Array.from(studentBestNetMap.values()),
+    }
+  }
+
+  // 13. Saf motoru çalıştır
   const input: Report360Input = {
     studentId,
     studentName: student.full_name,
@@ -361,6 +476,9 @@ export async function loadReport360Data(
     tasks: rawTasks,
     curriculumTopics: rawCurriculumTopics,
     globalTopicWeights: globalWeights,
+    topicMeasurements: rawMeasurements,
+    errorBasketItems: rawErrorBasketItems,
+    peerComparison: peerComparisonInput,
   }
 
   return buildReport360(input)

@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { CheckSquare, Plus, Trash2, CheckCircle2, ChevronRight, Compass } from 'lucide-react'
+import { CheckSquare, Plus, Trash2, CheckCircle2, ChevronRight, Compass, MessageCircle } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import TalkingPointsCard from '../components/reports/TalkingPointsCard'
+import ParentSummaryModal from '../components/reports/ParentSummaryModal'
 import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -34,6 +35,7 @@ export default function RaporlarPage() {
   
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [showParentSummaryModal, setShowParentSummaryModal] = useState(false)
 
   // Quick task input state
   const [selectedTopicId, setSelectedTopicId] = useState<string>('custom')
@@ -219,23 +221,43 @@ export default function RaporlarPage() {
               </select>
             </div>
 
-            {selectedStudentId && (
-              <Link
-                to={`/ogrenciler/${selectedStudentId}?tab=report`}
-                className="btn btn-secondary btn-sm"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontSize: 12,
-                  padding: '7px 12px',
-                }}
-              >
-                <Compass size={15} style={{ color: 'var(--indigo-600)' }} />
-                <span>360 Raporu Aç</span>
-                <ChevronRight size={14} style={{ color: 'var(--ink-faint)' }} />
-              </Link>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {selectedStudent && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setShowParentSummaryModal(true)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 12,
+                    padding: '7px 12px',
+                  }}
+                >
+                  <MessageCircle size={15} style={{ color: 'var(--success)' }} />
+                  <span>Veliye Haftalık Özet</span>
+                </button>
+              )}
+
+              {selectedStudentId && (
+                <Link
+                  to={`/ogrenciler/${selectedStudentId}?tab=report`}
+                  className="btn btn-secondary btn-sm"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 12,
+                    padding: '7px 12px',
+                  }}
+                >
+                  <Compass size={15} style={{ color: 'var(--indigo-600)' }} />
+                  <span>360 Raporu Aç</span>
+                  <ChevronRight size={14} style={{ color: 'var(--ink-faint)' }} />
+                </Link>
+              )}
+            </div>
           </div>
 
           {isCoachingLocked ? (
@@ -422,6 +444,17 @@ export default function RaporlarPage() {
           </>
           )}
         </div>
+      )}
+
+      {showParentSummaryModal && selectedStudent && (
+        <ParentSummaryModal
+          isOpen={showParentSummaryModal}
+          onClose={() => setShowParentSummaryModal(false)}
+          student={selectedStudent}
+          weeklyTasks={lastWeekTasks}
+          weekStart={weekKey(pastWeekMonday)}
+          targetNet={selectedStudent.target_net_value}
+        />
       )}
     </section>
   )

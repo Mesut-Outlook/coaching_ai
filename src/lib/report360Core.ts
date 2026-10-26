@@ -1,4 +1,4 @@
-import type { ExamType, Grade } from '../types/database'
+import type { ExamType, Grade, ErrorType, ErrorBasketItem } from '../types/database'
 import { SECTIONS_CONFIG } from './examSections'
 
 /** Sınav türüne göre maksimum net / soru sayısı sınırı */
@@ -71,6 +71,15 @@ export interface RawTaskItem {
   wrong_count: number | null
   blank_count: number | null
   question_count: number
+  origin_kind?: string | null
+  duration_min?: number | null
+}
+
+export interface RawMeasurementItem {
+  topic_id: number
+  accuracy_pct: number
+  measured_at: string
+  source_label?: string
 }
 
 export interface RawCurriculumTopicItem {
@@ -83,6 +92,7 @@ export interface RawCurriculumTopicItem {
 export interface GlobalExamTopicWeight {
   exam_topic_id: number
   avg_questions: number
+  source?: string
 }
 
 export interface Report360Input {
@@ -104,11 +114,26 @@ export interface Report360Input {
   tasks: RawTaskItem[] // Haftalık görevler
   curriculumTopics: RawCurriculumTopicItem[] // Öğrencinin sınıfına uyan müfredat konuları
   globalTopicWeights?: GlobalExamTopicWeight[] // Kurum/koç geneli ortalama soru ağırlığı
+  topicMeasurements?: RawMeasurementItem[] // Önceki/sonraki konu ölçümleri
+  errorBasketItems?: ErrorBasketItem[] // Öğrencinin yanlış nedenleri (error_basket_items)
+  peerComparison?: {
+    studentBestNet: number | null
+    peerBestNets: number[]
+  }
 }
 
 // ---------------------------------------------------------------------------
 // 2. Çıktı Tipleri (Grafik ve KPI Verileri)
 // ---------------------------------------------------------------------------
+
+export interface PeerComparisonData {
+  hasEnoughStudents: boolean
+  percentile: number | null
+  rank: number | null
+  totalStudents: number
+  topPercentile?: number | null
+  message?: string
+}
 
 export interface KpiStripData {
   lastNet: number | null
@@ -118,6 +143,8 @@ export interface KpiStripData {
   netGap: number | null // hedef - son net
   weeksLeft: number | null
   weeklyNeededNet: number | null
+  peerComparison?: PeerComparisonData
+  timePerQuestionSec?: number | null
   taskCompletion4w: {
     currentPct: number
     previousPct: number
@@ -189,6 +216,7 @@ export interface PriorityMatrixData {
   medianWeight: number
   topPriorityCount: number
   allWeightsEqual?: boolean
+  source?: string
 }
 
 export interface ParetoBarItem {
@@ -272,6 +300,66 @@ export interface CurriculumProgressData {
   }
 }
 
+export interface ReviewTimingItem {
+  topicId: number
+  topicName: string
+  subjectName: string
+  lastMeasuredAccuracy: number // %0..100
+  weeksInactive: number // Kaç haftadır çalışılmadı
+  targetIntervalWeeks: number // 1 -> 3 -> 6
+  repeatCount: number
+  isDue: boolean
+}
+
+export interface ReviewTimingData {
+  items: ReviewTimingItem[]
+  dueCount: number
+  summaryText: string
+}
+
+export interface InterventionImpactItem {
+  taskId: string
+  topicId: number
+  topicName: string
+  subjectName: string
+  originKind: string
+  taskCompletedAt: string
+  beforeAccuracyPct: number
+  afterAccuracyPct: number
+  deltaPct: number
+  isImproved: boolean
+  needsDifferentMethod: boolean
+}
+
+export interface InterventionImpactData {
+  hasEnoughData: boolean
+  totalInterventions: number
+  improvedCount: number
+  improvementRatePct: number
+  items: InterventionImpactItem[]
+  summaryText: string
+  emptyStateMessage?: string
+}
+
+export interface ErrorReasonItem {
+  type: ErrorType
+  label: string
+  count: number
+  percentage: number
+  color: string
+  bg: string
+  textColor: string
+  description: string
+}
+
+export interface ErrorReasonAnalysisData {
+  totalCount: number
+  items: ErrorReasonItem[]
+  distribution: Record<ErrorType, number>
+  dominantReason: ErrorType | null
+  summaryText: string
+}
+
 export interface Report360Data {
   studentId: string
   examType: ExamType
@@ -282,6 +370,9 @@ export interface Report360Data {
   errorProfile: ErrorProfileData
   consistency: ConsistencyData
   curriculum: CurriculumProgressData
+  reviewTiming: ReviewTimingData
+  interventionImpact: InterventionImpactData
+  errorReasons: ErrorReasonAnalysisData
 }
 
 // ---------------------------------------------------------------------------
@@ -415,6 +506,52 @@ export function buildReport360(input: Report360Input): Report360Data {
   const curriculumProgressPct =
     totalCurriculumTopics > 0 ? Math.round((sufficientTopics / totalCurriculumTopics) * 100) : 0
 
+  // R4-2: Kurum İçi Sıralama (anonim yüzdelik dilim)
+  let peerComparison: PeerComparisonData | undefined = undefined
+  if (input.peerComparison) {
+    const { studentBestNet, peerBestNets } = input.peerComparison
+    if (peerBestNets.length < 5) {
+      peerComparison = {
+        hasEnoughStudents: false,
+        percentile: null,
+        rank: null,
+        totalStudents: peerBestNets.length,
+        message: 'Karşılaştırma için en az 5 öğrenci gerekli',
+      }
+    } else if (studentBestNet !== null) {
+      const sortedNets = [...peerBestNets].sort((a, b) => b - a)
+      const rank = sortedNets.filter((n) => n > studentBestNet).length + 1
+      const total = sortedNets.length
+      const percentile = Math.round(((total - rank + 1) / total) * 100)
+      const topPercentile = Math.max(1, Math.round((rank / total) * 100))
+      peerComparison = {
+        hasEnoughStudents: true,
+        percentile,
+        rank,
+        totalStudents: total,
+        topPercentile,
+      }
+    }
+  }
+
+  // R4-3: Soru Başına Süre (tamamlanmış, süre ve soru sayısı girilmiş görevlerden)
+  let totalDurationSec = 0
+  let totalTimedQuestions = 0
+  for (const t of input.tasks) {
+    if (t.completed && t.duration_min && t.duration_min > 0) {
+      const qCount =
+        t.question_count && t.question_count > 0
+          ? t.question_count
+          : (t.correct_count ?? 0) + (t.wrong_count ?? 0) + (t.blank_count ?? 0)
+      if (qCount > 0) {
+        totalDurationSec += t.duration_min * 60
+        totalTimedQuestions += qCount
+      }
+    }
+  }
+  const timePerQuestionSec =
+    totalTimedQuestions > 0 ? Math.round(totalDurationSec / totalTimedQuestions) : null
+
   const kpi: KpiStripData = {
     lastNet,
     previousNet: prevNet,
@@ -423,6 +560,8 @@ export function buildReport360(input: Report360Input): Report360Data {
     netGap,
     weeksLeft,
     weeklyNeededNet,
+    peerComparison,
+    timePerQuestionSec,
     taskCompletion4w: {
       currentPct: currPct,
       previousPct: prevPct,
@@ -652,11 +791,13 @@ export function buildReport360(input: Report360Input): Report360Data {
     }
   })
 
+  const weightSource = input.globalTopicWeights?.find((w) => w.source)?.source
   const priorityMatrix: PriorityMatrixData = {
     points: priorityPoints,
     medianWeight,
     topPriorityCount: Math.min(6, priorityPoints.length),
     allWeightsEqual,
+    ...(weightSource ? { source: weightSource } : {}),
   }
 
   // -------------------------------------------------------------------------
@@ -1012,6 +1153,181 @@ export function buildReport360(input: Report360Input): Report360Data {
     },
   }
 
+  // -------------------------------------------------------------------------
+  // B8: Tekrar Zamanı (Review Timing)
+  // -------------------------------------------------------------------------
+  // Konu "yeterli" ise ve en son aktivite (ölçüm veya görev) >= 3 hafta önceyse tekrar zamanı.
+  // Aralıklar: 1. tekrar -> 1 hafta, 2. tekrar -> 3 hafta, 3.+ tekrar -> 6 hafta.
+  const reviewTimingItems: ReviewTimingItem[] = []
+  const refTimeMs = (input.referenceDate ?? new Date()).getTime()
+
+  // Konu bazında tamamlanan 'tekrar' görev sayıları
+  const repeatsByTopicId = new Map<number, number>()
+  for (const t of input.tasks) {
+    if (t.completed && t.task_type === 'tekrar' && t.topic_id !== null) {
+      repeatsByTopicId.set(t.topic_id, (repeatsByTopicId.get(t.topic_id) || 0) + 1)
+    }
+  }
+
+  // Konu bazında ölçümler (en son ölçüm ve doğruluk)
+  const measurementsByTopicId = new Map<number, RawMeasurementItem[]>()
+  for (const m of input.topicMeasurements || []) {
+    if (!measurementsByTopicId.has(m.topic_id)) {
+      measurementsByTopicId.set(m.topic_id, [])
+    }
+    measurementsByTopicId.get(m.topic_id)!.push(m)
+  }
+
+  for (const ct of input.curriculumTopics) {
+    const isSufficient = decisionMap.get(ct.id) === 'yeterli'
+    const mList = measurementsByTopicId.get(ct.id) || []
+    const lastMeasurement =
+      mList.length > 0
+        ? mList.slice().sort((a, b) => new Date(b.measured_at).getTime() - new Date(a.measured_at).getTime())[0]
+        : null
+    const measuredPct = lastMeasurement ? lastMeasurement.accuracy_pct : (isSufficient ? 85 : 0)
+
+    // Yeterli olmayan konular tekrar kapsamına girmez
+    if (!isSufficient && (!lastMeasurement || lastMeasurement.accuracy_pct < 70)) {
+      continue
+    }
+
+    const repeatCount = repeatsByTopicId.get(ct.id) || 0
+    let targetIntervalWeeks = 1
+    if (repeatCount === 1) targetIntervalWeeks = 3
+    else if (repeatCount >= 2) targetIntervalWeeks = 6
+
+    // En son aktivite tarihi (görev, ölçüm veya koç kararı)
+    let latestActivityMs = 0
+    const topicTasks = input.tasks.filter((t) => t.topic_id === ct.id)
+    for (const t of topicTasks) {
+      const dt = new Date(t.completed_at || t.created_at).getTime()
+      if (dt > latestActivityMs) latestActivityMs = dt
+    }
+    for (const m of mList) {
+      const dt = new Date(m.measured_at).getTime()
+      if (dt > latestActivityMs) latestActivityMs = dt
+    }
+    const dec = input.coachDecisions.find((d) => d.topic_id === ct.id)
+    if (dec) {
+      const dt = new Date(dec.decided_at).getTime()
+      if (dt > latestActivityMs) latestActivityMs = dt
+    }
+
+    if (latestActivityMs === 0) {
+      // Aktivite yoksa 4 hafta önce kabul et
+      latestActivityMs = refTimeMs - 28 * 86400000
+    }
+
+    const weeksInactive = Math.max(0, Math.floor((refTimeMs - latestActivityMs) / (7 * 86400000)))
+    const isDue = weeksInactive >= Math.min(3, targetIntervalWeeks)
+
+    reviewTimingItems.push({
+      topicId: ct.id,
+      topicName: ct.name,
+      subjectName: ct.subject_name,
+      lastMeasuredAccuracy: Math.round(measuredPct),
+      weeksInactive,
+      targetIntervalWeeks,
+      repeatCount,
+      isDue,
+    })
+  }
+
+  // Önce tekrarı gelenler, ardından hareketsiz haftaya göre azalan
+  reviewTimingItems.sort((a, b) => {
+    if (a.isDue !== b.isDue) return a.isDue ? -1 : 1
+    return b.weeksInactive - a.weeksInactive
+  })
+
+  const dueCount = reviewTimingItems.filter((i) => i.isDue).length
+  const reviewTiming: ReviewTimingData = {
+    items: reviewTimingItems,
+    dueCount,
+    summaryText:
+      dueCount > 0
+        ? `${dueCount} konunun tekrar zamanı geldi.`
+        : 'Tüm yeterli konuların tekrar planı güncel.',
+  }
+
+  // -------------------------------------------------------------------------
+  // B9: Müdahale Etkisi (Intervention Impact)
+  // -------------------------------------------------------------------------
+  // origin_kind != 'elle' olan tamamlanmış görevler
+  const interventionItems: InterventionImpactItem[] = []
+  const interventionTasks = input.tasks.filter(
+    (t) => t.completed && t.origin_kind && t.origin_kind !== 'elle' && t.topic_id !== null
+  )
+
+  const curriculumTopicMap = new Map<number, RawCurriculumTopicItem>()
+  for (const ct of input.curriculumTopics) {
+    curriculumTopicMap.set(ct.id, ct)
+  }
+
+  for (const it of interventionTasks) {
+    const topic = curriculumTopicMap.get(it.topic_id!)
+    const topicName = topic?.name || `Konu #${it.topic_id}`
+    const subjectName = topic?.subject_name || 'Ders'
+    const taskDateMs = new Date(it.completed_at || it.created_at).getTime()
+
+    const mList = measurementsByTopicId.get(it.topic_id!) || []
+    if (mList.length === 0) continue
+
+    // Görevden önceki son ölçüm
+    const beforeList = mList
+      .filter((m) => new Date(m.measured_at).getTime() <= taskDateMs)
+      .sort((a, b) => new Date(b.measured_at).getTime() - new Date(a.measured_at).getTime())
+
+    // Görevden sonraki ilk ölçüm
+    const afterList = mList
+      .filter((m) => new Date(m.measured_at).getTime() > taskDateMs)
+      .sort((a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime())
+
+    if (beforeList.length > 0 && afterList.length > 0) {
+      const beforeAcc = beforeList[0].accuracy_pct
+      const afterAcc = afterList[0].accuracy_pct
+      const deltaPct = Math.round((afterAcc - beforeAcc) * 10) / 10
+      const isImproved = deltaPct > 0
+
+      interventionItems.push({
+        taskId: it.id,
+        topicId: it.topic_id!,
+        topicName,
+        subjectName,
+        originKind: it.origin_kind || 'oneri',
+        taskCompletedAt: it.completed_at || it.created_at,
+        beforeAccuracyPct: beforeAcc,
+        afterAccuracyPct: afterAcc,
+        deltaPct,
+        isImproved,
+        needsDifferentMethod: !isImproved,
+      })
+    }
+  }
+
+  const improvedCount = interventionItems.filter((i) => i.isImproved).length
+  const totalInterventions = interventionItems.length
+  const improvementRatePct = totalInterventions > 0 ? Math.round((improvedCount / totalInterventions) * 100) : 0
+
+  const interventionImpact: InterventionImpactData = {
+    hasEnoughData: totalInterventions > 0,
+    totalInterventions,
+    improvedCount,
+    improvementRatePct,
+    items: interventionItems,
+    summaryText:
+      totalInterventions > 0
+        ? `Programa eklenen ${totalInterventions} konudan ${improvedCount}'si sonraki ölçümde yükseldi (%${improvementRatePct}).`
+        : 'Programa öneri/analizle eklenen konulardan sonra henüz yeni bir ölçüm yapılmadı.',
+    emptyStateMessage:
+      totalInterventions === 0
+        ? 'Henüz müdahale ölçümü bulunmuyor. Programa rapordan veya analizden eklenen görevler tamamlanıp yeni deneme girildikçe eğim grafiği oluşacaktır.'
+        : undefined,
+  }
+
+  // Hata Nedenleri Analizi (error_basket_items)
+  const errorReasons = buildErrorReasonAnalysis(input.errorBasketItems)
+
   return {
     studentId: input.studentId,
     examType: input.examType,
@@ -1022,5 +1338,102 @@ export function buildReport360(input: Report360Input): Report360Data {
     errorProfile,
     consistency,
     curriculum,
+    reviewTiming,
+    interventionImpact,
+    errorReasons,
+  }
+}
+
+export const ERROR_REASON_CONFIG: Record<
+  ErrorType,
+  { label: string; color: string; bg: string; textColor: string; description: string }
+> = {
+  bilgi_eksikligi: {
+    label: 'Bilgi Eksikliği',
+    color: 'var(--c-red, var(--critical))',
+    bg: 'var(--critical-bg)',
+    textColor: 'var(--critical-text)',
+    description: 'Konu ve formül eksikliklerinden kaynaklanan hatalar',
+  },
+  islem_hatasi: {
+    label: 'İşlem Hatası',
+    color: 'var(--c-orange, var(--warning))',
+    bg: 'var(--warning-bg)',
+    textColor: 'var(--warning-text)',
+    description: 'Dört işlem ve hesaplama hataları',
+  },
+  dikkat_hatasi: {
+    label: 'Dikkat Hatası',
+    color: 'var(--c-amber, var(--c-sosyal, #E2932E))',
+    bg: 'color-mix(in srgb, var(--c-sosyal, #E2932E) 12%, transparent)',
+    textColor: 'var(--c-sosyal, #E2932E)',
+    description: 'Soru kökünü yanlış okuma ve odak kaybı',
+  },
+  sure_yetmedi: {
+    label: 'Süre Yetmedi',
+    color: 'var(--c-blue, var(--c-math, #3B6FE0))',
+    bg: 'var(--indigo-050)',
+    textColor: 'var(--indigo-600)',
+    description: 'Zaman yönetimi ve yetiştirememe problemleri',
+  },
+}
+
+export function buildErrorReasonAnalysis(
+  errorBasketItems: ErrorBasketItem[] = []
+): ErrorReasonAnalysisData {
+  const counts: Record<ErrorType, number> = {
+    bilgi_eksikligi: 0,
+    islem_hatasi: 0,
+    dikkat_hatasi: 0,
+    sure_yetmedi: 0,
+  }
+
+  for (const item of errorBasketItems) {
+    if (item && item.error_type in counts) {
+      counts[item.error_type as ErrorType]++
+    }
+  }
+
+  const totalCount = Object.values(counts).reduce((a, b) => a + b, 0)
+  const types: ErrorType[] = ['bilgi_eksikligi', 'islem_hatasi', 'dikkat_hatasi', 'sure_yetmedi']
+  let dominantReason: ErrorType | null = null
+  let maxCount = 0
+
+  for (const type of types) {
+    if (counts[type] > maxCount) {
+      maxCount = counts[type]
+      dominantReason = type
+    }
+  }
+
+  const items: ErrorReasonItem[] = types.map((type) => {
+    const count = counts[type]
+    const percentage = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0
+    const conf = ERROR_REASON_CONFIG[type]
+    return {
+      type,
+      label: conf.label,
+      count,
+      percentage,
+      color: conf.color,
+      bg: conf.bg,
+      textColor: conf.textColor,
+      description: conf.description,
+    }
+  })
+
+  let summaryText = 'Henüz yanlış nedeni girilmemiş.'
+  if (totalCount > 0 && dominantReason) {
+    const domConf = ERROR_REASON_CONFIG[dominantReason as ErrorType]
+    const pct = totalCount > 0 ? Math.round((maxCount / totalCount) * 100) : 0
+    summaryText = `En sık karşılaşılan neden %${pct} ile "${domConf.label}".`
+  }
+
+  return {
+    totalCount,
+    items,
+    distribution: counts,
+    dominantReason,
+    summaryText,
   }
 }

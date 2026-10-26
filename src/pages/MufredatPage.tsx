@@ -4,6 +4,7 @@ import {
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
+import TopicWeightsImportCard from '../components/curriculum/TopicWeightsImportCard'
 import type { Curriculum, Grade, Subject, Topic } from '../types/database'
 
 const DEFAULT_COLOR = '#4C43A8'
@@ -439,6 +440,9 @@ export default function MufredatPage() {
           </p>
         </div>
       )}
+
+      {/* R4-1: Konu Ağırlığı İçe Aktarma (ÖSYM / MEB) */}
+      <TopicWeightsImportCard />
     </section>
   )
 }

@@ -1,6 +1,21 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, ChevronDown, Plus, Trash2, CheckSquare, X, Printer, MessageCircle, BookOpen, Edit2 } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  Trash2,
+  CheckSquare,
+  X,
+  Printer,
+  MessageCircle,
+  BookOpen,
+  Edit2,
+  Sparkles,
+  Check,
+  Clock,
+} from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import TopicProgressPanel from '../components/topics/TopicProgressPanel'
@@ -8,10 +23,12 @@ import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
-import type { Student, Topic, WeeklyTask, Subject, TaskType } from '../types/database'
+import type { Student, Topic, WeeklyTask, Subject, TaskType, ExamType } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange, DAYS } from '../lib/weeks'
-import { subjectAppliesTo, topicAppliesTo } from '../lib/curriculum'
+import { subjectAppliesTo, topicAppliesTo, gradeCurriculum } from '../lib/curriculum'
 import { openWhatsAppChat } from '../lib/whatsapp'
+import { loadReport360Data } from '../lib/report360'
+import { buildRecommendations, type RecommendItem } from '../lib/recommendCore'
 
 const TASK_TYPE_CONFIG: Record<TaskType, { label: string; bg: string; color: string; border: string }> = {
   konu: {
@@ -55,7 +72,7 @@ export default function ProgramPage() {
   const [students, setStudents] = useState<Student[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState(initialStudentId)
   const { user } = useAuth()
-  const { isSystemAdmin, studentScope } = useAccess()
+  const { isSystemAdmin, studentScope, can } = useAccess()
   
   const selectedStudent = useMemo(() => {
     return students.find(s => s.id === selectedStudentId)
@@ -67,6 +84,28 @@ export default function ProgramPage() {
   const [tasks, setTasks] = useState<WeeklyTask[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // R4-3: Süre Alanları (duration_min)
+  const [durationMin, setDurationMin] = useState<number | ''>('')
+  const [editDurationMin, setEditDurationMin] = useState<number | ''>('')
+  const [resultDurationMin, setResultDurationMin] = useState<string>('')
+
+  // R3-4: Öneri Motoru B - Haftalık Taslak Katmanı
+  const [draftTasks, setDraftTasks] = useState<Array<{
+    id: string
+    day_index: number
+    topic_id: number | null
+    custom_label: string | null
+    question_count: number
+    task_type: TaskType
+    source: string | null
+    origin_kind: 'oneri'
+    reason: string
+    subjectName?: string
+    topicName?: string
+  }>>([])
+  const [generatingDraft, setGeneratingDraft] = useState(false)
+  const [confirmingDraft, setConfirmingDraft] = useState(false)
   
   // Navigation for weeks
   const [currentMonday, setCurrentMonday] = useState<Date>(() => mondayOf(new Date()))
@@ -333,6 +372,7 @@ export default function ProgramPage() {
           topic_id: topicIdVal,
           custom_label: labelVal,
           question_count: questionCount,
+          duration_min: durationMin !== '' ? Number(durationMin) : null,
           is_exam: effectiveIsExam,
           task_type: taskType,
           source: trimmedSource,
@@ -355,6 +395,7 @@ export default function ProgramPage() {
       setSelectedTopicId('')
       setCustomLabel('')
       setQuestionCount(100)
+      setDurationMin('')
       setTaskType('konu')
       setTaskSource('')
     } catch (err) {
@@ -394,6 +435,7 @@ export default function ProgramPage() {
     }
     setEditCustomLabel(task.custom_label || '')
     setEditQuestionCount(task.question_count)
+    setEditDurationMin(task.duration_min !== null && task.duration_min !== undefined ? task.duration_min : '')
     setEditTaskType(task.task_type || (task.is_exam ? 'deneme' : 'konu'))
     setEditTaskSource(task.source || '')
   }
@@ -423,6 +465,7 @@ export default function ProgramPage() {
           topic_id: topicIdVal,
           custom_label: labelVal,
           question_count: editQuestionCount,
+          duration_min: editDurationMin !== '' ? Number(editDurationMin) : null,
           is_exam: effectiveIsExam,
           task_type: editTaskType,
           source: trimmedSource,
@@ -446,12 +489,13 @@ export default function ProgramPage() {
     }
   }
 
-  // Coach Result Entry Handlers (D / Y / B)
+  // Coach Result Entry Handlers (D / Y / B & Süre)
   const openResultModal = (task: WeeklyTask) => {
     setResultModalTask(task)
     setResultCorrect(task.correct_count !== null && task.correct_count !== undefined ? String(task.correct_count) : '')
     setResultWrong(task.wrong_count !== null && task.wrong_count !== undefined ? String(task.wrong_count) : '')
     setResultBlank(task.blank_count !== null && task.blank_count !== undefined ? String(task.blank_count) : '')
+    setResultDurationMin(task.duration_min !== null && task.duration_min !== undefined ? String(task.duration_min) : '')
     setResultError(null)
   }
 
@@ -480,6 +524,14 @@ export default function ProgramPage() {
       }
     }
 
+    let dur: number | null = null
+    if (resultDurationMin.trim() !== '') {
+      const parsedDur = parseInt(resultDurationMin.trim(), 10)
+      if (!isNaN(parsedDur) && parsedDur > 0) {
+        dur = parsedDur
+      }
+    }
+
     setSavingResult(true)
     setResultError(null)
 
@@ -490,6 +542,7 @@ export default function ProgramPage() {
           correct_count: d,
           wrong_count: y,
           blank_count: b,
+          duration_min: dur,
         })
         .eq('id', resultModalTask.id)
         .select()
@@ -505,6 +558,149 @@ export default function ProgramPage() {
     } finally {
       setSavingResult(false)
     }
+  }
+
+  // R3-4: Akıllı Taslak Üret / Onayla / Temizle
+  const handleGenerateDraft = async () => {
+    if (!selectedStudentId || !selectedStudent || !isSupabaseConfigured) return
+    setGeneratingDraft(true)
+    try {
+      const isLgs = gradeCurriculum(selectedStudent.grade) === 'LGS'
+      const examType: ExamType = isLgs ? 'LGS' : 'TYT'
+
+      // 1. 360 rapor verisini yükle
+      const r360 = await loadReport360Data(selectedStudentId, examType)
+      if (!r360) {
+        alert('Öneri motoru için yeterli veri bulunamadı.')
+        return
+      }
+
+      // 2. Koçun kritik kararları
+      const { data: decisionsData } = await supabase
+        .from('coach_decisions')
+        .select('topic_id, state, decided_at, note, topics(id, name, subjects(name))')
+        .eq('student_id', selectedStudentId)
+        .eq('state', 'kritik')
+
+      const criticalDecisions = (decisionsData || []).map((d: any) => ({
+        topicId: d.topic_id,
+        topicName: d.topics?.name || 'Konu',
+        subjectName: d.topics?.subjects?.name || 'Ders',
+        decidedAt: d.decided_at,
+        note: d.note,
+      }))
+
+      // 3. Son 4 haftanın görevleri
+      const fourWeeksAgo = new Date(currentMonday.getTime() - 28 * 86400000).toISOString().split('T')[0]
+      const { data: pastTasksData } = await supabase
+        .from('weekly_tasks')
+        .select('week_start, question_count, completed, task_type')
+        .eq('student_id', selectedStudentId)
+        .gte('week_start', fourWeeksAgo)
+
+      const last4WeeksTasks = (pastTasksData || []).map((t) => ({
+        week_start: t.week_start,
+        question_count: t.question_count,
+        completed: t.completed,
+        task_type: t.task_type as TaskType,
+      }))
+
+      // 4. Öneri motorunu çağır
+      const output = buildRecommendations({
+        studentId: selectedStudentId,
+        examType,
+        priorityPoints: r360.priorityMatrix.points.map((p) => ({
+          examTopicId: p.examTopicId,
+          examTopicName: p.examTopicName,
+          subjectName: p.subjectName,
+          weight: p.weight,
+          accuracyPct: p.accuracyPct,
+          priorityScore: p.priorityScore,
+          quadrant: p.quadrant,
+          curriculumTopicId: p.curriculumTopicId,
+        })),
+        reviewTopics: r360.reviewTiming.items.map((r) => ({
+          topicId: r.topicId,
+          topicName: r.topicName,
+          subjectName: r.subjectName,
+          lastMeasuredAccuracy: r.lastMeasuredAccuracy,
+          weeksInactive: r.weeksInactive,
+          reviewIntervalWeek: r.targetIntervalWeeks,
+          repeatCount: r.repeatCount,
+        })),
+        criticalDecisions,
+        last4WeeksTasks,
+      })
+
+      if (!output.items || output.items.length === 0) {
+        alert('Şu an için önerilecek konu bulunamadı. Deneme sonuçları veya konu yeterlilik durumları girildiğinde öneriler otomatik şekillenecektir.')
+        return
+      }
+
+      // 5. Günlere dağıt (Pazartesi-Cumartesi arası 6 güne dağıt)
+      const newDrafts = output.items.map((item: RecommendItem, idx: number) => ({
+        id: `draft-${idx}-${Date.now()}`,
+        day_index: idx % 6,
+        topic_id: item.topicId ?? null,
+        custom_label: item.topicId ? null : `${item.subjectName}: ${item.topicName}`,
+        question_count: item.recommendedQuestions,
+        task_type: item.taskType,
+        source: 'Akıllı Öneri',
+        origin_kind: 'oneri' as const,
+        reason: item.reason,
+        subjectName: item.subjectName,
+        topicName: item.topicName,
+      }))
+
+      setDraftTasks(newDrafts)
+    } catch (err: any) {
+      console.error('Draft generation error:', err)
+      alert('Taslak üretilirken bir hata oluştu: ' + (err?.message || 'Bilinmeyen hata'))
+    } finally {
+      setGeneratingDraft(false)
+    }
+  }
+
+  const handleConfirmDraft = async () => {
+    if (!selectedStudentId || draftTasks.length === 0 || !isSupabaseConfigured) return
+    setConfirmingDraft(true)
+    try {
+      const weekStartStr = weekKey(currentMonday)
+      const payload = draftTasks.map((d) => ({
+        student_id: selectedStudentId,
+        week_start: weekStartStr,
+        day_index: d.day_index,
+        topic_id: d.topic_id,
+        custom_label: d.custom_label,
+        question_count: d.question_count,
+        task_type: d.task_type,
+        is_exam: d.task_type === 'deneme',
+        source: d.source,
+        origin_kind: 'oneri' as const,
+        completed: false,
+      }))
+
+      const { data, error } = await supabase.from('weekly_tasks').insert(payload).select()
+      if (error) throw error
+
+      if (data) {
+        setTasks((prev) => [...prev, ...data])
+        setDraftTasks([])
+      }
+    } catch (err: any) {
+      console.error('Confirm draft error:', err)
+      alert('Taslak onaylanırken hata oluştu.')
+    } finally {
+      setConfirmingDraft(false)
+    }
+  }
+
+  const handleClearDraft = () => {
+    setDraftTasks([])
+  }
+
+  const handleRemoveDraftItem = (draftId: string) => {
+    setDraftTasks((prev) => prev.filter((d) => d.id !== draftId))
   }
 
   // Unique subjects, derived from the joined topics list — seçili öğrencinin sınıfına
@@ -544,7 +740,20 @@ export default function ProgramPage() {
         title="Haftalık Program"
         subtitle="Öğrencinin haftalık çalışma planını hazırlayın. Görevleri sürükleyerek gününü değiştirebilirsiniz."
         actions={
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {can('program.manage') && !isCoachingLocked && (
+              <button
+                type="button"
+                className="btn btn-secondary no-print"
+                onClick={handleGenerateDraft}
+                disabled={generatingDraft || !selectedStudentId}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                title="Öneri motoru ile haftalık çalışma taslağı üret"
+              >
+                <Sparkles size={14} style={{ color: 'var(--indigo-600)' }} />
+                {generatingDraft ? 'Taslak Üretiliyor…' : 'Akıllı Taslak Üret'}
+              </button>
+            )}
             <button type="button" className="btn btn-ghost no-print" onClick={() => window.print()}>
               <Printer size={14} /> Yazdır / PDF
             </button>
@@ -629,6 +838,57 @@ export default function ProgramPage() {
             </div>
           )}
 
+          {/* R3-4: Taslak Görevler Bildirim / Aksiyon Çubuğu */}
+          {draftTasks.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                borderRadius: 10,
+                background: 'color-mix(in srgb, var(--indigo-600) 8%, var(--surface))',
+                border: '1.5px dashed var(--indigo-400)',
+                flexWrap: 'wrap',
+                gap: 12,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--indigo-100)', color: 'var(--indigo-700)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink)' }}>
+                    {draftTasks.length} Görev Taslağı Hazırlandı (Öneri Motoru)
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--ink-soft)' }}>
+                    Taslak görevler kesikli kenarlıkla gösteriliyor. İncelendikten sonra onaylayarak programa kalıcı ekleyebilirsiniz.
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={handleClearDraft}
+                  disabled={confirmingDraft}
+                  style={{ fontSize: 12 }}
+                >
+                  Taslağı Temizle
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={handleConfirmDraft}
+                  disabled={confirmingDraft}
+                  style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Check size={14} /> {confirmingDraft ? 'Ekleniyor…' : 'Taslağı Onayla ve Programa Ekle'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Kanban Board */}
           {isCoachingLocked ? (
             <CoachingLockedState />
@@ -638,6 +898,7 @@ export default function ProgramPage() {
             <div className="program-board">
             {DAYS.map((dayName, dayIndex) => {
               const dayTasks = tasks.filter(t => t.day_index === dayIndex)
+              const draftsForDay = draftTasks.filter(d => d.day_index === dayIndex)
               const isAddingHere = addingDayIndex === dayIndex
 
               return (
@@ -652,16 +913,82 @@ export default function ProgramPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontWeight: 700, fontSize: 13.5 }}>{dayName}</span>
                       <span style={{ fontSize: 11, color: 'var(--ink-faint)', background: 'var(--measured-bg)', padding: '1px 6px', borderRadius: 10 }}>
-                        {dayTasks.length}
+                        {dayTasks.length}{draftsForDay.length > 0 ? ` (+${draftsForDay.length})` : ''}
                       </span>
                     </div>
                   </div>
 
                   {/* Task Cards List */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minHeight: 200 }}>
-                    {/* Boş gün eskiden bomboş beyaz bir kolondu — ne olduğu ne de ne
-                        yapılacağı belliydi. Artık kolonun kendisi görev eklemeye çağırıyor. */}
-                    {dayTasks.length === 0 && (
+                    {/* R3-4: Taslak Kartları */}
+                    {draftsForDay.map((draft) => (
+                      <div
+                        key={draft.id}
+                        style={{
+                          padding: '10px 12px',
+                          borderRadius: 10,
+                          border: '2px dashed var(--indigo-400)',
+                          background: 'color-mix(in srgb, var(--indigo-600) 4%, var(--surface))',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 5,
+                          position: 'relative',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                              <span
+                                style={{
+                                  fontSize: 9.5,
+                                  fontWeight: 700,
+                                  padding: '1px 5px',
+                                  borderRadius: 4,
+                                  background: 'var(--indigo-100)',
+                                  color: 'var(--indigo-700)',
+                                }}
+                              >
+                                Taslak
+                              </span>
+                              {draft.subjectName && (
+                                <span style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
+                                  {draft.subjectName}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--ink)', wordBreak: 'break-word' }}>
+                              {draft.topicName || draft.custom_label}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleRemoveDraftItem(draft.id)}
+                            style={{ padding: '2px 5px', color: 'var(--ink-faint)', border: 'none', background: 'none' }}
+                            title="Bu taslak görevi kaldır"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: 'var(--ink)' }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--indigo-600)' }}>
+                            {draft.question_count} soru
+                          </span>
+                          <span style={{ color: 'var(--ink-faint)' }}>·</span>
+                          <span style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
+                            {TASK_TYPE_CONFIG[draft.task_type]?.label}
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: 10.5, color: 'var(--indigo-600)', fontStyle: 'italic', lineHeight: 1.3, background: 'var(--surface)', padding: '4px 6px', borderRadius: 5, border: '1px solid var(--border-soft)' }}>
+                          💡 {draft.reason}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Boş gün */}
+                    {dayTasks.length === 0 && draftsForDay.length === 0 && (
                       <div className="day-empty">
                         <span className="day-empty-text">Bu güne görev yok</span>
                         {selectedStudentId && (
@@ -733,14 +1060,27 @@ export default function ProgramPage() {
                               </div>
                             )}
 
-                            <div className="field">
-                              <label style={{ fontSize: 9, fontWeight: 700 }}>Soru Sayısı</label>
-                              <input
-                                type="number"
-                                value={editQuestionCount}
-                                onChange={e => setEditQuestionCount(parseInt(e.target.value) || 0)}
-                                style={{ padding: 4, fontSize: 11 }}
-                              />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                              <div className="field">
+                                <label style={{ fontSize: 9, fontWeight: 700 }}>Soru Sayısı</label>
+                                <input
+                                  type="number"
+                                  value={editQuestionCount}
+                                  onChange={e => setEditQuestionCount(parseInt(e.target.value) || 0)}
+                                  style={{ padding: 4, fontSize: 11 }}
+                                />
+                              </div>
+                              <div className="field">
+                                <label style={{ fontSize: 9, fontWeight: 700 }}>Süre (dk)</label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  placeholder="dk"
+                                  value={editDurationMin}
+                                  onChange={e => setEditDurationMin(e.target.value === '' ? '' : parseInt(e.target.value, 10) || '')}
+                                  style={{ padding: 4, fontSize: 11 }}
+                                />
+                              </div>
                             </div>
 
                             {/* Görev Türü Seçici */}
@@ -927,9 +1267,16 @@ export default function ProgramPage() {
                           )}
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-soft)', paddingTop: 5, marginTop: 2 }}>
-                            <span style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--indigo-600)' }}>
-                              {task.question_count} soru
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                              <span style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--indigo-600)' }}>
+                                {task.question_count} soru
+                              </span>
+                              {task.duration_min ? (
+                                <span style={{ fontSize: 9.5, color: 'var(--ink-soft)', background: 'var(--surface)', border: '1px solid var(--border-soft)', padding: '0 4px', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                                  <Clock size={9} /> {task.duration_min} dk
+                                </span>
+                              ) : null}
+                            </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                               <span
                                 style={{
@@ -990,9 +1337,22 @@ export default function ProgramPage() {
                         </div>
                       )}
 
-                      <div className="field">
-                        <label style={{ fontSize: 10 }}>Soru Sayısı</label>
-                        <input type="number" value={questionCount} onChange={e => setQuestionCount(parseInt(e.target.value) || 0)} style={{ padding: 6, fontSize: 11.5 }} />
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                        <div className="field">
+                          <label style={{ fontSize: 10 }}>Soru Sayısı</label>
+                          <input type="number" value={questionCount} onChange={e => setQuestionCount(parseInt(e.target.value) || 0)} style={{ padding: 6, fontSize: 11.5 }} />
+                        </div>
+                        <div className="field">
+                          <label style={{ fontSize: 10 }}>Süre (dk) <span style={{ color: 'var(--ink-faint)' }}>(ops)</span></label>
+                          <input
+                            type="number"
+                            min="1"
+                            placeholder="dk"
+                            value={durationMin}
+                            onChange={e => setDurationMin(e.target.value === '' ? '' : parseInt(e.target.value, 10) || '')}
+                            style={{ padding: 6, fontSize: 11.5 }}
+                          />
+                        </div>
                       </div>
 
                       {/* Görev Türü Seçici */}
@@ -1197,6 +1557,21 @@ export default function ProgramPage() {
                 </div>
               )
             })()}
+
+            {/* R4-3: Çalışma Süresi (dk) */}
+            <div className="field" style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink)' }}>
+                Çalışma Süresi (dk) <span style={{ fontWeight: 400, color: 'var(--ink-faint)' }}>(opsiyonel)</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={resultDurationMin}
+                placeholder="Örn: 45"
+                onChange={(e) => setResultDurationMin(e.target.value)}
+                style={{ padding: '6px 8px', fontSize: 13, fontWeight: 600 }}
+              />
+            </div>
 
             <div style={{ display: 'flex', gap: 6 }}>
               {(resultModalTask.correct_count !== null && resultModalTask.correct_count !== undefined) && (

@@ -12,6 +12,7 @@ import {
   CheckCircle,
   Lightbulb,
   Plus,
+  Tag,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type {
@@ -21,7 +22,11 @@ import type {
   MockExamSection,
   MockExamSubjectResult,
   MockExamTopicResult,
+  ErrorType,
+  ErrorBasketItem,
 } from '../../types/database'
+import { ERROR_REASON_CONFIG } from '../../lib/report360Core'
+import ErrorReasonModal from './ErrorReasonModal'
 import {
   generateExamReport,
   type RawExamRecord,
@@ -114,16 +119,50 @@ export default function StudentExamAnalysisView({
     suggestedType?: 'konu' | 'tekrar' | 'rutin' | 'sureli_test' | 'deneme'
   } | null>(null)
 
+  // R4-4: Yanlış Nedenleri State
+  const [errorBasketItems, setErrorBasketItems] = useState<ErrorBasketItem[]>([])
+  const [topicLinks, setTopicLinks] = useState<Map<number, number>>(new Map())
+  const [topicNames, setTopicNames] = useState<Map<string, number>>(new Map())
+  const [errorModalTarget, setErrorModalTarget] = useState<{
+    topicRow: TopicRowData & { subject_label: string }
+    curriculumTopicId: number | null
+  } | null>(null)
+
   // Veri yükleme
   useEffect(() => {
+    let isMounted = true
+
     if (initialCatalog && initialExams) {
       setCatalog(initialCatalog)
       setRawExams(initialExams)
       setLoading(false)
-      return
+
+      const examIds = initialExams.map((e) => e.id)
+      if (examIds.length > 0) {
+        Promise.all([
+          supabase.from('error_basket_items').select('*').in('mock_exam_id', examIds),
+          supabase.from('exam_topic_links').select('exam_topic_id, topic_id').eq('is_primary', true),
+          supabase.from('topics').select('id, name'),
+        ]).then(([ebRes, lRes, ctRes]) => {
+          if (!isMounted) return
+          if (ebRes.data) setErrorBasketItems(ebRes.data as ErrorBasketItem[])
+          if (lRes.data) {
+            const lMap = new Map<number, number>()
+            lRes.data.forEach((l) => lMap.set(l.exam_topic_id, l.topic_id))
+            setTopicLinks(lMap)
+          }
+          if (ctRes.data) {
+            const nMap = new Map<string, number>()
+            ctRes.data.forEach((t) => nMap.set(t.name.trim().toLowerCase(), t.id))
+            setTopicNames(nMap)
+          }
+        })
+      }
+      return () => {
+        isMounted = false
+      }
     }
 
-    let isMounted = true
     setLoading(true)
     setError(null)
 
@@ -164,12 +203,16 @@ export default function StudentExamAnalysisView({
 
         const examIds = examsData.map((e) => e.id)
 
-        // 3. Bölümler, Alt Ders Sonuçları ve Konu Sonuçları (1000 satır cap + 200 chunk korumalı)
-        const [sections, subjectResults, topicResults] = await Promise.all([
-          fetchByExamIds<MockExamSection>('mock_exam_sections', examIds),
-          fetchByExamIds<MockExamSubjectResult>('mock_exam_subject_results', examIds),
-          fetchByExamIds<MockExamTopicResult>('mock_exam_topic_results', examIds),
-        ])
+        // 3. Bölümler, Alt Ders Sonuçları, Konu Sonuçları ve Hata Sepeti (1000 satır cap + 200 chunk korumalı)
+        const [sections, subjectResults, topicResults, errorBasketRes, linksRes, curriculumTopicsRes] =
+          await Promise.all([
+            fetchByExamIds<MockExamSection>('mock_exam_sections', examIds),
+            fetchByExamIds<MockExamSubjectResult>('mock_exam_subject_results', examIds),
+            fetchByExamIds<MockExamTopicResult>('mock_exam_topic_results', examIds),
+            supabase.from('error_basket_items').select('*').in('mock_exam_id', examIds),
+            supabase.from('exam_topic_links').select('exam_topic_id, topic_id').eq('is_primary', true),
+            supabase.from('topics').select('id, name'),
+          ])
 
         // RawExamRecord formatında birleştir
         const fullRecords: RawExamRecord[] = examsData.map((exam) => ({
@@ -190,6 +233,17 @@ export default function StudentExamAnalysisView({
 
         if (isMounted) {
           setRawExams(fullRecords)
+          if (errorBasketRes.data) setErrorBasketItems(errorBasketRes.data as ErrorBasketItem[])
+          if (linksRes.data) {
+            const lMap = new Map<number, number>()
+            linksRes.data.forEach((l) => lMap.set(l.exam_topic_id, l.topic_id))
+            setTopicLinks(lMap)
+          }
+          if (curriculumTopicsRes.data) {
+            const nMap = new Map<string, number>()
+            curriculumTopicsRes.data.forEach((t) => nMap.set(t.name.trim().toLowerCase(), t.id))
+            setTopicNames(nMap)
+          }
         }
       } catch (err) {
         if (!isMounted) return
@@ -884,6 +938,17 @@ export default function StudentExamAnalysisView({
                   .map((row) => {
                     const badge = getBandBadgeStyle(row.status_badge)
                     const isExpanded = expandedTopicId === row.exam_topic_id
+                    const curriculumTopicId =
+                      topicLinks.get(row.exam_topic_id) ??
+                      topicNames.get(row.name.trim().toLowerCase()) ??
+                      null
+                    const rowErrors = errorBasketItems.filter(
+                      (it) => curriculumTopicId !== null && it.topic_id === curriculumTopicId
+                    )
+                    const errorCountsByType = rowErrors.reduce((acc, it) => {
+                      acc[it.error_type] = (acc[it.error_type] || 0) + 1
+                      return acc
+                    }, {} as Record<ErrorType, number>)
 
                     return (
                       <tr key={row.exam_topic_id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
@@ -907,6 +972,36 @@ export default function StudentExamAnalysisView({
                             {row.name}
                             {isExpanded ? <ChevronUp size={12} style={{ marginLeft: 4 }} /> : <ChevronDown size={12} style={{ marginLeft: 4 }} />}
                           </button>
+
+                          {/* R4-4: Mevcut girilmiş nedenleri satırda küçük rozet olarak göster */}
+                          {rowErrors.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                              {Object.entries(errorCountsByType).map(([type, cnt]) => {
+                                const conf = ERROR_REASON_CONFIG[type as ErrorType]
+                                return (
+                                  <span
+                                    key={type}
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: 600,
+                                      padding: '1.5px 6px',
+                                      borderRadius: 4,
+                                      background: conf.bg,
+                                      color: conf.textColor,
+                                      border: `1px solid color-mix(in srgb, ${conf.color} 30%, transparent)`,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 3,
+                                    }}
+                                    title={`${conf.label}: ${conf.description}`}
+                                  >
+                                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: conf.color }} />
+                                    {conf.label} {cnt > 1 ? `(${cnt})` : ''}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          )}
                         </td>
                         <td style={{ padding: '8px', color: pal.textMuted }}>{row.subject_label}</td>
 
@@ -989,34 +1084,69 @@ export default function StudentExamAnalysisView({
                           </span>
                         </td>
 
-                        {/* İşlem (Programa Ekle) */}
+                        {/* İşlem (Programa Ekle & Yanlış Nedeni Ekle/Düzenle) */}
                         <td style={{ textAlign: 'center', padding: '6px' }}>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() =>
-                              setProgramPopoverTarget({
-                                examTopicId: row.exam_topic_id,
-                                examTopicName: row.name,
-                                suggestedType: 'sureli_test',
-                              })
-                            }
-                            style={{
-                              padding: '2px 8px',
-                              fontSize: 11,
-                              fontWeight: 600,
-                              color: row.status_badge === 'weak' ? 'var(--critical-text)' : 'var(--indigo-600)',
-                              background: row.status_badge === 'weak' ? 'var(--critical-bg)' : 'transparent',
-                              border: row.status_badge === 'weak' ? '1px solid color-mix(in srgb, var(--critical-text) 25%, transparent)' : 'none',
-                              whiteSpace: 'nowrap',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 3,
-                            }}
-                            title="Bu konuyu haftalık programa ekle"
-                          >
-                            <Plus size={12} /> Programa Ekle
-                          </button>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexWrap: 'nowrap', justifyContent: 'center' }}>
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              onClick={() =>
+                                setProgramPopoverTarget({
+                                  examTopicId: row.exam_topic_id,
+                                  examTopicName: row.name,
+                                  suggestedType: 'sureli_test',
+                                })
+                              }
+                              style={{
+                                padding: '2px 8px',
+                                fontSize: 11,
+                                fontWeight: 600,
+                                color: row.status_badge === 'weak' ? 'var(--critical-text)' : 'var(--indigo-600)',
+                                background: row.status_badge === 'weak' ? 'var(--critical-bg)' : 'transparent',
+                                border: row.status_badge === 'weak' ? '1px solid color-mix(in srgb, var(--critical-text) 25%, transparent)' : 'none',
+                                whiteSpace: 'nowrap',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 3,
+                              }}
+                              title="Bu konuyu haftalık programa ekle"
+                            >
+                              <Plus size={12} /> Programa Ekle
+                            </button>
+
+                            {/* R4-4: Yanlış nedeni ekle / düzenle düğmesi */}
+                            {role === 'coach' && (row.total_wrong > 0 || rowErrors.length > 0) && (
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() =>
+                                  setErrorModalTarget({
+                                    topicRow: row,
+                                    curriculumTopicId,
+                                  })
+                                }
+                                style={{
+                                  padding: '2px 8px',
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  color: rowErrors.length > 0 ? 'var(--indigo-600)' : 'var(--warning-text)',
+                                  background: rowErrors.length > 0 ? 'var(--indigo-025)' : 'var(--warning-bg)',
+                                  border: `1px solid ${
+                                    rowErrors.length > 0
+                                      ? 'var(--border)'
+                                      : 'color-mix(in srgb, var(--warning) 35%, transparent)'
+                                  }`,
+                                  whiteSpace: 'nowrap',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 3,
+                                }}
+                                title="Bu konudaki yanlışların nedenini ekle veya düzenle"
+                              >
+                                <Tag size={12} /> {rowErrors.length > 0 ? 'Neden Düzenle' : 'Neden Ekle'}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )
@@ -1037,6 +1167,38 @@ export default function StudentExamAnalysisView({
           suggestedType={programPopoverTarget.suggestedType || 'sureli_test'}
           onClose={() => setProgramPopoverTarget(null)}
           onSuccess={(cnt) => alert(`${cnt} görev başarıyla haftalık plana eklendi!`)}
+        />
+      )}
+
+      {/* R4-4: Yanlış Nedenleri Modal */}
+      {errorModalTarget && (
+        <ErrorReasonModal
+          isOpen={true}
+          onClose={() => setErrorModalTarget(null)}
+          studentName={studentName}
+          topicName={errorModalTarget.topicRow.name}
+          subjectLabel={errorModalTarget.topicRow.subject_label}
+          curriculumTopicId={errorModalTarget.curriculumTopicId}
+          examTopicId={errorModalTarget.topicRow.exam_topic_id}
+          wrongExams={errorModalTarget.topicRow.cells
+            .filter((c) => c.entered && c.wrong_count > 0)
+            .map((c) => ({
+              exam_id: c.exam_id,
+              exam_name: c.exam_name,
+              exam_date: c.exam_date,
+              wrong_count: c.wrong_count,
+            }))}
+          existingItems={errorBasketItems.filter(
+            (item) =>
+              errorModalTarget.curriculumTopicId !== null &&
+              item.topic_id === errorModalTarget.curriculumTopicId
+          )}
+          onItemAdded={(newItem) => {
+            setErrorBasketItems((prev) => [newItem, ...prev])
+          }}
+          onItemDeleted={(deletedId) => {
+            setErrorBasketItems((prev) => prev.filter((it) => it.id !== deletedId))
+          }}
         />
       )}
     </div>
