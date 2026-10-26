@@ -25,6 +25,7 @@ import type {
   ErrorType,
   ExamSubject,
   ExamTopic,
+  ExamCalendar,
   ExamType,
   ExcuseType,
   Grade,
@@ -50,6 +51,8 @@ import type {
   Subject,
   Topic,
   TopicMeasurement,
+  TaskOriginKind,
+  TaskType,
   Track,
   UniversityRanking,
   WeeklyTask,
@@ -108,6 +111,7 @@ export type _rowEkKosul = Expect<Equals<Row<'ek_yerlestirme_kosullari'>, EkYerle
 export type _rowVakifUcret = Expect<Equals<Row<'vakif_ogrenim_ucretleri'>, VakifOgrenimUcreti>>
 export type _rowTercihListesi = Expect<Equals<Row<'ogrenci_tercih_listeleri'>, OgrenciTercihListesi>>
 export type _rowExamTopicLinks = Expect<Equals<Row<'exam_topic_links'>, ExamTopicLink>>
+export type _rowExamCalendar = Expect<Equals<Row<'exam_calendar'>, ExamCalendar>>
 
 /**
  * Tablo listesi tam — bir tablo sessizce düşerse (veya adı değişirse) burada patlar.
@@ -143,6 +147,7 @@ export type _tableNames = Expect<
     | 'ek_yerlestirme_kosullari'
     | 'vakif_ogrenim_ucretleri'
     | 'ogrenci_tercih_listeleri'
+    | 'exam_calendar'
   >
 >
 
@@ -162,10 +167,36 @@ export type _insRoles = Expect<Equals<OptionalKeys<Insert<'roles'>>, 'id' | 'cre
 export type _insMemberships = Expect<Equals<OptionalKeys<Insert<'memberships'>>, 'id' | 'created_at'>>
 // token DB tarafında gen_random_uuid() ile üretiliyor — students'taki erişim kodlarıyla aynı desen.
 export type _insInvitations = Expect<Equals<OptionalKeys<Insert<'invitations'>>, 'id' | 'created_at' | 'token'>>
-export type _insStudents = Expect<Equals<OptionalKeys<Insert<'students'>>, 'id' | 'created_at' | 'student_access_code' | 'parent_access_code' | 'institution_id' | 'coaching_coach_id'>>
+export type _insStudents = Expect<
+  Equals<
+    OptionalKeys<Insert<'students'>>,
+    | 'id'
+    | 'created_at'
+    | 'student_access_code'
+    | 'parent_access_code'
+    | 'institution_id'
+    | 'coaching_coach_id'
+    | 'target_net_tyt'
+    | 'target_net_ayt'
+    | 'target_net_lgs'
+    | 'target_set_at'
+  >
+>
 export type _insProfiles = Expect<Equals<OptionalKeys<Insert<'profiles'>>, 'id' | 'created_at'>>
 export type _insWeeklyTasks = Expect<
-  Equals<OptionalKeys<Insert<'weekly_tasks'>>, 'id' | 'created_at'>
+  Equals<
+    OptionalKeys<Insert<'weekly_tasks'>>,
+    | 'id'
+    | 'created_at'
+    | 'correct_count'
+    | 'wrong_count'
+    | 'blank_count'
+    | 'completed_at'
+    | 'task_type'
+    | 'source'
+    | 'origin_kind'
+    | 'origin_exam_topic_id'
+  >
 >
 export type _insAttendance = Expect<
   Equals<OptionalKeys<Insert<'attendance_records'>>, 'id' | 'created_at'>
@@ -225,6 +256,12 @@ export type _excuseType = Expect<
   Equals<ExcuseType, 'yok' | 'hastalik' | 'ailevi' | 'okul_sinav' | 'ulasim' | 'izinli' | 'diger'>
 >
 export type _notifyTarget = Expect<Equals<NotifyTarget, 'ogrenci' | 'veli' | 'ikisi'>>
+export type _taskType = Expect<
+  Equals<TaskType, 'konu' | 'tekrar' | 'rutin' | 'sureli_test' | 'deneme'>
+>
+export type _taskOriginKind = Expect<
+  Equals<TaskOriginKind, 'elle' | 'deneme_analizi' | 'konu_haritasi' | 'gorusme' | 'oneri'>
+>
 export type _scoreType = Expect<Equals<ScoreType, 'SAY' | 'EA' | 'SÖZ' | 'DİL' | 'TYT'>>
 
 export type _studentGradeField = Expect<Equals<Student['grade'], Grade>>

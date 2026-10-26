@@ -2360,3 +2360,83 @@ end;
 $$;
 revoke all on function audit_stats() from public, anon;
 grant execute on function audit_stats() to authenticated;
+
+-- ===========================================================================
+-- Raporlar 2.0 · R1-1 — Veri Modeli Genişletmeleri (Idempotent)
+-- ===========================================================================
+
+-- 1.1 weekly_tasks: Yeni kolonlar
+alter table weekly_tasks add column if not exists correct_count smallint;
+alter table weekly_tasks add column if not exists wrong_count smallint;
+alter table weekly_tasks add column if not exists blank_count smallint;
+alter table weekly_tasks add column if not exists completed_at timestamptz;
+alter table weekly_tasks add column if not exists task_type text not null default 'konu';
+alter table weekly_tasks add column if not exists source text;
+alter table weekly_tasks add column if not exists origin_kind text not null default 'elle';
+alter table weekly_tasks add column if not exists origin_exam_topic_id int references exam_topics(id) on delete set null;
+
+-- weekly_tasks: task_type ve origin_kind check kısıtlamaları
+alter table weekly_tasks drop constraint if exists weekly_tasks_task_type_ck;
+alter table weekly_tasks add constraint weekly_tasks_task_type_ck
+  check (task_type in ('konu', 'tekrar', 'rutin', 'sureli_test', 'deneme'));
+
+alter table weekly_tasks drop constraint if exists weekly_tasks_origin_kind_ck;
+alter table weekly_tasks add constraint weekly_tasks_origin_kind_ck
+  check (origin_kind in ('elle', 'deneme_analizi', 'konu_haritasi', 'gorusme', 'oneri'));
+
+-- weekly_tasks: Sonuç kısıtlaması (D + Y + B <= question_count ve negatif olamaz)
+alter table weekly_tasks drop constraint if exists weekly_tasks_result_ck;
+alter table weekly_tasks add constraint weekly_tasks_result_ck check (
+  (correct_count is null or correct_count >= 0) and
+  (wrong_count is null or wrong_count >= 0) and
+  (blank_count is null or blank_count >= 0) and
+  (coalesce(correct_count, 0) + coalesce(wrong_count, 0) + coalesce(blank_count, 0) <= question_count)
+);
+
+-- Geriye dönük doldurma: is_exam olanlar deneme türüne güncellenir
+update weekly_tasks set task_type = 'deneme' where is_exam and task_type = 'konu';
+
+-- weekly_tasks trigger: completed false->true olunca completed_at = now(), true->false olunca null
+create or replace function trg_weekly_tasks_completed_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.completed = true and (old.completed is null or old.completed = false) then
+    new.completed_at = now();
+  elsif new.completed = false and old.completed = true then
+    new.completed_at = null;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_weekly_tasks_completed_at on weekly_tasks;
+create trigger trg_weekly_tasks_completed_at
+before insert or update on weekly_tasks
+for each row execute function trg_weekly_tasks_completed_at();
+
+-- 1.2 students: Hedef net kolonları
+alter table students add column if not exists target_net_tyt numeric(5,2);
+alter table students add column if not exists target_net_ayt numeric(5,2);
+alter table students add column if not exists target_net_lgs numeric(5,2);
+alter table students add column if not exists target_set_at timestamptz;
+
+-- 1.3 exam_calendar: Sınav tarihleri
+create table if not exists exam_calendar (
+  exam text primary key check (exam in ('YKS', 'LGS')),
+  exam_date date not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table exam_calendar enable row level security;
+
+drop policy if exists "exam_calendar: herkes okur" on exam_calendar;
+create policy "exam_calendar: herkes okur" on exam_calendar
+  for select to authenticated using (true);
+
+drop policy if exists "exam_calendar: yalnız sistem admini yönetir" on exam_calendar;
+create policy "exam_calendar: yalnız sistem admini yönetir" on exam_calendar
+  for all to authenticated
+  using (is_system_admin())
+  with check (is_system_admin());

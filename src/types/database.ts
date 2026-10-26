@@ -118,6 +118,10 @@ export type Student = {
   target_ranking: string | null
   target_net_label: string | null
   target_net_value: number | null
+  target_net_tyt?: number | null
+  target_net_ayt?: number | null
+  target_net_lgs?: number | null
+  target_set_at?: string | null
   is_active: boolean
   phone_number: string | null
   parent_phone_number: string | null
@@ -311,6 +315,9 @@ export type ErrorBasketItem = {
   created_at: string
 }
 
+export type TaskType = 'konu' | 'tekrar' | 'rutin' | 'sureli_test' | 'deneme'
+export type TaskOriginKind = 'elle' | 'deneme_analizi' | 'konu_haritasi' | 'gorusme' | 'oneri'
+
 export type WeeklyTask = {
   id: string
   student_id: string
@@ -322,6 +329,20 @@ export type WeeklyTask = {
   is_exam: boolean
   completed: boolean
   created_at: string
+  correct_count?: number | null
+  wrong_count?: number | null
+  blank_count?: number | null
+  completed_at?: string | null
+  task_type?: TaskType
+  source?: string | null
+  origin_kind?: TaskOriginKind
+  origin_exam_topic_id?: number | null
+}
+
+export type ExamCalendar = {
+  exam: 'YKS' | 'LGS'
+  exam_date: string
+  updated_at: string
 }
 
 export type ScoreType = 'SAY' | 'EA' | 'SÖZ' | 'DİL' | 'TYT'
@@ -464,6 +485,7 @@ export type Database = {
       ek_yerlestirme_kosullari: TableDef<EkYerlestirmeKosulu>
       vakif_ogrenim_ucretleri: TableDef<VakifOgrenimUcreti>
       ogrenci_tercih_listeleri: TableDef<OgrenciTercihListesi>
+      exam_calendar: TableDef<ExamCalendar>
     }
     Views: {
       topic_exam_measurements: ViewDef<TopicExamMeasurement>
