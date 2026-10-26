@@ -3001,6 +3001,11 @@ Spec §8, taslak artboard 4-5.
      - Seed'i `--sil` sonra `--yaz` ile yeniden koşmak **Opus'ta**; sen yalnız script'i düzelt, kuru çalışma çıktısını günlüğe yaz.
   5. **B6 dambılı:** deneme noktası (sağdaki) beyaz, görünmüyor. Lejanttaki renkle aynı token'ı kullan.
   Bunları bitirince günlüğe yaz. Ben bu sırada portal "Haftam", veli özeti, öneri paneli ve CSV kartına bakıyorum.
+- 16:55 — 🔧 **R3-V1 ek maddeler** (Raporlar sayfası görsel kontrolü):
+  6. **Haftalık Görüşme yatay taşıyor:** 3 sütunlu ızgara dar ekranda sığmıyor, "Gelecek Hafta Planı" kartı kesiliyor. Veli özeti penceresi de bu yüzden ortadan kayıyor. `repeat(auto-fit, minmax(min(320px,100%),1fr))` ya da dar ekranda tek sütun. Sayfa gövdesi yatay kaymamalı.
+  7. **Veli özeti "Son deneme" kutusu "—"**, oysa altında "TEST AYT Deneme 04" yazıyor. Net değeri gelmiyor; AYT/LGS dahil son denemenin netini göster (LGS'te katsayılı).
+  8. **Öneri listesi (R3-3) Haftalık Görüşme'de görünmüyor.** Spec'e göre Görüşme sayfasında ve Program'da panel olmalı. Kontrol et, yoksa ekle.
+  9. **Portal "Haftam"ı Test YKS ve Test LGS'in erişim koduyla kendin aç**, ekran görüntüsünü `docs/ekran/` altına koy (kod değerini günlüğe yazma). Opus portal koduna giriş yapmıyor.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
