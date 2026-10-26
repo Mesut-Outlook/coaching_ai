@@ -130,16 +130,27 @@ begin
           else coalesce(s.target_net_tyt, s.target_net_ayt)
         end,
         'latest_net', (
-          select sum(ms.net)
-          from mock_exams me
-          join mock_exam_sections ms on ms.mock_exam_id = me.id
-          where me.student_id = v_student_id
-            and me.id = (
-              select me2.id from mock_exams me2
-              where me2.student_id = v_student_id
-              order by me2.exam_date desc, me2.created_at desc
-              limit 1
+          select case
+            when me.exam_type = 'LGS' then (
+              select round(coalesce(sum(
+                case
+                  when ms.section_name in ('Türkçe', 'Matematik', 'Fen Bilimleri') then ms.net * 4
+                  else ms.net * 1
+                end
+              ), 0), 2)
+              from mock_exam_sections ms
+              where ms.mock_exam_id = me.id
             )
+            else (
+              select round(coalesce(sum(ms.net), 0), 2)
+              from mock_exam_sections ms
+              where ms.mock_exam_id = me.id
+            )
+          end
+          from mock_exams me
+          where me.student_id = v_student_id
+          order by me.exam_date desc, me.created_at desc
+          limit 1
         ),
         'latest_exam_type', (
           select me.exam_type

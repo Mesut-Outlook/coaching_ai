@@ -276,6 +276,7 @@ class TestDataGenerator {
   private examSubjects: ExamSubjectRow[] = []
   private examTopics: ExamTopicRow[] = []
   private topics: TopicRow[] = []
+  private topicLinks: Array<{ exam_topic_id: number; topic_id: number }> = []
   private coachId = '6e7c1177-3f01-428a-b198-36c472b0202e'
 
   constructor(seed = 20261026) {
@@ -286,12 +287,42 @@ class TestDataGenerator {
     examSubjects: ExamSubjectRow[],
     examTopics: ExamTopicRow[],
     topics: TopicRow[],
+    topicLinks?: Array<{ exam_topic_id: number; topic_id: number }>,
     coachId?: string,
   ) {
     this.examSubjects = examSubjects
     this.examTopics = examTopics
     this.topics = topics
+    if (topicLinks) this.topicLinks = topicLinks
     if (coachId) this.coachId = coachId
+  }
+
+  getStudentFocusProfiles(studentId: string, examTypeOrCurr: 'YKS' | 'LGS' | ExamType) {
+    const isYks = examTypeOrCurr !== 'LGS'
+    const curr = isYks ? 'YKS' : 'LGS'
+
+    const linksForCurr = this.topicLinks.filter((l) => {
+      const top = this.topics.find((t) => t.id === l.topic_id)
+      if (!top || top.curriculum !== curr) return false
+      if (!isYks && !top.grades.includes('8. Sınıf') && top.grades.length > 0) return false
+      return true
+    })
+
+    const interventionLinks = linksForCurr.slice(0, isYks ? 5 : 4)
+    const weakLinks = linksForCurr.slice(isYks ? 5 : 4, isYks ? 8 : 6)
+
+    const interventionExamTopicIds = new Set(interventionLinks.map((l) => l.exam_topic_id))
+    const weakExamTopicIds = new Set(weakLinks.map((l) => l.exam_topic_id))
+    const allFocusExamTopicIds = new Set([...interventionExamTopicIds, ...weakExamTopicIds])
+
+    return {
+      interventionLinks,
+      weakLinks,
+      interventionExamTopicIds,
+      weakExamTopicIds,
+      allFocusExamTopicIds,
+      decliningTopicId: interventionLinks[0]?.exam_topic_id,
+    }
   }
 
   // --- Deneme Üretimi (Tutarlılık Garantili: Bölüm = Alt Ders = Konu) ---
@@ -328,6 +359,8 @@ class TestDataGenerator {
     let totalWrong = 0
     let totalQuestions = 0
 
+    const focusProfile = this.getStudentFocusProfiles(studentId, examType)
+
     for (const es of subjects) {
       // İlgili alt dersin konuları
       let candidateTopics = this.examTopics.filter((et) => et.exam_subject_id === es.id)
@@ -342,8 +375,31 @@ class TestDataGenerator {
         throw new Error(`exam_subject ${es.id} (${es.label}) için konu bulunamadı!`)
       }
 
+      // Odak konuları öne al
+      candidateTopics.sort((a, b) => {
+        const aFocus = focusProfile.allFocusExamTopicIds.has(a.id)
+        const bFocus = focusProfile.allFocusExamTopicIds.has(b.id)
+        if (aFocus !== bFocus) return aFocus ? -1 : 1
+        return a.sort_order - b.sort_order
+      })
+
       // Soru sayısını konulara dağıt (toplam = es.question_count)
-      const dist = distributeQuestions(this.rand, es.question_count, candidateTopics.length)
+      const focusInSubj = candidateTopics.filter((t) => focusProfile.allFocusExamTopicIds.has(t.id))
+      let dist: number[]
+      if (focusInSubj.length > 0 && es.question_count >= focusInSubj.length) {
+        dist = new Array<number>(candidateTopics.length).fill(0)
+        for (let fi = 0; fi < focusInSubj.length; fi++) {
+          dist[fi] = 1
+        }
+        let rem = es.question_count - focusInSubj.length
+        while (rem > 0) {
+          const idx = Math.floor(this.rand() * candidateTopics.length)
+          dist[idx]++
+          rem--
+        }
+      } else {
+        dist = distributeQuestions(this.rand, es.question_count, candidateTopics.length)
+      }
 
       let subjCorrect = 0
       let subjWrong = 0
@@ -353,13 +409,30 @@ class TestDataGenerator {
         if (qCount === 0) continue
 
         const topic = candidateTopics[i]
-        // Doğru ve yanlış üretimi (konu bazında tutarlı)
-        const jitter = (this.rand() - 0.5) * 0.16
-        const topicAcc = Math.max(0.3, Math.min(0.98, targetAccuracy + jitter))
+        let topicAcc: number
+
+        if (focusProfile.interventionExamTopicIds.has(topic.id)) {
+          const isBeforeIntervention = examDate <= '2026-09-25'
+          if (isBeforeIntervention) {
+            topicAcc = 0.36 + (this.rand() - 0.5) * 0.1
+          } else {
+            if (topic.id === focusProfile.decliningTopicId) {
+              topicAcc = 0.34 + (this.rand() - 0.5) * 0.08
+            } else {
+              topicAcc = 0.82 + (this.rand() - 0.5) * 0.1
+            }
+          }
+        } else if (focusProfile.weakExamTopicIds.has(topic.id)) {
+          topicAcc = 0.40 + (this.rand() - 0.5) * 0.14
+        } else {
+          const jitter = (this.rand() - 0.5) * 0.24
+          topicAcc = Math.max(0.55, Math.min(0.96, targetAccuracy + jitter))
+        }
+
+        topicAcc = Math.max(0.25, Math.min(0.98, topicAcc))
         const correct = Math.min(qCount, Math.round(qCount * topicAcc))
         const remaining = qCount - correct
-        // Kalanın çoğu yanlış, azı boş
-        const wrong = remaining > 0 ? Math.round(remaining * (0.6 + this.rand() * 0.35)) : 0
+        const wrong = remaining > 0 ? Math.round(remaining * (0.65 + this.rand() * 0.3)) : 0
 
         subjCorrect += correct
         subjWrong += wrong
@@ -447,6 +520,41 @@ class TestDataGenerator {
     }
 
     const tasks: GeneratedTaskPayload[] = []
+    const focusProfile = this.getStudentFocusProfiles(studentId, curriculum)
+
+    // B9: Müdahale etkisi görevleri (2026-09-21 haftasında tamamlanmış görevler)
+    if (weekStart === '2026-09-21' && isPastWeek) {
+      for (let fi = 0; fi < focusProfile.interventionLinks.length; fi++) {
+        const l = focusProfile.interventionLinks[fi]
+        const top = this.topics.find((t) => t.id === l.topic_id)
+        if (!top) continue
+        const topicName = top.name
+        const qCount = 25
+        const correct = 20
+        const wrong = 4
+        const blank = 1
+
+        tasks.push({
+          student_id: studentId,
+          week_start: weekStart,
+          day_index: fi % 6,
+          topic_id: l.topic_id,
+          custom_label: `${topicName} · Deneme Analizi Pekiştirme`,
+          question_count: qCount,
+          is_exam: false,
+          completed: true,
+          completed_at: '2026-09-25T17:00:00Z',
+          task_type: fi % 2 === 0 ? 'konu' : 'sureli_test',
+          source: 'TEST veri',
+          origin_kind: fi % 2 === 0 ? 'deneme_analizi' : 'oneri',
+          origin_exam_topic_id: l.exam_topic_id,
+          correct_count: correct,
+          wrong_count: wrong,
+          blank_count: blank,
+          duration_min: 35,
+        })
+      }
+    }
     const taskCount = randInt(this.rand, 5, 7) // Haftalık 5 ila 7 görev
     const taskTypes: TaskType[] = ['konu', 'tekrar', 'rutin', 'sureli_test', 'deneme']
     const originKinds: TaskOriginKind[] = ['elle', 'deneme_analizi', 'oneri', 'konu_haritasi', 'gorusme']
@@ -883,11 +991,21 @@ async function main() {
     subject_name: t.subjects.name,
   }))
 
+  const { data: linksData, error: lErr } = await supabase
+    .from('exam_topic_links')
+    .select('exam_topic_id, topic_id, is_primary')
+    .eq('is_primary', true)
+  if (lErr || !linksData) {
+    console.error('❌ exam_topic_links tablosu okunamadı:', lErr?.message)
+    process.exit(1)
+  }
+
   const generator = new TestDataGenerator(20261026)
   generator.setMetadata(
     examSubjectsData as ExamSubjectRow[],
     examTopicsData as ExamTopicRow[],
     mappedTopics,
+    linksData as Array<{ exam_topic_id: number; topic_id: number }>,
   )
 
   // -------------------------------------------------------------------------
@@ -1099,7 +1217,7 @@ async function main() {
   console.log(`• Toplam Yanlış Nedeni:         ${allGeneratedErrorBaskets.length} (YKS: 4)`)
   console.log(`• Hedef Netler:`)
   console.log(`  - Test YKS:  TYT 100 / AYT 60`)
-  console.log(`  - Test LGS:  LGS 75`)
+  console.log(`  - Test LGS:  LGS 245 (katsayılı, en fazla 270)`)
   console.log(`  - Test Test: TYT 105`)
   console.log('─'.repeat(55))
 
@@ -1148,7 +1266,7 @@ async function main() {
   await supabase
     .from('students')
     .update({
-      target_net_lgs: 75,
+      target_net_lgs: 245,
       target_set_at: '2026-09-01T09:00:00Z',
     })
     .eq('id', ALLOWED_STUDENTS.TEST_LGS)

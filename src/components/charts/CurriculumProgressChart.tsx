@@ -107,7 +107,9 @@ export default function CurriculumProgressChart({ data, curriculumTitle }: Curri
             <AlertTriangle size={16} style={{ color: 'var(--critical)', flexShrink: 0 }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ fontWeight: 700, color: 'var(--critical-text)' }}>
-                Bu tempoyla müfredat sınavdan {velocity.weeksLate} hafta sonra bitiyor!
+                {velocity.weeksLate && velocity.weeksLate > 52
+                  ? velocity.summaryText
+                  : `Bu tempoyla müfredat sınavdan ${velocity.weeksLate} hafta sonra bitiyor!`}
               </span>
               <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>
                 Son 6 haftalık hız: ~{velocity.weeklyRate.toFixed(1).replace('.', ',')} konu/hafta · Kalan {totalTopics - totalSufficient} konunun tamamlanması için ~{velocity.weeksNeeded} hafta gerekiyor.

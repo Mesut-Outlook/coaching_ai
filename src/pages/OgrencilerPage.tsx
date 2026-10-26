@@ -110,7 +110,9 @@ export default function OgrencilerPage() {
     if (latestExam) {
       const examSecs = studentData.sections.filter(sec => sec.mock_exam_id === latestExam.id)
       if (examSecs.length > 0) {
-        lastNet = examSecs.reduce((sum, sec) => sum + (Number(sec.net) || 0), 0)
+        lastNet = isLgs
+          ? weightedNet(examSecs.map(sec => ({ section_name: sec.section_name, net: Number(sec.net) || 0 })))
+          : examSecs.reduce((sum, sec) => sum + (Number(sec.net) || 0), 0)
         lastNet = Math.round((lastNet + Number.EPSILON) * 100) / 100
       }
     }
@@ -1359,18 +1361,29 @@ export default function OgrencilerPage() {
         )
       )}
 
-      {showParentSummaryModal && studentData && (
-        <ParentSummaryModal
-          isOpen={showParentSummaryModal}
-          onClose={() => setShowParentSummaryModal(false)}
-          student={studentData.student}
-          weeklyTasks={studentData.tasks}
-          latestExam={studentData.exams[0] ?? null}
-          previousExam={studentData.exams[1] ?? null}
-          attendanceRecords={studentData.attendanceRecords}
-          targetNet={studentData.student.target_net_value}
-        />
-      )}
+      {showParentSummaryModal && studentData && (() => {
+        const enrichExam = (e?: MockExam) => {
+          if (!e) return null
+          const secs = studentData.sections.filter(s => s.mock_exam_id === e.id)
+          const isLgs = e.exam_type === 'LGS'
+          const net = isLgs
+            ? weightedNet(secs.map(s => ({ section_name: s.section_name, net: Number(s.net) || 0 })))
+            : secs.reduce((sum, s) => sum + (Number(s.net) || 0), 0)
+          return { ...e, total_net: Math.round(net * 100) / 100 }
+        }
+        return (
+          <ParentSummaryModal
+            isOpen={showParentSummaryModal}
+            onClose={() => setShowParentSummaryModal(false)}
+            student={studentData.student}
+            weeklyTasks={studentData.tasks}
+            latestExam={enrichExam(studentData.exams[0])}
+            previousExam={enrichExam(studentData.exams[1])}
+            attendanceRecords={studentData.attendanceRecords}
+            targetNet={studentData.student.target_net_value}
+          />
+        )
+      })()}
     </section>
   )
 }

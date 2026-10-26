@@ -9,9 +9,12 @@ import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
-import type { Student, WeeklyTask, CoachDecision, Topic, Subject } from '../types/database'
+import type { Student, WeeklyTask, CoachDecision, Topic, Subject, TaskType } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange } from '../lib/weeks'
-import { topicAppliesTo } from '../lib/curriculum'
+import { topicAppliesTo, gradeCurriculum } from '../lib/curriculum'
+import RecommendList from '../components/reports/RecommendList'
+import { buildRecommendations, type RecommendOutput } from '../lib/recommendCore'
+import { loadReport360Data } from '../lib/report360'
 
 export default function RaporlarPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -36,6 +39,7 @@ export default function RaporlarPage() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [showParentSummaryModal, setShowParentSummaryModal] = useState(false)
+  const [recommendations, setRecommendations] = useState<RecommendOutput | null>(null)
 
   // Quick task input state
   const [selectedTopicId, setSelectedTopicId] = useState<string>('custom')
@@ -105,6 +109,73 @@ export default function RaporlarPage() {
       setLastWeekTasks(pastData || [])
       setNextWeekTasks(nextData || [])
       setDecisions(decData || [])
+
+      // R3-3: Gelecek hafta için akıllı önerileri hesapla
+      try {
+        const student = students.find((s) => s.id === selectedStudentId)
+        const curr = student ? gradeCurriculum(student.grade) : 'YKS'
+        const examType = curr === 'LGS' ? 'LGS' : 'TYT'
+        const r360 = await loadReport360Data(selectedStudentId, examType)
+
+        const fourWeeksAgo = new Date(Date.now() - 28 * 86400000).toISOString().split('T')[0]
+        const { data: pastTasksData } = await supabase
+          .from('weekly_tasks')
+          .select('week_start, question_count, completed, task_type')
+          .eq('student_id', selectedStudentId)
+          .gte('week_start', fourWeeksAgo)
+
+        const last4WeeksTasks = (pastTasksData || []).map((t) => ({
+          week_start: t.week_start,
+          question_count: t.question_count,
+          completed: t.completed,
+          task_type: (t.task_type || 'konu') as TaskType,
+        }))
+
+        if (r360) {
+          const criticalDecisions = (decData || []).map((d) => {
+            const t = topics.find((tp) => tp.id === d.topic_id)
+            return {
+              topicId: d.topic_id,
+              topicName: t?.name || `Konu #${d.topic_id}`,
+              subjectName: t?.subjects?.name || 'Ders',
+              decidedAt: d.decided_at || new Date().toISOString(),
+              note: d.note ?? null,
+            }
+          })
+
+          const output = buildRecommendations({
+            studentId: selectedStudentId,
+            examType,
+            priorityPoints: r360.priorityMatrix.points.map((p) => ({
+              examTopicId: p.examTopicId,
+              examTopicName: p.examTopicName,
+              subjectName: p.subjectName,
+              weight: p.weight,
+              accuracyPct: p.accuracyPct,
+              priorityScore: p.priorityScore,
+              quadrant: p.quadrant,
+              curriculumTopicId: p.curriculumTopicId,
+            })),
+            reviewTopics: r360.reviewTiming.items.map((r) => ({
+              topicId: r.topicId,
+              topicName: r.topicName,
+              subjectName: r.subjectName,
+              lastMeasuredAccuracy: r.lastMeasuredAccuracy,
+              weeksInactive: r.weeksInactive,
+              reviewIntervalWeek: r.targetIntervalWeeks,
+              repeatCount: r.repeatCount,
+            })),
+            criticalDecisions,
+            last4WeeksTasks,
+          })
+          setRecommendations(output)
+        } else {
+          setRecommendations(null)
+        }
+      } catch (recErr) {
+        console.error('Error generating recommendations in RaporlarPage:', recErr)
+        setRecommendations(null)
+      }
     } catch (err) {
       console.error('Error loading weekly review data:', err)
     } finally {
@@ -275,7 +346,7 @@ export default function RaporlarPage() {
               )}
 
               {/* 3 COLUMN DASHBOARD */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: 20, alignItems: 'start' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 20, alignItems: 'start' }}>
               
               {/* COLUMN 1: Last Week Review */}
               <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -440,8 +511,22 @@ export default function RaporlarPage() {
                 </div>
               </div>
 
-            </div>
-          </>
+              </div>
+
+              {/* R3-3: Gelecek Hafta İçin Akıllı Öneriler Listesi */}
+              {recommendations && recommendations.items.length > 0 && (
+                <div style={{ marginTop: 20 }}>
+                  <RecommendList
+                    studentId={selectedStudentId}
+                    studentName={selectedStudent?.full_name}
+                    recommendations={recommendations}
+                    onProgramAdded={() => {
+                      loadReviewData()
+                    }}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

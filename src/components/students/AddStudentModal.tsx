@@ -168,6 +168,22 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
     const aytNum = (isLgs || !track) ? null : (targetNetAyt.trim() !== '' ? parseFloat(targetNetAyt.trim()) : null)
     const lgsNum = isLgs ? (targetNetLgs.trim() !== '' ? parseFloat(targetNetLgs.trim()) : null) : null
 
+    if (isLgs && lgsNum !== null && (lgsNum < 0 || lgsNum > 270)) {
+      setError('Hedef LGS neti 0 ile 270 arasında olmalıdır.')
+      setSaving(false)
+      return
+    }
+    if (!isLgs && tytNum !== null && (tytNum < 0 || tytNum > 120)) {
+      setError('Hedef TYT neti 0 ile 120 arasında olmalıdır.')
+      setSaving(false)
+      return
+    }
+    if (!isLgs && aytNum !== null && (aytNum < 0 || aytNum > 80)) {
+      setError('Hedef AYT neti 0 ile 80 arasında olmalıdır.')
+      setSaving(false)
+      return
+    }
+
     // Hedef net değiştiyse target_set_at damgasını güncelle
     const netChanged = editingStudent
       ? (
@@ -388,13 +404,13 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
                 type="number"
                 step="0.25"
                 min="0"
-                max="90"
-                placeholder="Örn: 82.50"
+                max="270"
+                placeholder="Örn: 240.00"
                 value={targetNetLgs}
                 onChange={(e) => setTargetNetLgs(e.target.value)}
               />
               <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>
-                LGS puanı değildir, katsayılı toplam nettir (en fazla 90).
+                LGS puanı değildir, katsayılı toplam nettir (en fazla 270).
               </span>
             </div>
           ) : (
