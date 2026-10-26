@@ -2795,6 +2795,18 @@ Spec §8, taslak artboard 4-5.
 - 08:00 — ✅ `985f757` + `e5f89dd` doğrulandı: getIsoDayIndex yerel gün (01:30 → 0 assert'i var), `.order('id')` eklenmiş. `ana-sayfa-ui`'ya merge ettim, tsc ✓, test:home-summary ✓.
   ⚠️ **Kural hatırlatma:** gece branch'leri (E8 dahil) yerel `main`'e merge edilmiş. **Push yok** (origin/main hâlâ `dc8a40f`, doğru). **E8/G3'ü henüz doğrulamadım.** `main`'i ben doğrulamadan push etme. Bundan sonra branch'leri `main`'e **ben** merge ederim, sen branch'te bırak.
 - 08:00 — 🏠 **Ana sayfa UI (Opus):** `ana-sayfa-ui` @ `21d3d1a` + merge `482eaca`. PanelPage yeniden yazıldı, Sidebar modül renkleri + ince kaydırma çubuğu + kayan gösterge, `HomeSummaryProvider` (menü rozetleri aynı özeti kullanır), `home.css`, view transitions. tsc ✓, build ✓, lint 28 (yeni uyarı yok). Canlı veriyle görsel kontrol için kullanıcı girişi bekleniyor (localhost:5174). **Bu dosyalara dokunma:** `PanelPage.tsx`, `Sidebar.tsx`, `AppShell.tsx`, `global.css` (sidebar + view-transition bölümleri), `tokens.css` (`--m-*`), `home.css`, `contexts/HomeSummaryProvider.tsx`, `contexts/homeSummaryContext.ts`.
+- 08:10 — ✅ **E8/G3 doğrulandı (2026 regresyon):** parser'ı 2026 PDF'iyle kendim koşturdum, sayfa aralıkları otomatik bulundu. Çıktı `00949bf`'deki `2026.json` ile **birebir aynı** (programlar 16.715, koşullar 195, ücretler 2.610). "Yeni Yıl Ekleme" dokümanı var. Not: sütun x-sınırları hâlâ sabit. 2025 PDF'i bunu sınayacak. 2025 kabulü PDF gelince.
+  ✅ Yerel `main` (`ed8f35f`) şu an doğrulanmış durumda: G1–G4 + E8. Push kararı kullanıcıda, sen push etme.
+- 08:10 — **PDF beklerken sıradaki işlerin** (ikisi de kendi branch'inde, `main`'e merge etme):
+  **Y1 · Proje geneli 1000 satır denetimi** (branch `gece/cap-denetimi`):
+  - `src/` içinde sayfalamasız `.select(` çağrılarını listele. Liste: dosya:satır, tablo, büyüme riski (öğrenci başına mı, kurum başına mı, referans mı).
+  - Riskli olanlara `.order('id')` + `.range()` döngüsü ekle. Mümkünse `homeSummary.ts`'teki `fetchAllWithPagination`'ı ortak `src/lib/paginate.ts`'e taşıyıp oradan kullan.
+  - Raporu `docs/1000-cap-denetimi.md`'ye yaz.
+  - **Dokunma:** PanelPage, Sidebar, AppShell, home.css, `HomeSummaryProvider` (bunlar Opus'ta).
+  **Y2 · Yardım + sürüm notu taslağı (v0.27)** (branch `yardim-v027`):
+  - `YardimPage`'de "Panel" kartı "Ana Sayfa" olsun. İçerik: ilgi bekleyenler ve nedenleri, bu hafta, modül kartları, menü rozetleri.
+  - `VersionHistory`'ye v0.27 notu: Ana Sayfa + menü yenilendi, 1000 satır/sayfalama düzeltmeleri, sayaç düzeltmesi, ek yerleştirme parser'ı yıldan bağımsız.
+  - Ekran görüntüsü ekleme, onu ben yaparım.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
