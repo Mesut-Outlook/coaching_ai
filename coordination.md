@@ -2966,6 +2966,14 @@ Spec §8, taslak artboard 4-5.
   2. `parent_summary_log` politikaları `institution_id in my_institution_ids()` kullanıyor. Netlik koçluk pratiğinde başka kurumdan koçluk öğrencileri de görünüyor, onlara kayıt açılamaz. İki politikayı da `exists (select 1 from students s where s.id = parent_summary_log.student_id)` yap: alt sorgu `students` RLS'iyle süzülür, kural tek kaynakta kalır. `is_system_admin()` kalabilir.
   3. `latest_net` LGS'te ham toplam. `my_week`'e `latest_exam_type` ekle. Portal LGS'te bu sayıyı katsayılı nete çevirir (`weightedNet`) ya da "LGS puanı değildir" notuyla gösterir. `improved_topics` etiketi UI'de "Bu hafta iyi gidenler" olsun (≥%70 görev doğruluğu, "gelişti" değil).
   Bitince günlüğe yaz, Docker'da tekrar doğrulayıp SQL'i kullanıcıya vereyim. Bu sırada R3-0'a bağlı olmayan ajanlar (B8, B9, öneri A, T-1) başlayabilir.
+- 14:25 — ✅ **agy: R3-0b (Opus 3 maddesi) tamamlandı (`8f2bed2` on `raporlar-r3`).**
+  1. `portal_dashboard.my_week` hem `target_net` hem de `days_to_exam` için `s.grade in ('7. Sınıf', '8. Sınıf')` LGS kuralı uygulandı.
+  2. `parent_summary_log` RLS politikaları `exists (select 1 from students s where s.id = parent_summary_log.student_id)` yapıldı.
+  3. `portal_dashboard.my_week`'e `latest_exam_type` eklendi, TS tipi `PortalMyWeek` güncellendi; LGS ise "(LGS ham neti)" dipnotu eklendi; kart başlığı "Bu Hafta İyi Gidenler" (≥%70 görev doğruluğu alt notuyla) yapıldı.
+  - Docker schema doğrulaması temiz (2/2 idempotent, exit 0).
+  - Tüm testler temiz (`test:types`, `test:report360` 12/12, `test:recommend` 7/7, `test:parent-summary`, `test:talking-points`, `test:home-summary`, `test:exam-report`, `test:permissions`).
+  - Lint: 28 warnings, 0 errors. Build temiz.
+  - Tüm R3, R4, T-1 ve R3-0b paketleri `raporlar-r3` dalında eksiksiz ve doğrulanmış olarak Opus'un 12:40 PM dönüşünü bekliyor.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
@@ -2997,3 +3005,4 @@ Spec §8, taslak artboard 4-5.
 - 12:55 | R2-2c | bitti | fc0f485 on raporlar-r2 | Opus maddeleri 6-11 tamamlandı: (6) Pareto/öncelik matrisi konu adları dolduruldu (exam_topics join + fallback + selftest assert); (7) Matris noktaları ders rengine bağlandı (subjects.color + token paleti); (8) Medyan eşiği (weight > median + allWeightsEqual iki bölge); (9) Hata profili köşe etiketleri + ders adı halo stroke; (10) B7 başlığı YKS vs LGS müfredatı; (11) Hedef yolu güven bandı ve Y ekseni [0, maxNet] sınırlandırıldı. test:types, test:report360 (8/8), lint (28), build temiz | yok | Opus doğrulaması ve LGS kabulü bekleniyor
 - 13:40 | R3-0 | bitti | ec9947e on raporlar-r3 | R3-0 şema ve tipler tamamlandı: duration_min, parent_summary_log, topic_weights, portal_dashboard 'my_week' ($fn$); test:types (30 tablo, 263 sütun), verify:schema (Docker 2/2 idempotent), lint (28), build temiz | SQL kullanıcı/Opus onayı bekliyor | alt ajanlar paralel başlatılıyor, sıradaki kontrol ~14:05
 - 14:10 | R3+R4 | bitti | a51a59c on raporlar-r3 | R3 (B8, B9, öneri A+B taslak, öğrenci haftam, veli özeti) ve R4 (ağırlık CSV, kurum içi sıra, süre metriği, yanlış nedeni, T-1 test verisi seeder) tamamlandı; test:types, test:report360 (12/12), test:recommend (7/7), test:parent-summary, test:talking-points, test:home-summary, test:exam-report, test:permissions, lint (28), build temiz | yok | Opus incelemesi ve canlıya alma bekleniyor
+- 14:25 | R3-0b | bitti | 8f2bed2 on raporlar-r3 | Opus 3 maddelik R3-0b geri bildirimi uygulandı (7. sınıf LGS kuralı, parent_summary_log RLS, latest_exam_type + iyi gidenler etiketi); test:types/report360(12/12)/recommend(7/7)/parent-summary/lint(28)/build temiz | yok | Opus 12:40 PM uyanışı ve canlıya alma bekleniyor
