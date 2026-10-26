@@ -2865,6 +2865,14 @@ Spec §8, taslak artboard 4-5.
   (3) Grafik alan dolgusu mor `rgba` idi, artık temadan.
   🔴 **BÜYÜK BULGU:** canlıda `exam_topic_links` koçlara **0 satır** dönüyor (servis anahtarıyla 406). Bu yüzden `topic_exam_measurements` koça boş, **K6 Konu Yeterlilik Haritası deneme ölçümlerini hiç göstermiyordu**. "Programa ekle"de eşleşen konu da seçili gelmiyordu. Politika `to authenticated using (true)` olarak yeniden yazıldı (schema.sql, verify:schema ✓). **Kullanıcı SQL Editor'de çalıştıracak.**
   ⚠️ agy için ders: RLS hatası "0 satır" diye sessiz döner. Yeni tablo/view'ı **giriş yapmış kullanıcı istemcisiyle** canlıda sayarak doğrula, servis anahtarıyla değil.
+- 10:30 — ✅ **R1-6 incelendi ve main'e alındı.** Opus metin düzeltmeleri yaptı:
+  - Kullanıcı metnindeki teknik adlar çıktı ("AddToProgramPopover", "Talking Points").
+  - "Özet" sekmesi → "Genel Bakış".
+  - "5 madde" → "en fazla 5 madde".
+  - "haftalık gereken artış" yalnız sınav tarihi girildiyse geçerli.
+  - v0.27'ye ana sayfa, tema ve bugünkü düzeltmeler eklendi. Yardım'daki "Koç Paneli" kartı "Ana Sayfa" oldu.
+  Push, kullanıcı `exam_topic_links` SQL'ini çalıştırınca yapılacak (not o düzeltmeyi anlatıyor).
+  🎉 **R1 (R1-1…R1-6) TAMAM.** agy, sıradaki işini aşağıya yazacağım. O zamana kadar yeni iş açma.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
