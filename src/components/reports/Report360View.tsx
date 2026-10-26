@@ -15,8 +15,10 @@ import TargetTrajectoryChart from '../charts/TargetTrajectoryChart'
 import ParetoLossChart from '../charts/ParetoLossChart'
 import PriorityMatrixChart from '../charts/PriorityMatrixChart'
 import ErrorProfileChart from '../charts/ErrorProfileChart'
+import ConsistencyDumbbellChart from '../charts/ConsistencyDumbbellChart'
+import CurriculumProgressChart from '../charts/CurriculumProgressChart'
 import AddToProgramPopover from '../program/AddToProgramPopover'
-import type { ExamType, Grade } from '../../types/database'
+import type { ExamType, Grade, TaskType } from '../../types/database'
 
 export interface Report360ViewProps {
   studentId: string
@@ -43,6 +45,7 @@ export default function Report360View({
   const [popoverTopic, setPopoverTopic] = useState<{
     topicId: number
     topicName: string
+    suggestedType?: TaskType
   } | null>(null)
 
   const loadData = useCallback(async () => {
@@ -342,6 +345,20 @@ export default function Report360View({
               data={data.errorProfile}
             />
           </div>
+
+          {/* B7: MÜFREDAT İLERLEMESİ & B6: TUTARLILIK */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 16 }}>
+            <CurriculumProgressChart
+              data={data.curriculum}
+            />
+
+            <ConsistencyDumbbellChart
+              data={data.consistency}
+              onAddToProgram={(topicId, topicName, suggestedType) =>
+                setPopoverTopic({ topicId, topicName, suggestedType })
+              }
+            />
+          </div>
         </>
       )}
 
@@ -352,7 +369,7 @@ export default function Report360View({
           studentName={studentName}
           topicId={popoverTopic.topicId}
           originKind="gorusme"
-          suggestedType="tekrar"
+          suggestedType={popoverTopic.suggestedType || 'tekrar'}
           onClose={() => setPopoverTopic(null)}
           onSuccess={() => {
             setPopoverTopic(null)
