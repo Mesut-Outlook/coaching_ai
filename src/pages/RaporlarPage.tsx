@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { CheckSquare, Plus, Trash2, CheckCircle2, ChevronRight } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
+import TalkingPointsCard from '../components/reports/TalkingPointsCard'
 import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -222,8 +223,17 @@ export default function RaporlarPage() {
           ) : loading ? (
             <div style={{ textAlign: 'center', padding: 40, color: 'var(--ink-soft)' }}>Yükleniyor…</div>
           ) : (
-            /* 3 COLUMN DASHBOARD */
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: 20, alignItems: 'start' }}>
+            <>
+              {selectedStudentId && (
+                <TalkingPointsCard
+                  studentId={selectedStudentId}
+                  studentName={selectedStudent?.full_name}
+                  onRefresh={loadReviewData}
+                />
+              )}
+
+              {/* 3 COLUMN DASHBOARD */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: 20, alignItems: 'start' }}>
               
               {/* COLUMN 1: Last Week Review */}
               <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -389,6 +399,7 @@ export default function RaporlarPage() {
               </div>
 
             </div>
+          </>
           )}
         </div>
       )}
