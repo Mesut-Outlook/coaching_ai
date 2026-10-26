@@ -1,4 +1,19 @@
 import type { ExamType, Grade } from '../types/database'
+import { SECTIONS_CONFIG } from './examSections'
+
+/** Sınav türüne göre maksimum net / soru sayısı sınırı */
+export function getMaxNetForExamType(examType: ExamType): number {
+  if (examType === 'TYT') {
+    return SECTIONS_CONFIG.TYT.reduce((sum, s) => sum + s.max, 0)
+  }
+  if (examType === 'AYT') {
+    return 80 // SAY/EA/SÖZ 40 + 40
+  }
+  if (examType === 'LGS') {
+    return SECTIONS_CONFIG.LGS.reduce((sum, s) => sum + s.max, 0)
+  }
+  return 120
+}
 
 // ---------------------------------------------------------------------------
 // 1. Girdi Tipleri (Supabase bağımsız, saf veri)
@@ -177,6 +192,7 @@ export interface PriorityMatrixData {
 export interface ParetoBarItem {
   examTopicId: number
   examTopicName: string
+  subjectName?: string
   lossNet: number
   cumulativePct: number
   isCritical: boolean // Toplam kaybın %60'ına dahil mi
@@ -464,20 +480,24 @@ export function buildReport360(input: Report360Input): Report360Data {
     }
 
     const examDaysFromFirst = Math.round((targetDateMs - firstDateMs) / 86400000)
-    const predictedNet = Math.round((slope * examDaysFromFirst + intercept) * 100) / 100
+    const rawPredicted = Math.round((slope * examDaysFromFirst + intercept) * 10) / 10
+    const maxNet = getMaxNetForExamType(input.examType)
+    const predictedNet = Math.max(0, Math.min(maxNet, rawPredicted))
 
     // Belirsizlik bandı: stdDev * sqrt(1 + 1/n), min ±3 net
     const n = regressionExams.length
     const band = Math.max(3.0, Math.round(residualStdDev * Math.sqrt(1 + 1 / n) * 100) / 100)
 
+    const formattedPred = predictedNet.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
     let gapToTarget: number | null = null
-    let summaryText = `Bu hızla sınav gününde ~${predictedNet.toFixed(1)} net bekleniyor.`
+    let summaryText = `Bu hızla sınav gününde ~${formattedPred} net bekleniyor.`
     if (targetNet !== null) {
-      gapToTarget = Math.round((predictedNet - targetNet) * 100) / 100
+      gapToTarget = Math.round((predictedNet - targetNet) * 10) / 10
+      const formattedGap = Math.abs(gapToTarget).toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
       if (gapToTarget >= 0) {
-        summaryText = `Bu hızla sınav gününde ~${predictedNet.toFixed(1)} net: hedefin ${gapToTarget.toFixed(1)} üstünde.`
+        summaryText = `Bu hızla sınav gününde ~${formattedPred} net: hedefin ${formattedGap} üstünde.`
       } else {
-        summaryText = `Bu hızla sınav gününde ~${predictedNet.toFixed(1)} net: hedefin ${Math.abs(gapToTarget).toFixed(1)} altında.`
+        summaryText = `Bu hızla sınav gününde ~${formattedPred} net: hedefin ${formattedGap} altında.`
       }
     }
 
@@ -630,7 +650,7 @@ export function buildReport360(input: Report360Input): Report360Data {
   // -------------------------------------------------------------------------
   // B4: Net Kaybı Pareto (Pareto Loss)
   // -------------------------------------------------------------------------
-  const topicLossMap = new Map<number, { name: string; loss: number; curriculumTopicId?: number | null }>()
+  const topicLossMap = new Map<number, { name: string; subjectName?: string; loss: number; curriculumTopicId?: number | null }>()
   let totalLoss = 0
 
   for (const r of last6TopicResults) {
@@ -641,6 +661,7 @@ export function buildReport360(input: Report360Input): Report360Data {
     if (!topicLossMap.has(r.exam_topic_id)) {
       topicLossMap.set(r.exam_topic_id, {
         name: r.exam_topic_name,
+        subjectName: r.exam_subject_name,
         loss: 0,
         curriculumTopicId: primaryTopicMap.get(r.exam_topic_id) ?? null,
       })
@@ -654,6 +675,7 @@ export function buildReport360(input: Report360Input): Report360Data {
     .map(([etId, v]) => ({
       examTopicId: etId,
       examTopicName: v.name,
+      subjectName: v.subjectName,
       lossNet: Math.round(v.loss * 100) / 100,
       curriculumTopicId: v.curriculumTopicId,
     }))
@@ -674,6 +696,7 @@ export function buildReport360(input: Report360Input): Report360Data {
     paretoBars.push({
       examTopicId: item.examTopicId,
       examTopicName: item.examTopicName,
+      subjectName: item.subjectName,
       lossNet: item.lossNet,
       cumulativePct: cumPct,
       isCritical,
