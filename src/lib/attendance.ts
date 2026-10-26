@@ -55,6 +55,32 @@ export function isoDaysAgo(days: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+export function isoDaysAgoFrom(baseDate: Date | string, days: number): string {
+  const d = typeof baseDate === 'string' ? new Date(baseDate) : new Date(baseDate.getTime())
+  d.setDate(d.getDate() - days)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/**
+ * Devamsızlık Takibi — Öğrenci bazında "Takip gerekli" eşiği kontrolü.
+ * Tek kaynak burasıdır (Devamsızlık sayfası ve Ana Sayfa Özeti buradan beslenir).
+ * Eşik: Son 30 günde toplam >= 3 VEYA mazeretsiz >= 2 devamsızlık.
+ */
+export function checkAttendanceNeedsAttention(
+  records: readonly Pick<AttendanceRecord, 'absence_date' | 'excuse_type'>[],
+  referenceIsoDate?: string
+): boolean {
+  const cutoff = referenceIsoDate ? isoDaysAgoFrom(referenceIsoDate, 30) : isoDaysAgo(30)
+  const last30Records = records.filter((r) => r.absence_date >= cutoff)
+  const last30Count = last30Records.length
+  const last30Unexcused = last30Records.filter((r) => r.excuse_type === 'yok').length
+
+  return (
+    last30Count >= ABSENCE_ALERT_THRESHOLDS.last30DaysTotal ||
+    last30Unexcused >= ABSENCE_ALERT_THRESHOLDS.last30DaysUnexcused
+  )
+}
+
 /** 'YYYY-MM-DD' → '29.07.2026' */
 export function formatDateTr(dateStr: string): string {
   const [y, m, d] = dateStr.split('-')
