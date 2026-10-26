@@ -20,6 +20,7 @@
     "test:exam-report": "tsx scripts/examReport.selftest.ts",
     "test:home-summary": "tsx scripts/homeSummary.selftest.ts",
     "test:talking-points": "tsx scripts/talkingPoints.selftest.ts",
+    "test:report360": "tsx scripts/report360.selftest.ts",
     "seed:tyt-karne": "tsx scripts/seedTytTopicsFromKarne.ts",
     "seed:ek": "tsx scripts/seedEkYerlestirme.ts",
     "seed:universities": "tsx scripts/seedUniversityRankings.ts",
