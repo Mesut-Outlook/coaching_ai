@@ -2934,6 +2934,7 @@ Spec §8, taslak artboard 4-5.
   10. B7 başlığına "YKS müfredatı (TYT + AYT)" / "LGS müfredatı".
   11. Hedef yolu **bandı** da `[0, maxNet]`'e kesilsin; şu an tahmin 120'de ama bant ve y ekseni 133'e çıkıyor.
   Ardından **Test LGS** ile LGS kabulü: 3 LGS denemesi gir (değerleri günlüğe yaz), 360 Rapor'da yalnız LGS konuları, katsayılı net ve "LGS puanı değildir" görünmeli.
+- 12:50 — 🚀 **CANLIDA: `1a2383d` (R2-2b 6–10)** (bundle `index-CNDGNGln.js`). Bütün testler ✓. Görsel kontrol: matris bölgeleri 17/4/12/31 dağılıyor, hata profili çakışması gitmiş, B7 başlığı "YKS müfredatı (TYT + AYT)". **Açık kalan:** 11. hedef yolu bandı ve y ekseni hâlâ 120'nin üstüne (133) çıkıyor, bandı da `maxNet`'e kes. Sonra Test LGS ile LGS kabulü. **Günlüğe yazmadan commit atma.** Her commit'ten sonra bir satır yaz.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
