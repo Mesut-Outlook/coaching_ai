@@ -164,6 +164,7 @@ export interface TargetTrajectoryData {
     net: number
   }>
   targetNet: number | null
+  maxNet?: number
   prediction: RegressionPrediction
   examDate: string | null
 }
@@ -455,6 +456,8 @@ export function buildReport360(input: Report360Input): Report360Data {
   let prediction: RegressionPrediction
   const regressionExams = sortedExams.slice(-6)
 
+  const maxNet = getMaxNetForExamType(input.examType)
+
   if (regressionExams.length < 3) {
     prediction = {
       canPredict: false,
@@ -482,7 +485,6 @@ export function buildReport360(input: Report360Input): Report360Data {
 
     const examDaysFromFirst = Math.round((targetDateMs - firstDateMs) / 86400000)
     const rawPredicted = Math.round((slope * examDaysFromFirst + intercept) * 10) / 10
-    const maxNet = getMaxNetForExamType(input.examType)
     const predictedNet = Math.max(0, Math.min(maxNet, rawPredicted))
 
     // Belirsizlik bandı: stdDev * sqrt(1 + 1/n), min ±3 net
@@ -518,6 +520,7 @@ export function buildReport360(input: Report360Input): Report360Data {
   const trajectory: TargetTrajectoryData = {
     examPoints,
     targetNet,
+    maxNet,
     prediction,
     examDate: input.examDate || null,
   }
