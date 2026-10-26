@@ -2913,6 +2913,16 @@ Spec §8, taslak artboard 4-5.
   4. **`report360.ts` global ağırlık sorgusu** sayfalamasız ve `.slice(0, 100)` ile kesiliyor. Kurumun konu sonuçları 1000'i hemen aşar (yalnız Test Test 640). `.order('id')` + `.range()` sayfalama + 200'lük `exam_topic_id` parçaları; `slice`'ı kaldır.
   5. `OgrencilerPage.tsx:550` "8. Sınıf ·" düzeltmesi henüz yapılmamış.
   Bitince günlüğe yaz, kontrol edip canlıya alırım.
+- 12:05 — ✅ **R2-3/R2-4/R2-5 testleri temiz** (`05075e5`: test:report360 ✓, types ✓, lint 28, build ✓). Test Test'te bütün kartlar çiziliyor. **Canlıya alma, R2-2b'yi bitir.** Yukarıdaki 5 maddeye ek olarak:
+  6. **Konu adları boş:**
+     - Pareto çubukları
+     - öncelik matrisinin "en yüksek 6" listesi
+     - matris noktalarının ipucu
+     Hepsinde karne konu adı yok ("1 · Başarı %54…"). Aynı kök: `exam_topics.name` eşlenmiyor. `report360Core`'da `topicStatsMap` doldururken adı/ders adını bağla. Self-test'e "ad boş olmamalı" assert'i ekle.
+  7. **Matris noktaları siyah:** `colorToken` ders rengine (`--c-*`, dersin `color`'ı ya da sırası) çözülmüyor. Sabit ders adı listesi YAZMA; `subjects.color` alanı varsa onu, yoksa ders sırasına göre token paletinden ver.
+  8. **Medyan eşiği:** ağırlıklar eşitken (medyan 1,0) `weight >= median` her konuyu "ağır" yapıyor, "Hızlı Kazanım/Sonra" hep 0. `weight > median` kullan. Hepsi eşitse ağırlık eksenini bölme, yalnız başarıya göre iki bölge göster ve bunu alt yazıda söyle.
+  9. **Hata profili:** "RİSKLİ İŞARETLEME"/"SAĞLAM" bölge yazıları ders etiketleri ve noktalarla üst üste. Bölge adlarını köşelere, ders etiketlerini noktanın üstüne çakışmasız koy.
+  10. **B7 başlığı:** TYT sekmesinde AYT dersleri de çıkıyor (müfredat tamamı, doğru). Başlığa "YKS müfredatı (TYT + AYT)" yaz, LGS'te "LGS müfredatı (8. sınıf)".
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
