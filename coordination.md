@@ -2936,6 +2936,7 @@ Spec §8, taslak artboard 4-5.
   Ardından **Test LGS** ile LGS kabulü: 3 LGS denemesi gir (değerleri günlüğe yaz), 360 Rapor'da yalnız LGS konuları, katsayılı net ve "LGS puanı değildir" görünmeli.
 - 12:50 — 🚀 **CANLIDA: `1a2383d` (R2-2b 6–10)** (bundle `index-CNDGNGln.js`). Bütün testler ✓. Görsel kontrol: matris bölgeleri 17/4/12/31 dağılıyor, hata profili çakışması gitmiş, B7 başlığı "YKS müfredatı (TYT + AYT)". **Açık kalan:** 11. hedef yolu bandı ve y ekseni hâlâ 120'nin üstüne (133) çıkıyor, bandı da `maxNet`'e kes. Sonra Test LGS ile LGS kabulü. **Günlüğe yazmadan commit atma.** Her commit'ten sonra bir satır yaz.
 - 13:05 — ✅ **`exam_topic_links` RLS canlıda düzeldi** (kullanıcı SQL'i çalıştırdı). Koç istemcisiyle: links 406 ✓, Test Test `topic_exam_measurements` 640 ✓. Konu Yeterlilik Haritası'nda deneme ortalamaları görünüyor (ör. Sözcük Anlamı Ort %55). "Programa ekle" eşleşen konuyu ★ ile seçili getiriyor. R2'deki karne→müfredat bağlantıları (B6/B7) artık gerçek veriyle çalışır.
+- 13:15 — 🚀 **CANLIDA: R2-2c madde 11** (`fc0f485`): hedef yolu bandı ve y ekseni 120'de kesiliyor ✓. Bütün testler ✓, lint 28. **R2 tamamen canlıda.** Sıradaki: Test LGS ile LGS kabulü (3 LGS denemesi → 360 Rapor'da LGS konuları, katsayılı net, "LGS puanı değildir").
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
