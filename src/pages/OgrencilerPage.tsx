@@ -12,6 +12,7 @@ import ExamSectionsTable from '../components/exams/ExamSectionsTable'
 import ExamShareButtons from '../components/exams/ExamShareButtons'
 import StudentExamAnalysisView from '../components/exams/StudentExamAnalysisView'
 import TalkingPointsCard from '../components/reports/TalkingPointsCard'
+import Report360View from '../components/reports/Report360View'
 import { formatPhoneForWhatsApp, openWhatsAppChat } from '../lib/whatsapp'
 import { ensureStudentAccessCodes } from '../lib/accessCode'
 import { fetchStudents } from '../lib/students'
@@ -23,7 +24,7 @@ import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../l
 import { topicAppliesTo, gradeCurriculum } from '../lib/curriculum'
 import { weightedNet } from '../lib/examSections'
 
-type ActiveTab = 'overview' | 'exams' | 'analysis' | 'subjects' | 'tasks' | 'attendance'
+type ActiveTab = 'overview' | 'report' | 'exams' | 'analysis' | 'subjects' | 'tasks' | 'attendance'
 
 /**
  * Mobil portal erişim linkini WhatsApp ile gönderir (öğrenciye ya da veliye).
@@ -85,7 +86,7 @@ export default function OgrencilerPage() {
   const tabParam = searchParams.get('tab') as ActiveTab | null
   const [studentData, setStudentData] = useState<StudentData | null>(null)
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
-    if (tabParam && ['overview', 'exams', 'analysis', 'subjects', 'tasks', 'attendance'].includes(tabParam)) {
+    if (tabParam && ['overview', 'report', 'exams', 'analysis', 'subjects', 'tasks', 'attendance'].includes(tabParam)) {
       return tabParam
     }
     return 'overview'
@@ -848,7 +849,7 @@ export default function OgrencilerPage() {
 
       {/* Tabs Menu */}
       <div style={{ display: 'flex', gap: 20, borderBottom: '1px solid var(--border)', marginBottom: 24, overflowX: 'auto' }}>
-        {(['overview', 'exams', 'analysis', 'subjects', 'tasks', 'attendance'] as const).map(tab => (
+        {(['overview', 'report', 'exams', 'analysis', 'subjects', 'tasks', 'attendance'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => {
@@ -872,6 +873,7 @@ export default function OgrencilerPage() {
             }}
           >
             {tab === 'overview' && 'Genel Bakış'}
+            {tab === 'report' && '360 Rapor'}
             {tab === 'exams' && 'Deneme Geçmişi'}
             {tab === 'analysis' && 'Deneme Analizi'}
             {tab === 'subjects' && 'Konu Yeterliliği'}
@@ -1041,6 +1043,16 @@ export default function OgrencilerPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* TAB CONTENT: 360 Report (R2) */}
+      {activeTab === 'report' && (
+        <Report360View
+          studentId={student.id}
+          studentName={student.full_name}
+          studentGrade={student.grade}
+          onSetTargetNet={() => setEditingStudent(student)}
+        />
       )}
 
       {/* TAB CONTENT: Exam History */}
