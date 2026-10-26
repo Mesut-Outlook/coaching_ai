@@ -2,6 +2,13 @@ import { useState } from 'react'
 import type { TargetTrajectoryData } from '../../lib/report360Core'
 import { TrendingUp, Calendar, AlertCircle } from 'lucide-react'
 
+function formatDateShortTr(dateStr: string): string {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return dateStr
+  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+}
+
 export interface TargetTrajectoryChartProps {
   data: TargetTrajectoryData
   height?: number
@@ -190,7 +197,7 @@ export default function TargetTrajectoryChart({
           {examDate && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--ink-soft)' }}>
               <Calendar size={13} />
-              <span>Sınav: {examDate}</span>
+              <span>Sınav: {formatDateShortTr(examDate)}</span>
             </div>
           )}
         </div>
@@ -278,7 +285,7 @@ export default function TargetTrajectoryChart({
 
           {/* Sınav Günü Tahmin Noktası */}
           <circle cx={targetX} cy={targetY} r={4.5} fill="var(--indigo-600)" stroke="var(--surface)" strokeWidth={1.5}>
-            <title>{`Sınav Tahmini: ~${prediction.predictedNetAtExam} ${unit} (±${bandW} net)`}</title>
+            <title>{`Sınav Tahmini: ~${prediction.predictedNetAtExam?.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unit} (±${bandW.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} net)`}</title>
           </circle>
           <text
             x={targetX}
@@ -289,7 +296,7 @@ export default function TargetTrajectoryChart({
             textAnchor="middle"
             fontFamily="system-ui, sans-serif"
           >
-            ~{prediction.predictedNetAtExam}
+            ~{prediction.predictedNetAtExam?.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
           </text>
 
           {/* Gerçek Deneme Eğrisi */}
@@ -348,7 +355,7 @@ export default function TargetTrajectoryChart({
             textAnchor="start"
             fontFamily="system-ui, sans-serif"
           >
-            {examPoints[0].date}
+            {formatDateShortTr(examPoints[0].date)}
           </text>
 
           <text
@@ -360,7 +367,7 @@ export default function TargetTrajectoryChart({
             textAnchor="end"
             fontFamily="system-ui, sans-serif"
           >
-            {examDate ? `Sınav (${examDate})` : 'Tahmin (+12 hf)'}
+            {examDate ? `Sınav (${formatDateShortTr(examDate)})` : 'Tahmin (+12 hf)'}
           </text>
         </svg>
       </div>

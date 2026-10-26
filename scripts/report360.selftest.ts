@@ -188,6 +188,19 @@ console.log('▶ R2-1 Koç 360 Raporu Motoru Öz-Testi Başlatılıyor...\n')
   assert.ok(pred.confidenceBandWidth! >= 3.0, 'En az ±3 net belirsizlik bandı olmalı')
   assert.ok(pred.summaryText.includes('hedefin'), 'Özet metin hedef kıyaslamasını içermeli')
 
+  // 3.3 Maksimum net sınır taşması (TYT 120 net sınırı aşılmamalı)
+  const inputOverflow: Report360Input = {
+    ...inputFewExams,
+    examDate: '2027-06-20', // Çok ileri bir tarih, regresyon 150+ net çıkarabilir
+    exams: [
+      { id: '1', name: 'D1', exam_date: '2026-10-01', exam_type: 'TYT', net: 100 },
+      { id: '2', name: 'D2', exam_date: '2026-10-11', exam_type: 'TYT', net: 105 },
+      { id: '3', name: 'D3', exam_date: '2026-10-21', exam_type: 'TYT', net: 110 },
+    ],
+  }
+  const resOverflow = buildReport360(inputOverflow)
+  assert.equal(resOverflow.trajectory.prediction.predictedNetAtExam, 120, 'TYT tahmin neti 120 sınırını aşmamalı')
+
   console.log('✓ 3. B2 (Hedef Yolu regresyon & tahmin) doğrulandı.')
 }
 

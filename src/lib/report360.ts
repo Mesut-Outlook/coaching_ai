@@ -34,6 +34,15 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks
 }
 
+function getSubjectColorToken(subjectName: string): string {
+  const lower = subjectName.toLowerCase()
+  if (lower.includes('mat') || lower.includes('geo')) return 'var(--c-math)'
+  if (lower.includes('türk') || lower.includes('edeb')) return 'var(--c-turkce)'
+  if (lower.includes('fiz') || lower.includes('kim') || lower.includes('biyo') || lower.includes('fen')) return 'var(--c-fen)'
+  if (lower.includes('tar') || lower.includes('coğ') || lower.includes('fel') || lower.includes('din') || lower.includes('sos')) return 'var(--c-sosyal)'
+  return 'var(--indigo-600)'
+}
+
 export async function loadReport360Data(
   studentId: string,
   examType: ExamType,
@@ -139,24 +148,34 @@ export async function loadReport360Data(
   const rawExamTopicIds = new Set<number>()
 
   for (const chunk of examChunks) {
-    const { data: topicRes } = await supabase
-      .from('mock_exam_topic_results')
-      .select('mock_exam_id, exam_topic_id, correct_count, wrong_count, blank_count, question_count')
-      .in('mock_exam_id', chunk)
-      .order('id', { ascending: true })
+    let offset = 0
+    const PAGE_SIZE = 1000
+    while (true) {
+      const { data: topicRes, error: trErr } = await supabase
+        .from('mock_exam_topic_results')
+        .select('mock_exam_id, exam_topic_id, correct_count, wrong_count, blank_count, question_count')
+        .in('mock_exam_id', chunk)
+        .order('id', { ascending: true })
+        .range(offset, offset + PAGE_SIZE - 1)
 
-    for (const tr of topicRes || []) {
-      rawExamTopicIds.add(tr.exam_topic_id)
-      rawTopicResults.push({
-        mock_exam_id: tr.mock_exam_id,
-        exam_topic_id: tr.exam_topic_id,
-        exam_topic_name: '', // exam_topics ile zenginleştirilecek
-        exam_subject_name: '',
-        correct_count: Number(tr.correct_count) || 0,
-        wrong_count: Number(tr.wrong_count) || 0,
-        blank_count: Number(tr.blank_count) || 0,
-        question_count: Number(tr.question_count) || 0,
-      })
+      if (trErr || !topicRes || topicRes.length === 0) break
+
+      for (const tr of topicRes) {
+        rawExamTopicIds.add(tr.exam_topic_id)
+        rawTopicResults.push({
+          mock_exam_id: tr.mock_exam_id,
+          exam_topic_id: tr.exam_topic_id,
+          exam_topic_name: '', // exam_topics ile zenginleştirilecek
+          exam_subject_name: '',
+          correct_count: Number(tr.correct_count) || 0,
+          wrong_count: Number(tr.wrong_count) || 0,
+          blank_count: Number(tr.blank_count) || 0,
+          question_count: Number(tr.question_count) || 0,
+        })
+      }
+
+      if (topicRes.length < PAGE_SIZE) break
+      offset += PAGE_SIZE
     }
   }
 
@@ -171,16 +190,17 @@ export async function loadReport360Data(
   for (const chunk of topicIdChunks) {
     const { data: ets } = await supabase
       .from('exam_topics')
-      .select('id, name, exam_subjects(name, color_token)')
+      .select('id, name, exam_subjects(label, section_name)')
       .in('id', chunk)
       .order('id', { ascending: true })
 
     for (const et of ets || []) {
       const s = et.exam_subjects as any
+      const subjName = s?.label || s?.section_name || ''
       examTopicMetaMap.set(et.id, {
         name: et.name,
-        subjectName: s?.name || '',
-        colorToken: s?.color_token,
+        subjectName: subjName,
+        colorToken: getSubjectColorToken(subjName),
       })
     }
   }
@@ -281,21 +301,34 @@ export async function loadReport360Data(
   // 10. Global / Kurum Geneli Konu Soru Ağırlıkları (İsteğe bağlı stabil ağırlık)
   const globalWeights: GlobalExamTopicWeight[] = []
   if (examTopicIdArray.length > 0) {
-    // Öğrencinin bulunduğu kurumdaki tüm denemelerden soru ağırlığı
-    const { data: allTopicStats } = await supabase
-      .from('mock_exam_topic_results')
-      .select('exam_topic_id, question_count, correct_count, wrong_count, blank_count')
-      .in('exam_topic_id', examTopicIdArray.slice(0, 100))
-
     const countMap = new Map<number, { sumQ: number; cnt: number }>()
-    for (const row of allTopicStats || []) {
-      const q = row.question_count || (row.correct_count + row.wrong_count + row.blank_count)
-      if (!countMap.has(row.exam_topic_id)) {
-        countMap.set(row.exam_topic_id, { sumQ: 0, cnt: 0 })
+    const PAGE_SIZE = 1000
+
+    for (const chunk of topicIdChunks) {
+      let offset = 0
+      while (true) {
+        const { data: chunkStats, error: statsErr } = await supabase
+          .from('mock_exam_topic_results')
+          .select('id, exam_topic_id, question_count, correct_count, wrong_count, blank_count')
+          .in('exam_topic_id', chunk)
+          .order('id', { ascending: true })
+          .range(offset, offset + PAGE_SIZE - 1)
+
+        if (statsErr || !chunkStats || chunkStats.length === 0) break
+
+        for (const row of chunkStats) {
+          const q = row.question_count || (row.correct_count + row.wrong_count + row.blank_count)
+          if (!countMap.has(row.exam_topic_id)) {
+            countMap.set(row.exam_topic_id, { sumQ: 0, cnt: 0 })
+          }
+          const st = countMap.get(row.exam_topic_id)!
+          st.sumQ += q
+          st.cnt++
+        }
+
+        if (chunkStats.length < PAGE_SIZE) break
+        offset += PAGE_SIZE
       }
-      const st = countMap.get(row.exam_topic_id)!
-      st.sumQ += q
-      st.cnt++
     }
 
     for (const [etId, st] of countMap.entries()) {

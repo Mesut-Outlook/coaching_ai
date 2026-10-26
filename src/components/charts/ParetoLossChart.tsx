@@ -10,7 +10,7 @@ export interface ParetoLossChartProps {
 
 export default function ParetoLossChart({
   data,
-  unit = 'net',
+  unit: _unit = 'net',
   onAddToProgram,
 }: ParetoLossChartProps) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
@@ -56,12 +56,12 @@ export default function ParetoLossChart({
             <span>Net Kaybı Pareto Analizi (80/20)</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--critical-text)', fontWeight: 600, marginTop: 3 }}>
-            {summaryText} (Toplam Kayıp: -{totalLossNet.toFixed(2).replace('.', ',')} {unit})
+            {summaryText} (Toplam kayıp: {totalLossNet.toFixed(2).replace('.', ',')} net)
           </div>
         </div>
 
-        <div style={{ fontSize: 11, color: 'var(--ink-soft)', background: 'var(--surface-alt)', padding: '4px 8px', borderRadius: 6 }}>
-          Kritik Eşik: ≤ %60
+        <div style={{ fontSize: 11, color: 'var(--critical-text)', background: 'color-mix(in srgb, var(--critical) 8%, transparent)', padding: '4px 8px', borderRadius: 6, fontWeight: 600 }}>
+          Kırmızı: toplam kaybın ilk %60'ı
         </div>
       </div>
 
@@ -101,18 +101,22 @@ export default function ParetoLossChart({
                   >
                     #{idx + 1}
                   </span>
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                    title={item.examTopicName}
-                  >
-                    {item.examTopicName}
-                  </span>
+                  <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                      }}
+                      title={item.examTopicName}
+                    >
+                      {item.examTopicName}
+                    </span>
+                    {item.subjectName && (
+                      <span style={{ color: 'var(--ink-soft)', fontSize: 11, marginLeft: 5 }}>
+                        ({item.subjectName})
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -127,7 +131,7 @@ export default function ParetoLossChart({
                       color: item.isCritical ? 'var(--critical)' : 'var(--ink-soft)',
                     }}
                   >
-                    -{item.lossNet.toFixed(2).replace('.', ',')} {unit}
+                    {item.lossNet.toFixed(2).replace('.', ',')} net kayıp
                   </span>
 
                   {item.curriculumTopicId && onAddToProgram && (
@@ -196,7 +200,7 @@ export default function ParetoLossChart({
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Σ %100</span>
                 <span style={{ fontWeight: 700, color: 'var(--ink-soft)' }}>
-                  -{otherBar.lossNet.toFixed(2).replace('.', ',')} {unit}
+                  {otherBar.lossNet.toFixed(2).replace('.', ',')} net kayıp
                 </span>
               </div>
             </div>

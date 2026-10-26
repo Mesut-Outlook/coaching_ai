@@ -547,7 +547,7 @@ export default function OgrencilerPage() {
                         {s.full_name}
                       </h3>
                       <p style={{ color: 'var(--ink-soft)', fontSize: 12, marginTop: 4, margin: 0 }}>
-                        {s.grade} · {s.track} {!s.is_active && <strong style={{ color: 'var(--critical-text)' }}>(Arşivli)</strong>}
+                        {s.grade}{s.track ? ` · ${s.track}` : ''} {!s.is_active && <strong style={{ color: 'var(--critical-text)' }}>(Arşivli)</strong>}
                       </p>
                     </div>
                   </div>
