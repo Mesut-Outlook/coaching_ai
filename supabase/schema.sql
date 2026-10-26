@@ -2098,8 +2098,9 @@ begin
 
   -- weekly_tasks'ta yalnız 'completed' değiştiyse atla. Öğrenci portalda her gün
   -- onlarca kutu işaretliyor; denetim değeri düşük, logun en büyük kalemi bu olur.
+  -- 'completed_at' (R1-1) aynı işaretlemeyle trigger'ca yazılır, o da gürültü sayılır.
   if TG_TABLE_NAME = 'weekly_tasks' and TG_OP = 'UPDATE'
-     and (to_jsonb(OLD) - 'completed') = (to_jsonb(NEW) - 'completed') then
+     and (to_jsonb(OLD) - 'completed' - 'completed_at') = (to_jsonb(NEW) - 'completed' - 'completed_at') then
     return NEW;
   end if;
 
