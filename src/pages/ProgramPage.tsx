@@ -1178,16 +1178,18 @@ export default function ProgramPage() {
             {(() => {
               const dNum = parseInt(resultCorrect.trim(), 10) || 0
               const yNum = parseInt(resultWrong.trim(), 10) || 0
-              const remaining = Math.max(0, resultModalTask.question_count - dNum - yNum)
+              const bNum = parseInt(resultBlank.trim(), 10) || 0
+              const unassigned = Math.max(0, resultModalTask.question_count - dNum - yNum)
+              const remaining = Math.max(0, resultModalTask.question_count - dNum - yNum - bNum)
               return (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'var(--surface-alt)', borderRadius: 6, fontSize: 11, color: 'var(--ink-soft)', marginBottom: 14 }}>
                   <span>Kalan soru: <strong>{remaining}</strong></span>
-                  {remaining > 0 && resultBlank.trim() === '' && (
+                  {unassigned > 0 && resultBlank.trim() === '' && (
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
                       style={{ padding: '2px 6px', fontSize: 10 }}
-                      onClick={() => setResultBlank(String(remaining))}
+                      onClick={() => setResultBlank(String(unassigned))}
                     >
                       Boş olarak doldur
                     </button>
