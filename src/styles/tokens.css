@@ -69,6 +69,8 @@
   --c-turkce: #D6495A;
   --c-fen: #2E9F63;
   --c-sosyal: #E2932E;
+  /* Modül kimlik renkleri: Ana Sayfa kısayol kartları (menü ikonları sabit açık tonlar kullanır) */
+  --m-ogr: #4C43A8; --m-den: #3B6FE0; --m-kon: #1D8FA6; --m-prg: #2E9F63; --m-dev: #E2832E; --m-rap: #9350A6;
   --shadow-card: 0 1px 2px rgba(36,31,92,0.04), 0 8px 24px -12px rgba(36,31,92,0.16);
   --shadow-pop: 0 12px 32px -8px rgba(36,31,92,0.28);
   --radius-lg: 18px;
@@ -91,7 +93,7 @@
     --measured: #8B87A6; --measured-bg: #26223F; --measured-text: #ADA9C6;
     --teal: #3FB6CC; --teal-bg: #123239; --teal-text: #7FD8E8;
     --plum: #C084D6; --plum-bg: #331B3D; --plum-text: #DDA8E8;
-    --c-math: #6D93EE; --c-turkce: #E9697A; --c-fen: #4FC98A; --c-sosyal: #EFB159;
+    --c-math: #6D93EE; --c-turkce: #E9697A; --c-fen: #4FC98A; --c-sosyal: #EFB159; --m-ogr: #8A7FEA; --m-den: #6D93EE; --m-kon: #3FB6CC; --m-prg: #4FC98A; --m-dev: #EFA159; --m-rap: #C084D6;
     --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
     --shadow-pop: 0 16px 40px -8px rgba(0,0,0,0.6);
   }
@@ -107,7 +109,7 @@
   --measured: #8B87A6; --measured-bg: #26223F; --measured-text: #ADA9C6;
   --teal: #3FB6CC; --teal-bg: #123239; --teal-text: #7FD8E8;
   --plum: #C084D6; --plum-bg: #331B3D; --plum-text: #DDA8E8;
-  --c-math: #6D93EE; --c-turkce: #E9697A; --c-fen: #4FC98A; --c-sosyal: #EFB159;
+  --c-math: #6D93EE; --c-turkce: #E9697A; --c-fen: #4FC98A; --c-sosyal: #EFB159; --m-ogr: #8A7FEA; --m-den: #6D93EE; --m-kon: #3FB6CC; --m-prg: #4FC98A; --m-dev: #EFA159; --m-rap: #C084D6;
   --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
   --shadow-pop: 0 16px 40px -8px rgba(0,0,0,0.6);
 }
@@ -122,7 +124,7 @@
   --measured: #A6A3BB; --measured-bg: #F1F0F6; --measured-text: #6B6885;
   --teal: #1D8FA6; --teal-bg: #E1F3F7; --teal-text: #0F6478;
   --plum: #9350A6; --plum-bg: #F5E9F8; --plum-text: #7A3690;
-  --c-math: #3B6FE0; --c-turkce: #D6495A; --c-fen: #2E9F63; --c-sosyal: #E2932E;
+  --c-math: #3B6FE0; --c-turkce: #D6495A; --c-fen: #2E9F63; --c-sosyal: #E2932E; --m-ogr: #4C43A8; --m-den: #3B6FE0; --m-kon: #1D8FA6; --m-prg: #2E9F63; --m-dev: #E2832E; --m-rap: #9350A6;
   --shadow-card: 0 1px 2px rgba(36,31,92,0.04), 0 8px 24px -12px rgba(36,31,92,0.16);
   --shadow-pop: 0 12px 32px -8px rgba(36,31,92,0.28);
 }
