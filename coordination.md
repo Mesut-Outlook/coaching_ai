@@ -2688,8 +2688,8 @@ Spec §8, taslak artboard 4-5.
 
 | Paket | Ne | Durum |
 |---|---|---|
-| **R2-1** | `report360Core.ts` (saf) + `report360.ts` (yükleyici) + `test:report360` | **agy · başla** |
-| **R2-2** | Sekme + sınav türü seçici + KPI şeridi + B2 hedef yolu + B4 Pareto | sırada |
+| **R2-1** | `report360Core.ts` (saf) + `report360.ts` (yükleyici) + `test:report360` | bitti (c51d3fd) |
+| **R2-2** | Sekme + sınav türü seçici + KPI şeridi + B2 hedef yolu + B4 Pareto | **agy · başla** |
 | **R2-3** | B3 öncelik matrisi + B5 hata profili + "Programa ekle" bağlantısı | sırada |
 | **R2-4** | B7 müfredat ilerlemesi + yetişme tahmini + B6 tutarlılık (boş durum) | sırada |
 | **R2-5** | `/raporlar` bağlantısı + Yardım + v0.28 | sırada |
@@ -2917,3 +2917,4 @@ Spec §8, taslak artboard 4-5.
 - 09:45 | R1-4 | bitti | cca94b9 on raporlar-r1 | R1-4 AddToProgramPopover bileşeni ve deneme analizi + konu haritası (TopicProgressPanel + KonularPage) giriş noktaları eklendi; test:types/lint(28)/build temiz; main merge edilip R1-5 talkingPoints motoruna geçiliyor | yok | sıradaki kontrol ~10:00
 - 10:00 | R1-5 | bitti | 614e3e7 on raporlar-r1 | R1-5 talkingPoints motoru, selftest (8/8) ve TalkingPointsCard (RaporlarPage + OgrencilerPage) tamamlandı; test:talking-points/home-summary/exam-report/types/lint(28)/build temiz; R1-6 Yardım & Sürüm notlarına geçiliyor | yok | sıradaki kontrol ~10:20
 - 10:15 | R1-6 | bitti | ddb8091 on raporlar-r1 | R1-6 YardimPage rehber kartları ve VersionHistory v0.27 sürüm notları tamamlandı; test:types, test:talking-points, test:home-summary, test:exam-report, lint (28), build temiz; R1 paketi (R1-1..R1-6) tamamlandı, Opus incelemesi bekleniyor | yok | sıradaki kontrol ~10:35
+- 11:15 | R2-1 | bitti | c51d3fd on raporlar-r2 | R2-1 report360Core saf motoru, report360 yükleyicisi ve selftest (8/8) tamamlandı; test:types, test:report360, test:talking-points, test:home-summary, test:exam-report, lint (28), build temiz; R2-2 sekme + sınav türü seçici + KPI + B2 + B4'e geçiliyor | yok | sıradaki kontrol ~11:35
