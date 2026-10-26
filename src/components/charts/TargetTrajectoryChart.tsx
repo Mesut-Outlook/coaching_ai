@@ -111,20 +111,22 @@ export default function TargetTrajectoryChart({
   const totalDays = Math.max(1, Math.round((targetDateMs - firstDateMs) / 86400000))
 
   // Y ekseni min / max
+  const maxAllowed = data.maxNet ?? (targetNet ? Math.max(targetNet, 120) : 120)
   const allNets = examPoints.map((e) => e.net)
-  if (targetNet !== null) allNets.push(targetNet)
+  if (targetNet !== null) allNets.push(Math.min(maxAllowed, targetNet))
   if (prediction.predictedNetAtExam !== undefined) {
-    allNets.push(prediction.predictedNetAtExam)
+    const pNet = prediction.predictedNetAtExam
+    allNets.push(pNet)
     const band = prediction.confidenceBandWidth || 3
-    allNets.push(prediction.predictedNetAtExam - band)
-    allNets.push(prediction.predictedNetAtExam + band)
+    allNets.push(Math.max(0, pNet - band))
+    allNets.push(Math.min(maxAllowed, pNet + band))
   }
 
   const minVal = Math.min(...allNets)
-  const maxVal = Math.max(...allNets)
+  const maxVal = Math.min(maxAllowed, Math.max(...allNets))
   const marginY = Math.max(3, (maxVal - minVal) * 0.15)
   const yMin = Math.max(0, Math.floor(minVal - marginY))
-  const yMax = Math.ceil(maxVal + marginY)
+  const yMax = Math.min(maxAllowed, Math.ceil(maxVal + marginY))
   const yRange = yMax - yMin || 1
 
   const getX = (dateMs: number) => {
@@ -150,8 +152,10 @@ export default function TargetTrajectoryChart({
   const targetX = getX(targetDateMs)
   const targetY = getY(prediction.predictedNetAtExam || lastPoint.net)
   const bandW = prediction.confidenceBandWidth || 3.0
-  const bandTopY = getY((prediction.predictedNetAtExam || lastPoint.net) + bandW)
-  const bandBottomY = getY((prediction.predictedNetAtExam || lastPoint.net) - bandW)
+  const bandTopNet = Math.min(maxAllowed, (prediction.predictedNetAtExam || lastPoint.net) + bandW)
+  const bandBottomNet = Math.max(0, (prediction.predictedNetAtExam || lastPoint.net) - bandW)
+  const bandTopY = getY(bandTopNet)
+  const bandBottomY = getY(bandBottomNet)
 
   const bandPolygonStr = `${lastPoint.cx},${lastPoint.cy} ${targetX},${bandTopY} ${targetX},${bandBottomY}`
 
