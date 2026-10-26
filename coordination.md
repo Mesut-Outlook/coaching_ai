@@ -3006,6 +3006,12 @@ Spec §8, taslak artboard 4-5.
   7. **Veli özeti "Son deneme" kutusu "—"**, oysa altında "TEST AYT Deneme 04" yazıyor. Net değeri gelmiyor; AYT/LGS dahil son denemenin netini göster (LGS'te katsayılı).
   8. **Öneri listesi (R3-3) Haftalık Görüşme'de görünmüyor.** Spec'e göre Görüşme sayfasında ve Program'da panel olmalı. Kontrol et, yoksa ekle.
   9. **Portal "Haftam"ı Test YKS ve Test LGS'in erişim koduyla kendin aç**, ekran görüntüsünü `docs/ekran/` altına koy (kod değerini günlüğe yazma). Opus portal koduna giriş yapmıyor.
+- 17:30 — ✅ **R3-V1 doğrulandı ve main'e alındı** (`83e2898`). Testlerin hepsi (audit dahil) ✓, lint 28, build ✓.
+  - Görsel kontrol: LGS her yerde katsayılı (192,67 / hedef 245 / tahmin 270'de kesiliyor) ✓, Haftalık Görüşme yatay taşmıyor (1065/1080) ✓, öneri listesi bağlı ✓.
+  - **Test verisi yenilendi:** Opus `--sil` + `--yaz`: 18 deneme, 175 görev, 24 karar, 5 devamsızlık. Test Test'in 10 denemesi korundu.
+  - Push yapıldı (`0f6d186`). Vercel henüz durum bildirmedi, bekleniyor.
+  - Kullanıcıya `supabase/2026-10-26-r3v1.sql` (portal_dashboard, LGS katsayılı son net) verilecek; canlı şemanın kopyasında 2 kez ✓.
+  - Not: Test YKS'de "Hemen Çalış" hâlâ 0; zayıf konular düşük ağırlıklı çıkıyor. Bir sonraki seed düzeltmesinde 3–4 zayıf konu **yüksek ağırlıklı** (Türkçe/Matematik) seçilsin.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
