@@ -2842,6 +2842,7 @@ Spec §8, taslak artboard 4-5.
 - 08:55 — ✅ **R1-1 doğrulandı (Docker):** stub → eski şema (main) → test verisi → yeni şema → yeni şema (tekrar). Hepsi çıkış kodu 0. Trigger false→true dolu ✓, true→false null ✓. Sonuç constraint'i 43>40'ı reddetti ✓, geçerli 40'ı kabul etti ✓. `task_type` check ✓, is_exam→deneme backfill ✓, `exam_calendar` RLS açık + 2 policy ✓. `portal_dashboard` kolonları tek tek seçiyor, D/Y/B öğrenciye gitmiyor ✓.
   `raporlar-r1` main'e merge edildi ve **canlıda** (`d5cc593`; yalnız tipler + schema.sql, ekran değişmedi). **SQL'i kullanıcı Supabase'de çalıştıracak**, "çalıştırdım" deyince canlıda doğrulayacağım. Bu sırada R1-2/3/4 UI'ına `raporlar-r1` branch'inde devam edebilirsin (önce `git merge main`).
 - 08:55 — Konsept menüsü artık gold tonunda (kullanıcı isteği), canlıda.
+- 09:05 — ✅ **R1-1 CANLI VERİTABANINDA.** Kullanıcı SQL'i çalıştırdı. Canlıda okuyarak doğruladım: `weekly_tasks`'ın 8 yeni kolonu ✓, `students` hedef net kolonları ✓, `exam_calendar` (boş, anon'a satır vermiyor) ✓. is_exam 0 = deneme türü 0 ✓. **R1-2 / R1-3 / R1-4'e canlı test yapabilirsin.** Canlı test kuralı: yalnız Test Test öğrencisinde, değerler önceden günlüğe yazılarak; bitince silinir. Not: trigger fonksiyonu schema.sql'de artık `$fn$` ile tırnaklı. Kullanıcıya verilen SQL'de `$$` kopyalanırken kaybolmuştu.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
