@@ -13,6 +13,8 @@ import { gradeCurriculum } from '../../lib/curriculum'
 import { loadReport360Data, type Report360Data } from '../../lib/report360'
 import TargetTrajectoryChart from '../charts/TargetTrajectoryChart'
 import ParetoLossChart from '../charts/ParetoLossChart'
+import PriorityMatrixChart from '../charts/PriorityMatrixChart'
+import ErrorProfileChart from '../charts/ErrorProfileChart'
 import AddToProgramPopover from '../program/AddToProgramPopover'
 import type { ExamType, Grade } from '../../types/database'
 
@@ -324,6 +326,20 @@ export default function Report360View({
               onAddToProgram={(curriculumTopicId, topicName) =>
                 setPopoverTopic({ topicId: curriculumTopicId, topicName })
               }
+            />
+          </div>
+
+          {/* B3: ÖNCELİK MATRİSİ & B5: HATA PROFİLİ */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 16 }}>
+            <PriorityMatrixChart
+              data={data.priorityMatrix}
+              onAddToProgram={(curriculumTopicId, topicName) =>
+                setPopoverTopic({ topicId: curriculumTopicId, topicName })
+              }
+            />
+
+            <ErrorProfileChart
+              data={data.errorProfile}
             />
           </div>
         </>
