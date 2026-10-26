@@ -105,6 +105,7 @@ export default function DenemelerPage() {
               .from('mock_exam_sections')
               .select('*')
               .in('mock_exam_id', chunk)
+              .order('id')
               .range(from, from + pageSize - 1)
             if (sectionsError) throw sectionsError
             if (!sectionBatch || sectionBatch.length === 0) break
@@ -141,7 +142,8 @@ export default function DenemelerPage() {
       const { data: rawAllExams, error: examsError } = await (supabase
         .from('mock_exams')
         .select('*, students(full_name, track, phone_number, parent_phone_number)')
-        .order('exam_date', { ascending: false }) as any)
+        .order('exam_date', { ascending: false })
+        .order('id') as any)
       if (examsError) throw examsError
 
       if (rawAllExams && rawAllExams.length > 0) {
@@ -158,6 +160,7 @@ export default function DenemelerPage() {
               .from('mock_exam_sections')
               .select('*')
               .in('mock_exam_id', chunk)
+              .order('id')
               .range(from, from + pageSize - 1)
             if (sectionsError) throw sectionsError
             if (!sectionBatch || sectionBatch.length === 0) break
@@ -177,6 +180,7 @@ export default function DenemelerPage() {
               .from('mock_exam_topic_results')
               .select('mock_exam_id')
               .in('mock_exam_id', chunk)
+              .order('id')
               .range(from, from + pageSize - 1)
             if (topicsError) throw topicsError
             if (!topicBatch || topicBatch.length === 0) break
