@@ -2778,6 +2778,20 @@ Spec §8, taslak artboard 4-5.
   j) `reports: { criticalTopicCount, studentsWithCritical, topTopic: {name, studentCount} | null, bySubject: {subjectName, count}[] }` (`coach_decisions` kritik + `topics`/`subjects` join).
   k) Selftest'e her yeni alan için en az bir assert ekle. Tarih için `referenceDate` sabit (Perşembe) kullan.
   Bitince G3'e dön.
+- 07:55 — (Opus gece yarısından beri limitteydi, kontroller şimdi yapıldı.) ✅ **G2b doğrulandı** (`fb2c3f7`, Coching_AI-g2): test:home-summary ✓, test:types ✓, build ✓, lint 28. supabase.ts geri alınmış, core ayrımı doğru. ✅ **G4 doğrulandı** (`c60b220`): test:types ✓, build ✓, exam-report ✓, lint 28. Worktree düzeni için teşekkürler.
+- 07:55 — 🔴 **İki düzeltme (öncelik 1, küçük):**
+  (1) **Sayfalamalı her sorguya kararlı sıra ekle: `.order('id')`.** Postgres sırasız `.range()` sayfalarında aynı satırı iki kez verebilir ya da atlayabilir. Yerler:
+    - `homeSummary.ts` → `fetchAllWithPagination` çağrılarının hepsi. mock_exams'te `exam_date`'ten sonra ikinci anahtar olarak `id`.
+    - `DenemelerPage.tsx` ve `StudentExamAnalysisView.tsx` → `fetchByExamIds`.
+    - `topics`/`subjects` sorguları da sayfalı olsun. Bugün <1000 satır ama büyüyor.
+  (2) **`getIsoDayIndex` UTC hatası:** `Date` nesnesinde `getUTCDay()` kullanılıyor, Türkiye'de 00:00–03:00 arası gün bir önceki güne kayıyor (Pazartesi gece yarısı = Pazar). `Date` için yerel `getDay()` kullan. `'YYYY-MM-DD'` dizesini yerel öğlen olarak çöz (`new Date(y, m-1, d, 12)`). Selftest'e "Pazartesi 01:30 → 0" assert'i ekle.
+  Düzeltmeler kendi branch'lerinde: `gece/ana-sayfa-veri` ve `gece/denemeler-sayfalama`. Bitince günlüğe yaz, ben tekrar doğrularım.
+- 07:55 — 🏠 **Kullanıcı ana sayfa tasarımını ONAYLADI** ("beğendim, geliştirmeyi yapabilirsin"). Ana sayfa + sidebar arayüzünü **Opus yazıyor**: branch `ana-sayfa-ui`, worktree `../Coching_AI-ui`. `PanelPage.tsx`, `Sidebar.tsx`, `global.css`'in sidebar bölümü ve yeni `src/components/home/*` **benim**; bunlara dokunma. Senin (1)–(2) düzeltmelerini `gece/ana-sayfa-veri`'den kendi branch'ime merge edeceğim.
+- 07:55 — **Sonraki işin (düzeltmelerden sonra): G3/E8 2025 kabulü.**
+  - ÖSYM 2025 Ek Yerleştirme kılavuzu PDF'ini bul ve indir (`~/Downloads`). Parser'ı koştur, `data/ek-yerlestirme/2025.json` + `2025-rapor.md` üret.
+  - Plandaki denetimlerin hepsi yapılacak: program toplamları, mükerrer kod 0, tanımsız koşul kodu 0, boş ad 0.
+  - **Seed YASAK.** 2026 regresyon diff'ini de rapora koy.
+  - PDF bulunamazsa günlüğe yaz ve `Raporlar R1-1` şema taslağına **dokunma**; R1 henüz kullanıcı onayında.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
