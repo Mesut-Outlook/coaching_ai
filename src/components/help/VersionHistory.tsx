@@ -15,6 +15,22 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '26 Ekim 2026',
+    entries: [
+      {
+        version: 'v0.27',
+        title: 'Raporlar 2.0 (R1): Hedef Net, Görev Sonuçları, Çoklu Programa Ekleme & Görüşme Maddeleri',
+        items: [
+          'Görev Türleri ve Kaynak Önerisi: Haftalık plana eklenen görevler artık 5 temel pedagojik türe (Konu, Tekrar, Rutin, Süreli Test, Deneme) ayrılabiliyor. Görev eklerken kaynak alanı öğrencinin son kullandığı kaynaklardan otomatik öneri sunuyor.',
+          'Koç Görev Sonuç Girişi: Tamamlanan görevler için Doğru, Yanlış ve Boş sayıları girilebiliyor; soru kartlarında sonuç ve başarı yüzdesi rozetleri renk kodlu olarak gösteriliyor.',
+          'Hedef Net ve Sınav Tarihleri: Öğrenci profillerine TYT, AYT ve LGS hedef netleri eklendi. Profil başlığında hedefe kalan net ve sınava kadar haftalık gereken artış hızı otomatik hesaplanıyor. Kurum yönetiminde ulusal YKS ve LGS sınav tarihleri kartı eklendi.',
+          'Gelişmiş Programa Ekleme (AddToProgramPopover): Deneme analizi zayıf konularından ve Konu Haritası\'ndan tek tıkla haftalık programa çoklu gün ve kaynak seçimiyle görev eklenebiliyor.',
+          'Görüşmede Konuşulacaklar (Talking Points): Haftalık Görüşme sayfasında ve öğrenci profilinde veri odaklı 5 kritik gündem maddesi (Kritik konular, Ödev tamamlama, Tutarsızlık tespiti, Tekrar ihtiyacı, İlerleme takibi) otomatik listeleniyor; ilgili aksiyon düğmeleriyle doğrudan programa görev açılabiliyor.',
+        ],
+      },
+    ],
+  },
+  {
     date: '24 Ekim 2026',
     entries: [
       {
