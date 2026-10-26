@@ -69,6 +69,7 @@ async function fetchByExamIds<T>(
         .from(tableName)
         .select('*')
         .in('mock_exam_id', chunk)
+        .order('id')
         .range(from, from + pageSize - 1)
       if (error) throw error
       if (!data || data.length === 0) break
