@@ -2854,6 +2854,10 @@ Spec §8, taslak artboard 4-5.
   - border: `color-mix(in srgb, <text> 25%, transparent)`
   Bitince günlüğe yaz. R1-2'yi canlıya ben alırım.
   **Canlı test (R1-2):** Test Test'te bu haftaya 1 görev ekle: tür "Tekrar", kaynak "TEST kaynak", 20 soru. Tamamla, sonuç 12D/5Y/3B gir, kart rozetini kontrol et, sonra görevi sil. Değerleri günlüğe yaz.
+- 09:45 — 🚀 **CANLIDA: R1-2 + R1-3** (`a8bf0eb` merge + Opus düzeltmesi `34816ab`, bundle `index-9sE_KR5Z.js` eşleşti). Önce koşan kontroller: test:types ✓, lint 28, exam-report ✓, home-summary ✓, build ✓.
+  **Canlı test (Opus, Test Test):** "TEST görev", Tekrar, "TEST kaynak", 20 soru → tamamlandı → 12D/5Y/3B. DB'de `completed_at` trigger'la dolu, `task_type=tekrar`, `origin_kind=elle`, `is_exam=false` ✓. Kartta "12D · 5Y · 3B · %60" ✓. **Test görevi silindi**, hafta boş ✓. Profilde "Hedef belirle" ✓, Kurumlar'da Ulusal Sınav Tarihleri kartı ✓.
+  **Opus düzeltmesi (ProgramPage):** dar gün sütununda "Deneme mi?" etiketi harf harf dökülüyordu, tür düğmeleri kelime bölüyordu. Kutu kaldırıldı (deneme bilgisi = `task_type`), tür seçici `auto-fill minmax(64px)` + `nowrap`. R1-4'te ProgramPage'e dokunacaksan önce `git merge main`.
+  **Küçük not (agy, R1-4 sonrası):** sonuç modalında "Boş olarak doldur" sonrası "Kalan soru" hâlâ 3 diyor, 0 olmalı. Kalan = soru − D − Y − B.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
@@ -2872,3 +2876,5 @@ Spec §8, taslak artboard 4-5.
 - 08:20 | R1-1 | bitti | 2ad24bb on raporlar-r1 | Ek yerleştirme bekletildi; R1-1 şema & tipler tamamlandı (28 tablo, 249 kolon, test:types/lint/build temiz); Opus Docker doğrulaması bekleniyor | SQL'i kullanıcı çalıştıracak | sıradaki kontrol ~08:35
 - 08:40 | R1-2 | başladı | f041ebb on raporlar-r1 | homeSummaryCore Türkçe net formatı (92,50 net) tamamlandı; main merge edildi; R1-2 ProgramPage görev türü/kaynak/koç sonuç girişi yapılıyor | yok | sıradaki kontrol ~08:55
 - 08:55 | R1-2 | bitti | 7915420 on raporlar-r1 | ProgramPage görev türü (5 seçenek), kaynak (<datalist>), koç sonuç girişi (D/Y/B modalı, kalan yardımcısı, validasyon) ve kart rozetleri tamamlandı; test:types/lint(28)/build temiz; R1-3 hedef net modal & profil başlığına geçiliyor | yok | sıradaki kontrol ~09:15
+- 09:15 | R1-2/R1-3 | bitti | a8bf0eb on raporlar-r1 | TASK_TYPE_CONFIG token renklerine bağlandı (deneme=plum); R1-3 hedef net (AddStudentModal LGS/YKS + OgrencilerPage profil başlığı + KurumlarPage Ulusal Sınav Tarihleri kartı) tamamlandı; test:types/lint(28)/build temiz; R1-4 AddToProgramPopover'a geçiliyor | yok | sıradaki kontrol ~09:30
+- 09:45 | R1-4 | bitti | cca94b9 on raporlar-r1 | R1-4 AddToProgramPopover bileşeni ve deneme analizi + konu haritası (TopicProgressPanel + KonularPage) giriş noktaları eklendi; test:types/lint(28)/build temiz; main merge edilip R1-5 talkingPoints motoruna geçiliyor | yok | sıradaki kontrol ~10:00

@@ -77,7 +77,6 @@ export default function ProgramPage() {
   const [selectedTopicId, setSelectedTopicId] = useState<string>('')
   const [customLabel, setCustomLabel] = useState('')
   const [questionCount, setQuestionCount] = useState<number>(100)
-  const [isExam, setIsExam] = useState<boolean>(false)
   const [taskType, setTaskType] = useState<TaskType>('konu')
   const [taskSource, setTaskSource] = useState<string>('')
   const [recentSources, setRecentSources] = useState<string[]>([])
@@ -91,7 +90,6 @@ export default function ProgramPage() {
   const [editTopicId, setEditTopicId] = useState<string>('')
   const [editCustomLabel, setEditCustomLabel] = useState('')
   const [editQuestionCount, setEditQuestionCount] = useState<number>(100)
-  const [editIsExam, setEditIsExam] = useState<boolean>(false)
   const [editTaskType, setEditTaskType] = useState<TaskType>('konu')
   const [editTaskSource, setEditTaskSource] = useState<string>('')
   const [savingTask, setSavingTask] = useState(false)
@@ -322,7 +320,8 @@ export default function ProgramPage() {
     
     try {
       const weekStartStr = weekKey(currentMonday)
-      const effectiveIsExam = taskType === 'deneme' || isExam
+      // "Deneme mi?" kutusu kalktı: deneme olup olmadığı yalnız görev türünden gelir.
+      const effectiveIsExam = taskType === 'deneme'
       const trimmedSource = taskSource.trim() || null
 
       const { data, error } = await supabase
@@ -356,7 +355,6 @@ export default function ProgramPage() {
       setSelectedTopicId('')
       setCustomLabel('')
       setQuestionCount(100)
-      setIsExam(false)
       setTaskType('konu')
       setTaskSource('')
     } catch (err) {
@@ -396,7 +394,6 @@ export default function ProgramPage() {
     }
     setEditCustomLabel(task.custom_label || '')
     setEditQuestionCount(task.question_count)
-    setEditIsExam(task.is_exam)
     setEditTaskType(task.task_type || (task.is_exam ? 'deneme' : 'konu'))
     setEditTaskSource(task.source || '')
   }
@@ -417,7 +414,7 @@ export default function ProgramPage() {
 
     setSavingTask(true)
     try {
-      const effectiveIsExam = editTaskType === 'deneme' || editIsExam
+      const effectiveIsExam = editTaskType === 'deneme'
       const trimmedSource = editTaskSource.trim() || null
 
       const { data, error } = await supabase
@@ -736,33 +733,20 @@ export default function ProgramPage() {
                               </div>
                             )}
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 6 }}>
-                              <div className="field">
-                                <label style={{ fontSize: 9, fontWeight: 700 }}>Soru Sayısı</label>
-                                <input
-                                  type="number"
-                                  value={editQuestionCount}
-                                  onChange={e => setEditQuestionCount(parseInt(e.target.value) || 0)}
-                                  style={{ padding: 4, fontSize: 11 }}
-                                />
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 12 }}>
-                                <input
-                                  type="checkbox"
-                                  id={`editIsExam-${task.id}`}
-                                  checked={editIsExam}
-                                  onChange={e => setEditIsExam(e.target.checked)}
-                                />
-                                <label htmlFor={`editIsExam-${task.id}`} style={{ fontSize: 9.5, fontWeight: 700, cursor: 'pointer', margin: 0 }}>
-                                  Deneme mi?
-                                </label>
-                              </div>
+                            <div className="field">
+                              <label style={{ fontSize: 9, fontWeight: 700 }}>Soru Sayısı</label>
+                              <input
+                                type="number"
+                                value={editQuestionCount}
+                                onChange={e => setEditQuestionCount(parseInt(e.target.value) || 0)}
+                                style={{ padding: 4, fontSize: 11 }}
+                              />
                             </div>
 
                             {/* Görev Türü Seçici */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                               <label style={{ fontSize: 9, fontWeight: 700 }}>Görev Türü</label>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 2, background: 'var(--surface)', padding: 2, borderRadius: 6, border: '1px solid var(--border)' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 2, background: 'var(--surface)', padding: 2, borderRadius: 6, border: '1px solid var(--border)' }}>
                                 {ALL_TASK_TYPES.map(tt => {
                                   const cfg = TASK_TYPE_CONFIG[tt]
                                   const isSel = editTaskType === tt
@@ -772,8 +756,6 @@ export default function ProgramPage() {
                                       type="button"
                                       onClick={() => {
                                         setEditTaskType(tt)
-                                        if (tt === 'deneme') setEditIsExam(true)
-                                        else if (editTaskType === 'deneme') setEditIsExam(false)
                                       }}
                                       style={{
                                         padding: '3px 1px',
@@ -785,6 +767,7 @@ export default function ProgramPage() {
                                         color: isSel ? cfg.color : 'var(--ink-soft)',
                                         cursor: 'pointer',
                                         textAlign: 'center',
+                                        whiteSpace: 'nowrap',
                                       }}
                                     >
                                       {cfg.label}
@@ -1007,22 +990,15 @@ export default function ProgramPage() {
                         </div>
                       )}
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 6 }}>
-                        <div className="field">
-                          <label style={{ fontSize: 10 }}>Soru Sayısı</label>
-                          <input type="number" value={questionCount} onChange={e => setQuestionCount(parseInt(e.target.value) || 0)} style={{ padding: 6, fontSize: 11.5 }} />
-                        </div>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 14 }}>
-                          <input type="checkbox" id="isExamCheck" checked={isExam} onChange={e => setIsExam(e.target.checked)} />
-                          <label htmlFor="isExamCheck" style={{ fontSize: 10.5, fontWeight: 600, cursor: 'pointer' }}>Deneme mi?</label>
-                        </div>
+                      <div className="field">
+                        <label style={{ fontSize: 10 }}>Soru Sayısı</label>
+                        <input type="number" value={questionCount} onChange={e => setQuestionCount(parseInt(e.target.value) || 0)} style={{ padding: 6, fontSize: 11.5 }} />
                       </div>
 
                       {/* Görev Türü Seçici */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         <label style={{ fontSize: 10, fontWeight: 700 }}>Görev Türü</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 2, background: 'var(--surface)', padding: 2, borderRadius: 6, border: '1px solid var(--border)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 2, background: 'var(--surface)', padding: 2, borderRadius: 6, border: '1px solid var(--border)' }}>
                           {ALL_TASK_TYPES.map(tt => {
                             const cfg = TASK_TYPE_CONFIG[tt]
                             const isSel = taskType === tt
@@ -1032,8 +1008,6 @@ export default function ProgramPage() {
                                 type="button"
                                 onClick={() => {
                                   setTaskType(tt)
-                                  if (tt === 'deneme') setIsExam(true)
-                                  else if (taskType === 'deneme') setIsExam(false)
                                 }}
                                 style={{
                                   padding: '4px 2px',
@@ -1045,6 +1019,7 @@ export default function ProgramPage() {
                                   color: isSel ? cfg.color : 'var(--ink-soft)',
                                   cursor: 'pointer',
                                   textAlign: 'center',
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
                                 {cfg.label}
