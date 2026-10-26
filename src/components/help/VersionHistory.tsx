@@ -18,6 +18,22 @@ const HISTORY: DateGroup[] = [
     date: '26 Ekim 2026',
     entries: [
       {
+        version: 'v0.29',
+        title: 'Raporlar 2.0 (R3 + R4): öneri motoru, akıllı haftalık taslak, tekrar zamanı, müdahale etkisi, öğrenci "Haftam", veli haftalık özeti',
+        items: [
+          'Akıllı taslak: Program ekranında "Akıllı Taslak Üret" zayıf ve tekrar zamanı gelmiş konulardan gelecek haftaya kesikli çerçeveli öneriler çıkarır, her birinde nedeni yazar. Onaylamadıkça hiçbir şey kaydedilmez ve öğrenciye gitmez.',
+          'Öncelik ve öneri listesi: Haftalık Görüşme sayfasında gelecek hafta için sıralı konu listesi, önerilen soru sayısı ve türüyle. Her satırdan tek tıkla programa eklenir.',
+          '360 Rapor yeni kartlar: tekrar zamanı gelen konular (3 hafta çalışılmayan yeterli konular), müdahale etkisi (rapordan programa eklenen konuların sonraki ölçümü), yanlış nedenleri dağılımı, soru başına süre ve kurum içi anonim sıra (en az 5 öğrenciyle).',
+          'Öğrenci portalında "Haftam": görev ilerlemesi, hedefe yolculuk, bu hafta iyi gidenler ve sıradaki odak konuları. Öğrenci doğru/yanlış sayılarını görmez.',
+          'Veliye haftalık özet: görevler, son deneme, devamsızlık ve suçlamasız "Evde nasıl destek olabilirsiniz?" önerileri; "WhatsApp\'ta Aç" ile gönderilir, ekranda "WhatsApp açıldı" damgası kalır.',
+          'Görevlerde çalışma süresi (dk) ve deneme analizinde yanlış nedeni (bilgi eksiği, işlem, dikkat, süre) girilebiliyor. Müfredat ekranından ÖSYM/MEB konu ağırlıkları CSV ile yüklenebiliyor.',
+          'LGS\'te bütün raporlar katsayılı net kullanıyor (Türkçe, Matematik, Fen ×4; diğerleri ×1; en fazla 270). Bu bir LGS puanı değildir.',
+          'Sınav tarihleri girildi: YKS 19 Haziran 2027, LGS 6 Haziran 2027. Ana Sayfa\'da kalan gün sayaçları ve 360 Rapor\'da sınav gününe tahmin.',
+          'Düzeltmeler: dar ekranda açılır pencerelerin sol menünün altında kalması, Haftalık Görüşme sayfasının yana taşması, Konu Yeterlilik Haritası\'nda deneme ölçümlerinin görünmemesi (izin hatası).',
+          'Test öğrencileri: Test YKS, Test LGS ve Test Test denemeler, 8 haftalık program, sonuçlar ve koç kararlarıyla dolduruldu; bütün ekranları bunlarla deneyebilirsin.',
+        ],
+      },
+      {
         version: 'v0.28',
         title: 'Raporlar 2.0 (R2) — Koç 360 Raporu: hedef yolu, öncelik matrisi, net kaybı Pareto, hata profili, tutarlılık ve müfredat yetişme',
         items: [
