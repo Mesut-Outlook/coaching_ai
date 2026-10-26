@@ -200,6 +200,7 @@ console.log('▶ R2-1 Koç 360 Raporu Motoru Öz-Testi Başlatılıyor...\n')
   }
   const resOverflow = buildReport360(inputOverflow)
   assert.equal(resOverflow.trajectory.prediction.predictedNetAtExam, 120, 'TYT tahmin neti 120 sınırını aşmamalı')
+  assert.equal(resOverflow.trajectory.maxNet, 120, 'TYT maxNet 120 olmalı')
 
   console.log('✓ 3. B2 (Hedef Yolu regresyon & tahmin) doğrulandı.')
 }
