@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, ChevronDown, Plus, Trash2, CheckSquare, X, Printer, MessageCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Plus, Trash2, CheckSquare, X, Printer, MessageCircle, BookOpen, Edit2 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
 import TopicProgressPanel from '../components/topics/TopicProgressPanel'
@@ -8,10 +8,20 @@ import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
-import type { Student, Topic, WeeklyTask, Subject } from '../types/database'
+import type { Student, Topic, WeeklyTask, Subject, TaskType } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange, DAYS } from '../lib/weeks'
 import { subjectAppliesTo, topicAppliesTo } from '../lib/curriculum'
 import { openWhatsAppChat } from '../lib/whatsapp'
+
+const TASK_TYPE_CONFIG: Record<TaskType, { label: string; bg: string; color: string; border: string }> = {
+  konu: { label: 'Konu', bg: 'var(--surface-alt)', color: 'var(--ink-soft)', border: 'var(--border)' },
+  tekrar: { label: 'Tekrar', bg: 'rgba(59, 130, 246, 0.12)', color: '#2563eb', border: 'rgba(59, 130, 246, 0.25)' },
+  rutin: { label: 'Rutin', bg: 'rgba(16, 185, 129, 0.12)', color: '#059669', border: 'rgba(16, 185, 129, 0.25)' },
+  sureli_test: { label: 'Süreli Test', bg: 'rgba(245, 158, 11, 0.14)', color: '#d97706', border: 'rgba(245, 158, 11, 0.3)' },
+  deneme: { label: 'Deneme', bg: 'rgba(239, 68, 68, 0.12)', color: '#dc2626', border: 'rgba(239, 68, 68, 0.25)' },
+}
+
+const ALL_TASK_TYPES: TaskType[] = ['konu', 'tekrar', 'rutin', 'sureli_test', 'deneme']
 
 export default function ProgramPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -43,6 +53,9 @@ export default function ProgramPage() {
   const [customLabel, setCustomLabel] = useState('')
   const [questionCount, setQuestionCount] = useState<number>(100)
   const [isExam, setIsExam] = useState<boolean>(false)
+  const [taskType, setTaskType] = useState<TaskType>('konu')
+  const [taskSource, setTaskSource] = useState<string>('')
+  const [recentSources, setRecentSources] = useState<string[]>([])
   const [addingTask, setAddingTask] = useState(false)
 
   // Task Editing State
@@ -54,8 +67,18 @@ export default function ProgramPage() {
   const [editCustomLabel, setEditCustomLabel] = useState('')
   const [editQuestionCount, setEditQuestionCount] = useState<number>(100)
   const [editIsExam, setEditIsExam] = useState<boolean>(false)
+  const [editTaskType, setEditTaskType] = useState<TaskType>('konu')
+  const [editTaskSource, setEditTaskSource] = useState<string>('')
   const [savingTask, setSavingTask] = useState(false)
   const [waMenuOpen, setWaMenuOpen] = useState(false)
+
+  // Coach Result Entry Modal State (D / Y / B)
+  const [resultModalTask, setResultModalTask] = useState<WeeklyTask | null>(null)
+  const [resultCorrect, setResultCorrect] = useState<string>('')
+  const [resultWrong, setResultWrong] = useState<string>('')
+  const [resultBlank, setResultBlank] = useState<string>('')
+  const [savingResult, setSavingResult] = useState(false)
+  const [resultError, setResultError] = useState<string | null>(null)
 
   // Sync selectedStudentId with query parameters
   const handleStudentChange = (id: string) => {
@@ -85,6 +108,33 @@ export default function ProgramPage() {
         if (data) setTopics(data as any)
       })
   }, [studentScope])
+
+  // Load recent sources for current student (top 5 distinct)
+  useEffect(() => {
+    if (!selectedStudentId || !isSupabaseConfigured) {
+      setRecentSources([])
+      return
+    }
+    supabase
+      .from('weekly_tasks')
+      .select('source')
+      .eq('student_id', selectedStudentId)
+      .not('source', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(50)
+      .then(({ data }) => {
+        if (data) {
+          const unique = Array.from(
+            new Set(
+              data
+                .map((d: any) => (d.source ? String(d.source).trim() : ''))
+                .filter((s: string) => Boolean(s && s.length > 0))
+            )
+          ).slice(0, 5)
+          setRecentSources(unique)
+        }
+      })
+  }, [selectedStudentId])
 
   // Load tasks for the selected student and week
   const loadTasks = async () => {
@@ -247,7 +297,9 @@ export default function ProgramPage() {
     
     try {
       const weekStartStr = weekKey(currentMonday)
-      
+      const effectiveIsExam = taskType === 'deneme' || isExam
+      const trimmedSource = taskSource.trim() || null
+
       const { data, error } = await supabase
         .from('weekly_tasks')
         .insert({
@@ -257,7 +309,10 @@ export default function ProgramPage() {
           topic_id: topicIdVal,
           custom_label: labelVal,
           question_count: questionCount,
-          is_exam: isExam,
+          is_exam: effectiveIsExam,
+          task_type: taskType,
+          source: trimmedSource,
+          origin_kind: 'elle',
           completed: false
         })
         .select()
@@ -265,6 +320,9 @@ export default function ProgramPage() {
       if (error) throw error
       if (data) {
         setTasks(prev => [...prev, data[0]])
+        if (trimmedSource && !recentSources.includes(trimmedSource)) {
+          setRecentSources(prev => [trimmedSource, ...prev].slice(0, 5))
+        }
       }
 
       // Reset form
@@ -274,6 +332,8 @@ export default function ProgramPage() {
       setCustomLabel('')
       setQuestionCount(100)
       setIsExam(false)
+      setTaskType('konu')
+      setTaskSource('')
     } catch (err) {
       alert('Görev eklenirken hata oluştu.')
     } finally {
@@ -312,6 +372,8 @@ export default function ProgramPage() {
     setEditCustomLabel(task.custom_label || '')
     setEditQuestionCount(task.question_count)
     setEditIsExam(task.is_exam)
+    setEditTaskType(task.task_type || (task.is_exam ? 'deneme' : 'konu'))
+    setEditTaskSource(task.source || '')
   }
 
   // Handle task editing save
@@ -330,13 +392,18 @@ export default function ProgramPage() {
 
     setSavingTask(true)
     try {
+      const effectiveIsExam = editTaskType === 'deneme' || editIsExam
+      const trimmedSource = editTaskSource.trim() || null
+
       const { data, error } = await supabase
         .from('weekly_tasks')
         .update({
           topic_id: topicIdVal,
           custom_label: labelVal,
           question_count: editQuestionCount,
-          is_exam: editIsExam
+          is_exam: effectiveIsExam,
+          task_type: editTaskType,
+          source: trimmedSource,
         })
         .eq('id', taskId)
         .select()
@@ -345,12 +412,76 @@ export default function ProgramPage() {
 
       if (data && data.length > 0) {
         setTasks(prev => prev.map(t => t.id === taskId ? data[0] : t))
+        if (trimmedSource && !recentSources.includes(trimmedSource)) {
+          setRecentSources(prev => [trimmedSource, ...prev].slice(0, 5))
+        }
       }
       setEditingTaskId(null)
     } catch (err) {
       alert('Görev güncellenirken hata oluştu.')
     } finally {
       setSavingTask(false)
+    }
+  }
+
+  // Coach Result Entry Handlers (D / Y / B)
+  const openResultModal = (task: WeeklyTask) => {
+    setResultModalTask(task)
+    setResultCorrect(task.correct_count !== null && task.correct_count !== undefined ? String(task.correct_count) : '')
+    setResultWrong(task.wrong_count !== null && task.wrong_count !== undefined ? String(task.wrong_count) : '')
+    setResultBlank(task.blank_count !== null && task.blank_count !== undefined ? String(task.blank_count) : '')
+    setResultError(null)
+  }
+
+  const handleSaveResult = async () => {
+    if (!resultModalTask || !isSupabaseConfigured) return
+
+    const isEmptyInput = resultCorrect.trim() === '' && resultWrong.trim() === '' && resultBlank.trim() === ''
+
+    let d: number | null = null
+    let y: number | null = null
+    let b: number | null = null
+
+    if (!isEmptyInput) {
+      d = parseInt(resultCorrect.trim(), 10)
+      y = parseInt(resultWrong.trim(), 10)
+      b = parseInt(resultBlank.trim(), 10)
+
+      if (isNaN(d) || isNaN(y) || isNaN(b) || d < 0 || y < 0 || b < 0) {
+        setResultError('Doğru, Yanlış ve Boş sayılarını pozitif tamsayı olarak eksiksiz girin (veya temizlemek için tümünü silin).')
+        return
+      }
+
+      if (d + y + b > resultModalTask.question_count) {
+        setResultError(`D + Y + B toplamı (${d + y + b}), hedef soru sayısını (${resultModalTask.question_count}) aşamaz.`)
+        return
+      }
+    }
+
+    setSavingResult(true)
+    setResultError(null)
+
+    try {
+      const { data, error: updateError } = await supabase
+        .from('weekly_tasks')
+        .update({
+          correct_count: d,
+          wrong_count: y,
+          blank_count: b,
+        })
+        .eq('id', resultModalTask.id)
+        .select()
+
+      if (updateError) throw updateError
+
+      if (data && data.length > 0) {
+        setTasks(prev => prev.map(t => t.id === resultModalTask.id ? data[0] : t))
+      }
+      setResultModalTask(null)
+    } catch (err: any) {
+      setResultError(err?.message || 'Sonuç kaydedilemedi.')
+    } finally {
+      setSavingResult(false)
     }
   }
 
@@ -603,6 +734,56 @@ export default function ProgramPage() {
                               </div>
                             </div>
 
+                            {/* Görev Türü Seçici */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                              <label style={{ fontSize: 9, fontWeight: 700 }}>Görev Türü</label>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 2, background: 'var(--surface)', padding: 2, borderRadius: 6, border: '1px solid var(--border)' }}>
+                                {ALL_TASK_TYPES.map(tt => {
+                                  const cfg = TASK_TYPE_CONFIG[tt]
+                                  const isSel = editTaskType === tt
+                                  return (
+                                    <button
+                                      key={tt}
+                                      type="button"
+                                      onClick={() => {
+                                        setEditTaskType(tt)
+                                        if (tt === 'deneme') setEditIsExam(true)
+                                        else if (editTaskType === 'deneme') setEditIsExam(false)
+                                      }}
+                                      style={{
+                                        padding: '3px 1px',
+                                        fontSize: 9.5,
+                                        fontWeight: isSel ? 700 : 500,
+                                        border: 'none',
+                                        borderRadius: 4,
+                                        background: isSel ? (tt === 'deneme' ? '#dc2626' : 'var(--brand, #0D9488)') : 'transparent',
+                                        color: isSel ? '#fff' : 'var(--ink-soft)',
+                                        cursor: 'pointer',
+                                        textAlign: 'center',
+                                      }}
+                                    >
+                                      {cfg.label}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Kaynak Alanı */}
+                            <div className="field">
+                              <label style={{ fontSize: 9, fontWeight: 700 }}>
+                                Kaynak <span style={{ fontWeight: 400, color: 'var(--ink-faint)' }}>(opsiyonel)</span>
+                              </label>
+                              <input
+                                type="text"
+                                list="task-sources"
+                                placeholder="Örn: 3D AYT, Apotemi"
+                                value={editTaskSource}
+                                onChange={e => setEditTaskSource(e.target.value)}
+                                style={{ padding: 4, fontSize: 11 }}
+                              />
+                            </div>
+
                             <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
                               <button
                                 type="button"
@@ -626,6 +807,14 @@ export default function ProgramPage() {
                         )
                       }
 
+                      const typeCfg = TASK_TYPE_CONFIG[task.task_type || (task.is_exam ? 'deneme' : 'konu')] || TASK_TYPE_CONFIG.konu
+                      const hasResult = task.correct_count !== null && task.correct_count !== undefined && task.wrong_count !== null && task.wrong_count !== undefined
+                      const correct = task.correct_count ?? 0
+                      const wrong = task.wrong_count ?? 0
+                      const blank = task.blank_count ?? 0
+                      const totalAnswered = correct + wrong + blank
+                      const accuracyPct = totalAnswered > 0 ? Math.round((correct / totalAnswered) * 100) : 0
+
                       return (
                         <div
                           key={task.id}
@@ -641,8 +830,8 @@ export default function ProgramPage() {
                             cursor: 'grab',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 8,
-                            opacity: task.completed ? 0.75 : 1,
+                            gap: 6,
+                            opacity: task.completed ? 0.85 : 1,
                             position: 'relative'
                           }}
                         >
@@ -673,12 +862,20 @@ export default function ProgramPage() {
                                   {task.custom_label || 'Özel Görev'}
                                 </div>
                               )}
-                              {topic?.subjects && (
-                                <div style={{ fontSize: 9.5, color: 'var(--ink-faint)', marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: topic.subjects.color }}></span>
-                                  {topic.subjects.name}
-                                </div>
-                              )}
+                              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                                {topic?.subjects && (
+                                  <div style={{ fontSize: 9.5, color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: topic.subjects.color }}></span>
+                                    {topic.subjects.name}
+                                  </div>
+                                )}
+                                {task.source && (
+                                  <div style={{ fontSize: 9.5, color: 'var(--ink-soft)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                    <BookOpen size={10} style={{ opacity: 0.7 }} />
+                                    <span>{task.source}</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             <button
@@ -691,15 +888,60 @@ export default function ProgramPage() {
                             </button>
                           </div>
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-soft)', paddingTop: 6 }}>
+                          {/* Tamamlanan görev için Sonuç alanı (D/Y/B ve % Doğruluk) */}
+                          {task.completed && (
+                            <div style={{ marginTop: 2, paddingTop: 4, borderTop: '1px dashed var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                              {hasResult ? (
+                                <>
+                                  <span style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--success-text)', background: 'var(--surface)', border: '1px solid var(--border-soft)', padding: '1px 5px', borderRadius: 4 }}>
+                                    {correct}D · {wrong}Y · {blank}B · %{accuracyPct}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="no-print"
+                                    onClick={(e) => { e.stopPropagation(); openResultModal(task) }}
+                                    style={{ background: 'none', border: 'none', color: 'var(--indigo-600)', fontSize: 9.5, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                                  >
+                                    Düzenle
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="no-print"
+                                  onClick={(e) => { e.stopPropagation(); openResultModal(task) }}
+                                  style={{ background: 'none', border: 'none', color: 'var(--indigo-600)', fontSize: 10, fontWeight: 600, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                                >
+                                  <Edit2 size={10} /> Sonuç gir
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-soft)', paddingTop: 5, marginTop: 2 }}>
                             <span style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--indigo-600)' }}>
                               {task.question_count} soru
                             </span>
-                            {task.is_exam && (
-                              <span style={{ fontSize: 9, background: 'var(--critical-bg)', color: 'var(--critical-text)', fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>
-                                DENEME
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <span
+                                style={{
+                                  fontSize: 9,
+                                  fontWeight: 700,
+                                  padding: '1px 5px',
+                                  borderRadius: 4,
+                                  background: typeCfg.bg,
+                                  color: typeCfg.color,
+                                  border: `1px solid ${typeCfg.border}`,
+                                }}
+                              >
+                                {typeCfg.label}
                               </span>
-                            )}
+                              {task.is_exam && task.task_type !== 'deneme' && (
+                                <span style={{ fontSize: 9, background: 'var(--critical-bg)', color: 'var(--critical-text)', fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>
+                                  DENEME
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       )
@@ -750,6 +992,56 @@ export default function ProgramPage() {
                           <input type="checkbox" id="isExamCheck" checked={isExam} onChange={e => setIsExam(e.target.checked)} />
                           <label htmlFor="isExamCheck" style={{ fontSize: 10.5, fontWeight: 600, cursor: 'pointer' }}>Deneme mi?</label>
                         </div>
+                      </div>
+
+                      {/* Görev Türü Seçici */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <label style={{ fontSize: 10, fontWeight: 700 }}>Görev Türü</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 2, background: 'var(--surface)', padding: 2, borderRadius: 6, border: '1px solid var(--border)' }}>
+                          {ALL_TASK_TYPES.map(tt => {
+                            const cfg = TASK_TYPE_CONFIG[tt]
+                            const isSel = taskType === tt
+                            return (
+                              <button
+                                key={tt}
+                                type="button"
+                                onClick={() => {
+                                  setTaskType(tt)
+                                  if (tt === 'deneme') setIsExam(true)
+                                  else if (taskType === 'deneme') setIsExam(false)
+                                }}
+                                style={{
+                                  padding: '4px 2px',
+                                  fontSize: 10,
+                                  fontWeight: isSel ? 700 : 500,
+                                  border: 'none',
+                                  borderRadius: 5,
+                                  background: isSel ? (tt === 'deneme' ? '#dc2626' : 'var(--brand, #0D9488)') : 'transparent',
+                                  color: isSel ? '#fff' : 'var(--ink-soft)',
+                                  cursor: 'pointer',
+                                  textAlign: 'center',
+                                }}
+                              >
+                                {cfg.label}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Kaynak Alanı */}
+                      <div className="field">
+                        <label style={{ fontSize: 10, fontWeight: 700 }}>
+                          Kaynak <span style={{ fontWeight: 400, color: 'var(--ink-faint)' }}>(opsiyonel)</span>
+                        </label>
+                        <input
+                          type="text"
+                          list="task-sources"
+                          placeholder="Örn: 3D AYT, Apotemi"
+                          value={taskSource}
+                          onChange={e => setTaskSource(e.target.value)}
+                          style={{ padding: 6, fontSize: 11.5 }}
+                        />
                       </div>
 
                       <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
@@ -810,6 +1102,134 @@ export default function ProgramPage() {
               subjectName={progressTopic.subjectName}
               onClose={() => setProgressTopic(null)}
             />
+          </div>
+        </div>
+      )}
+      {/* Öğrencinin son kullandığı kaynaklar otomatik öneri listesi */}
+      <datalist id="task-sources">
+        {recentSources.map(s => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
+
+      {/* Koç Sonuç Girişi Modalı (D / Y / B) */}
+      {resultModalTask && (
+        <div className="modal-overlay no-print" onClick={() => setResultModalTask(null)}>
+          <div className="modal-panel card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 380, width: '92%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div>
+                <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>Görev Sonucu Girişi</h3>
+                <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 2 }}>
+                  {resultModalTask.custom_label || topics.find(t => t.id === resultModalTask.topic_id)?.name || 'Görev'} · Hedef: {resultModalTask.question_count} soru
+                </div>
+              </div>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setResultModalTask(null)} aria-label="Kapat">
+                <X size={14} />
+              </button>
+            </div>
+
+            {resultError && (
+              <div style={{ padding: '6px 10px', background: 'var(--critical-bg)', color: 'var(--critical-text)', borderRadius: 6, fontSize: 11.5, marginBottom: 10 }}>
+                {resultError}
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+              <div className="field">
+                <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--success-text)' }}>Doğru (D)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max={resultModalTask.question_count}
+                  value={resultCorrect}
+                  placeholder="0"
+                  onChange={(e) => setResultCorrect(e.target.value)}
+                  style={{ padding: '6px 8px', fontSize: 13, fontWeight: 600, textAlign: 'center' }}
+                  autoFocus
+                />
+              </div>
+              <div className="field">
+                <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--critical-text)' }}>Yanlış (Y)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max={resultModalTask.question_count}
+                  value={resultWrong}
+                  placeholder="0"
+                  onChange={(e) => setResultWrong(e.target.value)}
+                  style={{ padding: '6px 8px', fontSize: 13, fontWeight: 600, textAlign: 'center' }}
+                />
+              </div>
+              <div className="field">
+                <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-soft)' }}>Boş (B)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max={resultModalTask.question_count}
+                  value={resultBlank}
+                  placeholder="0"
+                  onChange={(e) => setResultBlank(e.target.value)}
+                  style={{ padding: '6px 8px', fontSize: 13, fontWeight: 600, textAlign: 'center' }}
+                />
+              </div>
+            </div>
+
+            {/* Kalan / Doldur yardımcısı */}
+            {(() => {
+              const dNum = parseInt(resultCorrect.trim(), 10) || 0
+              const yNum = parseInt(resultWrong.trim(), 10) || 0
+              const remaining = Math.max(0, resultModalTask.question_count - dNum - yNum)
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', background: 'var(--surface-alt)', borderRadius: 6, fontSize: 11, color: 'var(--ink-soft)', marginBottom: 14 }}>
+                  <span>Kalan soru: <strong>{remaining}</strong></span>
+                  {remaining > 0 && resultBlank.trim() === '' && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      style={{ padding: '2px 6px', fontSize: 10 }}
+                      onClick={() => setResultBlank(String(remaining))}
+                    >
+                      Boş olarak doldur
+                    </button>
+                  )}
+                </div>
+              )
+            })()}
+
+            <div style={{ display: 'flex', gap: 6 }}>
+              {(resultModalTask.correct_count !== null && resultModalTask.correct_count !== undefined) && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ fontSize: 11, color: 'var(--critical-text)' }}
+                  onClick={() => {
+                    setResultCorrect('')
+                    setResultWrong('')
+                    setResultBlank('')
+                  }}
+                  title="Sonucu temizle"
+                >
+                  Temizle
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                style={{ flex: 1, justifyContent: 'center' }}
+                onClick={() => setResultModalTask(null)}
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                style={{ flex: 1.5, justifyContent: 'center' }}
+                onClick={handleSaveResult}
+                disabled={savingResult}
+              >
+                {savingResult ? 'Kaydediliyor…' : 'Kaydet'}
+              </button>
+            </div>
           </div>
         </div>
       )}
