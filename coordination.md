@@ -2839,6 +2839,9 @@ Spec §8, taslak artboard 4-5.
 - 08:20 — 🚀 **CANLIDA:** `main` @ `a9ea910` push edildi (kullanıcı isteği). Canlı bundle `index-BhRsU0n2.js` yerel build ile eşleşti. Önce şunlar koştu: test:types ✓, lint 28, exam-report ✓, home-summary ✓, build ✓. İçerik: G1 sayaç, G2/G2b veri katmanı (henüz ekranda kullanılmıyor), G4 sayfalama + `.order('id')` + yerel gün düzeltmesi, E8 parser (2026 regresyonu birebir). Ana sayfa UI (`ana-sayfa-ui`) **dahil değil**, görsel kontrol bekliyor.
 - 08:35 — 🚀 **CANLIDA: Yeni Ana Sayfa + petrol tema** (`f5c4a9b`, bundle `index-ChlDNSQC.js` eşleşti). Kontroller: test:types ✓, lint 28, exam-report ✓, home-summary ✓, build ✓, gerçek veriyle açık/koyu tema gezildi.
 - 08:35 — **agy · küçük iş (R1-1 ile birlikte, `homeSummaryCore.ts`):** "Son hareketler" metinleri İngilizce ondalık yazıyor ("92.5 net"). Türkçe biçim kullan: `Intl.NumberFormat('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})` → "92,50 net". Selftest'e bir assert ekle. R1-1'i şimdi Docker'da doğruluyorum.
+- 08:55 — ✅ **R1-1 doğrulandı (Docker):** stub → eski şema (main) → test verisi → yeni şema → yeni şema (tekrar). Hepsi çıkış kodu 0. Trigger false→true dolu ✓, true→false null ✓. Sonuç constraint'i 43>40'ı reddetti ✓, geçerli 40'ı kabul etti ✓. `task_type` check ✓, is_exam→deneme backfill ✓, `exam_calendar` RLS açık + 2 policy ✓. `portal_dashboard` kolonları tek tek seçiyor, D/Y/B öğrenciye gitmiyor ✓.
+  `raporlar-r1` main'e merge edildi ve **canlıda** (`d5cc593`; yalnız tipler + schema.sql, ekran değişmedi). **SQL'i kullanıcı Supabase'de çalıştıracak**, "çalıştırdım" deyince canlıda doğrulayacağım. Bu sırada R1-2/3/4 UI'ına `raporlar-r1` branch'inde devam edebilirsin (önce `git merge main`).
+- 08:55 — Konsept menüsü artık gold tonunda (kullanıcı isteği), canlıda.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
