@@ -69,6 +69,7 @@ export type PortalMyWeek = {
   completed_tasks: number
   target_net: number | null
   latest_net: number | null
+  latest_exam_type?: string | null
   days_to_exam: number | null
   coach_latest_note: string | null
   focus_topics: string[]

@@ -313,6 +313,11 @@ export default function OgrenciPortalPage() {
                           <strong style={{ color: 'var(--ink)', fontSize: 14 }}>
                             {latestNet !== null ? Math.round(latestNet * 10) / 10 : '—'}
                           </strong>
+                          {(my_week?.latest_exam_type === 'LGS' || curriculum === 'LGS') && (
+                            <span style={{ fontSize: 10, color: 'var(--ink-faint)', marginLeft: 4 }}>
+                              (LGS ham neti)
+                            </span>
+                          )}
                         </span>
                         <span style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600 }}>
                           Hedef:{' '}
@@ -398,13 +403,18 @@ export default function OgrenciPortalPage() {
               </div>
             </div>
 
-            {/* Bu Hafta Kazandıkların */}
+            {/* Bu Hafta İyi Gidenler */}
             <div style={card}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <Sparkles size={18} style={{ color: '#eab308' }} />
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
-                  Bu Hafta Kazandıkların
-                </h3>
+                <div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
+                    Bu Hafta İyi Gidenler
+                  </h3>
+                  <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 1 }}>
+                    Haftalık görevlerde %70 ve üzeri doğruluk sağlanan konular
+                  </div>
+                </div>
               </div>
 
               {my_week?.improved_topics && my_week.improved_topics.length > 0 ? (

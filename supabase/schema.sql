@@ -1467,7 +1467,7 @@ begin
         'total_tasks', coalesce((select count(*) from weekly_tasks wt where wt.student_id = v_student_id and wt.week_start = v_week), 0),
         'completed_tasks', coalesce((select count(*) from weekly_tasks wt where wt.student_id = v_student_id and wt.week_start = v_week and wt.completed = true), 0),
         'target_net', case
-          when s.grade = '8. Sınıf' then s.target_net_lgs
+          when s.grade in ('7. Sınıf', '8. Sınıf') then s.target_net_lgs
           else coalesce(s.target_net_tyt, s.target_net_ayt)
         end,
         'latest_net', (
@@ -1482,10 +1482,17 @@ begin
               limit 1
             )
         ),
+        'latest_exam_type', (
+          select me.exam_type
+          from mock_exams me
+          where me.student_id = v_student_id
+          order by me.exam_date desc, me.created_at desc
+          limit 1
+        ),
         'days_to_exam', (
           select (ec.exam_date - current_date)
           from exam_calendar ec
-          where ec.exam = case when s.grade = '8. Sınıf' then 'LGS' else 'YKS' end
+          where ec.exam = case when s.grade in ('7. Sınıf', '8. Sınıf') then 'LGS' else 'YKS' end
           limit 1
         ),
         'coach_latest_note', (
@@ -2525,7 +2532,6 @@ create policy "parent_summary_log: öğrenciyi görebilen koç okur" on parent_s
     (select is_system_admin()) or exists (
       select 1 from students s
       where s.id = parent_summary_log.student_id
-        and s.institution_id in (select my_institution_ids())
     )
   );
 
@@ -2535,7 +2541,6 @@ create policy "parent_summary_log: öğrenciyi görebilen koç ekler" on parent_
     (select is_system_admin()) or exists (
       select 1 from students s
       where s.id = parent_summary_log.student_id
-        and s.institution_id in (select my_institution_ids())
     )
   );
 
