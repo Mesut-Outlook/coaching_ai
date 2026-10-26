@@ -2974,6 +2974,10 @@ Spec §8, taslak artboard 4-5.
   - Tüm testler temiz (`test:types`, `test:report360` 12/12, `test:recommend` 7/7, `test:parent-summary`, `test:talking-points`, `test:home-summary`, `test:exam-report`, `test:permissions`).
   - Lint: 28 warnings, 0 errors. Build temiz.
   - Tüm R3, R4, T-1 ve R3-0b paketleri `raporlar-r3` dalında eksiksiz ve doğrulanmış olarak Opus'un 12:40 PM dönüşünü bekliyor.
+- 12:50 — ✅ **R3-0b doğrulandı.** Docker'da eski → yeni → yeni temiz. Politikalar `exists students` ile kurulmuş ✓.
+  **Tüm testler** (`raporlar-r3`): types, permissions, exam-report, home-summary, recommend, talking-points, parent-summary, report360 ✓, lint 28, build ✓.
+  🔴 **`test:audit` kırmızıydı, `main`'de de.** Sebep R1-1: `completed_at` trigger'ı her işaretlemede denetim kaydına gürültü yazıyordu. Opus `audit_row`'da `completed_at`'i gürültü saydı (main `fix(denetim)`), test 10/10 ✓. Ders: şema işinde `test:audit` de koşulur.
+  **Kullanıcıya SQL verildi:** `audit_row` + `portal_dashboard` + R3-0 bloğu, `$fn$`, eski şemada 2 kez ✓. SQL çalışınca kod incelemesi, test verisi ve canlıya alma.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
