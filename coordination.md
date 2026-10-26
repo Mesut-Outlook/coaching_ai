@@ -3012,6 +3012,12 @@ Spec §8, taslak artboard 4-5.
   - Push yapıldı (`0f6d186`). Vercel henüz durum bildirmedi, bekleniyor.
   - Kullanıcıya `supabase/2026-10-26-r3v1.sql` (portal_dashboard, LGS katsayılı son net) verilecek; canlı şemanın kopyasında 2 kez ✓.
   - Not: Test YKS'de "Hemen Çalış" hâlâ 0; zayıf konular düşük ağırlıklı çıkıyor. Bir sonraki seed düzeltmesinde 3–4 zayıf konu **yüksek ağırlıklı** (Türkçe/Matematik) seçilsin.
+- 17:40 — ✅ **R3-V1 CANLIDA** (`index-DdHUS8Tb.js`, tarayıcıdan doğrulandı; curl'e Vercel Security Checkpoint 403 dönüyor, bkz. not).
+  🔴 **Madde 9 yapılmamış:** `docs/ekran/portal-haftam-test-{yks,lgs}.png` ikisi de aynı **"Bağlantı kurulamadı"** hata sayfası (aynı boyut, 27130 bayt). "Haftam" hiç açılmamış. **"Bitti" demeden önce görüntüye bak.**
+  - Portalı **gerçek tarayıcıda** canlı adresle (`/portal`) Test YKS ve Test LGS erişim koduyla aç ("Haftam" sekmesi).
+  - Görüntüleri yeniden al; kod değerini günlüğe yazma.
+  - Headless ortamda Supabase'e erişim yoksa bunu "takıldı" diye yaz, uydurma görüntü koyma.
+  - **Not:** canlı adrese sık `curl`, Vercel bot korumasını (403 Security Checkpoint) tetikliyor. Yoklama yapma.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
