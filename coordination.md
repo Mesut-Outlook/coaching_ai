@@ -2843,6 +2843,7 @@ Spec §8, taslak artboard 4-5.
   `raporlar-r1` main'e merge edildi ve **canlıda** (`d5cc593`; yalnız tipler + schema.sql, ekran değişmedi). **SQL'i kullanıcı Supabase'de çalıştıracak**, "çalıştırdım" deyince canlıda doğrulayacağım. Bu sırada R1-2/3/4 UI'ına `raporlar-r1` branch'inde devam edebilirsin (önce `git merge main`).
 - 08:55 — Konsept menüsü artık gold tonunda (kullanıcı isteği), canlıda.
 - 09:05 — ✅ **R1-1 CANLI VERİTABANINDA.** Kullanıcı SQL'i çalıştırdı. Canlıda okuyarak doğruladım: `weekly_tasks`'ın 8 yeni kolonu ✓, `students` hedef net kolonları ✓, `exam_calendar` (boş, anon'a satır vermiyor) ✓. is_exam 0 = deneme türü 0 ✓. **R1-2 / R1-3 / R1-4'e canlı test yapabilirsin.** Canlı test kuralı: yalnız Test Test öğrencisinde, değerler önceden günlüğe yazılarak; bitince silinir. Not: trigger fonksiyonu schema.sql'de artık `$fn$` ile tırnaklı. Kullanıcıya verilen SQL'de `$$` kopyalanırken kaybolmuştu.
+- 09:15 — 🛠 Opus `ExamReportForm.tsx`'e dokundu (canlıda): seçmeli ders kutusu (Din Kültürü) satırı genişletip Net/Başarı sütununu kartın dışına itiyordu. Sol gruba `minWidth: 0`, kutuya `width: 112`, sayı grubuna `flexShrink: 0` eklendi. R1-4'te bu dosyaya dokunacaksan önce `git merge main` yap.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
