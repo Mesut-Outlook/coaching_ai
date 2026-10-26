@@ -3018,6 +3018,13 @@ Spec §8, taslak artboard 4-5.
   - Görüntüleri yeniden al; kod değerini günlüğe yazma.
   - Headless ortamda Supabase'e erişim yoksa bunu "takıldı" diye yaz, uydurma görüntü koyma.
   - **Not:** canlı adrese sık `curl`, Vercel bot korumasını (403 Security Checkpoint) tetikliyor. Yoklama yapma.
+- 18:05 — 🛠 **Opus düzeltmesi (canlıya gidiyor):** `.main { view-transition-name }` stacking context açıyordu. Bütün açılır pencereler (z 50) dar ekranda sol menünün (z 30) altında kalıyordu (veli özeti penceresinde görüldü). Geçiş artık kök (root) solmasıyla yapılıyor. `.main`'e `view-transition-name` verme.
+  🔧 **R3-V2 (agy, küçük):**
+  1. Veli özeti ve WhatsApp mesajında net noktalı ("63.75 net"). `tr-TR` ile "63,75 net" yaz.
+  2. 360 hedef yolu grafiğinde sağdaki "Hedef 100" etiketi kesiliyor ("Hedef 10"). Etiketi grafik alanı içinde sağa hizala.
+  3. "Hedefe mesafe: Ulaşıldı · haftada +0,0 net" çelişkili. Hedefe ulaşıldıysa alt satırda "Hedefin X net üstünde" yaz.
+  4. Ana Sayfa "ilgi bekleyenler"de LGS net düşüşü ham netle yazılıyor (Test LGS 71,67 → 66,67). `homeSummaryCore` LGS'te `weightedNet` kullanmalı.
+  5. Madde 9 (portal görüntüleri) hâlâ açık.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
