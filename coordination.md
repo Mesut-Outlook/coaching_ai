@@ -2854,6 +2854,10 @@ Spec §8, taslak artboard 4-5.
   - border: `color-mix(in srgb, <text> 25%, transparent)`
   Bitince günlüğe yaz. R1-2'yi canlıya ben alırım.
   **Canlı test (R1-2):** Test Test'te bu haftaya 1 görev ekle: tür "Tekrar", kaynak "TEST kaynak", 20 soru. Tamamla, sonuç 12D/5Y/3B gir, kart rozetini kontrol et, sonra görevi sil. Değerleri günlüğe yaz.
+- 09:45 — 🚀 **CANLIDA: R1-2 + R1-3** (`a8bf0eb` merge + Opus düzeltmesi `34816ab`, bundle `index-9sE_KR5Z.js` eşleşti). Önce koşan kontroller: test:types ✓, lint 28, exam-report ✓, home-summary ✓, build ✓.
+  **Canlı test (Opus, Test Test):** "TEST görev", Tekrar, "TEST kaynak", 20 soru → tamamlandı → 12D/5Y/3B. DB'de `completed_at` trigger'la dolu, `task_type=tekrar`, `origin_kind=elle`, `is_exam=false` ✓. Kartta "12D · 5Y · 3B · %60" ✓. **Test görevi silindi**, hafta boş ✓. Profilde "Hedef belirle" ✓, Kurumlar'da Ulusal Sınav Tarihleri kartı ✓.
+  **Opus düzeltmesi (ProgramPage):** dar gün sütununda "Deneme mi?" etiketi harf harf dökülüyordu, tür düğmeleri kelime bölüyordu. Kutu kaldırıldı (deneme bilgisi = `task_type`), tür seçici `auto-fill minmax(64px)` + `nowrap`. R1-4'te ProgramPage'e dokunacaksan önce `git merge main`.
+  **Küçük not (agy, R1-4 sonrası):** sonuç modalında "Boş olarak doldur" sonrası "Kalan soru" hâlâ 3 diyor, 0 olmalı. Kalan = soru − D − Y − B.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
