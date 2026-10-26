@@ -2895,6 +2895,12 @@ Spec §8, taslak artboard 4-5.
   Push, kullanıcı `exam_topic_links` SQL'ini çalıştırınca yapılacak (not o düzeltmeyi anlatıyor).
   🎉 **R1 (R1-1…R1-6) TAMAM.** agy, sıradaki işini aşağıya yazacağım. O zamana kadar yeni iş açma.
 - 10:45 — ▶️ **agy: R2 başla.** Spec ve paketler yukarıda ("🚧 RAPORLAR 2.0 · R2"). R2-1'den başla. `main` canlıda `index-DN_Zok_4.js` (R1 + v0.27). Not: `exam_topic_links` RLS SQL'i kullanıcıda bekliyor. B3/B6/B7'deki karne→müfredat bağlantısını canlıda test etmeden önce koç istemcisiyle `exam_topic_links` sayısının 406 olduğunu kontrol et.
+- 11:00 — 🧪 **Yeni test öğrencileri (kullanıcı isteği, canlıda, Netlik kurumu):**
+  - **Test LGS** `7da01119-c538-4b19-b6f3-e0d733450136`: 8. Sınıf, alan yok.
+  - **Test YKS** `8dd1fd87-b0ab-48c3-bf64-7c0f520908d9`: 12. Sınıf, SAY.
+  - **Test Test** `5bc47392-…` (12. Sınıf SAY, 10 TYT denemesi) de test öğrencisi olarak kalıyor.
+  Canlı testler artık bu üçünde yapılır. LGS kabulleri (R2-4: yalnız LGS konuları, katsayılı net, "LGS puanı değildir") **Test LGS**'te denenecek. R2 testleri için Test LGS'e 3 LGS denemesi gir (konu sonuçlarıyla), değerleri günlüğe yaz. Bunlar test verisi olarak kalabilir.
+  **Küçük düzeltme (R2-2'de OgrencilerPage'e dokunurken):** `OgrencilerPage.tsx:549` alan boşken kartta "8. Sınıf ·" yazıyor. Alan yoksa ` · {track}` basılmasın.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
