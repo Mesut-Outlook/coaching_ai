@@ -187,6 +187,7 @@ export interface PriorityMatrixData {
   points: PriorityMatrixPoint[]
   medianWeight: number
   topPriorityCount: number
+  allWeightsEqual?: boolean
 }
 
 export interface ParetoBarItem {
@@ -544,14 +545,17 @@ export function buildReport360(input: Report360Input): Report360Data {
     const q = r.question_count || (r.correct_count + r.wrong_count + r.blank_count)
     if (!topicStatsMap.has(r.exam_topic_id)) {
       topicStatsMap.set(r.exam_topic_id, {
-        name: r.exam_topic_name,
-        subjectName: r.exam_subject_name,
-        colorToken: r.subject_color_token || 'var(--c-default)',
+        name: r.exam_topic_name || `Konu #${r.exam_topic_id}`,
+        subjectName: r.exam_subject_name || '',
+        colorToken: r.subject_color_token || 'var(--indigo-600)',
         totalCorrect: 0,
         totalQuestions: 0,
       })
     }
     const st = topicStatsMap.get(r.exam_topic_id)!
+    if (!st.name && r.exam_topic_name) st.name = r.exam_topic_name
+    if (!st.subjectName && r.exam_subject_name) st.subjectName = r.exam_subject_name
+    if (r.subject_color_token && st.colorToken === 'var(--indigo-600)') st.colorToken = r.subject_color_token
     st.totalCorrect += r.correct_count
     st.totalQuestions += q
   }
@@ -613,6 +617,9 @@ export function buildReport360(input: Report360Input): Report360Data {
 
   // Medyan ağırlık
   const medianWeight = calculateMedian(matrixPointsRaw.map((p) => p.weight))
+  const allWeightsEqual =
+    matrixPointsRaw.length > 0 &&
+    matrixPointsRaw.every((p) => p.weight === matrixPointsRaw[0].weight)
 
   // Öncelik puanına göre sırala
   matrixPointsRaw.sort((a, b) => b.priorityScore - a.priorityScore)
@@ -620,7 +627,8 @@ export function buildReport360(input: Report360Input): Report360Data {
   const priorityPoints: PriorityMatrixPoint[] = matrixPointsRaw.map((p, idx) => {
     let quadrant: PriorityQuadrant
     const isSuccess = p.accuracy >= 0.7
-    const isHeavy = p.weight >= medianWeight
+    // weight > median; hepsi eşitse başarıya göre iki bölgeye ayrılır
+    const isHeavy = allWeightsEqual ? true : p.weight > medianWeight
 
     if (!isSuccess && isHeavy) quadrant = 'hemen_calis'
     else if (isSuccess && isHeavy) quadrant = 'koru'
@@ -645,6 +653,7 @@ export function buildReport360(input: Report360Input): Report360Data {
     points: priorityPoints,
     medianWeight,
     topPriorityCount: Math.min(6, priorityPoints.length),
+    allWeightsEqual,
   }
 
   // -------------------------------------------------------------------------
@@ -660,13 +669,15 @@ export function buildReport360(input: Report360Input): Report360Data {
 
     if (!topicLossMap.has(r.exam_topic_id)) {
       topicLossMap.set(r.exam_topic_id, {
-        name: r.exam_topic_name,
-        subjectName: r.exam_subject_name,
+        name: r.exam_topic_name || `Konu #${r.exam_topic_id}`,
+        subjectName: r.exam_subject_name || '',
         loss: 0,
         curriculumTopicId: primaryTopicMap.get(r.exam_topic_id) ?? null,
       })
     }
     const item = topicLossMap.get(r.exam_topic_id)!
+    if (!item.name && r.exam_topic_name) item.name = r.exam_topic_name
+    if (!item.subjectName && r.exam_subject_name) item.subjectName = r.exam_subject_name
     item.loss += loss
     totalLoss += loss
   }
