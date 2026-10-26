@@ -18,6 +18,7 @@
     "seed:exam-catalog": "tsx scripts/seedExamCatalog.ts",
     "seed:exam-links": "tsx scripts/seedExamTopicLinks.ts",
     "test:exam-report": "tsx scripts/examReport.selftest.ts",
+    "test:home-summary": "tsx scripts/homeSummary.selftest.ts",
     "seed:tyt-karne": "tsx scripts/seedTytTopicsFromKarne.ts",
     "seed:ek": "tsx scripts/seedEkYerlestirme.ts",
     "seed:universities": "tsx scripts/seedUniversityRankings.ts",

@@ -9,12 +9,12 @@ import Sparkline from '../components/charts/Sparkline'
 import AddAbsenceModal from '../components/attendance/AddAbsenceModal'
 import { openWhatsAppChat } from '../lib/whatsapp'
 import {
-  ABSENCE_ALERT_THRESHOLDS,
   EXCUSE_LABELS,
   NOTIFY_TARGET_LABELS,
   SESSION_LABELS,
   STATUS_LABELS,
   buildParentSummaryMessage,
+  checkAttendanceNeedsAttention,
   formatDateTr,
   formatTimestampDayMonthTr,
   isoDaysAgo,
@@ -191,9 +191,7 @@ export default function DevamsizlikPage() {
         const last30Count = last30Records.length
         const last30Unexcused = last30Records.filter((r) => r.excuse_type === 'yok').length
         const lastDate = records.length ? records[0].absence_date : null
-        const needsAttention =
-          last30Count >= ABSENCE_ALERT_THRESHOLDS.last30DaysTotal ||
-          last30Unexcused >= ABSENCE_ALERT_THRESHOLDS.last30DaysUnexcused
+        const needsAttention = checkAttendanceNeedsAttention(records)
 
         return {
           student,
