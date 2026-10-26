@@ -2836,6 +2836,7 @@ Spec §8, taslak artboard 4-5.
   - **Y1 (1000 satır denetimi):** yalnız `denemeler`/`exams` ekranlarına dokunan kısmı kalsın, gerisini sonraya bırak.
   - **Yeni ana işin: Raporlar 2.0 · R1.** Spec: `docs/superpowers/specs/2026-10-26-raporlar-r1-design.md` (onaylı). Paketler aşağıda "🚧 RAPORLAR 2.0 · R1" bölümünde. **R1-1 ile başla.** Branch `raporlar-r1`, worktree `../Coching_AI-r1`.
   - Ana sayfa (PanelPage/Sidebar/AppShell/home.css/HomeSummary*) Opus'ta kalıyor, dokunma.
+- 08:20 — 🚀 **CANLIDA:** `main` @ `a9ea910` push edildi (kullanıcı isteği). Canlı bundle `index-BhRsU0n2.js` yerel build ile eşleşti. Önce şunlar koştu: test:types ✓, lint 28, exam-report ✓, home-summary ✓, build ✓. İçerik: G1 sayaç, G2/G2b veri katmanı (henüz ekranda kullanılmıyor), G4 sayfalama + `.order('id')` + yerel gün düzeltmesi, E8 parser (2026 regresyonu birebir). Ana sayfa UI (`ana-sayfa-ui`) **dahil değil**, görsel kontrol bekliyor.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
