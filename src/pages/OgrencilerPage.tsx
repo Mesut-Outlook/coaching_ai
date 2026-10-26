@@ -64,6 +64,7 @@ interface StudentData {
   attendanceCount: number
   attendanceUnexcusedCount: number
   attendanceRecords: AttendanceRecord[]
+  examCalendar?: Record<string, string>
 }
 
 export default function OgrencilerPage() {
@@ -88,6 +89,66 @@ export default function OgrencilerPage() {
     }
     return 'overview'
   })
+
+  // Hedef Net ve Kalan Hesaplaması (Profil Başlığı, R1-3)
+  const targetNetInfo = useMemo(() => {
+    if (!studentData) return null
+    const s = studentData.student
+    const curr = gradeCurriculum(s.grade) // 'LGS' | 'YKS'
+    const isLgs = curr === 'LGS'
+
+    const targetVal = isLgs ? s.target_net_lgs : s.target_net_tyt
+    const examName = isLgs ? 'LGS' : 'TYT'
+
+    // Son deneme (bu sınav türündeki en son deneme)
+    const latestExam = studentData.exams.find(e => e.exam_type === examName)
+    let lastNet: number | null = null
+    if (latestExam) {
+      const examSecs = studentData.sections.filter(sec => sec.mock_exam_id === latestExam.id)
+      if (examSecs.length > 0) {
+        lastNet = examSecs.reduce((sum, sec) => sum + (Number(sec.net) || 0), 0)
+        lastNet = Math.round((lastNet + Number.EPSILON) * 100) / 100
+      }
+    }
+
+    const examCalDate = studentData.examCalendar?.[examName] || null
+    let weeksLeft: number | null = null
+    if (examCalDate) {
+      const today = new Date()
+      const calD = new Date(examCalDate)
+      const diffMs = calD.getTime() - today.getTime()
+      if (diffMs > 0) {
+        weeksLeft = Math.max(1, Math.round(diffMs / (7 * 86400000)))
+      }
+    }
+
+    if (targetVal === null || targetVal === undefined) {
+      return {
+        hasTarget: false as const,
+        examName,
+        targetVal: null,
+        lastNet,
+        kalan: null,
+        weeksLeft: null,
+        weeklyNeeded: null,
+      }
+    }
+
+    const kalan = lastNet !== null ? Math.round((targetVal - lastNet + Number.EPSILON) * 100) / 100 : null
+    const weeklyNeeded = (kalan !== null && kalan > 0 && weeksLeft !== null && weeksLeft > 0)
+      ? Math.round((kalan / weeksLeft + Number.EPSILON) * 100) / 100
+      : null
+
+    return {
+      hasTarget: true as const,
+      examName,
+      targetVal,
+      lastNet,
+      kalan,
+      weeksLeft,
+      weeklyNeeded,
+    }
+  }, [studentData])
   // Deneme Geçmişi sekmesinde tıklanan denemenin bölüm tablosu açılır
   const [expandedExamId, setExpandedExamId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -209,6 +270,19 @@ export default function OgrencilerPage() {
         attendanceRecords = []
       }
 
+      // 8. Fetch exam calendar
+      const examCalendarMap: Record<string, string> = {}
+      try {
+        const { data: calData } = await supabase.from('exam_calendar').select('exam, exam_date')
+        if (calData) {
+          calData.forEach((c: any) => {
+            if (c.exam && c.exam_date) examCalendarMap[c.exam] = c.exam_date
+          })
+        }
+      } catch {
+        // ignore
+      }
+
       setStudentData({
         student,
         exams: exams || [],
@@ -219,6 +293,7 @@ export default function OgrencilerPage() {
         attendanceCount,
         attendanceUnexcusedCount,
         attendanceRecords,
+        examCalendar: examCalendarMap,
       })
     }
 
@@ -663,6 +738,59 @@ export default function OgrencilerPage() {
                 </>
               )}
             </p>
+
+            {/* Hedef Net ve Sınav Tarihi / Hız Satırı (R1-3) */}
+            {targetNetInfo && (
+              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, fontSize: 13 }}>
+                {targetNetInfo.hasTarget ? (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--surface-alt)', border: '1px solid var(--border-soft)', padding: '4px 10px', borderRadius: 8 }}>
+                    <span style={{ fontWeight: 600, color: 'var(--ink)' }}>
+                      Son {targetNetInfo.examName} {targetNetInfo.lastNet !== null ? targetNetInfo.lastNet.toFixed(2).replace('.', ',') : '—'}
+                    </span>
+                    <span style={{ color: 'var(--ink-faint)' }}>•</span>
+                    <span style={{ fontWeight: 600, color: 'var(--indigo-600)' }}>
+                      Hedef {targetNetInfo.targetVal}
+                    </span>
+                    {targetNetInfo.kalan != null && (
+                      <>
+                        <span style={{ color: 'var(--ink-faint)' }}>•</span>
+                        <span style={{ fontWeight: 600, color: targetNetInfo.kalan <= 0 ? 'var(--success-text)' : 'var(--critical-text)' }}>
+                          {targetNetInfo.kalan <= 0 ? 'Hedefe ulaşıldı!' : `kalan ${targetNetInfo.kalan.toFixed(2).replace('.', ',')}`}
+                        </span>
+                      </>
+                    )}
+                    {targetNetInfo.weeksLeft != null && (
+                      <>
+                        <span style={{ color: 'var(--ink-faint)' }}>•</span>
+                        <span style={{ color: 'var(--ink-soft)' }}>
+                          {targetNetInfo.weeksLeft} hafta
+                          {targetNetInfo.weeklyNeeded != null && ` · haftada +${targetNetInfo.weeklyNeeded.toFixed(2).replace('.', ',')} gerekli`}
+                        </span>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setEditingStudent(student)}
+                      style={{ padding: '0 4px', fontSize: 11, color: 'var(--ink-soft)', textDecoration: 'underline', height: 'auto' }}
+                    >
+                      Düzenle
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--surface-alt)', border: '1px dashed var(--border)', padding: '4px 10px', borderRadius: 8 }}>
+                    <span style={{ color: 'var(--ink-soft)' }}>Hedef net belirlenmemiş.</span>
+                    <button
+                      type="button"
+                      onClick={() => setEditingStudent(student)}
+                      style={{ background: 'none', border: 'none', color: 'var(--indigo-600)', fontWeight: 600, fontSize: 12.5, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                    >
+                      Hedef belirle
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
         

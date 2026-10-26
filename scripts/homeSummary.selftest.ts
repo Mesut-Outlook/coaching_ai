@@ -40,6 +40,7 @@ import assert from 'node:assert/strict'
 import {
   buildHomeSummary,
   chunkArray,
+  formatNetTr,
   getIsoDayIndex,
   type EnrichedMockExam,
   type SubjectInfo,
@@ -482,7 +483,15 @@ assert.ok(
   summary.recent.some((r) => r.kind === 'decision' && r.text.includes('Türev → kritik')),
   'Koç kararı akışta bulunmalı (G2b c)'
 )
-console.log('✓ 7. Son hareketler akışı (görev hariç, karar dahil) başarıyla doğrulandı.')
+// Deneme olayı Türkçe formatlı (virgüllü, 2 ondalık basamak) olmalı
+assert.equal(formatNetTr(92.5), '92,50', 'formatNetTr(92.5) Türkçe biçimde 92,50 dönmeli')
+const examAct = summary.recent.find((r) => r.kind === 'exam')
+assert.ok(examAct, 'Deneme aktivitesi akışta bulunmalı')
+assert.ok(
+  examAct.text.includes('73,00 net'),
+  `Deneme aktivitesi Türkçe net formatı ("73,00 net") içermeli, gelen: "${examAct.text}"`
+)
+console.log('✓ 7. Son hareketler akışı (görev hariç, karar dahil, Türkçe net formatlı) başarıyla doğrulandı.')
 
 // ---------------------------------------------------------------------------
 // 8. İlave Uç Durumlar ve Detaylı Doğrulamalar (G4 İncelemesi)

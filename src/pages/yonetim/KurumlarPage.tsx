@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Plus, Building2, Users, GraduationCap, Edit2, X } from 'lucide-react'
+import { Plus, Building2, Users, GraduationCap, Edit2, X, Calendar } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAccess } from '../../contexts/useAccess'
 import PageHeader from '../../components/layout/PageHeader'
@@ -23,6 +23,51 @@ export default function KurumlarPage() {
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // Sınav Tarihleri State (exam_calendar)
+  const [yksDate, setYksDate] = useState('')
+  const [lgsDate, setLgsDate] = useState('')
+  const [savingCalendar, setSavingCalendar] = useState(false)
+  const [calendarSaved, setCalendarSaved] = useState(false)
+  const [calendarError, setCalendarError] = useState<string | null>(null)
+
+  const loadExamCalendar = async () => {
+    if (!isSupabaseConfigured) return
+    try {
+      const { data } = await supabase.from('exam_calendar').select('*')
+      if (data) {
+        data.forEach((r: any) => {
+          if (r.exam === 'YKS') setYksDate(r.exam_date || '')
+          if (r.exam === 'LGS') setLgsDate(r.exam_date || '')
+        })
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleSaveCalendar = async () => {
+    if (!isSupabaseConfigured) return
+    setSavingCalendar(true)
+    setCalendarError(null)
+    setCalendarSaved(false)
+    try {
+      const rows: Array<{ exam: 'YKS' | 'LGS'; exam_date: string; updated_at: string }> = []
+      if (yksDate) rows.push({ exam: 'YKS', exam_date: yksDate, updated_at: new Date().toISOString() })
+      if (lgsDate) rows.push({ exam: 'LGS', exam_date: lgsDate, updated_at: new Date().toISOString() })
+
+      if (rows.length > 0) {
+        const { error: upsertErr } = await supabase.from('exam_calendar').upsert(rows)
+        if (upsertErr) throw upsertErr
+      }
+      setCalendarSaved(true)
+      setTimeout(() => setCalendarSaved(false), 3000)
+    } catch (err: any) {
+      setCalendarError(err.message || 'Sınav tarihleri kaydedilemedi.')
+    } finally {
+      setSavingCalendar(false)
+    }
+  }
 
   const loadInstitutions = async () => {
     if (!isSupabaseConfigured || !isSystemAdmin) {
@@ -77,6 +122,7 @@ export default function KurumlarPage() {
 
   useEffect(() => {
     loadInstitutions()
+    loadExamCalendar()
   }, [isSystemAdmin])
 
   const handleOpenCreate = () => {
@@ -207,6 +253,63 @@ export default function KurumlarPage() {
             </div>
           ))
         )}
+      </div>
+
+      {/* Ulusal Sınav Tarihleri Kartı (R1-3) */}
+      <div className="card" style={{ marginTop: 24, padding: 20, border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div>
+            <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Calendar size={18} style={{ color: 'var(--indigo-600)' }} /> Ulusal Sınav Tarihleri
+            </h3>
+            <p style={{ fontSize: 12.5, color: 'var(--ink-soft)', margin: '4px 0 0 0' }}>
+              ÖSYM ve MEB tarafından açıklanan resmi sınav tarihlerini belirleyin. Öğrenci profillerinde kalan hafta ve net hızı sayaçlarını besler.
+            </p>
+          </div>
+        </div>
+
+        {calendarError && (
+          <div className="alert alert-error" style={{ marginBottom: 12 }}>
+            {calendarError}
+          </div>
+        )}
+        {calendarSaved && (
+          <div className="alert alert-success" style={{ marginBottom: 12 }}>
+            Sınav tarihleri başarıyla güncellendi.
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, alignItems: 'flex-end' }}>
+          <div className="field">
+            <label style={{ fontWeight: 700, fontSize: 12 }}>YKS Sınav Tarihi</label>
+            <input
+              type="date"
+              value={yksDate}
+              onChange={(e) => setYksDate(e.target.value)}
+              style={{ padding: '8px 10px', fontSize: 13 }}
+            />
+          </div>
+          <div className="field">
+            <label style={{ fontWeight: 700, fontSize: 12 }}>LGS Sınav Tarihi</label>
+            <input
+              type="date"
+              value={lgsDate}
+              onChange={(e) => setLgsDate(e.target.value)}
+              style={{ padding: '8px 10px', fontSize: 13 }}
+            />
+          </div>
+          <div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleSaveCalendar}
+              disabled={savingCalendar}
+              style={{ height: 38, padding: '0 16px' }}
+            >
+              {savingCalendar ? 'Kaydediliyor…' : 'Tarihleri Kaydet'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Modal */}

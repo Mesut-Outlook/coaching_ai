@@ -45,6 +45,21 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLgs])
   const [targetProgram, setTargetProgram] = useState(editingStudent?.target_program ?? '')
+  const [targetNetTyt, setTargetNetTyt] = useState<string>(
+    editingStudent?.target_net_tyt !== null && editingStudent?.target_net_tyt !== undefined
+      ? String(editingStudent.target_net_tyt)
+      : ''
+  )
+  const [targetNetAyt, setTargetNetAyt] = useState<string>(
+    editingStudent?.target_net_ayt !== null && editingStudent?.target_net_ayt !== undefined
+      ? String(editingStudent.target_net_ayt)
+      : ''
+  )
+  const [targetNetLgs, setTargetNetLgs] = useState<string>(
+    editingStudent?.target_net_lgs !== null && editingStudent?.target_net_lgs !== undefined
+      ? String(editingStudent.target_net_lgs)
+      : ''
+  )
   const [phoneNumber, setPhoneNumber] = useState(editingStudent?.phone_number ?? '')
   const [parentPhoneNumber, setParentPhoneNumber] = useState(editingStudent?.parent_phone_number ?? '')
   const [photoUrl, setPhotoUrl] = useState(editingStudent?.photo_url ?? '')
@@ -149,6 +164,19 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
     setSaving(true)
     setError(null)
 
+    const tytNum = isLgs ? null : (targetNetTyt.trim() !== '' ? parseFloat(targetNetTyt.trim()) : null)
+    const aytNum = (isLgs || !track) ? null : (targetNetAyt.trim() !== '' ? parseFloat(targetNetAyt.trim()) : null)
+    const lgsNum = isLgs ? (targetNetLgs.trim() !== '' ? parseFloat(targetNetLgs.trim()) : null) : null
+
+    // Hedef net değiştiyse target_set_at damgasını güncelle
+    const netChanged = editingStudent
+      ? (
+          editingStudent.target_net_tyt !== tytNum ||
+          editingStudent.target_net_ayt !== aytNum ||
+          editingStudent.target_net_lgs !== lgsNum
+        )
+      : (tytNum !== null || aytNum !== null || lgsNum !== null)
+
     const payload = {
       coach_id: user.id,
       institution_id: selectedInstitutionId,
@@ -157,6 +185,10 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
       grade,
       track: isLgs ? null : track,
       target_program: targetProgram.trim() || null,
+      target_net_tyt: tytNum,
+      target_net_ayt: aytNum,
+      target_net_lgs: lgsNum,
+      target_set_at: netChanged ? new Date().toISOString() : (editingStudent?.target_set_at ?? null),
       phone_number: phoneNumber.trim() || null,
       parent_phone_number: parentPhoneNumber.trim() || null,
       photo_url: photoUrl || null,
@@ -347,6 +379,60 @@ export default function AddStudentModal({ onClose, onCreated, editingStudent }: 
               onChange={(e) => setTargetProgram(e.target.value)}
             />
           </div>
+
+          {/* Hedef Net Alanları (Müfredata göre) */}
+          {isLgs ? (
+            <div className="field">
+              <label>Hedef LGS Neti (katsayılı net)</label>
+              <input
+                type="number"
+                step="0.25"
+                min="0"
+                max="90"
+                placeholder="Örn: 82.50"
+                value={targetNetLgs}
+                onChange={(e) => setTargetNetLgs(e.target.value)}
+              />
+              <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>
+                LGS puanı değildir, katsayılı toplam nettir (en fazla 90).
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: track ? '1fr 1fr' : '1fr', gap: 12 }}>
+              <div className="field">
+                <label>Hedef TYT Neti</label>
+                <input
+                  type="number"
+                  step="0.25"
+                  min="0"
+                  max="120"
+                  placeholder="Örn: 95.00"
+                  value={targetNetTyt}
+                  onChange={(e) => setTargetNetTyt(e.target.value)}
+                />
+                <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>
+                  Maksimum 120 net.
+                </span>
+              </div>
+              {track && (
+                <div className="field">
+                  <label>Hedef AYT Neti</label>
+                  <input
+                    type="number"
+                    step="0.25"
+                    min="0"
+                    max="80"
+                    placeholder="Örn: 65.00"
+                    value={targetNetAyt}
+                    onChange={(e) => setTargetNetAyt(e.target.value)}
+                  />
+                  <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>
+                    Maksimum 80 net.
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Bu bir erişim kararı — sıradan bir alan gibi görünmemeli:
               işaretlenirse konu/program/rapor verisi kurumun geri kalanına kapanır. */}
