@@ -42,7 +42,7 @@ interface NavItem {
 }
 
 const MAIN_NAV_ITEMS: NavItem[] = [
-  { to: '/panel', label: 'Ana Sayfa', icon: House, permission: 'panel.view', color: '#8F86E0' },
+  { to: '/panel', label: 'Ana Sayfa', icon: House, permission: 'panel.view', color: '#3FB6CC' },
   {
     to: '/ogrenciler', label: 'Öğrenciler', icon: Users, permission: 'students.view', color: '#6E63C9',
     badge: (s) => (s.students.totalActive ? { n: s.students.totalActive, title: 'Aktif öğrenci' } : null),
@@ -51,7 +51,7 @@ const MAIN_NAV_ITEMS: NavItem[] = [
     to: '/denemeler', label: 'Denemeler', icon: ClipboardList, permission: 'exams.view', color: '#3B6FE0',
     badge: (s) => (s.exams.withoutTopicsCount ? { n: s.exams.withoutTopicsCount, hot: true, title: 'Konusu girilmemiş deneme' } : null),
   },
-  { to: '/konular', label: 'Konular', icon: Layers, permission: 'topics.view', color: '#1D8FA6' },
+  { to: '/konular', label: 'Konular', icon: Layers, permission: 'topics.view', color: 'var(--m-kon)' },
   { to: '/program', label: 'Program', icon: Calendar, permission: 'program.view', color: '#2E9F63' },
   {
     to: '/devamsizlik', label: 'Devamsızlık', icon: UserX, permission: 'attendance.view', color: '#E2832E',

@@ -20,6 +20,9 @@ import { useAuth } from '../contexts/AuthContext'
 import { useHomeSummary } from '../contexts/homeSummaryContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { DAYS } from '../lib/weeks'
+
+/** DAYS[i].slice(0, 3) Pazartesi/Pazar ve Cuma/Cumartesi'yi aynı yazıyordu. */
+const DAY_SHORT = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
 import {
   getIsoDayIndex,
   type AttentionReason,
@@ -276,7 +279,8 @@ function WeekCard({ program }: { program: HomeSummary['program'] }) {
   const today = getIsoDayIndex(new Date())
   const { toDate, byDay, lastWeekSameDayPct } = program
   const hasPlan = program.thisWeekTotalTasks > 0
-  const diff = hasPlan && toDate.planned > 0 && lastWeekSameDayPct != null ? toDate.pct - lastWeekSameDayPct : null
+  // Pazartesi günü yeni başlamışken geçen haftanın bitmiş Pazartesi'siyle kıyas yanıltıcı (%0 ▼100).
+  const diff = hasPlan && today > 0 && toDate.planned > 0 && lastWeekSameDayPct != null ? toDate.pct - lastWeekSameDayPct : null
   const monday = new Date()
   monday.setDate(monday.getDate() - today)
   const sunday = new Date(monday)
@@ -359,7 +363,7 @@ function WeekCard({ program }: { program: HomeSummary['program'] }) {
                   }
                 >
                   <div className="h-bar">{!future && <i style={{ '--h': `${h}%`, '--d': d.dayIndex } as CSSProperties} />}</div>
-                  <small>{isToday ? 'Bugün' : DAYS[d.dayIndex].slice(0, 3)}</small>
+                  <small>{isToday ? 'Bugün' : DAY_SHORT[d.dayIndex]}</small>
                   <em className="tnum">{future ? d.planned : `${d.done}/${d.planned}`}</em>
                 </div>
               )
@@ -583,7 +587,7 @@ function ModuleTiles({ s }: { s: HomeSummary }) {
                 {Array.from({ length: Math.min(n, 4) }).map((_, k) => (
                   <i key={k} />
                 ))}
-                <em>{DAYS[d].slice(0, 3)}</em>
+                <em>{DAY_SHORT[d]}</em>
               </span>
             ))}
           </div>

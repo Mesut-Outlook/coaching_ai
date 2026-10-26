@@ -94,7 +94,7 @@
 }
 .h-act:hover { border-color: var(--indigo-600); background: var(--indigo-050); }
 .h-act:active { transform: translateY(1px); }
-.h-act.is-primary { background: var(--indigo-600); border-color: var(--indigo-600); color: #fff; box-shadow: 0 6px 16px -8px var(--indigo-600); }
+.h-act.is-primary { background: var(--indigo-600); border-color: var(--indigo-600); color: var(--on-primary); box-shadow: 0 6px 16px -8px var(--indigo-600); }
 .h-act.is-primary:hover { background: var(--indigo-700); }
 .h-go { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: var(--ink-faint); transition: background .15s, color .15s; }
 .h-go:hover { background: var(--indigo-050); color: var(--indigo-600); }
