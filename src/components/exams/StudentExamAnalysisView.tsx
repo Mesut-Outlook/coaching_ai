@@ -17,6 +17,9 @@ import type {
   ExamType,
   ExamSubject,
   ExamTopic,
+  MockExamSection,
+  MockExamSubjectResult,
+  MockExamTopicResult,
 } from '../../types/database'
 import {
   generateExamReport,
@@ -44,6 +47,37 @@ export interface StudentExamAnalysisViewProps {
   initialExamType?: ExamType
   initialCatalog?: ExamReportCatalog
   initialExams?: RawExamRecord[]
+}
+
+async function fetchByExamIds<T>(
+  tableName: 'mock_exam_sections' | 'mock_exam_subject_results' | 'mock_exam_topic_results',
+  examIds: string[]
+): Promise<T[]> {
+  if (examIds.length === 0) return []
+  const chunkSize = 200
+  const chunks: string[][] = []
+  for (let i = 0; i < examIds.length; i += chunkSize) {
+    chunks.push(examIds.slice(i, i + chunkSize))
+  }
+
+  let allResults: T[] = []
+  for (const chunk of chunks) {
+    let from = 0
+    const pageSize = 1000
+    while (true) {
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .in('mock_exam_id', chunk)
+        .range(from, from + pageSize - 1)
+      if (error) throw error
+      if (!data || data.length === 0) break
+      allResults = allResults.concat(data as unknown as T[])
+      if (data.length < pageSize) break
+      from += pageSize
+    }
+  }
+  return allResults
 }
 
 export default function StudentExamAnalysisView({
@@ -120,16 +154,12 @@ export default function StudentExamAnalysisView({
 
         const examIds = examsData.map((e) => e.id)
 
-        // 3. Bölümler, Alt Ders Sonuçları ve Konu Sonuçları
-        const [secRes, subjResData, topResData] = await Promise.all([
-          supabase.from('mock_exam_sections').select('*').in('mock_exam_id', examIds),
-          supabase.from('mock_exam_subject_results').select('*').in('mock_exam_id', examIds),
-          supabase.from('mock_exam_topic_results').select('*').in('mock_exam_id', examIds),
+        // 3. Bölümler, Alt Ders Sonuçları ve Konu Sonuçları (1000 satır cap + 200 chunk korumalı)
+        const [sections, subjectResults, topicResults] = await Promise.all([
+          fetchByExamIds<MockExamSection>('mock_exam_sections', examIds),
+          fetchByExamIds<MockExamSubjectResult>('mock_exam_subject_results', examIds),
+          fetchByExamIds<MockExamTopicResult>('mock_exam_topic_results', examIds),
         ])
-
-        if (secRes.error) throw secRes.error
-        if (subjResData.error) throw subjResData.error
-        if (topResData.error) throw topResData.error
 
         // RawExamRecord formatında birleştir
         const fullRecords: RawExamRecord[] = examsData.map((exam) => ({
@@ -143,9 +173,9 @@ export default function StudentExamAnalysisView({
           percentile: exam.percentile,
           ranks: exam.ranks as any,
           coach_note: exam.coach_note,
-          sections: secRes.data?.filter((s) => s.mock_exam_id === exam.id) || [],
-          subject_results: subjResData.data?.filter((s) => s.mock_exam_id === exam.id) || [],
-          topic_results: topResData.data?.filter((t) => t.mock_exam_id === exam.id) || [],
+          sections: sections.filter((s) => s.mock_exam_id === exam.id),
+          subject_results: subjectResults.filter((s) => s.mock_exam_id === exam.id),
+          topic_results: topicResults.filter((t) => t.mock_exam_id === exam.id),
         }))
 
         if (isMounted) {
