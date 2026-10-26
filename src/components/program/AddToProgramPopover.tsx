@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { X, Calendar, Plus, Check } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { mondayOf, weekKey, DAYS } from '../../lib/weeks'
-import type { TaskType, TaskOriginKind, Topic, Subject } from '../../types/database'
+import { topicAppliesTo } from '../../lib/curriculum'
+import type { TaskType, TaskOriginKind, Topic, Subject, Student } from '../../types/database'
 
 export interface AddToProgramPopoverProps {
   studentId: string
@@ -64,6 +65,7 @@ export default function AddToProgramPopover({
 }: AddToProgramPopoverProps) {
   // Topic options state
   const [allTopics, setAllTopics] = useState<Array<Topic & { subjects: Subject | null }>>([])
+  const [studentGrade, setStudentGrade] = useState<Student['grade'] | null>(null)
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(topicId ?? null)
   const [linkedTopicIds, setLinkedTopicIds] = useState<number[]>([])
   const [loadingLinks, setLoadingLinks] = useState(false)
@@ -98,6 +100,13 @@ export default function AddToProgramPopover({
   // Load curriculum topics and recent sources
   useEffect(() => {
     if (!isSupabaseConfigured) return
+
+    supabase
+      .from('students')
+      .select('grade')
+      .eq('id', studentId)
+      .maybeSingle()
+      .then(({ data }) => setStudentGrade(data?.grade ?? null))
 
     supabase
       .from('topics')
@@ -172,6 +181,12 @@ export default function AddToProgramPopover({
   const currentTopic = useMemo(() => {
     return allTopics.find((t) => t.id === selectedTopicId)
   }, [allTopics, selectedTopicId])
+
+  // Öğrencinin müfredatına ait konular (YKS öğrencisine LGS konusu çıkmasın). Tek kaynak: curriculum.ts
+  const visibleTopics = useMemo(
+    () => (studentGrade ? allTopics.filter((t) => t.subjects && topicAppliesTo(t, t.subjects, studentGrade)) : allTopics),
+    [allTopics, studentGrade],
+  )
 
   // Total questions across days
   const totalQuestions = selectedDays.length * (questionCount || 0)
@@ -294,7 +309,7 @@ export default function AddToProgramPopover({
               {/* Varsa eşleşen (linked) konular önce listelenir */}
               {linkedTopicIds.length > 0 && (
                 <optgroup label="Eşleşen Müfredat Konuları (Önerilen)">
-                  {allTopics
+                  {visibleTopics
                     .filter((t) => linkedTopicIds.includes(t.id))
                     .map((t) => (
                       <option key={`linked-${t.id}`} value={t.id}>
@@ -304,7 +319,7 @@ export default function AddToProgramPopover({
                 </optgroup>
               )}
               <optgroup label="Tüm Müfredat Konuları">
-                {allTopics.map((t) => (
+                {visibleTopics.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name} ({t.subjects?.name || 'Ders'})
                   </option>
