@@ -14,11 +14,36 @@ import { subjectAppliesTo, topicAppliesTo } from '../lib/curriculum'
 import { openWhatsAppChat } from '../lib/whatsapp'
 
 const TASK_TYPE_CONFIG: Record<TaskType, { label: string; bg: string; color: string; border: string }> = {
-  konu: { label: 'Konu', bg: 'var(--surface-alt)', color: 'var(--ink-soft)', border: 'var(--border)' },
-  tekrar: { label: 'Tekrar', bg: 'rgba(59, 130, 246, 0.12)', color: '#2563eb', border: 'rgba(59, 130, 246, 0.25)' },
-  rutin: { label: 'Rutin', bg: 'rgba(16, 185, 129, 0.12)', color: '#059669', border: 'rgba(16, 185, 129, 0.25)' },
-  sureli_test: { label: 'Süreli Test', bg: 'rgba(245, 158, 11, 0.14)', color: '#d97706', border: 'rgba(245, 158, 11, 0.3)' },
-  deneme: { label: 'Deneme', bg: 'rgba(239, 68, 68, 0.12)', color: '#dc2626', border: 'rgba(239, 68, 68, 0.25)' },
+  konu: {
+    label: 'Konu',
+    bg: 'var(--measured-bg)',
+    color: 'var(--measured-text)',
+    border: 'color-mix(in srgb, var(--measured-text) 25%, transparent)',
+  },
+  tekrar: {
+    label: 'Tekrar',
+    bg: 'var(--teal-bg)',
+    color: 'var(--teal-text)',
+    border: 'color-mix(in srgb, var(--teal-text) 25%, transparent)',
+  },
+  rutin: {
+    label: 'Rutin',
+    bg: 'var(--success-bg)',
+    color: 'var(--success-text)',
+    border: 'color-mix(in srgb, var(--success-text) 25%, transparent)',
+  },
+  sureli_test: {
+    label: 'Süreli Test',
+    bg: 'var(--warning-bg)',
+    color: 'var(--warning-text)',
+    border: 'color-mix(in srgb, var(--warning-text) 25%, transparent)',
+  },
+  deneme: {
+    label: 'Deneme',
+    bg: 'var(--plum-bg)',
+    color: 'var(--plum-text)',
+    border: 'color-mix(in srgb, var(--plum-text) 25%, transparent)',
+  },
 }
 
 const ALL_TASK_TYPES: TaskType[] = ['konu', 'tekrar', 'rutin', 'sureli_test', 'deneme']
@@ -754,10 +779,10 @@ export default function ProgramPage() {
                                         padding: '3px 1px',
                                         fontSize: 9.5,
                                         fontWeight: isSel ? 700 : 500,
-                                        border: 'none',
+                                        border: isSel ? `1px solid ${cfg.border}` : '1px solid transparent',
                                         borderRadius: 4,
-                                        background: isSel ? (tt === 'deneme' ? '#dc2626' : 'var(--brand, #0D9488)') : 'transparent',
-                                        color: isSel ? '#fff' : 'var(--ink-soft)',
+                                        background: isSel ? cfg.bg : 'transparent',
+                                        color: isSel ? cfg.color : 'var(--ink-soft)',
                                         cursor: 'pointer',
                                         textAlign: 'center',
                                       }}
@@ -1014,10 +1039,10 @@ export default function ProgramPage() {
                                   padding: '4px 2px',
                                   fontSize: 10,
                                   fontWeight: isSel ? 700 : 500,
-                                  border: 'none',
+                                  border: isSel ? `1px solid ${cfg.border}` : '1px solid transparent',
                                   borderRadius: 5,
-                                  background: isSel ? (tt === 'deneme' ? '#dc2626' : 'var(--brand, #0D9488)') : 'transparent',
-                                  color: isSel ? '#fff' : 'var(--ink-soft)',
+                                  background: isSel ? cfg.bg : 'transparent',
+                                  color: isSel ? cfg.color : 'var(--ink-soft)',
                                   cursor: 'pointer',
                                   textAlign: 'center',
                                 }}
