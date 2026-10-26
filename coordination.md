@@ -2842,6 +2842,18 @@ Spec §8, taslak artboard 4-5.
 - 08:55 — ✅ **R1-1 doğrulandı (Docker):** stub → eski şema (main) → test verisi → yeni şema → yeni şema (tekrar). Hepsi çıkış kodu 0. Trigger false→true dolu ✓, true→false null ✓. Sonuç constraint'i 43>40'ı reddetti ✓, geçerli 40'ı kabul etti ✓. `task_type` check ✓, is_exam→deneme backfill ✓, `exam_calendar` RLS açık + 2 policy ✓. `portal_dashboard` kolonları tek tek seçiyor, D/Y/B öğrenciye gitmiyor ✓.
   `raporlar-r1` main'e merge edildi ve **canlıda** (`d5cc593`; yalnız tipler + schema.sql, ekran değişmedi). **SQL'i kullanıcı Supabase'de çalıştıracak**, "çalıştırdım" deyince canlıda doğrulayacağım. Bu sırada R1-2/3/4 UI'ına `raporlar-r1` branch'inde devam edebilirsin (önce `git merge main`).
 - 08:55 — Konsept menüsü artık gold tonunda (kullanıcı isteği), canlıda.
+- 09:05 — ✅ **R1-1 CANLI VERİTABANINDA.** Kullanıcı SQL'i çalıştırdı. Canlıda okuyarak doğruladım: `weekly_tasks`'ın 8 yeni kolonu ✓, `students` hedef net kolonları ✓, `exam_calendar` (boş, anon'a satır vermiyor) ✓. is_exam 0 = deneme türü 0 ✓. **R1-2 / R1-3 / R1-4'e canlı test yapabilirsin.** Canlı test kuralı: yalnız Test Test öğrencisinde, değerler önceden günlüğe yazılarak; bitince silinir. Not: trigger fonksiyonu schema.sql'de artık `$fn$` ile tırnaklı. Kullanıcıya verilen SQL'de `$$` kopyalanırken kaybolmuştu.
+- 09:15 — 🛠 Opus `ExamReportForm.tsx`'e dokundu (canlıda): seçmeli ders kutusu (Din Kültürü) satırı genişletip Net/Başarı sütununu kartın dışına itiyordu. Sol gruba `minWidth: 0`, kutuya `width: 112`, sayı grubuna `flexShrink: 0` eklendi. R1-4'te bu dosyaya dokunacaksan önce `git merge main` yap.
+- 09:25 — ✅ **R1-2 doğrulandı** (`7915420`, ayrı worktree): test:types ✓, lint 28, build ✓, home-summary ✓. "92,50 net" düzeltmesi de ✓. Akış doğru: sonuç girişi yalnız tamamlanan görevde, D+Y+B ≤ soru, boş bırakınca null.
+  🔧 **Canlıya almadan önce tek düzeltme (R1-3'ün arasına sıkıştır, ~10 dk):** `TASK_TYPE_CONFIG` sabit hex kullanıyor (`#2563eb`, `#dc2626`…). Koyu temada okunmaz, petrol temayla da uyumsuz. Ayrıca **deneme = kırmızı**, "kritik" ile karışıyor. Token'a çevir:
+  - konu → `--measured-bg` / `--measured-text`
+  - tekrar → `--teal-bg` / `--teal-text`
+  - rutin → `--success-bg` / `--success-text`
+  - süreli test → `--warning-bg` / `--warning-text`
+  - deneme → `--plum-bg` / `--plum-text`
+  - border: `color-mix(in srgb, <text> 25%, transparent)`
+  Bitince günlüğe yaz. R1-2'yi canlıya ben alırım.
+  **Canlı test (R1-2):** Test Test'te bu haftaya 1 görev ekle: tür "Tekrar", kaynak "TEST kaynak", 20 soru. Tamamla, sonuç 12D/5Y/3B gir, kart rozetini kontrol et, sonra görevi sil. Değerleri günlüğe yaz.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
@@ -2858,3 +2870,5 @@ Spec §8, taslak artboard 4-5.
 - 08:00 | G2b/G4 | bitti | 985f757 & e5f89dd (main'de) | Düzeltmeler tamamlandı: .order('id') kararlı sıra (topics/subjects dahil) + getIsoDayIndex yerel gün assert'i (01:30 → 0) geçti; G3/E8 2025 kabulüne geçiliyor | yok | sıradaki kontrol ~08:15
 - 08:05 | G3/E8 | bekliyor | main | 2025 Ek Yerleştirme PDF'i ~/Downloads ve sistemde bulunamadı (yalnızca 2026 PDF mevcut); kullanıcıya PDF soruldu, "PDF bekleniyor" | 2025 PDF eksik | sıradaki kontrol ~08:20
 - 08:20 | R1-1 | bitti | 2ad24bb on raporlar-r1 | Ek yerleştirme bekletildi; R1-1 şema & tipler tamamlandı (28 tablo, 249 kolon, test:types/lint/build temiz); Opus Docker doğrulaması bekleniyor | SQL'i kullanıcı çalıştıracak | sıradaki kontrol ~08:35
+- 08:40 | R1-2 | başladı | f041ebb on raporlar-r1 | homeSummaryCore Türkçe net formatı (92,50 net) tamamlandı; main merge edildi; R1-2 ProgramPage görev türü/kaynak/koç sonuç girişi yapılıyor | yok | sıradaki kontrol ~08:55
+- 08:55 | R1-2 | bitti | 7915420 on raporlar-r1 | ProgramPage görev türü (5 seçenek), kaynak (<datalist>), koç sonuç girişi (D/Y/B modalı, kalan yardımcısı, validasyon) ve kart rozetleri tamamlandı; test:types/lint(28)/build temiz; R1-3 hedef net modal & profil başlığına geçiliyor | yok | sıradaki kontrol ~09:15

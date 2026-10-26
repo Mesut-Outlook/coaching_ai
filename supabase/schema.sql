@@ -2400,7 +2400,8 @@ update weekly_tasks set task_type = 'deneme' where is_exam and task_type = 'konu
 create or replace function trg_weekly_tasks_completed_at()
 returns trigger
 language plpgsql
-as $$
+-- $fn$: bazı arayüzler $$ çiftini matematik işareti sanıp siliyor (2026-10-26, SQL Editor'e kopyalarken).
+as $fn$
 begin
   if new.completed = true and (old.completed is null or old.completed = false) then
     new.completed_at = now();
@@ -2409,7 +2410,7 @@ begin
   end if;
   return new;
 end;
-$$;
+$fn$;
 
 drop trigger if exists trg_weekly_tasks_completed_at on weekly_tasks;
 create trigger trg_weekly_tasks_completed_at

@@ -1099,10 +1099,12 @@ export default function ExamReportForm({
                           <tr key={subj.id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
                             <td colSpan={7} style={{ padding: '8px 0' }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+                                {/* minWidth: 0 — seçmeli ders kutusu (ör. "Din Kültürü") daralabilsin; yoksa
+                                    satırı genişletip Net/Başarı sütunlarını kartın dışına itiyordu. */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
                                   {/* Seçmeli grup geçiş anahtarı */}
                                   {subj.choice_group ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
                                       <select
                                         value={choiceSelections[subj.choice_group] ?? subj.id}
                                         onChange={(e) =>
@@ -1111,7 +1113,7 @@ export default function ExamReportForm({
                                             [subj.choice_group!]: Number(e.target.value),
                                           }))
                                         }
-                                        style={{ fontSize: 12, padding: '3px 6px', fontWeight: 600 }}
+                                        style={{ fontSize: 12, padding: '3px 6px', fontWeight: 600, width: 112, maxWidth: '100%', minWidth: 0 }}
                                       >
                                         {catalogSubjects
                                           .filter((cs) => cs.choice_group === subj.choice_group)
@@ -1149,7 +1151,7 @@ export default function ExamReportForm({
                                   </button>
                                 </div>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                                   {/* Soru sayısı */}
                                   <input
                                     type="number"
