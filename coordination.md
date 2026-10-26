@@ -2703,6 +2703,29 @@ Spec §8, taslak artboard 4-5.
 
 ---
 
+## 🚧 RAPORLAR 2.0 · R3 + R4 + TEST VERİSİ (kullanıcı onayı 2026-10-26) — Opus planı, agy (10 alt ajan) uygular
+
+**Spec:** `docs/superpowers/specs/2026-10-26-raporlar-r3-r4-design.md`. Paketler, ajan başına dosya sahipliği ve kabul kuralları orada.
+**Kullanıcı talimatı:** "Tüm eksikleri tamamlat. agy 10 alt ajanla çalışsın, tüm yazılım işini bitirsin. Opus görselliğe baksın. Test öğrencilerinde her şey tam olsun, Eda neleri yapabileceğini bilsin."
+**Sınav tarihleri girildi:** YKS 2027-06-19, LGS 2027-06-06 (`exam_calendar`, canlı).
+
+| Paket | Ne | Durum |
+|---|---|---|
+| R3-0 | Şema: `duration_min`, `parent_summary_log`, `topic_weights`, `portal_dashboard`'a "Haftam" | **önce bu** |
+| R3-1 / R3-2 | B8 tekrar zamanı / B9 müdahale etkisi | R3-0 tiplerinden sonra paralel |
+| R3-3 / R3-4 | Öneri motoru A (liste) / B (taslak) | 〃 |
+| R3-5 / R3-6 | Öğrenci "Haftam" / veli haftalık özeti + WhatsApp | 〃 |
+| R4-1…R4-4 | Ağırlık CSV, kurum içi sıra, çalışma süresi, yanlış nedeni | 〃 |
+| T-1 | Test verisi script'i (yalnız 3 test öğrencisi; kuru çalışma varsayılan) | 〃, `--yaz` Opus + kullanıcı onayıyla |
+| G-1 | Eda rehberi + Yardım v0.29 | **Opus**, en sonda |
+
+**Kurallar:**
+- Branch `raporlar-r3`, worktree `../Coching_AI-r3`. Alt ajanlar aynı branch'te farklı dosyalarda, ya da kendi alt branch'lerinde çalışır; birleştirme agy'de.
+- `main` merge ve push **Opus**'ta.
+- R3-0 SQL'ini kullanıcıya **Opus** verir (`$fn$` tırnaklı).
+
+---
+
 ## 🌙 GECE PLANI — 2026-10-25 20:45 → 2026-10-26 08:00 (Opus planladı, kullanıcı talimatı)
 
 **Kullanıcının bu gece istedikleri:**
@@ -2936,6 +2959,8 @@ Spec §8, taslak artboard 4-5.
   Ardından **Test LGS** ile LGS kabulü: 3 LGS denemesi gir (değerleri günlüğe yaz), 360 Rapor'da yalnız LGS konuları, katsayılı net ve "LGS puanı değildir" görünmeli.
 - 12:50 — 🚀 **CANLIDA: `1a2383d` (R2-2b 6–10)** (bundle `index-CNDGNGln.js`). Bütün testler ✓. Görsel kontrol: matris bölgeleri 17/4/12/31 dağılıyor, hata profili çakışması gitmiş, B7 başlığı "YKS müfredatı (TYT + AYT)". **Açık kalan:** 11. hedef yolu bandı ve y ekseni hâlâ 120'nin üstüne (133) çıkıyor, bandı da `maxNet`'e kes. Sonra Test LGS ile LGS kabulü. **Günlüğe yazmadan commit atma.** Her commit'ten sonra bir satır yaz.
 - 13:05 — ✅ **`exam_topic_links` RLS canlıda düzeldi** (kullanıcı SQL'i çalıştırdı). Koç istemcisiyle: links 406 ✓, Test Test `topic_exam_measurements` 640 ✓. Konu Yeterlilik Haritası'nda deneme ortalamaları görünüyor (ör. Sözcük Anlamı Ort %55). "Programa ekle" eşleşen konuyu ★ ile seçili getiriyor. R2'deki karne→müfredat bağlantıları (B6/B7) artık gerçek veriyle çalışır.
+- 13:15 — 🚀 **CANLIDA: R2-2c madde 11** (`fc0f485`): hedef yolu bandı ve y ekseni 120'de kesiliyor ✓. Bütün testler ✓, lint 28. **R2 tamamen canlıda.** Sıradaki: Test LGS ile LGS kabulü (3 LGS denemesi → 360 Rapor'da LGS konuları, katsayılı net, "LGS puanı değildir").
+- 13:30 — ▶️ **agy: R3 + R4 + T-1 başla (10 alt ajan).** Spec `docs/superpowers/specs/2026-10-26-raporlar-r3-r4-design.md`, ajan/dosya tablosu orada. Önce R3-0 (şema + tipler). Bitince günlüğe yaz; Docker'da doğrulayıp kullanıcıya SQL'i ben vereceğim. Tipler commit'lenince diğer ajanlar paralel başlar. Ana sayfa/sidebar/tema dosyalarına dokunma (Opus). LGS kabulü (Test LGS) artık T-1'in içinde.
 
 ### 📒 agy durum günlüğü
 - 20:45 | G1 | başladı | main | G1 sayaç analizi ve düzeltme | yok | sıradaki kontrol ~21:15
