@@ -1589,7 +1589,7 @@ returns json
 language plpgsql
 security definer
 set search_path = public, pg_temp
-as $$
+as $fn$
 declare
   v_student_id uuid;
   v_role text;
@@ -1618,7 +1618,7 @@ begin
   end if;
   return json_build_object('ok', true);
 end;
-$$;
+$fn$;
 grant execute on function portal_set_task_completed(text, uuid, boolean) to anon, authenticated;
 
 create or replace function portal_add_exam(
@@ -2623,7 +2623,7 @@ where w.topic_id = t.id and w.subject_id is null;
 create or replace function trg_weekly_tasks_subject_id()
 returns trigger
 language plpgsql
-as $$
+as $fn$
 begin
   if NEW.topic_id is not null then
     select t.subject_id into NEW.subject_id
@@ -2632,7 +2632,7 @@ begin
   end if;
   return NEW;
 end;
-$$;
+$fn$;
 
 drop trigger if exists trg_weekly_tasks_subject_id on weekly_tasks;
 create trigger trg_weekly_tasks_subject_id
