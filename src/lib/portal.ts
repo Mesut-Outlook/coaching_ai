@@ -34,6 +34,9 @@ export type PortalTask = {
   completed: boolean
   label: string
   subject_name: string | null
+  start_time?: string | null
+  duration_min?: number | null
+  block_kind?: 'ders' | 'mola' | 'serbest'
 }
 
 export type PortalExamSection = {

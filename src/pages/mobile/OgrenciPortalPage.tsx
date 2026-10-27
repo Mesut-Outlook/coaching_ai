@@ -44,6 +44,18 @@ function formatDayMonth(d: Date): string {
   return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long' })
 }
 
+function formatPortalTimeRange(startTime?: string | null, durationMin?: number | null): string {
+  if (!startTime) return ''
+  const start = startTime.slice(0, 5)
+  if (!durationMin) return start
+  const parts = start.split(':')
+  const totalM = (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0) + durationMin
+  const endH = Math.floor(totalM / 60) % 24
+  const endM = totalM % 60
+  const end = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+  return `${start} – ${end}`
+}
+
 /** Bugünün gün indeksi (0=Pazartesi … 6=Pazar). */
 function todayDayIndex(): number {
   return (new Date().getDay() + 6) % 7
@@ -118,6 +130,7 @@ export default function OgrenciPortalPage() {
   }, [activeTab, examReportData, loadExamReport])
 
   async function toggleTaskCompleted(task: PortalTask) {
+    if (task.block_kind === 'mola' || task.block_kind === 'serbest') return
     const session = getPortalSession()
     if (!session || !data) return
 
@@ -125,7 +138,7 @@ export default function OgrenciPortalPage() {
     setActionError(null)
     // İyimser güncelleme — sunucu reddederse geri alınıyor.
     const updatedTasks = data.tasks.map((t) => (t.id === task.id ? { ...t, completed: next } : t))
-    const updatedCompletedTasks = updatedTasks.filter((t) => t.completed).length
+    const updatedCompletedTasks = updatedTasks.filter((t) => (!t.block_kind || t.block_kind === 'ders') && t.completed).length
 
     setData({
       ...data,
@@ -148,7 +161,7 @@ export default function OgrenciPortalPage() {
               my_week: prev.my_week
                 ? {
                     ...prev.my_week,
-                    completed_tasks: prev.tasks.filter((t) => (t.id === task.id ? !next : t.completed)).length,
+                    completed_tasks: prev.tasks.filter((t) => (!t.block_kind || t.block_kind === 'ders') && (t.id === task.id ? !next : t.completed)).length,
                   }
                 : undefined,
             }
@@ -187,8 +200,9 @@ export default function OgrenciPortalPage() {
 
   const theme = PORTAL_THEME.ogrenci
   const { student, tasks, exams, week_start, is_current_week, my_week } = data
-  const completedCount = my_week?.completed_tasks ?? tasks.filter((t) => t.completed).length
-  const totalCount = my_week?.total_tasks ?? tasks.length
+  const dersTasks = tasks.filter((t) => !t.block_kind || t.block_kind === 'ders')
+  const completedCount = my_week?.completed_tasks ?? dersTasks.filter((t) => t.completed).length
+  const totalCount = my_week?.total_tasks ?? dersTasks.length
   const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
   const today = todayDayIndex()
   const curriculum = gradeCurriculum(student.grade)
@@ -203,11 +217,11 @@ export default function OgrenciPortalPage() {
     return a - b
   })
 
-  // Sıradaki odak listesi: my_week.focus_topics varsa o, yoksa tamamlanmamış görev etiketleri
+  // Sıradaki odak listesi: my_week.focus_topics varsa o, yoksa tamamlanmamış ders görevi etiketleri
   const focusTopics =
     my_week?.focus_topics && my_week.focus_topics.length > 0
       ? my_week.focus_topics
-      : tasks.filter((t) => !t.completed).map((t) => t.label)
+      : dersTasks.filter((t) => !t.completed).map((t) => t.label)
 
   return (
     <div className="portal-page" style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: 90 }}>
@@ -575,7 +589,7 @@ export default function OgrenciPortalPage() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700 }}>Program Görevlerim</h3>
-              <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{tasks.length} Görev</span>
+              <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{dersTasks.length} Ders Görevi</span>
             </div>
 
             {tasks.length === 0 ? (
@@ -586,7 +600,15 @@ export default function OgrenciPortalPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                 {days.map((dayIndex) => {
                   const isToday = is_current_week && dayIndex === today
-                  const dayTasks = tasks.filter((t) => t.day_index === dayIndex)
+                  const dayTasks = tasks
+                    .filter((t) => t.day_index === dayIndex)
+                    .sort((a, b) => {
+                      if (a.start_time && b.start_time) return a.start_time.localeCompare(b.start_time)
+                      if (a.start_time) return -1
+                      if (b.start_time) return 1
+                      return 0
+                    })
+
                   return (
                     <div key={dayIndex}>
                       <div
@@ -614,50 +636,132 @@ export default function OgrenciPortalPage() {
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {dayTasks.map((t) => (
-                          <button
-                            key={t.id}
-                            type="button"
-                            onClick={() => toggleTaskCompleted(t)}
-                            style={{
-                              backgroundColor: '#ffffff',
-                              borderRadius: 14,
-                              padding: '14px 16px',
-                              border: isToday ? `1px solid ${theme.accent}` : '1px solid var(--border)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 14,
-                              cursor: 'pointer',
-                              textAlign: 'left',
-                              width: '100%',
-                              opacity: t.completed ? 0.65 : 1,
-                            }}
-                          >
-                            {t.completed ? (
-                              <CheckCircle2 size={24} style={{ color: '#10b981', flexShrink: 0 }} />
-                            ) : (
-                              <Circle size={24} style={{ color: '#cbd5e1', flexShrink: 0 }} />
-                            )}
+                        {dayTasks.map((t) => {
+                          const timeRange = formatPortalTimeRange(t.start_time, t.duration_min)
 
-                            <div style={{ flex: 1, minWidth: 0 }}>
+                          // 1) Mola (Gri tek satır, onay kutusu yok)
+                          if (t.block_kind === 'mola') {
+                            return (
                               <div
+                                key={t.id}
                                 style={{
-                                  fontSize: 14,
-                                  fontWeight: 600,
-                                  color: 'var(--ink)',
-                                  textDecoration: t.completed ? 'line-through' : 'none',
+                                  backgroundColor: '#f1f5f9',
+                                  borderRadius: 12,
+                                  padding: '8px 12px',
+                                  fontSize: 12,
+                                  color: '#64748b',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: 8,
                                 }}
                               >
-                                {t.label}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  {timeRange && (
+                                    <span style={{ fontWeight: 700, color: '#475569', fontFamily: 'monospace', fontSize: 11 }}>
+                                      {timeRange}
+                                    </span>
+                                  )}
+                                  <span>☕ {t.label || 'Mola'} · {t.duration_min || 10} dk</span>
+                                </div>
                               </div>
-                              <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                {t.subject_name && <span>{t.subject_name}</span>}
-                                {t.question_count > 0 && <span>Hedef: {t.question_count} soru</span>}
-                                {t.is_exam && <span style={{ color: theme.accentStrong, fontWeight: 700 }}>Deneme</span>}
+                            )
+                          }
+
+                          // 2) Serbest (Kesikli nötr kart, onay kutusu yok)
+                          if (t.block_kind === 'serbest') {
+                            return (
+                              <div
+                                key={t.id}
+                                style={{
+                                  backgroundColor: '#f8fafc',
+                                  borderRadius: 14,
+                                  padding: '12px 14px',
+                                  border: '1px dashed #cbd5e1',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: 10,
+                                }}
+                              >
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  {timeRange && (
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: theme.accentStrong, fontFamily: 'monospace', marginBottom: 2 }}>
+                                      {timeRange}
+                                    </div>
+                                  )}
+                                  <div style={{ fontSize: 13.5, fontWeight: 600, color: '#334155' }}>
+                                    📌 {t.label}
+                                  </div>
+                                </div>
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    padding: '2px 8px',
+                                    borderRadius: 6,
+                                    backgroundColor: '#e2e8f0',
+                                    color: '#475569',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  Serbest
+                                </span>
                               </div>
-                            </div>
-                          </button>
-                        ))}
+                            )
+                          }
+
+                          // 3) Ders Bloğu (Onay kutulu, saat aralıklı)
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => toggleTaskCompleted(t)}
+                              style={{
+                                backgroundColor: '#ffffff',
+                                borderRadius: 14,
+                                padding: '14px 16px',
+                                border: isToday ? `1px solid ${theme.accent}` : '1px solid var(--border)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 14,
+                                cursor: 'pointer',
+                                textAlign: 'left',
+                                width: '100%',
+                                opacity: t.completed ? 0.65 : 1,
+                              }}
+                            >
+                              {t.completed ? (
+                                <CheckCircle2 size={24} style={{ color: '#10b981', flexShrink: 0 }} />
+                              ) : (
+                                <Circle size={24} style={{ color: '#cbd5e1', flexShrink: 0 }} />
+                              )}
+
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                {timeRange && (
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: theme.accentStrong, fontFamily: 'monospace', marginBottom: 2 }}>
+                                    {timeRange}
+                                  </div>
+                                )}
+                                <div
+                                  style={{
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    color: 'var(--ink)',
+                                    textDecoration: t.completed ? 'line-through' : 'none',
+                                  }}
+                                >
+                                  {t.label}
+                                </div>
+                                <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                  {t.subject_name && <span>{t.subject_name}</span>}
+                                  {t.question_count > 0 && <span>Hedef: {t.question_count} soru</span>}
+                                  {t.is_exam && <span style={{ color: theme.accentStrong, fontWeight: 700 }}>Deneme</span>}
+                                </div>
+                              </div>
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                   )
