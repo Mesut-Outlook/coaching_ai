@@ -10,6 +10,7 @@ import ExamShareButtons from '../components/exams/ExamShareButtons'
 import ExamReportForm from '../components/exams/ExamReportForm'
 import CoachExamsOverviewTab from '../components/exams/CoachExamsOverviewTab'
 import type { Student, MockExam, MockExamSection } from '../types/database'
+import { formatNetTr } from '../lib/homeSummaryCore'
 
 function chunkArray<T>(items: readonly T[], chunkSize = 200): T[][] {
   const chunks: T[][] = []
@@ -443,14 +444,14 @@ export default function DenemelerPage() {
                               {e.exam_date} · {e.exam_type} {e.publisher ? `· ${e.publisher}` : ''}
                             </div>
                             <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 4 }}>
-                              {e.sectionsList.map((s) => `${s.section_name}: ${s.net}`).join(' · ')}
+                              {e.sectionsList.map((s) => `${s.section_name}: ${formatNetTr(Number(s.net))}`).join(' · ')}
                             </div>
                           </div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                           <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--indigo-600)' }}>{e.totalNet}</div>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--indigo-600)' }}>{formatNetTr(e.totalNet)}</div>
                             <div style={{ fontSize: 9.5, color: 'var(--ink-faint)' }}>toplam net</div>
                           </div>
 
@@ -660,10 +661,10 @@ export default function DenemelerPage() {
                               whiteSpace: 'nowrap',
                             }}
                             title={e.sectionsList
-                              .map((s) => `${s.section_name}: ${s.correct_count}D ${s.wrong_count}Y (${s.net} net)`)
+                              .map((s) => `${s.section_name}: ${s.correct_count}D ${s.wrong_count}Y (${formatNetTr(Number(s.net))} net)`)
                               .join(' · ')}
                           >
-                            {e.sectionsList.map((s) => `${s.section_name}: ${s.net}`).join(' · ')}
+                            {e.sectionsList.map((s) => `${s.section_name}: ${formatNetTr(Number(s.net))}`).join(' · ')}
                           </td>
                           <td
                             style={{
@@ -674,7 +675,7 @@ export default function DenemelerPage() {
                               fontSize: 14,
                             }}
                           >
-                            {e.totalNet}
+                            {formatNetTr(e.totalNet)}
                           </td>
                           <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                             <div style={{ display: 'flex', justifyContent: 'center', gap: 6, alignItems: 'center' }}>

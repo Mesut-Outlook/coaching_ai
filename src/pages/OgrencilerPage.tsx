@@ -24,6 +24,7 @@ import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Top
 import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../lib/attendance'
 import { topicAppliesTo, gradeCurriculum } from '../lib/curriculum'
 import { weightedNet } from '../lib/examSections'
+import { formatNetTr } from '../lib/homeSummaryCore'
 
 type ActiveTab = 'overview' | 'report' | 'exams' | 'analysis' | 'subjects' | 'tasks' | 'attendance'
 
@@ -932,15 +933,15 @@ export default function OgrencilerPage() {
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4 }}>
                   {studentCurriculum === 'LGS' ? (
-                    <>{stats.averageLgsNet} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>LGS</span></>
+                    <>{formatNetTr(stats.averageLgsNet)} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>LGS</span></>
                   ) : (
-                    <>{stats.averageTytNet} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>TYT</span> / {stats.averageAytNet} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>AYT</span></>
+                    <>{formatNetTr(stats.averageTytNet)} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>TYT</span> / {formatNetTr(stats.averageAytNet)} <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-soft)' }}>AYT</span></>
                   )}
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 }}>
                   Son 5 deneme ortalaması
                   {studentCurriculum === 'LGS' && stats.lgsExams.length > 0 && (
-                    <> · Ağırlıklı net: <strong>{stats.averageLgsWeightedNet}</strong> (LGS puanı değildir)</>
+                    <> · Ağırlıklı net: <strong>{formatNetTr(stats.averageLgsWeightedNet)}</strong> (LGS puanı değildir)</>
                   )}
                 </div>
               </div>
@@ -972,7 +973,7 @@ export default function OgrencilerPage() {
                     <div style={{ height: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
                       {stats.lgsExams.map((e) => (
                         <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--plum-text)' }}>{e.totalNet}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--plum-text)' }}>{formatNetTr(e.totalNet)}</span>
                           <div style={{ width: 14, height: `${(e.totalNet / 90) * 80}px`, background: 'linear-gradient(to top, var(--plum), #dda8e8)', borderRadius: '4px 4px 0 0' }}></div>
                           <span style={{ fontSize: 9.5, color: 'var(--ink-faint)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 60 }} title={e.exam.name}>
                             {e.exam.publisher || 'Deneme'}
@@ -995,7 +996,7 @@ export default function OgrencilerPage() {
                       <div style={{ height: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
                         {stats.tytExams.map((e) => (
                           <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--indigo-600)' }}>{e.totalNet}</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--indigo-600)' }}>{formatNetTr(e.totalNet)}</span>
                             <div style={{ width: 14, height: `${(e.totalNet / 120) * 80}px`, background: 'linear-gradient(to top, var(--indigo-500), var(--indigo-500))', borderRadius: '4px 4px 0 0' }}></div>
                             <span style={{ fontSize: 9.5, color: 'var(--ink-faint)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 60 }} title={e.exam.name}>
                               {e.exam.publisher || 'Deneme'}
@@ -1017,7 +1018,7 @@ export default function OgrencilerPage() {
                       <div style={{ height: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
                         {stats.aytExams.map((e) => (
                           <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal-text)' }}>{e.totalNet}</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal-text)' }}>{formatNetTr(e.totalNet)}</span>
                             <div style={{ width: 14, height: `${(e.totalNet / 80) * 80}px`, background: 'linear-gradient(to top, var(--teal), #7fd8e8)', borderRadius: '4px 4px 0 0' }}></div>
                             <span style={{ fontSize: 9.5, color: 'var(--ink-faint)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 60 }} title={e.exam.name}>
                               {e.exam.publisher || 'Deneme'}
@@ -1115,10 +1116,10 @@ export default function OgrencilerPage() {
                             </span>
                           </td>
                           <td style={{ padding: '12px', color: 'var(--ink-faint)' }}>
-                            {examSecs.map(s => `${s.section_name}: ${s.net}`).join(' · ')}
+                            {examSecs.map(s => `${s.section_name}: ${formatNetTr(Number(s.net))}`).join(' · ')}
                           </td>
                           <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: 'var(--indigo-600)', fontSize: 14 }}>
-                            {totalNet}
+                            {formatNetTr(totalNet)}
                           </td>
                         </tr>
                         {isOpen && (

@@ -30,6 +30,7 @@ import {
   type PortalExamReportData,
   type PortalTask,
 } from '../../lib/portal'
+import { formatNetTr } from '../../lib/homeSummaryCore'
 
 const DAY_NAMES = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
 
@@ -329,7 +330,7 @@ export default function OgrenciPortalPage() {
                         <span style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600 }}>
                           Son Net:{' '}
                           <strong style={{ color: 'var(--ink)', fontSize: 14 }}>
-                            {latestNet !== null ? Math.round(latestNet * 10) / 10 : '—'}
+                            {latestNet !== null ? formatNetTr(latestNet) : '—'}
                           </strong>
                           {isLgsExam && (
                             <span style={{ fontSize: 10, color: 'var(--ink-faint)', marginLeft: 4 }}>
@@ -340,7 +341,7 @@ export default function OgrenciPortalPage() {
                         <span style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600 }}>
                           Hedef:{' '}
                           <strong style={{ color: theme.accentStrong, fontSize: 14 }}>
-                            {targetNet} Net
+                            {formatNetTr(targetNet)} Net
                           </strong>
                         </span>
                       </div>
@@ -362,7 +363,7 @@ export default function OgrenciPortalPage() {
                           <span style={{ color: '#10b981', fontWeight: 700 }}>🎉 Hedefe Ulaşıldı!</span>
                         ) : (
                           <span>
-                            Hedefe <strong>{remainingNet}</strong> net kaldı
+                            Hedefe <strong>{formatNetTr(remainingNet)}</strong> net kaldı
                           </span>
                         )}
                       </div>
@@ -883,7 +884,7 @@ export default function OgrenciPortalPage() {
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
                             <div style={{ fontSize: 18, fontWeight: 800, color: theme.accentStrong, fontVariantNumeric: 'tabular-nums' }}>
-                              {Math.round(Number(e.total_net) * 100) / 100}
+                              {formatNetTr(Number(e.total_net))}
                             </div>
                             <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>net</div>
                           </div>
@@ -1109,7 +1110,7 @@ function AddExamModal({
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                     <span style={{ fontSize: 13, fontWeight: 700 }}>{s.name}</span>
                     <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
-                      {s.max} soru{s.katsayi ? ` · katsayı ${s.katsayi}` : ''} · net <strong style={{ color: 'var(--indigo-600)' }}>{Math.round(net * 100) / 100}</strong>
+                      {s.max} soru{s.katsayi ? ` · katsayı ${s.katsayi}` : ''} · net <strong style={{ color: 'var(--indigo-600)' }}>{formatNetTr(net)}</strong>
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>

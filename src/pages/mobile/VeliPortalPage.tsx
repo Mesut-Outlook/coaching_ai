@@ -22,6 +22,7 @@ import {
   type PortalDashboard,
   type PortalExamReportData,
 } from '../../lib/portal'
+import { formatNetTr } from '../../lib/homeSummaryCore'
 
 const card = {
   backgroundColor: 'var(--surface)',
@@ -310,7 +311,7 @@ export default function VeliPortalPage() {
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
                             <div style={{ fontSize: 18, fontWeight: 800, color: theme.accentStrong, fontVariantNumeric: 'tabular-nums' }}>
-                              {Math.round(Number(e.total_net) * 100) / 100}
+                              {formatNetTr(Number(e.total_net))}
                             </div>
                             <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>net</div>
                           </div>

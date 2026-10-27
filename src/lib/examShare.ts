@@ -1,5 +1,6 @@
 import type { MockExamSection, MockExam } from '../types/database'
 import { weightedNet } from './examSections'
+import { formatNetTr } from './homeSummaryCore'
 
 // Deneme sonucunun WhatsApp mesajı. WhatsApp kalın metni *yıldız* ile gösterir.
 // Devamsızlık bildirimleriyle aynı ton: öğrenciye doğrudan, veliye bilgilendirme.
@@ -12,8 +13,7 @@ function fmtDateTr(iso: string) {
 }
 
 function fmtNet(n: number) {
-  const rounded = Math.round(Number(n) * 100) / 100
-  return String(rounded)
+  return formatNetTr(Number(n))
 }
 
 export function buildExamResultMessage(

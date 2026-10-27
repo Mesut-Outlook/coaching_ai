@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { TargetTrajectoryData } from '../../lib/report360Core'
 import { TrendingUp, Calendar, AlertCircle } from 'lucide-react'
+import { formatNetTr } from '../../lib/homeSummaryCore'
 
 function formatDateShortTr(dateStr: string): string {
   if (!dateStr) return ''
@@ -83,7 +84,7 @@ export default function TargetTrajectoryChart({
             Tahmin için en az 3 deneme gereklidir (şu an {examPoints.length}).
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 4 }}>
-            Mevcut denemeler: {examPoints.map((e) => `${e.name}: ${e.net} ${unit}`).join(' · ')}
+            Mevcut denemeler: {examPoints.map((e) => `${e.name}: ${formatNetTr(e.net)} ${unit}`).join(' · ')}
           </div>
         </div>
       </div>
@@ -264,14 +265,15 @@ export default function TargetTrajectoryChart({
                 strokeDasharray="4 4"
               />
               <text
-                x={width - padRight + 4}
-                y={targetLineY + 3.5}
+                x={width - padRight - 4}
+                y={targetLineY - 5}
+                textAnchor="end"
                 fontSize={10}
                 fontWeight={700}
                 fill="var(--teal-text, #0D9488)"
                 fontFamily="system-ui, sans-serif"
               >
-                Hedef {targetNet}
+                Hedef {formatNetTr(targetNet ?? 0)}
               </text>
             </g>
           )}
@@ -331,7 +333,7 @@ export default function TargetTrajectoryChart({
                   stroke="var(--indigo-600)"
                   strokeWidth={2}
                 >
-                  <title>{`${p.name} (${p.date}): ${p.net} ${unit}`}</title>
+                  <title>{`${p.name} (${p.date}): ${formatNetTr(p.net)} ${unit}`}</title>
                 </circle>
                 {isHovered && (
                   <text
@@ -343,7 +345,7 @@ export default function TargetTrajectoryChart({
                     textAnchor="middle"
                     fontFamily="system-ui, sans-serif"
                   >
-                    {p.net}
+                    {formatNetTr(p.net)}
                   </text>
                 )}
               </g>

@@ -414,6 +414,34 @@ assert.equal(netDetail.last, 73)
 assert.equal(netDetail.delta, -7)
 assert.equal(netDetail.examType, 'TYT')
 
+// LGS net düşüşü katsayılı netle hesaplanır (ham: 20 -> 18 = -2; Türkçe katsayısı 4 => -8)
+{
+  const lgsEx = (id: string, date: string, net: number): EnrichedMockExam => ({
+    ...mockExams[0],
+    id,
+    exam_type: 'LGS',
+    exam_date: date,
+    created_at: `${date}T12:00:00Z`,
+    totalNet: net,
+    sectionsList: [{ id: `sec-${id}`, mock_exam_id: id, section_name: 'Türkçe', max_questions: 20, correct_count: 0, wrong_count: 0, blank_count: 0, wrong_penalty: 3, net }],
+  })
+  const lgsSummary = buildHomeSummary({
+    students: mockStudents,
+    coachDecisions: [],
+    mockExams: [lgsEx('lgs-1', '2026-10-10', 10), lgsEx('lgs-2', '2026-10-21', 8)],
+    weeklyTasks: [],
+    lastWeekTasks: [],
+    attendanceRecords: [],
+    topics: mockTopics,
+    subjects: mockSubjects,
+    referenceDate: REF_DATE,
+  })
+  const lgsR = lgsSummary.attention.flatMap((a) => a.reasons).find((r) => r.kind === 'net_dususu')
+  assert.ok(lgsR, 'LGS katsayılı düşüş (-8) eşiği geçmeli')
+  assert.equal((lgsR.detail as { delta: number }).delta, -8)
+  assert.ok(lgsR.label.includes('8 net'))
+}
+
 // Ayşe Devamsızlık detail: { last14Count: 2, notOpened: true }
 const ayseAtt = summary.attention.find((a) => a.studentId === 's-ayse')
 assert.ok(ayseAtt, 'Ayşe ilgi listesinde olmalı')
@@ -511,12 +539,12 @@ assert.ok(
   'Koç kararı akışta bulunmalı (G2b c)'
 )
 // Deneme olayı Türkçe formatlı (virgüllü, 2 ondalık basamak) olmalı
-assert.equal(formatNetTr(92.5), '92,50', 'formatNetTr(92.5) Türkçe biçimde 92,50 dönmeli')
+assert.equal(formatNetTr(92.5), '92,5', 'formatNetTr(92.5) Türkçe biçimde 92,5 dönmeli')
 const examAct = summary.recent.find((r) => r.kind === 'exam')
 assert.ok(examAct, 'Deneme aktivitesi akışta bulunmalı')
 assert.ok(
-  examAct.text.includes('73,00 net'),
-  `Deneme aktivitesi Türkçe net formatı ("73,00 net") içermeli, gelen: "${examAct.text}"`
+  examAct.text.includes('73 net'),
+  `Deneme aktivitesi Türkçe net formatı ("73 net") içermeli, gelen: "${examAct.text}"`
 )
 console.log('✓ 7. Son hareketler akışı (görev hariç, karar dahil, Türkçe net formatlı) başarıyla doğrulandı.')
 

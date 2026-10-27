@@ -1,6 +1,7 @@
 import { fmtWeekRange } from './weeks'
 import type { AttendanceRecord, MockExam, Student, WeeklyTask } from '../types/database'
 import type { PortalAttendance, PortalExam, PortalStudent, PortalTask } from './portal'
+import { formatNetTr } from './homeSummaryCore'
 
 export type ParentSupportTipInput = {
   completionPct: number
@@ -162,13 +163,12 @@ export function buildParentSummaryWhatsAppMessage(params: {
 
   let examLine = ''
   if (stats.latestExamName && stats.latestExamNet != null) {
-    const roundedNet = Math.round(stats.latestExamNet * 100) / 100
-    examLine = `\n📊 *Son Deneme:* ${stats.latestExamName} (${stats.latestExamType ?? 'Deneme'}) — *${roundedNet} Net*`
+    examLine = `\n📊 *Son Deneme:* ${stats.latestExamName} (${stats.latestExamType ?? 'Deneme'}) — *${formatNetTr(stats.latestExamNet)} Net*`
     if (stats.targetNet != null) {
-      examLine += ` (Hedef: ${stats.targetNet})`
+      examLine += ` (Hedef: ${formatNetTr(stats.targetNet)})`
     }
   } else if (stats.targetNet != null) {
-    examLine = `\n🎯 *Hedef Net:* ${stats.targetNet}`
+    examLine = `\n🎯 *Hedef Net:* ${formatNetTr(stats.targetNet)}`
   }
 
   let attendanceLine = ''
