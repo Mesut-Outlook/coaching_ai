@@ -199,6 +199,9 @@ export type _insWeeklyTasks = Expect<
     | 'origin_kind'
     | 'origin_exam_topic_id'
     | 'duration_min'
+    | 'start_time'
+    | 'block_kind'
+    | 'subject_id'
   >
 >
 export type _insAttendance = Expect<

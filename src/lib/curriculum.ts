@@ -41,3 +41,11 @@ export function topicAppliesTo(
   if (!subjectAppliesTo(subject, grade)) return false
   return topic.grades.length === 0 || topic.grades.includes(grade)
 }
+
+/**
+ * YKS dersinin sınav grubu (TYT | AYT).
+ * Kural: Ad 'AYT ' ile başlıyorsa AYT, değilse TYT.
+ */
+export function subjectExamGroup(subject: Pick<Subject, 'name'>): 'TYT' | 'AYT' {
+  return subject.name.startsWith('AYT ') ? 'AYT' : 'TYT'
+}

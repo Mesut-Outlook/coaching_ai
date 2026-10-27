@@ -250,11 +250,12 @@ export async function loadReport360Data(
     decided_at: d.decided_at,
   }))
 
-  // 8. Haftalık Görevler (weekly_tasks)
+  // 8. Haftalık Görevler (weekly_tasks) - Yalnızca ders blokları
   const { data: tasksData } = await supabase
     .from('weekly_tasks')
-    .select('id, topic_id, task_type, completed, completed_at, created_at, correct_count, wrong_count, blank_count, question_count, origin_kind, duration_min')
+    .select('id, topic_id, task_type, completed, completed_at, created_at, correct_count, wrong_count, blank_count, question_count, origin_kind, duration_min, block_kind')
     .eq('student_id', studentId)
+    .eq('block_kind', 'ders')
     .order('created_at', { ascending: false })
 
   const rawTasks: RawTaskItem[] = (tasksData || []).map((t) => ({
@@ -270,6 +271,7 @@ export async function loadReport360Data(
     question_count: t.question_count,
     origin_kind: t.origin_kind ?? null,
     duration_min: t.duration_min ?? null,
+    block_kind: t.block_kind,
   }))
 
   // 8b. Konu Ölçüm Geçmişi (topic_exam_measurements + topic_measurements)

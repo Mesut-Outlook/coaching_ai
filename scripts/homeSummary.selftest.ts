@@ -323,6 +323,33 @@ const thisWeekTasks: WeeklyTask[] = [
     completed: true,
     created_at: '2026-10-19T08:00:00Z',
   },
+  // P2: Mola ve serbest blokları - program sayaçlarını değiştirmemeli
+  {
+    id: 't-mola-home',
+    student_id: 's-ali',
+    week_start: THIS_WEEK_MON,
+    day_index: 0,
+    topic_id: null,
+    custom_label: 'Mola',
+    question_count: 0,
+    is_exam: false,
+    completed: true,
+    block_kind: 'mola',
+    created_at: '2026-10-19T09:00:00Z',
+  },
+  {
+    id: 't-serbest-home',
+    student_id: 's-ali',
+    week_start: THIS_WEEK_MON,
+    day_index: 1,
+    topic_id: null,
+    custom_label: 'Koçluk Görüşmesi',
+    question_count: 0,
+    is_exam: false,
+    completed: true,
+    block_kind: 'serbest',
+    created_at: '2026-10-19T10:00:00Z',
+  },
 ]
 
 // Geçen hafta görevleri (Ali için 2'de 2 tamamlanmış = %100)

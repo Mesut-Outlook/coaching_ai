@@ -122,6 +122,7 @@ export default function RaporlarPage() {
           .from('weekly_tasks')
           .select('week_start, question_count, completed, task_type')
           .eq('student_id', selectedStudentId)
+          .eq('block_kind', 'ders')
           .gte('week_start', fourWeeksAgo)
 
         const last4WeeksTasks = (pastTasksData || []).map((t) => ({
@@ -187,16 +188,17 @@ export default function RaporlarPage() {
     loadReviewData()
   }, [selectedStudentId])
 
-  // Stats for the past week
+  // Stats for the past week (Yalnızca ders blokları)
   const pastWeekStats = useMemo(() => {
-    const total = lastWeekTasks.length
+    const dersTasks = lastWeekTasks.filter(t => !t.block_kind || t.block_kind === 'ders')
+    const total = dersTasks.length
     if (total === 0) return { completionRate: 0, solvedCount: 0, targetCount: 0 }
     
-    const completed = lastWeekTasks.filter(t => t.completed).length
+    const completed = dersTasks.filter(t => t.completed).length
     const completionRate = Math.round((completed / total) * 100)
     
-    const targetCount = lastWeekTasks.reduce((sum, t) => sum + t.question_count, 0)
-    const solvedCount = lastWeekTasks.filter(t => t.completed).reduce((sum, t) => sum + t.question_count, 0)
+    const targetCount = dersTasks.reduce((sum, t) => sum + t.question_count, 0)
+    const solvedCount = dersTasks.filter(t => t.completed).reduce((sum, t) => sum + t.question_count, 0)
     
     return { completionRate, solvedCount, targetCount }
   }, [lastWeekTasks])
@@ -377,13 +379,23 @@ export default function RaporlarPage() {
                   ) : (
                     lastWeekTasks.map(t => {
                       const topic = topics.find(tp => tp.id === t.topic_id)
+                      const isMola = t.block_kind === 'mola'
+                      const isSerbest = t.block_kind === 'serbest'
                       return (
                         <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, opacity: t.completed ? 0.7 : 1 }}>
-                          <CheckSquare size={14} color={t.completed ? 'var(--success)' : 'var(--ink-faint)'} />
+                          {isMola ? (
+                            <span style={{ fontSize: 13, marginRight: 2 }}>☕</span>
+                          ) : isSerbest ? (
+                            <span style={{ fontSize: 13, marginRight: 2 }}>📌</span>
+                          ) : (
+                            <CheckSquare size={14} color={t.completed ? 'var(--success)' : 'var(--ink-faint)'} />
+                          )}
                           <span style={{ textDecoration: t.completed ? 'line-through' : 'none', fontWeight: 500, flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                            {topic?.name || t.custom_label || 'Özel Görev'}
+                            {isMola ? (t.custom_label || 'Mola') : isSerbest ? (t.custom_label || 'Serbest Etkinlik') : (topic?.name || t.custom_label || 'Özel Görev')}
                           </span>
-                          <span style={{ color: 'var(--ink-faint)', fontSize: 10 }}>({t.question_count} s.)</span>
+                          {isMola && <span style={{ color: 'var(--ink-faint)', fontSize: 10 }}>({t.duration_min || 10} dk)</span>}
+                          {isSerbest && <span style={{ color: 'var(--ink-faint)', fontSize: 10 }}>({t.duration_min || 60} dk)</span>}
+                          {!isMola && !isSerbest && <span style={{ color: 'var(--ink-faint)', fontSize: 10 }}>({t.question_count} s.)</span>}
                         </div>
                       )
                     })
@@ -490,13 +502,17 @@ export default function RaporlarPage() {
                     nextWeekTasks.map(t => {
                       const topic = topics.find(tp => tp.id === t.topic_id)
                       const dayNameShort = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'][t.day_index]
+                      const isMola = t.block_kind === 'mola'
+                      const isSerbest = t.block_kind === 'serbest'
                       return (
                         <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', border: '1px solid var(--border-soft)', borderRadius: 6, background: 'var(--surface)', fontSize: 11.5 }}>
                           <span style={{ fontWeight: 700, color: 'var(--indigo-600)', marginRight: 6 }}>{dayNameShort}</span>
                           <span style={{ flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: 500 }} title={topic?.name || t.custom_label || ''}>
-                            {topic?.name || t.custom_label || 'Özel Görev'}
+                            {isMola ? `☕ ${t.custom_label || 'Mola'}` : isSerbest ? `📌 ${t.custom_label || 'Serbest'}` : (topic?.name || t.custom_label || 'Özel Görev')}
                           </span>
-                          <span style={{ color: 'var(--ink-faint)', fontSize: 10, paddingRight: 6 }}>({t.question_count} s.)</span>
+                          {isMola && <span style={{ color: 'var(--ink-faint)', fontSize: 10, paddingRight: 6 }}>({t.duration_min || 10} dk)</span>}
+                          {isSerbest && <span style={{ color: 'var(--ink-faint)', fontSize: 10, paddingRight: 6 }}>({t.duration_min || 60} dk)</span>}
+                          {!isMola && !isSerbest && <span style={{ color: 'var(--ink-faint)', fontSize: 10, paddingRight: 6 }}>({t.question_count} s.)</span>}
                           <button 
                             type="button" 
                             onClick={() => handleDeleteFutureTask(t.id)} 

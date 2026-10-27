@@ -71,7 +71,7 @@ const GUIDE: GuideItem[] = [
     label: 'Haftalık Program',
     icon: Calendar,
     step: '5 · Haftayı Planla',
-    body: 'Haftalık plan gün gün bir pano şeklinde. Görevler artık beş türe ayrılır (Konu, Tekrar, Rutin, Süreli Test, Deneme) ve kaynak alanı son kullanılan kaynaklardan otomatik tamamlama sunar. Bir görevi sürükleyip başka güne taşıyabilir, tamamlanan görevlerde koç Doğru/Yanlış/Boş sonuçlarını girip kart rozetlerinde görüntüleyebilir. Bir görevin konu adına tıklarsan o konunun gelişim paneli açılır. Sağ üstteki "Yazdır / PDF" ile programı tek sayfaya sığacak şekilde yazdırabilir, "WhatsApp ile Gönder" ile öğrenciye, veliye ya da her ikisine birden iletebilirsin.',
+    body: 'Haftalık plan gün gün saatli bloklar panosu şeklinde. "+ Görev Ekle" ile açılan yeni pencerede çoklu gün × çoklu saat seçerek Ders, Mola veya Serbest blokları tek seferde oluşturabilirsin. Ders blokları sol kenarlık rengiyle ayrışır, YKS öğrencisinde TYT/AYT ayrımı ve isteğe bağlı konu seçimi sunar; dinlenme molaları (☕) ve serbest aktiviteler (📌 Özel ders, okul sınavı vb.) koçluk analizlerine ve sayaçlara karışmaz. Kartlar saat sırasına göre dizilir, saatsiz görevler günün altında toplanır. Kartların üzerine çift tıklayarak düzenleyebilir, sürükleyerek başka güne taşıyabilirsin. Tamamlanan görevlerde koç Doğru/Yanlış/Boş sonuçlarını girip kart rozetlerinde görüntüleyebilir; soru hedefi olmayan saatli görevlerde soru sayısı girilen sonuca göre otomatik tamamlanır. Sağ üstteki "Yazdır / PDF" ve "WhatsApp ile Gönder" butonlarıyla hazırladığın programı saatli formatta kolayca paylaşabilirsin.',
     usage: 'Hafta başında planlarken, görev sonuçlarını girerken ya da hazırladığın programı öğrenciyle/veliyle paylaşman gerektiğinde.',
   },
   {

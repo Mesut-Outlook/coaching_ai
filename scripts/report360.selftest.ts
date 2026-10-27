@@ -97,6 +97,33 @@ console.log('▶ R2-1 Koç 360 Raporu Motoru Öz-Testi Başlatılıyor...\n')
         blank_count: null,
         question_count: 20,
       },
+      // P2: Mola ve serbest blokları - sayaçları etkilememeli
+      {
+        id: 't-mola',
+        topic_id: null,
+        task_type: 'rutin',
+        block_kind: 'mola',
+        completed: true,
+        completed_at: '2026-10-22T10:00:00Z',
+        created_at: '2026-10-22T10:00:00Z',
+        correct_count: 0,
+        wrong_count: 0,
+        blank_count: 0,
+        question_count: 0,
+      },
+      {
+        id: 't-serbest',
+        topic_id: null,
+        task_type: 'rutin',
+        block_kind: 'serbest',
+        completed: true,
+        completed_at: '2026-10-22T11:00:00Z',
+        created_at: '2026-10-22T11:00:00Z',
+        correct_count: 0,
+        wrong_count: 0,
+        blank_count: 0,
+        question_count: 0,
+      },
       // Önceki 4 hafta (4-8 hafta önce): 1 görev tamamlandı
       {
         id: 't3',

@@ -1464,8 +1464,8 @@ begin
     ),
     'my_week', (
       select json_build_object(
-        'total_tasks', coalesce((select count(*) from weekly_tasks wt where wt.student_id = v_student_id and wt.week_start = v_week), 0),
-        'completed_tasks', coalesce((select count(*) from weekly_tasks wt where wt.student_id = v_student_id and wt.week_start = v_week and wt.completed = true), 0),
+        'total_tasks', coalesce((select count(*) from weekly_tasks wt where wt.student_id = v_student_id and wt.week_start = v_week and wt.block_kind = 'ders'), 0),
+        'completed_tasks', coalesce((select count(*) from weekly_tasks wt where wt.student_id = v_student_id and wt.week_start = v_week and wt.completed = true and wt.block_kind = 'ders'), 0),
         'target_net', case
           when s.grade in ('7. Sınıf', '8. Sınıf') then s.target_net_lgs
           else coalesce(s.target_net_tyt, s.target_net_ayt)
@@ -1518,7 +1518,7 @@ begin
           select json_agg(distinct coalesce(wt.custom_label, tp.name, 'Görev'))
           from weekly_tasks wt
           left join topics tp on tp.id = wt.topic_id
-          where wt.student_id = v_student_id and wt.week_start = v_week
+          where wt.student_id = v_student_id and wt.week_start = v_week and wt.block_kind = 'ders'
         ), '[]'::json),
         'improved_topics', coalesce((
           select json_agg(distinct json_build_object('topic_name', tp.name, 'subject_name', sb.name))
@@ -1528,6 +1528,7 @@ begin
           where wt.student_id = v_student_id
             and wt.week_start = v_week
             and wt.completed = true
+            and wt.block_kind = 'ders'
             and wt.correct_count is not null
             and wt.question_count > 0
             and (wt.correct_count::numeric / wt.question_count) >= 0.7
@@ -1535,14 +1536,16 @@ begin
       ) from students s where s.id = v_student_id
     ),
     'tasks', coalesce((
-      select json_agg(t order by t.day_index, t.created_at) from (
+      select json_agg(t order by t.day_index, t.start_time nulls last, t.created_at) from (
         select wt.id, wt.day_index, wt.week_start, wt.question_count,
                wt.is_exam, wt.completed, wt.created_at,
+               wt.start_time, wt.duration_min, wt.block_kind,
                coalesce(wt.custom_label, tp.name, 'Görev') as label,
-               sb.name as subject_name
+               coalesce(sb_direct.name, sb_tp.name) as subject_name
         from weekly_tasks wt
         left join topics tp on tp.id = wt.topic_id
-        left join subjects sb on sb.id = tp.subject_id
+        left join subjects sb_tp on sb_tp.id = tp.subject_id
+        left join subjects sb_direct on sb_direct.id = wt.subject_id
         where wt.student_id = v_student_id and wt.week_start = v_week
       ) t
     ), '[]'::json),
@@ -1586,7 +1589,7 @@ returns json
 language plpgsql
 security definer
 set search_path = public, pg_temp
-as $$
+as $fn$
 declare
   v_student_id uuid;
   v_role text;
@@ -1607,7 +1610,7 @@ begin
   perform set_config('app.actor', 'ogrenci:' || v_student_id, true);
 
   update weekly_tasks set completed = coalesce(p_completed, false)
-  where id = p_task_id and student_id = v_student_id;
+  where id = p_task_id and student_id = v_student_id and block_kind = 'ders';
   get diagnostics v_rows = row_count;
 
   if v_rows = 0 then
@@ -1615,7 +1618,7 @@ begin
   end if;
   return json_build_object('ok', true);
 end;
-$$;
+$fn$;
 grant execute on function portal_set_task_completed(text, uuid, boolean) to anon, authenticated;
 
 create or replace function portal_add_exam(
@@ -2595,3 +2598,44 @@ create policy "topic_weights: yetkili koç siler" on topic_weights
   for delete to authenticated using (
     (select is_system_admin()) or (select user_has_any_permission('curriculum.manage'))
   );
+
+-- ===========================================================================
+-- P — Saatli program blokları ve "Görev Ekle" penceresi (2026-10-27)
+-- ===========================================================================
+
+-- 1. weekly_tasks yeni kolonlar: start_time, block_kind, subject_id
+alter table weekly_tasks add column if not exists start_time time;
+alter table weekly_tasks add column if not exists block_kind text not null default 'ders';
+alter table weekly_tasks add column if not exists subject_id int references subjects(id) on delete set null;
+
+-- 2. block_kind check kısıtı ('ders', 'mola', 'serbest')
+alter table weekly_tasks drop constraint if exists weekly_tasks_block_kind_ck;
+alter table weekly_tasks add constraint weekly_tasks_block_kind_ck
+  check (block_kind in ('ders', 'mola', 'serbest'));
+
+-- 3. Geriye dönük subject_id doldurma
+update weekly_tasks w
+set subject_id = t.subject_id
+from topics t
+where w.topic_id = t.id and w.subject_id is null;
+
+-- 4. Trigger: insert veya update'te topic_id doluysa subject_id'yi topics'ten doldur
+create or replace function trg_weekly_tasks_subject_id()
+returns trigger
+language plpgsql
+as $fn$
+begin
+  if NEW.topic_id is not null then
+    select t.subject_id into NEW.subject_id
+    from topics t
+    where t.id = NEW.topic_id;
+  end if;
+  return NEW;
+end;
+$fn$;
+
+drop trigger if exists trg_weekly_tasks_subject_id on weekly_tasks;
+create trigger trg_weekly_tasks_subject_id
+before insert or update on weekly_tasks
+for each row execute function trg_weekly_tasks_subject_id();
+

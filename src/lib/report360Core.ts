@@ -74,6 +74,7 @@ export interface RawTaskItem {
   question_count: number
   origin_kind?: string | null
   duration_min?: number | null
+  block_kind?: 'ders' | 'mola' | 'serbest'
 }
 
 export interface RawMeasurementItem {
@@ -462,12 +463,15 @@ export function buildReport360(input: Report360Input): Report360Data {
   const eightWeeksMs = 56 * 86400000
   const nowMs = now.getTime()
 
-  const current4wTasks = input.tasks.filter((t) => {
+  // P2: Mola ve serbest blokları raporlama ve sayaçlardan dışla
+  const dersTasks = input.tasks.filter((t) => !t.block_kind || t.block_kind === 'ders')
+
+  const current4wTasks = dersTasks.filter((t) => {
     const tMs = new Date(t.created_at).getTime()
     return tMs >= nowMs - fourWeeksMs && tMs <= nowMs
   })
 
-  const prev4wTasks = input.tasks.filter((t) => {
+  const prev4wTasks = dersTasks.filter((t) => {
     const tMs = new Date(t.created_at).getTime()
     return tMs >= nowMs - eightWeeksMs && tMs < nowMs - fourWeeksMs
   })
@@ -538,7 +542,7 @@ export function buildReport360(input: Report360Input): Report360Data {
   // R4-3: Soru Başına Süre (tamamlanmış, süre ve soru sayısı girilmiş görevlerden)
   let totalDurationSec = 0
   let totalTimedQuestions = 0
-  for (const t of input.tasks) {
+  for (const t of dersTasks) {
     if (t.completed && t.duration_min && t.duration_min > 0) {
       const qCount =
         t.question_count && t.question_count > 0
@@ -1058,7 +1062,7 @@ export function buildReport360(input: Report360Input): Report360Data {
     }
   >()
 
-  const tasksByTopicId = new Set(input.tasks.filter((t) => t.topic_id !== null).map((t) => t.topic_id!))
+  const tasksByTopicId = new Set(dersTasks.filter((t) => t.topic_id !== null).map((t) => t.topic_id!))
 
   for (const ct of input.curriculumTopics) {
     if (!subjectMap.has(ct.subject_id)) {
@@ -1170,7 +1174,7 @@ export function buildReport360(input: Report360Input): Report360Data {
 
   // Konu bazında tamamlanan 'tekrar' görev sayıları
   const repeatsByTopicId = new Map<number, number>()
-  for (const t of input.tasks) {
+  for (const t of dersTasks) {
     if (t.completed && t.task_type === 'tekrar' && t.topic_id !== null) {
       repeatsByTopicId.set(t.topic_id, (repeatsByTopicId.get(t.topic_id) || 0) + 1)
     }
@@ -1206,7 +1210,7 @@ export function buildReport360(input: Report360Input): Report360Data {
 
     // En son aktivite tarihi (görev, ölçüm veya koç kararı)
     let latestActivityMs = 0
-    const topicTasks = input.tasks.filter((t) => t.topic_id === ct.id)
+    const topicTasks = dersTasks.filter((t) => t.topic_id === ct.id)
     for (const t of topicTasks) {
       const dt = new Date(t.completed_at || t.created_at).getTime()
       if (dt > latestActivityMs) latestActivityMs = dt
@@ -1262,7 +1266,7 @@ export function buildReport360(input: Report360Input): Report360Data {
   // -------------------------------------------------------------------------
   // origin_kind != 'elle' olan tamamlanmış görevler
   const interventionItems: InterventionImpactItem[] = []
-  const interventionTasks = input.tasks.filter(
+  const interventionTasks = dersTasks.filter(
     (t) => t.completed && t.origin_kind && t.origin_kind !== 'elle' && t.topic_id !== null
   )
 

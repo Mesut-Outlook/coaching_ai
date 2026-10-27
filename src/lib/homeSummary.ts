@@ -94,6 +94,7 @@ export async function loadHomeSummary(scope: StudentScope): Promise<HomeSummary>
         .select('*')
         .in('student_id', studentIds)
         .in('week_start', [thisWeekStr, lastWeekStr])
+        .eq('block_kind', 'ders')
         .order('id')
         .range(from, to)
     ),
