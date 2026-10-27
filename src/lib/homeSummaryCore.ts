@@ -7,7 +7,6 @@
 
 import { mondayOf, weekKey } from './weeks'
 import { gradeCurriculum } from './curriculum'
-import { weightedNet } from './examSections'
 import { checkAttendanceNeedsAttention, isoDaysAgoFrom, SESSION_LABELS, STATUS_LABELS } from './attendance'
 import { countExamsWithoutTopics } from './examReport'
 import type {
@@ -412,10 +411,9 @@ export function buildHomeSummary(rawData: HomeSummaryRawData): HomeSummary {
     if (latestExam) {
       const prevExam = sExams.find((e, idx) => idx > 0 && e.exam_type === latestExam.exam_type)
       if (prevExam) {
-        // LGS'te ham toplam net yerine ders katsayılı net (puan değil) kıyaslanır.
-        const isLgs = latestExam.exam_type === 'LGS'
-        const lastN = isLgs ? weightedNet(latestExam.sectionsList) : latestExam.totalNet
-        const prevN = isLgs ? weightedNet(prevExam.sectionsList) : prevExam.totalNet
+        // totalNet LGS'te zaten katsayılı net (puan değil).
+        const lastN = latestExam.totalNet
+        const prevN = prevExam.totalNet
         const delta = round2(lastN - prevN)
         if (delta <= -5) {
           reasons.push({

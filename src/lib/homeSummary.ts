@@ -7,6 +7,7 @@
 
 import { supabase, isSupabaseConfigured } from './supabase'
 import { fetchStudents } from './students'
+import { weightedNet } from './examSections'
 import { mondayOf, weekKey } from './weeks'
 import {
   buildHomeSummary,
@@ -165,7 +166,10 @@ export async function loadHomeSummary(scope: StudentScope): Promise<HomeSummary>
   // 5. Denemeleri zenginleştir
   const enrichedExams: EnrichedMockExam[] = rawExams.map((exam) => {
     const secs = sections.filter((s) => s.mock_exam_id === exam.id)
-    const totalNet = round2(secs.reduce((sum, s) => sum + Number(s.net), 0))
+    // LGS'te toplam = ders katsayılı net (LGS puanı değildir); YKS ham toplam.
+    const totalNet = round2(
+      exam.exam_type === 'LGS' ? weightedNet(secs) : secs.reduce((sum, s) => sum + Number(s.net), 0)
+    )
     const topicResultsCount = topicCountsByExam[exam.id] || 0
     return {
       ...exam,

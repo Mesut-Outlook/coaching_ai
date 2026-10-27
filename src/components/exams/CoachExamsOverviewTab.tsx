@@ -265,6 +265,9 @@ export default function CoachExamsOverviewTab({ students, allExams }: CoachExams
                       <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ink)' }}>
                         {latestExam.totalNet.toFixed(2).replace('.', ',')} net
                       </div>
+                      {latestExam.exam_type === 'LGS' && (
+                        <div style={{ fontSize: 10, color: 'var(--ink-faint)' }} title="LGS katsayılı net (LGS puanı değildir)">katsayılı</div>
+                      )}
 
                       {deltaNet !== null && (
                         <div

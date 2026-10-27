@@ -11,6 +11,7 @@ import ExamReportForm from '../components/exams/ExamReportForm'
 import CoachExamsOverviewTab from '../components/exams/CoachExamsOverviewTab'
 import type { Student, MockExam, MockExamSection } from '../types/database'
 import { formatNetTr } from '../lib/homeSummaryCore'
+import { weightedNet } from '../lib/examSections'
 
 function chunkArray<T>(items: readonly T[], chunkSize = 200): T[][] {
   const chunks: T[][] = []
@@ -118,7 +119,7 @@ export default function DenemelerPage() {
 
         const enrichedExams = rawExams.map((exam) => {
           const secs = rawSections.filter((s) => s.mock_exam_id === exam.id)
-          const totalNet = Math.round(secs.reduce((sum, s) => sum + Number(s.net), 0) * 100) / 100
+          const totalNet = Math.round((exam.exam_type === 'LGS' ? weightedNet(secs) : secs.reduce((sum, s) => sum + Number(s.net), 0)) * 100) / 100
           return { ...exam, totalNet, sectionsList: secs }
         })
         setExams(enrichedExams)
@@ -198,7 +199,7 @@ export default function DenemelerPage() {
 
         const enrichedAllExams = rawAllExams.map((exam: any) => {
           const secs = rawSections?.filter((s) => s.mock_exam_id === exam.id) || []
-          const totalNet = Math.round(secs.reduce((sum, s) => sum + Number(s.net), 0) * 100) / 100
+          const totalNet = Math.round((exam.exam_type === 'LGS' ? weightedNet(secs) : secs.reduce((sum, s) => sum + Number(s.net), 0)) * 100) / 100
           const topicResultsCount = topicCountsByExam[exam.id] || 0
           return {
             ...exam,
@@ -452,7 +453,7 @@ export default function DenemelerPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--indigo-600)' }}>{formatNetTr(e.totalNet)}</div>
-                            <div style={{ fontSize: 9.5, color: 'var(--ink-faint)' }}>toplam net</div>
+                            <div style={{ fontSize: 9.5, color: 'var(--ink-faint)' }} title={e.exam_type === 'LGS' ? 'LGS katsayılı net (LGS puanı değildir)' : undefined}>{e.exam_type === 'LGS' ? 'katsayılı net' : 'toplam net'}</div>
                           </div>
 
                           {/* Düzenle / Konuları gir */}
@@ -676,6 +677,7 @@ export default function DenemelerPage() {
                             }}
                           >
                             {formatNetTr(e.totalNet)}
+                            {e.exam_type === 'LGS' && <div style={{ fontSize: 10, color: 'var(--ink-faint)', fontWeight: 400 }} title="LGS katsayılı net (LGS puanı değildir)">katsayılı</div>}
                           </td>
                           <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                             <div style={{ display: 'flex', justifyContent: 'center', gap: 6, alignItems: 'center' }}>
