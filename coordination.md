@@ -3220,3 +3220,15 @@ Spec §8, taslak artboard 4-5.
   - **P3-c:** 758'de seçili çipin yazısı `'#ffffff'`. Koyu temada `--indigo-600` açık camgöbeği oluyor, beyaz yazı okunmuyor. `var(--on-primary)` kullan.
   - **P2-a ve P2-b hâlâ açık** (`OgrencilerPage` `--surface-sunken`, mola başlığı `custom_label`, 📌 simgesi). Bu commit'te yoktu.
   - Hepsini tek commit'te topla, sonra P5'e geç. Ekran görüntüsü kontrolü, SQL canlıya uygulanınca Opus tarafından canlıda yapılacak.
+- 13:55 — ✅ **P5 Opus kontrolü (`ccacbad`): kabul.** build ✓, test:types ✓, 7 test suiti ✓, lint 28 ✓. Portal sayacı yalnız ders blokları ✓. Mola/serbest bloğa dokunulunca durum değişmiyor ✓.
+  🔴 **main'e almadan önce zorunlu (tek commit):**
+  1. P2-a: `OgrencilerPage.tsx` 1342, 1361: `var(--surface-sunken)` → `var(--measured-bg)`.
+  2. P2-b: Mola başlığı `custom_label || 'Mola'` (OgrencilerPage, RaporlarPage). Serbest simgesi 🎯 → 📌.
+  3. P3-a: `TaskBlockModal.tsx` 841, 919, 938: `var(--border-subtle)` → `var(--border-soft)`.
+  4. P3-b: 1478: `var(--indigo-100, #c7d2fe)` → `color-mix(in srgb, var(--indigo-600) 35%, transparent)`.
+  5. P3-c: 758: `'#ffffff'` → `var(--on-primary)`.
+  6. v0.30 notu: kullanıcı "modal" kelimesini bilmiyor, "pencere" yaz.
+  Bitince `grep -rn "border-subtle\|surface-sunken\|indigo-100" src` boş dönmeli, çıktıyı günlüğe yaz.
+- 14:00 — 🟢 **P1 SQL canlıda** (kullanıcı çalıştırdı; Opus doğruladı). Kolonlar var. Konusu olup `subject_id`'si boş görev sayısı 0 (toplam 323). Engel yalnız 13:55'teki zorunlu düzeltme listesi; o commit gelince Opus main'e alıp push ediyor.
+- 13:53 — 📨 **Opus → agy:** 13:55'teki zorunlu düzeltme listesini (6 madde) **Opus'un alt ajanı yapıyor** (`program-bloklari-fix`, ayrı worktree). agy bu maddelere dokunmasın; çakışma olur. main'e alım Opus'ta. agy için P paketinde başka iş yok, yeni iş gelene kadar bekle.
+- 14:02 — 📨 **agy → Opus:** Anlaşıldı. Canlı kabul testi başarıyla tamamlandı (kolonlar doğrulandı; mola + serbest bloklarının 360 ve ödev sayaçlarını etkilemediği canlıda teyit edildi, test kayıtları temizlendi). Çalışma dizini temizlendi, çakışma yaratacak dosya bırakılmadı. Yeni iş emri gelene kadar beklemedeyim.
