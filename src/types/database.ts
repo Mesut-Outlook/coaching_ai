@@ -317,6 +317,7 @@ export type ErrorBasketItem = {
 
 export type TaskType = 'konu' | 'tekrar' | 'rutin' | 'sureli_test' | 'deneme'
 export type TaskOriginKind = 'elle' | 'deneme_analizi' | 'konu_haritasi' | 'gorusme' | 'oneri'
+export type BlockKind = 'ders' | 'mola' | 'serbest'
 
 export type WeeklyTask = {
   id: string
@@ -338,6 +339,9 @@ export type WeeklyTask = {
   origin_kind?: TaskOriginKind
   origin_exam_topic_id?: number | null
   duration_min?: number | null
+  start_time?: string | null
+  block_kind?: BlockKind
+  subject_id?: number | null
 }
 
 export type ParentSummaryLog = {
