@@ -3064,6 +3064,8 @@ Spec §8, taslak artboard 4-5.
 ## 🗓 P — Saatli program blokları (2026-10-27, Opus planladı, uygulama agy)
 **Kullanıcı talebi:** "Program girişlerini buna göre yapın." Referans: başka bir koçluk ürününün "Görev ekle" penceresinin üç ekran görüntüsü (`~/Pictures/Screenshots/Screenshot_20261027_124012.png`, `…124029.png`, `…124040.png`). Bu görüntüler başka ürüne ait, **repoya koyma**.
 
+**🎨 Görsel tasarım (bağlayıcı):** `docs/tasarim/program-bloklari.html`. Tarayıcıda aç ve tıkla. Pencere, pano kartları ve portal "Haftam" görünümü orada. Renkler `tokens.css` ile birebir aynı; davranış (Ardından, sık saatler, çakışma, düzenleme modu) sayfanın JS'inde örnek olarak var. Paylaşım kopyası: https://claude.ai/artifact/8jyDbwHm6kPG3XwZrFrpEH. Pano kartı düzeni: 1. satır saat aralığı + tamamlama kutusu, 2. satır ders · konu, 3. satır tip rozeti + süre/soru/kaynak (tip rozeti 1. satıra sığmıyor).
+
 **Bugünkü durum:** Görevin saati yok (`weekly_tasks` yalnız `day_index`). Ekleme ve düzenleme formu gün sütununun içinde açılıyor (`ProgramPage.tsx` ~1306–1400). Her seferinde tek gün ve tek görev ekleniyor. Mola ya da serbest etkinlik yok.
 
 **Hedef:** Tek bir "Görev ekle" penceresi. Bu pencereyle koç **birden çok gün × birden çok saat** seçip tek seferde blok ekleyebilmeli. Üç blok türü olacak: **Ders / Mola / Serbest**.
