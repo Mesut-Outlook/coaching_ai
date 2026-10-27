@@ -3060,3 +3060,139 @@ Spec §8, taslak artboard 4-5.
 - 14:25 | R3-0b | bitti | 8f2bed2 on raporlar-r3 | Opus 3 maddelik R3-0b geri bildirimi uygulandı (7. sınıf LGS kuralı, parent_summary_log RLS, latest_exam_type + iyi gidenler etiketi); test:types/report360(12/12)/recommend(7/7)/parent-summary/lint(28)/build temiz | yok | Opus 12:40 PM uyanışı ve canlıya alma bekleniyor
 - 17:05 | R3-V1 | bitti | 83e2898 on raporlar-r3 | Opus 9 maddelik R3-V1 listesi tamamlandı: (1) LGS katsayılı net 270 ölçeği (KPI, hedef yolu, AddStudentModal, OgrenciPortal, portal_dashboard SQL, selftest assert); (2) Tekrar zamanı (>= 3 hafta varsayılan liste, 'Yakında' katlanır bölümü, 'Henüz tekrar edilmedi' / 'N. tekrar yapıldı'); (3) B7 52 hafta uyarısı ('Bu tempoyla sınava yetişmiyor; haftada en az N konu yeterliye geçmeli'); (4) Test verisi gerçekçiliği (konu başarıları %30–%95 dağılımı, zayıf konular, B9 önce/sonra müdahale ölçümleri, LGS hedef 245; kuru çalışma doğrulandı: 18 deneme / 175 görev / 24 karar / 5 devamsızlık / 1 veli log / 4 yanlış nedeni); (5) B6 dambıl deneme noktası var(--teal, #1D8FA6) rengine bağlandı; (6) Haftalık Görüşme duyarlı ızgara taşma düzeltmesi (repeat(auto-fit, minmax(min(320px,100%),1fr))); (7) Veli özeti son deneme neti (mock_exam_sections join + LGS weightedNet); (8) Öneri listesi (RecommendList) Haftalık Görüşme sayfasına bağlandı; (9) Portal 'Haftam' ekran görüntüleri alındı (docs/ekran/portal-haftam-test-yks.png ve docs/ekran/portal-haftam-test-lgs.png). test:types, test:report360 (12/12), test:recommend (7/7), test:parent-summary, test:talking-points, test:home-summary, test:exam-report, test:permissions, lint (28), build temiz | yok | Opus incelemesi ve canlıya alma bekleniyor
 - 2026-10-27 — 📽 **Eda için haftalık yenilik sunumu yayında:** https://claude.ai/artifact/KqhmjgR5UZqYKnPpETVi6Z (23–26 Ekim, v0.25–v0.29; 20 slayt: eskiden/şimdi, ne girilmeli tablosu, okuma kılavuzu, LGS katsayılı net hesaplayıcı, mini test). Düz HTML, capability yok; görseller G-1 rehberinden kopyalandı.
+
+## 🗓 P — Saatli program blokları (2026-10-27, Opus planladı, uygulama agy)
+**Kullanıcı talebi:** "Program girişlerini buna göre yapın." Referans: başka bir koçluk ürününün "Görev ekle" penceresinin üç ekran görüntüsü (`~/Pictures/Screenshots/Screenshot_20261027_124012.png`, `…124029.png`, `…124040.png`). Bu görüntüler başka ürüne ait, **repoya koyma**.
+
+**Bugünkü durum:** Görevin saati yok (`weekly_tasks` yalnız `day_index`). Ekleme ve düzenleme formu gün sütununun içinde açılıyor (`ProgramPage.tsx` ~1306–1400). Her seferinde tek gün ve tek görev ekleniyor. Mola ya da serbest etkinlik yok.
+
+**Hedef:** Tek bir "Görev ekle" penceresi. Bu pencereyle koç **birden çok gün × birden çok saat** seçip tek seferde blok ekleyebilmeli. Üç blok türü olacak: **Ders / Mola / Serbest**.
+
+### Opus kararları (tartışma yok, böyle uygula)
+- **Görev tipleri:** Bizim 5 tipimiz korunur (Konu, Tekrar, Rutin, Süreli Test, Deneme). Referanstaki "Soru / Analiz / Çalışma" **eklenmez**, çünkü 360 rapor ve öneri motoru `task_type` kullanıyor.
+- **Mola ve serbest bloklar raporlara girmez.** Ödev tamamlama, doğruluk, veli özeti, görüşme ve portal sayaçları yalnız `block_kind = 'ders'` satırlarını sayar. (P2'nin bütün işi bu.)
+- **Saat zorunlu değil.** Eski görevler, taslak motoru ve `AddToProgramPopover` saatsiz eklemeye devam eder. Saatsiz görev günün altında "Saatsiz" başlığıyla durur.
+- **"12. Sınıf" sekmesi yok.** Okul dersi müfredatımız yok.
+- **Konu seçimi opsiyonel.** Ders seçilip konu boş bırakılabilir. Bunun için `subject_id` kolonu açılıyor.
+
+### P1 · Şema (SQL'i kullanıcı çalıştırır)
+1. `alter table weekly_tasks add column if not exists start_time time;`
+2. `alter table weekly_tasks add column if not exists block_kind text not null default 'ders';` ve check kısıtı (`'ders','mola','serbest'`), drop/add deseniyle.
+3. `alter table weekly_tasks add column if not exists subject_id int references subjects(id) on delete set null;`
+   - Geriye dönük doldurma: `update weekly_tasks w set subject_id = t.subject_id from topics t where w.topic_id = t.id and w.subject_id is null;`
+   - **Trigger:** insert/update'te `topic_id` doluysa `subject_id`'yi `topics`'ten doldur. Böylece popover, taslak ve seed script'lerinin hiçbirine dokunmak gerekmez.
+4. `portal_dashboard`:
+   - `tasks` JSON'una `start_time`, `duration_min`, `block_kind` ekle.
+   - `subject_name` önce `wt.subject_id`'den gelsin, sonra `tp.subject_id`'den.
+   - Sıra: `day_index, start_time nulls last, created_at`.
+   - `my_week` içindeki `total_tasks`, `completed_tasks`, `focus_topics` ve `improved_topics` yalnız `block_kind = 'ders'` satırlarını saysın.
+5. `portal_set_task_completed`: update'e `and block_kind = 'ders'` koşulu ekle.
+6. `src/types/database.ts`'i güncelle (`BlockKind` tipi). Teslim dosyası: `supabase/2026-10-27-program-bloklari.sql`.
+7. **Kabul:** `npm run verify:schema`. Docker'da **önce canlı şemanın kopyası, sonra yeni şema, sonra yeni şema bir kez daha** (CLAUDE.md tuzağı: `alter` satırları, onlara dokunan her şeyin üstünde olmalı). `test:types` ✓.
+
+### P2 · Mola ve serbest blokları raporlardan dışla
+- `.eq('block_kind', 'ders')` ya da çekirdekte filtre ekle. `weekly_tasks` okuyan her yere bak:
+  - `src/lib/report360.ts`
+  - `src/lib/homeSummary.ts`
+  - `src/lib/talkingPoints.ts` (2 sorgu)
+  - `src/components/reports/ParentSummaryModal.tsx`
+  - `src/pages/RaporlarPage.tsx` (geçen hafta / gelecek hafta listeleri **görüntüleme**, orada blok türünü göster)
+  - `src/pages/OgrencilerPage.tsx`
+  - `ProgramPage.tsx` içindeki taslak motorunun son 4 hafta sorgusu (~596)
+- Filtre çekirdekteyse (`*Core.ts`) ilgili self-test'e bir mola satırı ekle: sayaçlar değişmemeli.
+- **Kabul:**
+  - Canlı test **Test YKS** üzerinde. Değerleri önce günlüğe yaz: 1 mola + 1 serbest blok ekle. 360 "Ödev tamamlama" ile Ana Sayfa sayaçları değişmemeli. Testten sonra iki bloğu sil.
+  - Bütün `test:*` ✓.
+
+### P3 · "Görev ekle" penceresi: `src/components/program/TaskBlockModal.tsx`
+**Açılış:**
+- Gün sütunundaki "+ Görev Ekle" düğmesi pencereyi açar. O gün seçili gelir.
+- Başlangıç saati o günün son saatli bloğunun bitişidir (`start_time + duration_min`). Saatli blok yoksa saat seçilmemiş gelir.
+- **Başlık:** "Görev ekle". Alt satırda "Pzt 27 Eki · 07:00" (saat yoksa yalnız tarih).
+
+**Üst kısım:**
+- Bölmeli düğme: **Ders | Mola | Serbest**.
+- Altında "Bu saate:" ile iki hızlı çip: **🎓 Özel ders** ve **🤝 Koçluk görüşmesi**. Tıklanınca Serbest'e geçer, etkinlik adı dolar, süre 60 dk olur.
+
+**Sol sütun · Ders:**
+- **Sınav grubu:** YKS öğrencisinde **TYT | AYT** bölmeli düğmesi. LGS öğrencisinde bu düğme görünmez.
+  - Grup kuralı `curriculum.ts`'e yeni yardımcı olarak yazılır: `subjectExamGroup(subject)`. Ad `AYT ` ile başlıyorsa AYT, değilse TYT. Liste gömme.
+  - Canlıdaki 18 YKS dersini tek tek kontrol et, gruplarını günlüğe yaz.
+  - Ders listesi mevcut `subjectsList`'ten gelir (`subjectAppliesTo` ile süzülmüş).
+- **Ders kutusu:** "TYT dersi seçin veya yazın…" Yazarak aranır.
+  - Listedeki bir ders seçilirse `subject_id` dolar.
+  - Listede olmayan bir metin yazılırsa `custom_label` olur ve `subject_id` null kalır.
+- **Konu kutusu:** "Konu seçin veya arayın (opsiyonel)". `topicsForSubject` mevcut, `topicAppliesTo` ile süzülür. Türkçe-duyarsız arama.
+- **Tip çipleri:** Konu, Tekrar, Rutin, Süreli Test, Deneme. Renkler `TASK_TYPE_CONFIG`'ten gelir.
+- **Süre çipleri:** 30 / 40 / 50 / 60 dk ve "Diğer dk" kutusu. Varsayılan 40.
+- **"+ Detay ekle"** açılınca iki alan gelir:
+  - Soru sayısı. Boş bırakılırsa 0.
+  - Kaynak. Mevcut `task-sources` datalist'i ve son kaynaklar kullanılır.
+
+**Sol sütun · Mola:**
+- Süre çipleri: 5 / 10 / 15 / 20 / 30 / 45 / 60 ve "Diğer dk". Varsayılan 10.
+- "+ Detay ekle" bir not alanı açar ("Yemek, yürüyüş…"). Not `custom_label`'a yazılır, boşsa "Mola".
+
+**Sol sütun · Serbest:**
+- Etkinlik adı (zorunlu). Placeholder: "Hastane randevusu, okul sınavı…"
+- Mola'daki süre çipleri. Varsayılan seçili değil, seçim zorunlu.
+
+**Sağ sütun · üç türde ortak:**
+- **GÜN:** Pzt … Paz çipleri, çoklu seçim. Ek olarak **Hafta içi** (Pzt–Cum) ve **Hepsi** (7 gün) kısayolları.
+- **SAATLER:**
+  - Seçili saatler × ile silinebilen çipler olarak durur.
+  - Çiplerin altında `<input type="time">` ve "+ Saat" düğmesi.
+  - "**+ Ardından (07:40)**": son çipin saati + seçili süre. Çip yoksa görünmez.
+- **SIK KULLANDIĞIN SAATLER:**
+  - Öğrencinin son 8 haftasındaki `start_time` değerlerinden en sık 3 tanesi, saat sırasıyla.
+  - Pencere açılınca tek bir sorguyla gelir (`.range` ile sayfala).
+  - Hiç saat yoksa bölüm görünmez.
+- **Özet (yeşil şerit):** "2 gün × 3 saat = 6 blok". Saat seçili değilse "2 gün · saatsiz = 2 blok".
+- **Çakışma uyarısı (sarı, engellemez):** "Çar 07:00 – 07:40 mevcut bir blokla çakışıyor". Aynı gün ve kesişen aralık varsa çıkar.
+
+**Alt:**
+- **İptal** ve **Ekle** düğmeleri.
+- Ekle tek bir toplu `insert` yapar.
+  - Supabase tuzağı: **bütün satırlara aynı anahtarlar** yazılmalı.
+  - Mola/serbest satırları: `task_type: 'rutin'`, `question_count: 0`, `topic_id: null`, `subject_id: null`, `origin_kind: 'elle'`.
+- **Mola saatsiz eklenemez.** "Mola için en az bir saat seçin" uyarısı.
+
+**Düzenleme:**
+- Karttaki düzenle düğmesi aynı pencereyi "Görevi düzenle / Kaydet" moduyla açar.
+- Tek gün ve tek saat seçilebilir; başka gün seçmek bloğu o güne taşır.
+- **Eski inline ekleme ve düzenleme formlarını sil.** İlgili `edit*` / `selected*` state'leri de kalksın, `ProgramPage` küçülsün.
+
+**Sonuç penceresi düzeltmesi:**
+- `question_count = 0` olan görevde D+Y+B kontrolü atlanır. Kaydederken `question_count = D+Y+B` yazılır. Yoksa yeni akışta sonuç hiç girilemez.
+
+**Görünüm:**
+- Token renkleri kullanılır; `global.css`'te var olan sınıflar kullanılır. Tailwind yok, `--accent` yok.
+- Karanlık temada okunur.
+- 720 px altında tek sütun. Pencere ekran yüksekliğini aşarsa içi kayar; alttaki düğmeler sabit kalır.
+- Esc ile ve arka plana tıklayınca kapanır.
+
+### P4 · Program panosu
+- **Kart sırası:** saatli bloklar saate göre, ardından "Saatsiz" ince başlığı altında saatsizler.
+- **Kart başında saat aralığı:** "07:00 – 07:40". Ders kartında solda ders rengi şeridi (`subjects.color`).
+- **Mola kartı:** tek satır, gri, "☕ Mola · 10 dk". Tamamlama kutusu ve sonuç düğmesi yok.
+- **Serbest kartı:** nötr renk, etkinlik adı ve saat. Tamamlama kutusu yok.
+- **Sütun başlığı:** sayaç yalnız ders bloklarını sayar. Yanında günün toplam ders süresi ("3 sa 20 dk").
+- **Sürükle bırak:** `start_time` korunur.
+- **WhatsApp ve yazdır metni:**
+  - Saatli satırlar "07:00 TYT Matematik · Türev (40 dk)" biçiminde, saat sırasıyla.
+  - Molalar metne girmez.
+
+### P5 · Portal, Yardım, sürüm notu
+- **Portal "Haftam" ve öğrenci görev listesi:**
+  - Saat aralığı gösterilir.
+  - Mola gri tek satırdır, onay kutusu yok.
+  - Serbest blok onay kutusu olmadan görünür.
+  - Renkler `portalTheme.ts`'ten (sabit hex).
+- **Yardım → Haftalık Program kartı:** yeni pencerenin anlatımı.
+- **`VersionHistory.tsx`:** **v0.30** notu, kullanıcı dilinde.
+
+### Kontrol kapıları
+- Her paketten sonra Opus kontrol eder: `npm run build`, `test:types`, bütün `test:*`, `lint` (≤ 28, yeni uyarı yok).
+- P1 SQL'i kullanıcı çalıştırmadan P2–P5 canlıya gitmez. P1 yereldeki tiplere göre yazılabilir.
+- Ekran kontrolü **Test YKS** ve **Test LGS** ile yapılır. LGS'te TYT/AYT düğmesi görünmemeli ve yalnız LGS dersleri gelmeli. Test blokları sonra silinir.
+- Branch: `program-bloklari`. main'e Opus alır.
