@@ -590,12 +590,13 @@ export default function ProgramPage() {
         note: d.note,
       }))
 
-      // 3. Son 4 haftanın görevleri
+      // 3. Son 4 haftanın görevleri (Yalnızca ders blokları)
       const fourWeeksAgo = new Date(currentMonday.getTime() - 28 * 86400000).toISOString().split('T')[0]
       const { data: pastTasksData } = await supabase
         .from('weekly_tasks')
         .select('week_start, question_count, completed, task_type')
         .eq('student_id', selectedStudentId)
+        .eq('block_kind', 'ders')
         .gte('week_start', fourWeeksAgo)
 
       const last4WeeksTasks = (pastTasksData || []).map((t) => ({

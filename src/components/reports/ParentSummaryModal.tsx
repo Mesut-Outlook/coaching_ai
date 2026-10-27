@@ -91,6 +91,7 @@ export default function ParentSummaryModal({
               .select('*')
               .eq('student_id', student.id)
               .eq('week_start', activeWeekStart)
+              .eq('block_kind', 'ders')
               .order('day_index', { ascending: true })
             if (!cancelled && data) setTasks(data)
           })())

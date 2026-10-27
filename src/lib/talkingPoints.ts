@@ -132,12 +132,13 @@ export async function fetchTalkingPointsInput(
     }
   }
 
-  // 3. Haftalık Program İstatistikleri
+  // 3. Haftalık Program İstatistikleri (Yalnızca ders blokları)
   const { data: thisWeekTasks } = await supabase
     .from('weekly_tasks')
     .select('id, day_index, completed')
     .eq('student_id', studentId)
     .eq('week_start', currentWeekKey)
+    .eq('block_kind', 'ders')
 
   let programStats: WeeklyProgramStats | null = null
   if (thisWeekTasks && thisWeekTasks.length > 0) {
@@ -169,6 +170,7 @@ export async function fetchTalkingPointsInput(
       .from('weekly_tasks')
       .select('topic_id, created_at, completed, correct_count, wrong_count, blank_count')
       .eq('student_id', studentId)
+      .eq('block_kind', 'ders')
       .not('topic_id', 'is', null)
       .order('created_at', { ascending: false }),
     supabase

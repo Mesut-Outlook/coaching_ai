@@ -104,8 +104,10 @@ console.log('▶ R3-6 Veli Haftalık Özeti Öz-Testi Başlatılıyor...\n')
 {
   const stats = computeSummaryStats({
     tasks: [
-      { id: '1', completed: true } as any,
-      { id: '2', completed: false } as any,
+      { id: '1', completed: true, block_kind: 'ders' } as any,
+      { id: '2', completed: false, block_kind: 'ders' } as any,
+      { id: '3', completed: true, block_kind: 'mola' } as any,
+      { id: '4', completed: true, block_kind: 'serbest' } as any,
     ],
     latestExam: { id: 'e1', name: 'Özdebir TYT 1', exam_type: 'TYT', total_net: 82.5 } as any,
     targetNet: 90,

@@ -394,8 +394,9 @@ export default function OgrencilerPage() {
         ) / 10
       : 0
 
-    const taskCompletion = tasks.length
-      ? Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100)
+    const dersTasks = tasks.filter(t => !t.block_kind || t.block_kind === 'ders')
+    const taskCompletion = dersTasks.length
+      ? Math.round((dersTasks.filter(t => t.completed).length / dersTasks.length) * 100)
       : 0
 
     const criticalTopics = decisions.filter(d => d.state === 'kritik')
@@ -1323,6 +1324,47 @@ export default function OgrencilerPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {weekTasks.map(task => {
                         const topic = topics.find(t => t.id === task.topic_id)
+                        const isMola = task.block_kind === 'mola'
+                        const isSerbest = task.block_kind === 'serbest'
+
+                        if (isMola) {
+                          return (
+                            <div key={task.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', background: 'var(--surface-alt)', border: '1px solid var(--border-soft)', borderRadius: 10 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span style={{ fontSize: 16 }}>☕</span>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 600 }}>Mola</div>
+                                  <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>
+                                    {task.start_time ? `${task.start_time.slice(0, 5)} · ` : ''}{task.duration_min || 10} dk
+                                  </div>
+                                </div>
+                              </div>
+                              <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 12, background: 'var(--surface-sunken)', color: 'var(--ink-faint)' }}>
+                                Mola
+                              </span>
+                            </div>
+                          )
+                        }
+
+                        if (isSerbest) {
+                          return (
+                            <div key={task.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', background: 'var(--surface-alt)', border: '1px solid var(--border-soft)', borderRadius: 10 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span style={{ fontSize: 16 }}>🎯</span>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 600 }}>{task.custom_label || 'Serbest Etkinlik'}</div>
+                                  <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>
+                                    {task.start_time ? `${task.start_time.slice(0, 5)} · ` : ''}{task.duration_min || 60} dk
+                                  </div>
+                                </div>
+                              </div>
+                              <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 12, background: 'var(--surface-sunken)', color: 'var(--indigo-600)' }}>
+                                Serbest
+                              </span>
+                            </div>
+                          )
+                        }
+
                         return (
                           <div key={task.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: task.completed ? 'var(--success-bg)' : 'var(--surface-alt)', border: '1px solid var(--border-soft)', borderRadius: 10, opacity: task.completed ? 0.75 : 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

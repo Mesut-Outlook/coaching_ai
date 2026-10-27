@@ -79,8 +79,10 @@ export function computeSummaryStats(params: {
 }): SummaryStats {
   const { tasks, latestExam, previousExam, attendanceRecords = [], targetNet = null } = params
 
-  const totalCount = tasks.length
-  const completedCount = tasks.filter((t) => t.completed).length
+  // P2: Mola ve serbest blokları veli özeti sayaçlarından dışla
+  const dersTasks = tasks.filter((t) => !('block_kind' in t) || !t.block_kind || t.block_kind === 'ders')
+  const totalCount = dersTasks.length
+  const completedCount = dersTasks.filter((t) => t.completed).length
   const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   const latestNet =

@@ -347,9 +347,10 @@ export function buildHomeSummary(rawData: HomeSummaryRawData): HomeSummary {
   }
 
   // -------------------------------------------------------------------------
-  // 3. Program Görevleri Haritası
+  // 3. Program Görevleri Haritası (Yalnızca ders blokları)
   // -------------------------------------------------------------------------
-  const thisWeekTasks = rawData.weeklyTasks.filter((t) => t.week_start === thisWeekKeyStr)
+  const dersWeeklyTasks = rawData.weeklyTasks.filter((t) => !t.block_kind || t.block_kind === 'ders')
+  const thisWeekTasks = dersWeeklyTasks.filter((t) => t.week_start === thisWeekKeyStr)
   const activeStudentTasksMap = new Map<string, WeeklyTask[]>()
   for (const t of thisWeekTasks) {
     if (studentMap.has(t.student_id)) {
@@ -627,8 +628,8 @@ export function buildHomeSummary(rawData: HomeSummaryRawData): HomeSummary {
   // lastWeekSameDayPct
   let lastWeekSameDayPct: number | null = null
   const lastWeekAllTasks =
-    rawData.lastWeekTasks ||
-    rawData.weeklyTasks.filter((t) => t.week_start === lastWeekKeyStr)
+    (rawData.lastWeekTasks ? rawData.lastWeekTasks.filter((t) => !t.block_kind || t.block_kind === 'ders') : null) ||
+    dersWeeklyTasks.filter((t) => t.week_start === lastWeekKeyStr)
 
   if (lastWeekAllTasks.length > 0) {
     const lwToDateTasks = lastWeekAllTasks.filter((t) => t.day_index <= currentDayIndex)
