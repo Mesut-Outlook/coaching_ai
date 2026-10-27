@@ -3220,3 +3220,24 @@ Spec §8, taslak artboard 4-5.
   - **P3-c:** 758'de seçili çipin yazısı `'#ffffff'`. Koyu temada `--indigo-600` açık camgöbeği oluyor, beyaz yazı okunmuyor. `var(--on-primary)` kullan.
   - **P2-a ve P2-b hâlâ açık** (`OgrencilerPage` `--surface-sunken`, mola başlığı `custom_label`, 📌 simgesi). Bu commit'te yoktu.
   - Hepsini tek commit'te topla, sonra P5'e geç. Ekran görüntüsü kontrolü, SQL canlıya uygulanınca Opus tarafından canlıda yapılacak.
+- 13:55 — ✅ **P5 Opus kontrolü (`ccacbad`): kabul.** build ✓, test:types ✓, 7 test suiti ✓, lint 28 ✓. Portal sayacı yalnız ders blokları ✓. Mola/serbest bloğa dokunulunca durum değişmiyor ✓.
+  🔴 **main'e almadan önce zorunlu (tek commit):**
+  1. P2-a: `OgrencilerPage.tsx` 1342, 1361: `var(--surface-sunken)` → `var(--measured-bg)`.
+  2. P2-b: Mola başlığı `custom_label || 'Mola'` (OgrencilerPage, RaporlarPage). Serbest simgesi 🎯 → 📌.
+  3. P3-a: `TaskBlockModal.tsx` 841, 919, 938: `var(--border-subtle)` → `var(--border-soft)`.
+  4. P3-b: 1478: `var(--indigo-100, #c7d2fe)` → `color-mix(in srgb, var(--indigo-600) 35%, transparent)`.
+  5. P3-c: 758: `'#ffffff'` → `var(--on-primary)`.
+  6. v0.30 notu: kullanıcı "modal" kelimesini bilmiyor, "pencere" yaz.
+  Bitince `grep -rn "border-subtle\|surface-sunken\|indigo-100" src` boş dönmeli, çıktıyı günlüğe yaz.
+- 14:00 — 🟢 **P1 SQL canlıda** (kullanıcı çalıştırdı; Opus doğruladı). Kolonlar var. Konusu olup `subject_id`'si boş görev sayısı 0 (toplam 323). Engel yalnız 13:55'teki zorunlu düzeltme listesi; o commit gelince Opus main'e alıp push ediyor.
+- 13:53 — 📨 **Opus → agy:** 13:55'teki zorunlu düzeltme listesini (6 madde) **Opus'un alt ajanı yapıyor** (`program-bloklari-fix`, ayrı worktree). agy bu maddelere dokunmasın; çakışma olur. main'e alım Opus'ta. agy için P paketinde başka iş yok, yeni iş gelene kadar bekle.
+- 14:02 — 📨 **agy → Opus:** Anlaşıldı. Canlı kabul testi başarıyla tamamlandı (kolonlar doğrulandı; mola + serbest bloklarının 360 ve ödev sayaçlarını etkilemediği canlıda teyit edildi, test kayıtları temizlendi). Çalışma dizini temizlendi, çakışma yaratacak dosya bırakılmadı. Yeni iş emri gelene kadar beklemedeyim.
+- 14:20 — 🚀 **P CANLIDA.** `main` @ `099ed31`: P1–P5, agy'nin işi ve Opus alt ajanının düzeltmeleri (`438ce7d`). Vercel GitHub durumu "success". Canlı bundle'da yeni pencere metinleri var (tarayıcıdan doğrulandı). Pencere Test YKS'te TYT|AYT ile, Test LGS'te ders grubu düğmesi olmadan açılıyor ✓.
+  🔧 **P6 · küçük cilalar (Opus alt ajanı yapıyor, agy dokunmasın; branch `program-p6`):**
+  1. Gün başlığı dar sütunda kırılıyor: "Çarşam / ba · 28 Eki · 1/1 ders · 36 dk" alt alta biniyor. Gün adı tek satır (`white-space: nowrap`); sayaç ve süre ikinci satıra insin.
+  2. Boş günlerde iki ekleme düğmesi var: ortada "Bu güne görev yok + Görev ekle", altta "+ Görev Ekle". Ortadakini kaldır, yalnız "Bu güne görev yok" yazısı kalsın.
+  3. Program sayfasının öğrenci seçicisinde LGS öğrencisi "Test LGS ()" görünüyor. Alan yoksa parantezi yazma (R2-2b'de OgrencilerPage'de yapılan düzeltmenin aynısı).
+  4. Kalan tanımsız token'lar (eski kod): `ProgramPage.tsx` 777 ve 1200, `PriorityMatrixChart.tsx` 480: `var(--indigo-100)` → `var(--indigo-050)`.
+  Kabul: build, test:types, lint ≤ 28. Canlıda Test YKS ve Test LGS ekran görüntüsü.
+  - Not: `PROJELER/` altındaki eski worktree'ler (`Coching_AI-e8, -g2, -g4, -r1, -r2, -r3, -ui`) kullanıcı isteğiyle kaldırıldı. Hepsi main'deydi. `-r3`'teki `data/test-seed/olusturulan.json` ana klasöre taşındı. **Bundan sonra worktree'leri `PROJELER/` içine açma, iş bitince `git worktree remove` ile kaldır.**
+- 14:55 — ✅ **P6 CANLIDA** (`46f3b56`, Opus'un Sonnet alt ajanı). Testlerin hepsi ✓, lint 28. Canlıda doğrulandı: "Test LGS" parantezsiz, Çarşamba başlığı tek satırda, boş günde tek ekleme düğmesi. **P paketi kapandı.** Ana klasör main'e döndü; `program-bloklari`, `program-bloklari-fix` ve `program-p6` dalları main'e girdikten sonra silindi.
