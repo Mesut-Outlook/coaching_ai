@@ -755,7 +755,7 @@ export default function TaskBlockModal({
                                 borderRadius: 5,
                                 border: 'none',
                                 background: isSel ? 'var(--indigo-600)' : 'transparent',
-                                color: isSel ? '#ffffff' : 'var(--ink-soft)',
+                                color: isSel ? 'var(--on-primary)' : 'var(--ink-soft)',
                                 cursor: 'pointer',
                               }}
                             >
@@ -838,7 +838,7 @@ export default function TaskBlockModal({
                                 fontSize: 12,
                                 cursor: 'pointer',
                                 background: selectedSubjectId === s.id ? 'var(--surface-alt)' : 'transparent',
-                                borderBottom: '1px solid var(--border-subtle)',
+                                borderBottom: '1px solid var(--border-soft)',
                               }}
                             >
                               {s.name}
@@ -916,7 +916,7 @@ export default function TaskBlockModal({
                               fontSize: 11.5,
                               color: 'var(--ink-faint)',
                               cursor: 'pointer',
-                              borderBottom: '1px solid var(--border-subtle)',
+                              borderBottom: '1px solid var(--border-soft)',
                               fontStyle: 'italic',
                             }}
                           >
@@ -935,7 +935,7 @@ export default function TaskBlockModal({
                                 fontSize: 12,
                                 cursor: 'pointer',
                                 background: selectedTopicId === t.id ? 'var(--surface-alt)' : 'transparent',
-                                borderBottom: '1px solid var(--border-subtle)',
+                                borderBottom: '1px solid var(--border-soft)',
                               }}
                             >
                               {t.name}
@@ -1475,7 +1475,7 @@ export default function TaskBlockModal({
                         fontSize: 11.5,
                         fontWeight: 600,
                         borderRadius: 6,
-                        border: '1px solid var(--indigo-100, #c7d2fe)',
+                        border: '1px solid color-mix(in srgb, var(--indigo-600) 35%, transparent)',
                         background: 'var(--indigo-050)',
                         color: 'var(--indigo-600)',
                         cursor: 'pointer',

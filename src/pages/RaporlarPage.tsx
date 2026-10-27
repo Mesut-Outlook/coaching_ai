@@ -386,12 +386,12 @@ export default function RaporlarPage() {
                           {isMola ? (
                             <span style={{ fontSize: 13, marginRight: 2 }}>☕</span>
                           ) : isSerbest ? (
-                            <span style={{ fontSize: 13, marginRight: 2 }}>🎯</span>
+                            <span style={{ fontSize: 13, marginRight: 2 }}>📌</span>
                           ) : (
                             <CheckSquare size={14} color={t.completed ? 'var(--success)' : 'var(--ink-faint)'} />
                           )}
                           <span style={{ textDecoration: t.completed ? 'line-through' : 'none', fontWeight: 500, flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                            {isMola ? 'Mola' : isSerbest ? (t.custom_label || 'Serbest Etkinlik') : (topic?.name || t.custom_label || 'Özel Görev')}
+                            {isMola ? (t.custom_label || 'Mola') : isSerbest ? (t.custom_label || 'Serbest Etkinlik') : (topic?.name || t.custom_label || 'Özel Görev')}
                           </span>
                           {isMola && <span style={{ color: 'var(--ink-faint)', fontSize: 10 }}>({t.duration_min || 10} dk)</span>}
                           {isSerbest && <span style={{ color: 'var(--ink-faint)', fontSize: 10 }}>({t.duration_min || 60} dk)</span>}
@@ -508,7 +508,7 @@ export default function RaporlarPage() {
                         <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', border: '1px solid var(--border-soft)', borderRadius: 6, background: 'var(--surface)', fontSize: 11.5 }}>
                           <span style={{ fontWeight: 700, color: 'var(--indigo-600)', marginRight: 6 }}>{dayNameShort}</span>
                           <span style={{ flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: 500 }} title={topic?.name || t.custom_label || ''}>
-                            {isMola ? '☕ Mola' : isSerbest ? `🎯 ${t.custom_label || 'Serbest'}` : (topic?.name || t.custom_label || 'Özel Görev')}
+                            {isMola ? `☕ ${t.custom_label || 'Mola'}` : isSerbest ? `📌 ${t.custom_label || 'Serbest'}` : (topic?.name || t.custom_label || 'Özel Görev')}
                           </span>
                           {isMola && <span style={{ color: 'var(--ink-faint)', fontSize: 10, paddingRight: 6 }}>({t.duration_min || 10} dk)</span>}
                           {isSerbest && <span style={{ color: 'var(--ink-faint)', fontSize: 10, paddingRight: 6 }}>({t.duration_min || 60} dk)</span>}

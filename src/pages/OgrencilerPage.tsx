@@ -1333,13 +1333,13 @@ export default function OgrencilerPage() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                 <span style={{ fontSize: 16 }}>☕</span>
                                 <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600 }}>Mola</div>
+                                  <div style={{ fontSize: 13, fontWeight: 600 }}>{task.custom_label || 'Mola'}</div>
                                   <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>
                                     {task.start_time ? `${task.start_time.slice(0, 5)} · ` : ''}{task.duration_min || 10} dk
                                   </div>
                                 </div>
                               </div>
-                              <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 12, background: 'var(--surface-sunken)', color: 'var(--ink-faint)' }}>
+                              <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 12, background: 'var(--measured-bg)', color: 'var(--ink-faint)' }}>
                                 Mola
                               </span>
                             </div>
@@ -1350,7 +1350,7 @@ export default function OgrencilerPage() {
                           return (
                             <div key={task.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', background: 'var(--surface-alt)', border: '1px solid var(--border-soft)', borderRadius: 10 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <span style={{ fontSize: 16 }}>🎯</span>
+                                <span style={{ fontSize: 16 }}>📌</span>
                                 <div>
                                   <div style={{ fontSize: 13, fontWeight: 600 }}>{task.custom_label || 'Serbest Etkinlik'}</div>
                                   <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>
@@ -1358,7 +1358,7 @@ export default function OgrencilerPage() {
                                   </div>
                                 </div>
                               </div>
-                              <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 12, background: 'var(--surface-sunken)', color: 'var(--indigo-600)' }}>
+                              <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 12, background: 'var(--measured-bg)', color: 'var(--indigo-600)' }}>
                                 Serbest
                               </span>
                             </div>

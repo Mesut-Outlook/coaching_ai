@@ -23,7 +23,7 @@ const HISTORY: DateGroup[] = [
         items: [
           'Saatli program blokları: Haftalık programdaki görevlere başlangıç saati ve süre (dk) tanımlandı. Bloklar panoda saat sırasına göre dizilir; her blokta "07:00 – 07:40" gibi zaman aralığı gösterilir. Saati olmayan görevler günün altında "Saatsiz" başlığında toplanır.',
           'Üç blok türü (Ders / Mola / Serbest): Çalışma görevlerinin yanı sıra gün içine dinlenme molaları (☕ Mola) ve serbest aktiviteler (📌 Özel ders, koçluk görüşmesi, okul sınavı vb.) eklenebilir.',
-          'Çoklu gün × saat ekleme penceresi: Gün sütunundaki "+ Görev Ekle" düğmesiyle açılan yeni modal üzerinden birden çok gün ve birden çok saat (örneğin 3 gün × 2 saat = 6 blok) tek seferde toplu olarak eklenebilir.',
+          'Çoklu gün × saat ekleme penceresi: Gün sütunundaki "+ Görev Ekle" düğmesiyle açılan yeni pencereden birden çok gün ve birden çok saat (örneğin 3 gün × 2 saat = 6 blok) tek seferde toplu olarak eklenebilir.',
           'Zaman kısayolları: Son eklenen saatin üstüne seçili süreyi ekleyen "+ Ardından" düğmesi ve öğrencinin son 8 haftasındaki en sık kullanılan 3 saat kısayoluyla program dakikalar içinde hazırlanır.',
           'Mola ve serbest bloklar raporlardan bağımsızdır: Mola ve serbest aktiviteler ödev tamamlama, doğruluk oranı, 360 rapor, haftalık görüşme maddeleri, veli haftalık özeti ve portal sayaçlarına dahil edilmez; analizler yalnız ders bloklarını ölçer.',
           'YKS için TYT | AYT seçici ve esnek ders girişi: YKS öğrencileri için TYT ve AYT sınav grubu ayrımı eklendi. Ders kutusundan arama yapılabilir; konu seçmek isteğe bağlıdır (konu seçilmeden genel ders çalışması planlanabilir).',
