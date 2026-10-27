@@ -24,6 +24,7 @@ import ReviewTimingCard from './ReviewTimingCard'
 import InterventionImpactCard from './InterventionImpactCard'
 import AddToProgramPopover from '../program/AddToProgramPopover'
 import type { ExamType, Grade, TaskType } from '../../types/database'
+import { formatNetTr } from '../../lib/homeSummaryCore'
 
 export interface Report360ViewProps {
   studentId: string
@@ -181,7 +182,7 @@ export default function Report360View({
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--ink)' }}>
-                  {data.kpi.lastNet !== null ? data.kpi.lastNet.toFixed(2).replace('.', ',') : '—'}
+                  {data.kpi.lastNet !== null ? formatNetTr(data.kpi.lastNet) : '—'}
                 </span>
                 {data.kpi.deltaNet !== null && (
                   <span
@@ -194,12 +195,12 @@ export default function Report360View({
                       borderRadius: 4,
                     }}
                   >
-                    {data.kpi.deltaNet >= 0 ? `+${data.kpi.deltaNet}` : data.kpi.deltaNet}
+                    {data.kpi.deltaNet >= 0 ? `+${formatNetTr(data.kpi.deltaNet)}` : formatNetTr(data.kpi.deltaNet)}
                   </span>
                 )}
               </div>
               <span style={{ fontSize: 10.5, color: 'var(--ink-faint)' }}>
-                {data.kpi.previousNet !== null ? `Önceki: ${data.kpi.previousNet} net` : 'İlk deneme kaydı'}
+                {data.kpi.previousNet !== null ? `Önceki: ${formatNetTr(data.kpi.previousNet)} net` : 'İlk deneme kaydı'}
               </span>
             </div>
 
@@ -216,17 +217,21 @@ export default function Report360View({
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                     <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--ink)' }}>
                       {data.kpi.netGap !== null && data.kpi.netGap > 0
-                        ? `-${data.kpi.netGap.toFixed(1).replace('.', ',')}`
+                        ? `-${formatNetTr(data.kpi.netGap)}`
                         : 'Ulaşıldı'}
                     </span>
                     <span style={{ fontSize: 11.5, color: 'var(--ink-soft)' }}>
-                      / Hedef: {data.kpi.targetNet}
+                      / Hedef: {formatNetTr(data.kpi.targetNet)}
                     </span>
                   </div>
                   <span style={{ fontSize: 10.5, color: 'var(--teal-text, #0D9488)', fontWeight: 600 }}>
-                    {data.kpi.weeksLeft !== null && data.kpi.weeklyNeededNet !== null
-                      ? `${data.kpi.weeksLeft} hafta · haftada +${data.kpi.weeklyNeededNet.toFixed(1).replace('.', ',')} net`
-                      : 'Sınav tarihi girilmedi'}
+                    {data.kpi.netGap !== null && data.kpi.netGap <= 0
+                      ? data.kpi.netGap === 0
+                        ? 'Hedefte'
+                        : `Hedefin ${formatNetTr(Math.abs(data.kpi.netGap))} net üstünde`
+                      : data.kpi.weeksLeft !== null && data.kpi.weeklyNeededNet !== null
+                        ? `${data.kpi.weeksLeft} hafta · haftada +${formatNetTr(data.kpi.weeklyNeededNet)} net`
+                        : 'Sınav tarihi girilmedi'}
                   </span>
                 </>
               ) : (

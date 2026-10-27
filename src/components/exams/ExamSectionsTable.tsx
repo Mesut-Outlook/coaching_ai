@@ -1,4 +1,5 @@
 import type { MockExamSection } from '../../types/database'
+import { formatNetTr } from '../../lib/homeSummaryCore'
 
 // Tablonun ihtiyacı olan alanlar — bilinçli olarak Pick (Omit değil): mobil portal
 // RPC'si (bkz. src/lib/portal.ts → PortalExamSection) `id`/`mock_exam_id` yanında
@@ -57,7 +58,7 @@ export default function ExamSectionsTable({ sections }: { sections: ExamSectionR
               <td style={{ ...num, color: 'var(--critical-text)' }}>{s.wrong_count}</td>
               <td style={{ ...num, color: 'var(--ink-faint)' }}>{s.blank_count}</td>
               <td style={{ ...num, color: 'var(--ink-faint)' }}>{s.max_questions}</td>
-              <td style={{ ...netCell, color: 'var(--indigo-600)' }}>{Number(s.net)}</td>
+              <td style={{ ...netCell, color: 'var(--indigo-600)' }}>{formatNetTr(Number(s.net))}</td>
             </tr>
           ))}
           <tr style={{ borderTop: '1px solid var(--border)', background: 'var(--surface-alt)' }}>
@@ -67,7 +68,7 @@ export default function ExamSectionsTable({ sections }: { sections: ExamSectionR
             <td style={{ ...num, fontWeight: 700, color: 'var(--ink-soft)' }}>{total.blank}</td>
             <td style={{ ...num, fontWeight: 700, color: 'var(--ink-soft)' }}>{total.max}</td>
             <td style={{ ...netCell, color: 'var(--indigo-600)', fontSize: 13.5 }}>
-              {Math.round(total.net * 100) / 100}
+              {formatNetTr(total.net)}
             </td>
           </tr>
         </tbody>

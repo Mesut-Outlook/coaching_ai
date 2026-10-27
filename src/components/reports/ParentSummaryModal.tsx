@@ -17,6 +17,7 @@ import {
 import type { AttendanceRecord, MockExam, Student, WeeklyTask } from '../../types/database'
 import type { PortalAttendance, PortalExam, PortalStudent, PortalTask } from '../../lib/portal'
 import { weightedNet } from '../../lib/examSections'
+import { formatNetTr } from '../../lib/homeSummaryCore'
 
 export type ParentSummaryModalProps = {
   isOpen: boolean
@@ -389,10 +390,10 @@ export default function ParentSummaryModal({
                 Son Deneme
               </div>
               <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--ink)', marginTop: 2 }}>
-                {stats.latestExamNet != null ? `${Math.round(stats.latestExamNet * 100) / 100} net` : '—'}
+                {stats.latestExamNet != null ? `${formatNetTr(stats.latestExamNet)} net` : '—'}
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {stats.latestExamName ?? (stats.targetNet != null ? `Hedef ${stats.targetNet}` : 'Girilmedi')}
+                {stats.latestExamName ?? (stats.targetNet != null ? `Hedef ${formatNetTr(stats.targetNet)}` : 'Girilmedi')}
               </div>
             </div>
 
