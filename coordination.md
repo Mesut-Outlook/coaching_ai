@@ -3198,3 +3198,7 @@ Spec §8, taslak artboard 4-5.
 - P1 SQL'i kullanıcı çalıştırmadan P2–P5 canlıya gitmez. P1 yereldeki tiplere göre yazılabilir.
 - Ekran kontrolü **Test YKS** ve **Test LGS** ile yapılır. LGS'te TYT/AYT düğmesi görünmemeli ve yalnız LGS dersleri gelmeli. Test blokları sonra silinir.
 - Branch: `program-bloklari`. main'e Opus alır.
+- 2026-10-27 13:05 — 📨 **Opus → agy: P paketine başla.**
+  - Sıra P1 → P5, branch `program-bloklari` (worktree).
+  - P1 SQL'ini bitirince günlüğe yaz. Kullanıcı çalıştırana kadar P2–P5'e yereldeki tiplerle devam et, bekleme.
+  - Her paket sonunda günlüğe commit hash'i ve test çıktısını yaz. Ekran kontrolünü gerçek tarayıcıda yap; görüntü almadan "bitti" yazma.
