@@ -732,7 +732,7 @@ export default function ProgramPage() {
             <div className="field" style={{ minWidth: 200 }}>
               <select value={selectedStudentId} onChange={(e) => handleStudentChange(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10 }}>
                 {students.map(s => (
-                  <option key={s.id} value={s.id}>{s.full_name} ({s.track})</option>
+                  <option key={s.id} value={s.id}>{s.full_name} {s.track ? ` (${s.track})` : ''}</option>
                 ))}
               </select>
             </div>
@@ -774,7 +774,7 @@ export default function ProgramPage() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--indigo-100)', color: 'var(--indigo-700)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--indigo-050)', color: 'var(--indigo-700)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Sparkles size={18} />
                 </div>
                 <div>
@@ -1151,9 +1151,9 @@ export default function ProgramPage() {
                   onDrop={(e) => handleDrop(e, dayIndex)}
                 >
                   {/* Column Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px solid var(--border-soft)', paddingBottom: 6 }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                      <span style={{ fontWeight: 700, fontSize: 13.5 }}>{dayName}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', rowGap: 4, borderBottom: '1px solid var(--border-soft)', paddingBottom: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexShrink: 0 }}>
+                      <span style={{ fontWeight: 700, fontSize: 13.5, whiteSpace: 'nowrap' }}>{dayName}</span>
                       <span style={{ fontSize: 11, color: 'var(--ink-faint)', fontVariantNumeric: 'tabular-nums' }}>
                         {dayDate.getDate()} {MONTHS_TR_SHORT[dayDate.getMonth()]}
                       </span>
@@ -1197,7 +1197,7 @@ export default function ProgramPage() {
                                   fontWeight: 700,
                                   padding: '1px 5px',
                                   borderRadius: 4,
-                                  background: 'var(--indigo-100)',
+                                  background: 'var(--indigo-050)',
                                   color: 'var(--indigo-700)',
                                 }}
                               >
@@ -1244,15 +1244,6 @@ export default function ProgramPage() {
                     {dayTasks.length === 0 && draftsForDay.length === 0 && (
                       <div className="day-empty">
                         <span className="day-empty-text">Bu güne görev yok</span>
-                        {selectedStudentId && (
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm no-print"
-                            onClick={() => handleOpenAddTaskModal(dayIndex)}
-                          >
-                            <Plus size={14} /> Görev ekle
-                          </button>
-                        )}
                       </div>
                     )}
 

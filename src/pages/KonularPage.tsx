@@ -248,7 +248,7 @@ export default function KonularPage() {
                 <div className="field" style={{ minWidth: 200 }}>
                   <select value={selectedStudentId} onChange={(e) => handleStudentChange(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 10 }}>
                     {students.map(s => (
-                      <option key={s.id} value={s.id}>{s.full_name} ({s.track})</option>
+                      <option key={s.id} value={s.id}>{s.full_name} {s.track ? ` (${s.track})` : ''}</option>
                     ))}
                   </select>
                 </div>

@@ -383,7 +383,7 @@ export default function TercihPage() {
           <div>
             <h1 style={{ fontSize: 20, margin: 0, fontWeight: 800 }}>NETLİK · TERCIH LİSTESİ RAPORU</h1>
             <p style={{ fontSize: 13, margin: '4px 0 0 0', color: '#444' }}>
-              {selectedStudent ? `Öğrenci: ${selectedStudent.full_name} (${selectedStudent.track})` : 'Üniversite & Bölüm Tercih Listesi'}
+              {selectedStudent ? `Öğrenci: ${selectedStudent.full_name}${selectedStudent.track ? ` (${selectedStudent.track})` : ''}` : 'Üniversite & Bölüm Tercih Listesi'}
               {rank && ` · Tahmini Sıralama: ${rank.toLocaleString('tr')}`}
             </p>
           </div>
@@ -543,7 +543,7 @@ export default function TercihPage() {
             <select style={inputStyle} value={selectedStudentId} onChange={(e) => handleStudentChange(e.target.value)}>
               <option value="">Öğrenci seç — puan türünü ön-doldur</option>
               {students.map((s) => (
-                <option key={s.id} value={s.id}>{s.full_name} ({s.track})</option>
+                <option key={s.id} value={s.id}>{s.full_name} {s.track ? ` (${s.track})` : ''}</option>
               ))}
             </select>
           </div>

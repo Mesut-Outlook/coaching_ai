@@ -477,7 +477,7 @@ export default function PriorityMatrixChart({ data, onAddToProgram }: PriorityMa
                         width: 20,
                         height: 20,
                         borderRadius: '50%',
-                        background: 'var(--indigo-100)',
+                        background: 'var(--indigo-050)',
                         color: 'var(--indigo-700)',
                         fontSize: 10,
                         fontWeight: 700,

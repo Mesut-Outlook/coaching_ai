@@ -742,7 +742,7 @@ export default function ExamReportForm({
                 >
                   {students.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.full_name} ({s.grade} · {s.track})
+                      {s.full_name} ({s.grade}{s.track ? ` · ${s.track}` : ''})
                     </option>
                   ))}
                 </select>
