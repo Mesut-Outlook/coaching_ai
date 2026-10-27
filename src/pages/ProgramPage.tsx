@@ -14,7 +14,6 @@ import {
   Edit2,
   Sparkles,
   Check,
-  Clock,
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import PageHeader from '../components/layout/PageHeader'
@@ -25,45 +24,83 @@ import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, Topic, WeeklyTask, Subject, TaskType, ExamType } from '../types/database'
 import { mondayOf, weekKey, fmtWeekRange, DAYS } from '../lib/weeks'
-import { subjectAppliesTo, topicAppliesTo, gradeCurriculum } from '../lib/curriculum'
+import { subjectAppliesTo, gradeCurriculum } from '../lib/curriculum'
 import { openWhatsAppChat } from '../lib/whatsapp'
 import { loadReport360Data } from '../lib/report360'
 import { buildRecommendations, type RecommendItem } from '../lib/recommendCore'
+import TaskBlockModal, {
+  timeToMinutes,
+  addMinutesToTime,
+  formatTimeShort,
+  TASK_TYPE_CONFIG,
+} from '../components/program/TaskBlockModal'
 
-const TASK_TYPE_CONFIG: Record<TaskType, { label: string; bg: string; color: string; border: string }> = {
-  konu: {
-    label: 'Konu',
-    bg: 'var(--measured-bg)',
-    color: 'var(--measured-text)',
-    border: 'color-mix(in srgb, var(--measured-text) 25%, transparent)',
-  },
-  tekrar: {
-    label: 'Tekrar',
-    bg: 'var(--teal-bg)',
-    color: 'var(--teal-text)',
-    border: 'color-mix(in srgb, var(--teal-text) 25%, transparent)',
-  },
-  rutin: {
-    label: 'Rutin',
-    bg: 'var(--success-bg)',
-    color: 'var(--success-text)',
-    border: 'color-mix(in srgb, var(--success-text) 25%, transparent)',
-  },
-  sureli_test: {
-    label: 'Süreli Test',
-    bg: 'var(--warning-bg)',
-    color: 'var(--warning-text)',
-    border: 'color-mix(in srgb, var(--warning-text) 25%, transparent)',
-  },
-  deneme: {
-    label: 'Deneme',
-    bg: 'var(--plum-bg)',
-    color: 'var(--plum-text)',
-    border: 'color-mix(in srgb, var(--plum-text) 25%, transparent)',
-  },
+const MONTHS_TR_SHORT = [
+  'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
+  'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara',
+]
+
+function formatBlockTimeRange(startTime: string | null | undefined, durationMin: number | null | undefined): string {
+  if (!startTime) return durationMin ? `${durationMin} dk` : ''
+  const start = formatTimeShort(startTime)
+  if (!durationMin) return start
+  const end = addMinutesToTime(start, durationMin)
+  return `${start} – ${end}`
 }
 
-const ALL_TASK_TYPES: TaskType[] = ['konu', 'tekrar', 'rutin', 'sureli_test', 'deneme']
+function formatMinutesToHours(min: number): string {
+  if (min <= 0) return ''
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  if (h > 0) {
+    return m > 0 ? `${h} sa ${m} dk` : `${h} sa`
+  }
+  return `${m} dk`
+}
+
+function buildWhatsAppScheduleText(
+  tasks: WeeklyTask[],
+  topics: (Topic & { subjects: Subject | null })[],
+  subjects: Subject[]
+): string {
+  const lines: string[] = []
+  DAYS.forEach((dayName, dayIndex) => {
+    // Molalar metne girmez
+    const dayTasks = tasks.filter((t) => t.day_index === dayIndex && t.block_kind !== 'mola')
+    if (dayTasks.length === 0) return
+
+    const timed = dayTasks
+      .filter((t) => Boolean(t.start_time))
+      .sort((a, b) => timeToMinutes(a.start_time!) - timeToMinutes(b.start_time!))
+    const untimed = dayTasks
+      .filter((t) => !t.start_time)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+    lines.push(`\n📅 *${dayName}*`)
+
+    const formatTaskLine = (t: WeeklyTask) => {
+      if (t.block_kind === 'serbest') {
+        const timeStr = t.start_time ? formatTimeShort(t.start_time) + ' ' : ''
+        const durStr = t.duration_min ? ` (${t.duration_min} dk)` : ''
+        return `• ${timeStr}📌 ${t.custom_label || 'Serbest Etkinlik'}${durStr}`
+      }
+
+      const topic = topics.find((tp) => tp.id === t.topic_id)
+      const subject = t.subject_id ? subjects.find((s) => s.id === t.subject_id) : topic?.subjects
+      const subjectName = subject?.name || ''
+      const topicOrLabel = topic?.name || t.custom_label || 'Ders'
+      const title = subjectName ? `${subjectName} · ${topicOrLabel}` : topicOrLabel
+      const timeStr = t.start_time ? formatTimeShort(t.start_time) + ' ' : ''
+      const durStr = t.duration_min ? ` (${t.duration_min} dk)` : ''
+      const qStr = t.question_count > 0 ? ` [${t.question_count} soru]` : ''
+      return `• ${timeStr}${title}${durStr}${qStr}`
+    }
+
+    timed.forEach((t) => lines.push(formatTaskLine(t)))
+    untimed.forEach((t) => lines.push(formatTaskLine(t)))
+  })
+  return lines.join('\n')
+}
 
 export default function ProgramPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -85,9 +122,7 @@ export default function ProgramPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // R4-3: Süre Alanları (duration_min)
-  const [durationMin, setDurationMin] = useState<number | ''>('')
-  const [editDurationMin, setEditDurationMin] = useState<number | ''>('')
+  // Coach Result Entry Modal duration
   const [resultDurationMin, setResultDurationMin] = useState<string>('')
 
   // R3-4: Öneri Motoru B - Haftalık Taslak Katmanı
@@ -109,30 +144,19 @@ export default function ProgramPage() {
   
   // Navigation for weeks
   const [currentMonday, setCurrentMonday] = useState<Date>(() => mondayOf(new Date()))
-  
-  // Inline Add Form State (per day)
-  const [addingDayIndex, setAddingDayIndex] = useState<number | null>(null)
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('custom')
-  const [selectedTopicId, setSelectedTopicId] = useState<string>('')
-  const [customLabel, setCustomLabel] = useState('')
-  const [questionCount, setQuestionCount] = useState<number>(100)
-  const [taskType, setTaskType] = useState<TaskType>('konu')
-  const [taskSource, setTaskSource] = useState<string>('')
-  const [recentSources, setRecentSources] = useState<string[]>([])
-  const [addingTask, setAddingTask] = useState(false)
 
-  // Task Editing State
-  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+  // Sources datalist
+  const [recentSources, setRecentSources] = useState<string[]>([])
+
   // Konuya tıklanınca açılan gelişim paneli (Konu Yeterlilik Haritası'ndaki panelin aynısı)
   const [progressTopic, setProgressTopic] = useState<{ id: number; name: string; subjectName?: string | null } | null>(null)
-  const [editSubjectId, setEditSubjectId] = useState<string>('custom')
-  const [editTopicId, setEditTopicId] = useState<string>('')
-  const [editCustomLabel, setEditCustomLabel] = useState('')
-  const [editQuestionCount, setEditQuestionCount] = useState<number>(100)
-  const [editTaskType, setEditTaskType] = useState<TaskType>('konu')
-  const [editTaskSource, setEditTaskSource] = useState<string>('')
-  const [savingTask, setSavingTask] = useState(false)
   const [waMenuOpen, setWaMenuOpen] = useState(false)
+
+  // P3: TaskBlockModal State
+  const [taskModalOpen, setTaskModalOpen] = useState(false)
+  const [taskModalDayIndex, setTaskModalDayIndex] = useState(0)
+  const [taskModalStartTime, setTaskModalStartTime] = useState<string | null>(null)
+  const [taskModalEditingTask, setTaskModalEditingTask] = useState<WeeklyTask | null>(null)
 
   // Coach Result Entry Modal State (D / Y / B)
   const [resultModalTask, setResultModalTask] = useState<WeeklyTask | null>(null)
@@ -230,6 +254,18 @@ export default function ProgramPage() {
     return students.find(s => s.id === selectedStudentId)
   }, [students, selectedStudentId])
 
+  // Unique subjects, derived from the joined topics list — seçili öğrencinin sınıfına
+  // uymayan dersler (subjectAppliesTo) görev atama formundan hiç görünmez.
+  const subjectsList = useMemo(() => {
+    const bySubjectId = new Map<number, Subject>()
+    topics.forEach((t) => {
+      if (t.subjects && !bySubjectId.has(t.subject_id)) bySubjectId.set(t.subject_id, t.subjects)
+    })
+    const all = Array.from(bySubjectId.values())
+    const filtered = selectedStudent ? all.filter((s) => subjectAppliesTo(s, selectedStudent.grade)) : all
+    return filtered.sort((a, b) => a.sort_order - b.sort_order)
+  }, [topics, selectedStudent])
+
   // Week navigation handlers
   const handlePrevWeek = () => {
     setCurrentMonday(prev => new Date(prev.getTime() - 7 * 86400000))
@@ -260,8 +296,9 @@ export default function ProgramPage() {
     }
 
     const weekRange = fmtWeekRange(currentMonday)
-    const studentMessage = `Merhaba ${currentStudent.full_name}, bu haftaki (${weekRange}) ders çalışma programın hazır! PDF dosyasını ekten inceleyebilirsin. İyi çalışmalar!`
-    const parentMessage = `Merhaba, ${currentStudent.full_name} için bu haftaki (${weekRange}) ders çalışma programı hazır! PDF dosyasını ekte bulabilirsiniz.`
+    const scheduleSummary = buildWhatsAppScheduleText(tasks, topics, subjectsList)
+    const studentMessage = `Merhaba ${currentStudent.full_name}, bu haftaki (${weekRange}) ders çalışma programın:\n${scheduleSummary}\n\nİyi çalışmalar!`
+    const parentMessage = `Merhaba, ${currentStudent.full_name} için bu haftaki (${weekRange}) ders çalışma programı:\n${scheduleSummary}`
 
     const recipientLabel = recipient === 'ogrenci' ? 'öğrenciye' : recipient === 'veli' ? 'veliye' : 'öğrenciye ve veliye'
     const confirmSend = window.confirm(
@@ -283,7 +320,7 @@ export default function ProgramPage() {
     }
   }
 
-  // HTML5 Drag and Drop Handlers
+  // HTML5 Drag and Drop Handlers (preserves start_time)
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
     e.dataTransfer.setData('text/plain', taskId)
     e.dataTransfer.effectAllowed = 'move'
@@ -315,7 +352,7 @@ export default function ProgramPage() {
         .eq('id', taskId)
       
       if (error) throw error
-    } catch (err) {
+    } catch {
       // Rollback on error
       loadTasks()
       alert('Görev taşınırken hata oluştu.')
@@ -335,73 +372,9 @@ export default function ProgramPage() {
         .update({ completed: !currentCompleted })
         .eq('id', taskId)
       if (error) throw error
-    } catch (err) {
+    } catch {
       loadTasks()
       alert('Görev durumu güncellenemedi.')
-    }
-  }
-
-  // Add a new task to a specific day
-  const handleAddTask = async (dayIndex: number) => {
-    if (!selectedStudentId || !isSupabaseConfigured) return
-
-    const topicIdVal = selectedSubjectId === 'custom' ? null : (selectedTopicId ? parseInt(selectedTopicId) : null)
-    const labelVal = selectedSubjectId === 'custom' ? customLabel : null
-
-    if (selectedSubjectId === 'custom' && !customLabel.trim()) {
-      return alert('Lütfen görev açıklaması girin.')
-    }
-    if (selectedSubjectId !== 'custom' && !selectedTopicId) {
-      return alert('Lütfen konu seçin.')
-    }
-
-    setAddingTask(true)
-    
-    try {
-      const weekStartStr = weekKey(currentMonday)
-      // "Deneme mi?" kutusu kalktı: deneme olup olmadığı yalnız görev türünden gelir.
-      const effectiveIsExam = taskType === 'deneme'
-      const trimmedSource = taskSource.trim() || null
-
-      const { data, error } = await supabase
-        .from('weekly_tasks')
-        .insert({
-          student_id: selectedStudentId,
-          week_start: weekStartStr,
-          day_index: dayIndex,
-          topic_id: topicIdVal,
-          custom_label: labelVal,
-          question_count: questionCount,
-          duration_min: durationMin !== '' ? Number(durationMin) : null,
-          is_exam: effectiveIsExam,
-          task_type: taskType,
-          source: trimmedSource,
-          origin_kind: 'elle',
-          completed: false
-        })
-        .select()
-      
-      if (error) throw error
-      if (data) {
-        setTasks(prev => [...prev, data[0]])
-        if (trimmedSource && !recentSources.includes(trimmedSource)) {
-          setRecentSources(prev => [trimmedSource, ...prev].slice(0, 5))
-        }
-      }
-
-      // Reset form
-      setAddingDayIndex(null)
-      setSelectedSubjectId('custom')
-      setSelectedTopicId('')
-      setCustomLabel('')
-      setQuestionCount(100)
-      setDurationMin('')
-      setTaskType('konu')
-      setTaskSource('')
-    } catch (err) {
-      alert('Görev eklenirken hata oluştu.')
-    } finally {
-      setAddingTask(false)
     }
   }
 
@@ -416,77 +389,45 @@ export default function ProgramPage() {
     try {
       const { error } = await supabase.from('weekly_tasks').delete().eq('id', taskId)
       if (error) throw error
-    } catch (err) {
+    } catch {
       loadTasks()
       alert('Görev silinemedi.')
     }
   }
 
-  // Handle task editing start
-  const handleStartEdit = (task: WeeklyTask) => {
-    setEditingTaskId(task.id)
-    if (task.topic_id) {
-      const topic = topics.find(t => t.id === task.topic_id)
-      setEditSubjectId(topic ? String(topic.subject_id) : 'custom')
-      setEditTopicId(String(task.topic_id))
-    } else {
-      setEditSubjectId('custom')
-      setEditTopicId('')
+  // TaskBlockModal Handlers (P3)
+  const handleOpenAddTaskModal = (dayIndex: number) => {
+    const dayTasks = tasks.filter(t => t.day_index === dayIndex && t.start_time)
+    const sorted = [...dayTasks].sort((a, b) => timeToMinutes(a.start_time!) - timeToMinutes(b.start_time!))
+    let nextStart: string | null = null
+    if (sorted.length > 0) {
+      const last = sorted[sorted.length - 1]
+      const dur = last.duration_min || 40
+      nextStart = addMinutesToTime(formatTimeShort(last.start_time), dur)
     }
-    setEditCustomLabel(task.custom_label || '')
-    setEditQuestionCount(task.question_count)
-    setEditDurationMin(task.duration_min !== null && task.duration_min !== undefined ? task.duration_min : '')
-    setEditTaskType(task.task_type || (task.is_exam ? 'deneme' : 'konu'))
-    setEditTaskSource(task.source || '')
+    setTaskModalDayIndex(dayIndex)
+    setTaskModalStartTime(nextStart)
+    setTaskModalEditingTask(null)
+    setTaskModalOpen(true)
   }
 
-  // Handle task editing save
-  const handleSaveEdit = async (taskId: string) => {
-    if (!isSupabaseConfigured) return
+  const handleOpenEditTaskModal = (task: WeeklyTask) => {
+    setTaskModalDayIndex(task.day_index)
+    setTaskModalStartTime(task.start_time ? formatTimeShort(task.start_time) : null)
+    setTaskModalEditingTask(task)
+    setTaskModalOpen(true)
+  }
 
-    const topicIdVal = editSubjectId === 'custom' ? null : (editTopicId ? parseInt(editTopicId) : null)
-    const labelVal = editSubjectId === 'custom' ? editCustomLabel : null
-
-    if (editSubjectId === 'custom' && !editCustomLabel.trim()) {
-      return alert('Lütfen görev açıklaması girin.')
-    }
-    if (editSubjectId !== 'custom' && !editTopicId) {
-      return alert('Lütfen konu seçin.')
-    }
-
-    setSavingTask(true)
-    try {
-      const effectiveIsExam = editTaskType === 'deneme'
-      const trimmedSource = editTaskSource.trim() || null
-
-      const { data, error } = await supabase
-        .from('weekly_tasks')
-        .update({
-          topic_id: topicIdVal,
-          custom_label: labelVal,
-          question_count: editQuestionCount,
-          duration_min: editDurationMin !== '' ? Number(editDurationMin) : null,
-          is_exam: effectiveIsExam,
-          task_type: editTaskType,
-          source: trimmedSource,
-        })
-        .eq('id', taskId)
-        .select()
-
-      if (error) throw error
-
-      if (data && data.length > 0) {
-        setTasks(prev => prev.map(t => t.id === taskId ? data[0] : t))
-        if (trimmedSource && !recentSources.includes(trimmedSource)) {
-          setRecentSources(prev => [trimmedSource, ...prev].slice(0, 5))
-        }
+  const handleTaskModalSuccess = (newOrUpdatedTasks: WeeklyTask[]) => {
+    setTaskModalOpen(false)
+    setTaskModalEditingTask(null)
+    // Add any newly used sources to recentSources
+    newOrUpdatedTasks.forEach(t => {
+      if (t.source && !recentSources.includes(t.source)) {
+        setRecentSources(prev => [t.source!, ...prev].slice(0, 5))
       }
-      setEditingTaskId(null)
-    } catch (err) {
-      alert('Görev güncellenirken hata oluştu.')
-    } finally {
-      setSavingTask(false)
-    }
+    })
+    loadTasks()
   }
 
   // Coach Result Entry Handlers (D / Y / B & Süre)
@@ -518,7 +459,8 @@ export default function ProgramPage() {
         return
       }
 
-      if (d + y + b > resultModalTask.question_count) {
+      // Saatli blokta soru hedefi olmadan açılmışsa (question_count = 0) D+Y+B hedef kontrolünü atla
+      if (resultModalTask.question_count > 0 && d + y + b > resultModalTask.question_count) {
         setResultError(`D + Y + B toplamı (${d + y + b}), hedef soru sayısını (${resultModalTask.question_count}) aşamaz.`)
         return
       }
@@ -536,14 +478,20 @@ export default function ProgramPage() {
     setResultError(null)
 
     try {
+      const updatePayload: Partial<WeeklyTask> = {
+        correct_count: d,
+        wrong_count: y,
+        blank_count: b,
+        duration_min: dur,
+      }
+      // question_count = 0 ise kullanıcı sonradan soru girdiyse hedef soru sayısını da doldursun
+      if (resultModalTask.question_count === 0 && d !== null && y !== null && b !== null) {
+        updatePayload.question_count = d + y + b
+      }
+
       const { data, error: updateError } = await supabase
         .from('weekly_tasks')
-        .update({
-          correct_count: d,
-          wrong_count: y,
-          blank_count: b,
-          duration_min: dur,
-        })
+        .update(updatePayload)
         .eq('id', resultModalTask.id)
         .select()
 
@@ -704,36 +652,7 @@ export default function ProgramPage() {
     setDraftTasks((prev) => prev.filter((d) => d.id !== draftId))
   }
 
-  // Unique subjects, derived from the joined topics list — seçili öğrencinin sınıfına
-  // uymayan dersler (subjectAppliesTo) görev atama formundan hiç görünmez.
-  const subjectsList = useMemo(() => {
-    const bySubjectId = new Map<number, Subject>()
-    topics.forEach((t) => {
-      if (t.subjects && !bySubjectId.has(t.subject_id)) bySubjectId.set(t.subject_id, t.subjects)
-    })
-    const all = Array.from(bySubjectId.values())
-    const filtered = selectedStudent ? all.filter((s) => subjectAppliesTo(s, selectedStudent.grade)) : all
-    return filtered.sort((a, b) => a.sort_order - b.sort_order)
-  }, [topics, selectedStudent])
 
-  // Topics belonging to the currently selected subject in the add-task form.
-  // topicAppliesTo (subject + grade) tek kaynak — sınıfa uymayan konular listelenmez.
-  const topicsForSubject = useMemo(() => {
-    if (selectedSubjectId === 'custom') return []
-    const subjectId = parseInt(selectedSubjectId)
-    return topics
-      .filter((t) => t.subject_id === subjectId && t.subjects && (!selectedStudent || topicAppliesTo(t, t.subjects, selectedStudent.grade)))
-      .sort((a, b) => a.sort_order - b.sort_order)
-  }, [topics, selectedSubjectId, selectedStudent])
-
-  // Topics belonging to the currently selected subject in the edit-task form
-  const editTopicsForSubject = useMemo(() => {
-    if (editSubjectId === 'custom') return []
-    const subjectId = parseInt(editSubjectId)
-    return topics
-      .filter((t) => t.subject_id === subjectId && t.subjects && (!selectedStudent || topicAppliesTo(t, t.subjects, selectedStudent.grade)))
-      .sort((a, b) => a.sort_order - b.sort_order)
-  }, [topics, editSubjectId, selectedStudent])
 
   return (
     <section className="screen">
@@ -898,9 +817,331 @@ export default function ProgramPage() {
           ) : (
             <div className="program-board">
             {DAYS.map((dayName, dayIndex) => {
+              const dayDate = new Date(currentMonday.getFullYear(), currentMonday.getMonth(), currentMonday.getDate() + dayIndex)
               const dayTasks = tasks.filter(t => t.day_index === dayIndex)
               const draftsForDay = draftTasks.filter(d => d.day_index === dayIndex)
-              const isAddingHere = addingDayIndex === dayIndex
+
+              const timedTasks = dayTasks
+                .filter(t => Boolean(t.start_time))
+                .sort((a, b) => timeToMinutes(a.start_time!) - timeToMinutes(b.start_time!))
+
+              const untimedTasks = dayTasks
+                .filter(t => !t.start_time)
+                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+              const dersTasks = dayTasks.filter(t => !t.block_kind || t.block_kind === 'ders')
+              const doneDersCount = dersTasks.filter(t => t.completed).length
+              const dersMins = dersTasks.reduce((s, t) => s + (t.duration_min || 0), 0)
+              const dersDurationText = formatMinutesToHours(dersMins)
+
+              const renderTaskCard = (task: WeeklyTask) => {
+                const isMola = task.block_kind === 'mola'
+                const isSerbest = task.block_kind === 'serbest'
+                const range = formatBlockTimeRange(task.start_time, task.duration_min)
+
+                // 1) MOLA KARTI (Tek satır, gri, tamamlama kutusu ve sonuç butonu yok)
+                if (isMola) {
+                  return (
+                    <div
+                      key={task.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, task.id)}
+                      onDoubleClick={() => handleOpenEditTaskModal(task)}
+                      className="no-print"
+                      style={{
+                        background: 'var(--measured-bg)',
+                        border: '1px dashed var(--border)',
+                        borderRadius: 8,
+                        padding: '6px 9px',
+                        fontSize: 11.5,
+                        color: 'var(--measured-text)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 6,
+                        cursor: 'grab',
+                      }}
+                      title="Çift tıklayın: düzenle"
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden' }}>
+                        <span style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          ☕ {task.custom_label || 'Mola'} · {task.duration_min || 10} dk
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+                        {task.start_time && (
+                          <span style={{ fontSize: 10.5, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                            {range}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm no-print"
+                          onClick={() => handleOpenEditTaskModal(task)}
+                          style={{ padding: '2px 4px', border: 'none', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer' }}
+                          title="Düzenle"
+                        >
+                          <Edit2 size={11} />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm no-print"
+                          onClick={() => handleDeleteTask(task.id)}
+                          style={{ padding: '2px 4px', border: 'none', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer' }}
+                          title="Sil"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                }
+
+                // 2) SERBEST KARTI (Nötr renk, etkinlik adı ve saat, tamamlama kutusu yok)
+                if (isSerbest) {
+                  return (
+                    <div
+                      key={task.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, task.id)}
+                      onDoubleClick={() => handleOpenEditTaskModal(task)}
+                      style={{
+                        background: 'var(--surface-alt)',
+                        border: '1px dashed var(--border)',
+                        borderRadius: 10,
+                        padding: '8px 10px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                        cursor: 'grab',
+                      }}
+                      title="Çift tıklayın: düzenle"
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)', fontFamily: 'var(--font-mono)' }}>
+                          {range}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span
+                            style={{
+                              fontSize: 9.5,
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: 5,
+                              background: 'var(--measured-bg)',
+                              color: 'var(--measured-text)',
+                            }}
+                          >
+                            Serbest
+                          </span>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm no-print"
+                            onClick={() => handleOpenEditTaskModal(task)}
+                            style={{ padding: 2, border: 'none', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer' }}
+                            title="Düzenle"
+                          >
+                            <Edit2 size={11} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm no-print"
+                            onClick={() => handleDeleteTask(task.id)}
+                            style={{ padding: 2, border: 'none', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer' }}
+                            title="Sil"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--ink)', wordBreak: 'break-word' }}>
+                        📌 {task.custom_label || 'Serbest Etkinlik'}
+                      </div>
+                    </div>
+                  )
+                }
+
+                // 3) DERS KARTI (Renkli sol kenarlık, saat aralığı, tamamlama kutusu, sonuç)
+                const topic = topics.find(t => t.id === task.topic_id)
+                const subject = task.subject_id
+                  ? subjectsList.find(s => s.id === task.subject_id)
+                  : topic?.subjects
+                const subjectColor = subject?.color || 'var(--indigo-500)'
+                const subjectName = subject?.name || ''
+                const typeCfg = TASK_TYPE_CONFIG[task.task_type || (task.is_exam ? 'deneme' : 'konu')] || TASK_TYPE_CONFIG.konu
+                const hasResult = task.correct_count !== null && task.correct_count !== undefined && task.wrong_count !== null && task.wrong_count !== undefined
+                const correct = task.correct_count ?? 0
+                const wrong = task.wrong_count ?? 0
+                const blank = task.blank_count ?? 0
+                const totalAnswered = correct + wrong + blank
+                const accuracyPct = totalAnswered > 0 ? Math.round((correct / totalAnswered) * 100) : 0
+
+                return (
+                  <div
+                    key={task.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, task.id)}
+                    onDoubleClick={() => handleOpenEditTaskModal(task)}
+                    title="Konuya tıklayın: gelişim paneli · Karta çift tıklayın: düzenle"
+                    style={{
+                      padding: '8px 10px 8px 12px',
+                      background: task.completed ? 'var(--success-bg)' : 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      borderLeft: `4px solid ${subjectColor}`,
+                      borderRadius: 10,
+                      cursor: 'grab',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 5,
+                      opacity: task.completed ? 0.88 : 1,
+                      position: 'relative',
+                    }}
+                  >
+                    {/* 1. Satır: Saat aralığı + Tamamlama kutusu + Düzenle/Sil */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)', fontFamily: 'var(--font-mono)' }}>
+                        {range}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleComplete(task.id, task.completed)}
+                          style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', display: 'flex' }}
+                          title={task.completed ? 'Tamamlanmadı yap' : 'Tamamlandı işaretle'}
+                        >
+                          <CheckSquare size={16} color={task.completed ? 'var(--success)' : 'var(--ink-faint)'} />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm no-print"
+                          onClick={() => handleOpenEditTaskModal(task)}
+                          style={{ padding: 2, border: 'none', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer' }}
+                          title="Düzenle"
+                        >
+                          <Edit2 size={11} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTask(task.id)}
+                          style={{ border: 'none', background: 'none', padding: 2, color: 'var(--ink-faint)', cursor: 'pointer', opacity: 0.6 }}
+                          className="delete-btn no-print"
+                          title="Sil"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 2. Satır: Ders · Konu */}
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--ink)', wordBreak: 'break-word' }}>
+                      {subjectName && (
+                        <span style={{ color: 'var(--ink)' }}>
+                          {subjectName}
+                          {topic || task.custom_label ? ' · ' : ''}
+                        </span>
+                      )}
+                      {topic ? (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          title="Bu konunun gelişim panelini aç"
+                          onClick={(ev) => {
+                            ev.stopPropagation()
+                            setProgressTopic({ id: topic.id, name: topic.name, subjectName: topic.subjects?.name })
+                          }}
+                          onDoubleClick={(ev) => ev.stopPropagation()}
+                          onKeyDown={(ev) => {
+                            if (ev.key === 'Enter' || ev.key === ' ') {
+                              ev.preventDefault()
+                              setProgressTopic({ id: topic.id, name: topic.name, subjectName: topic.subjects?.name })
+                            }
+                          }}
+                          style={{
+                            fontWeight: 600,
+                            color: 'var(--indigo-600)',
+                            textDecoration: task.completed ? 'line-through' : 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {topic.name}
+                        </span>
+                      ) : (
+                        <span style={{ fontWeight: 600, textDecoration: task.completed ? 'line-through' : 'none' }}>
+                          {task.custom_label || 'Özel Görev'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* 3. Satır: Tip rozeti + Süre/Soru/Kaynak */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap', marginTop: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span
+                          style={{
+                            fontSize: 9.5,
+                            fontWeight: 700,
+                            padding: '1px 5px',
+                            borderRadius: 4,
+                            background: typeCfg.bg,
+                            color: typeCfg.color,
+                            border: `1px solid ${typeCfg.border}`,
+                          }}
+                        >
+                          {typeCfg.label}
+                        </span>
+                        {task.is_exam && task.task_type !== 'deneme' && (
+                          <span style={{ fontSize: 9, background: 'var(--critical-bg)', color: 'var(--critical-text)', fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>
+                            DENEME
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: 'var(--ink-soft)' }}>
+                        {task.question_count > 0 && (
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--indigo-600)' }}>
+                            {task.question_count} soru
+                          </span>
+                        )}
+                        {task.source && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: 'var(--ink-soft)' }}>
+                            <BookOpen size={10} style={{ opacity: 0.7 }} />
+                            <span>{task.source}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 4. Satır: Tamamlanan görev için Sonuç alanı (D/Y/B ve % Doğruluk) */}
+                    {task.completed && (
+                      <div style={{ marginTop: 2, paddingTop: 4, borderTop: '1px dashed var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                        {hasResult ? (
+                          <>
+                            <span style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--success-text)', background: 'var(--surface)', border: '1px solid var(--border-soft)', padding: '1px 5px', borderRadius: 4 }}>
+                              {correct}D · {wrong}Y · {blank}B · %{accuracyPct}
+                            </span>
+                            <button
+                              type="button"
+                              className="no-print"
+                              onClick={(e) => { e.stopPropagation(); openResultModal(task) }}
+                              style={{ background: 'none', border: 'none', color: 'var(--indigo-600)', fontSize: 9.5, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                            >
+                              Düzenle
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            className="no-print"
+                            onClick={(e) => { e.stopPropagation(); openResultModal(task) }}
+                            style={{ background: 'none', border: 'none', color: 'var(--indigo-600)', fontSize: 10, fontWeight: 600, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                          >
+                            <Edit2 size={10} /> Sonuç gir
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              }
 
               return (
                 <div
@@ -910,12 +1151,23 @@ export default function ProgramPage() {
                   onDrop={(e) => handleDrop(e, dayIndex)}
                 >
                   {/* Column Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-soft)', paddingBottom: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px solid var(--border-soft)', paddingBottom: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                       <span style={{ fontWeight: 700, fontSize: 13.5 }}>{dayName}</span>
-                      <span style={{ fontSize: 11, color: 'var(--ink-faint)', background: 'var(--measured-bg)', padding: '1px 6px', borderRadius: 10 }}>
-                        {dayTasks.length}{draftsForDay.length > 0 ? ` (+${draftsForDay.length})` : ''}
+                      <span style={{ fontSize: 11, color: 'var(--ink-faint)', fontVariantNumeric: 'tabular-nums' }}>
+                        {dayDate.getDate()} {MONTHS_TR_SHORT[dayDate.getMonth()]}
                       </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--ink-faint)', fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ background: 'var(--measured-bg)', padding: '1px 6px', borderRadius: 10, fontWeight: 600 }}>
+                        {doneDersCount}/{dersTasks.length} ders
+                        {draftsForDay.length > 0 ? ` (+${draftsForDay.length})` : ''}
+                      </span>
+                      {dersDurationText && (
+                        <span style={{ color: 'var(--ink-soft)', fontWeight: 600 }}>
+                          {dersDurationText}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -996,447 +1248,67 @@ export default function ProgramPage() {
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm no-print"
-                            onClick={() => setAddingDayIndex(dayIndex)}
+                            onClick={() => handleOpenAddTaskModal(dayIndex)}
                           >
                             <Plus size={14} /> Görev ekle
                           </button>
                         )}
                       </div>
                     )}
-                    {dayTasks.map(task => {
-                      const topic = topics.find(t => t.id === task.topic_id)
-                      const isEditing = editingTaskId === task.id
 
-                      if (isEditing) {
-                        return (
+                    {/* 1. Saatli Bloklar (Saate göre sıralı) */}
+                    {timedTasks.map(renderTaskCard)}
+
+                    {/* 2. Saatsiz Bölümü (Varsa) */}
+                    {untimedTasks.length > 0 && (
+                      <>
+                        {timedTasks.length > 0 && (
                           <div
-                            key={task.id}
                             style={{
-                              padding: 10,
-                              background: 'var(--surface-alt)',
-                              border: '1px solid var(--indigo-500)',
-                              borderRadius: 10,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              letterSpacing: '0.07em',
+                              textTransform: 'uppercase',
+                              color: 'var(--ink-faint)',
+                              margin: '6px 0 2px',
                               display: 'flex',
-                              flexDirection: 'column',
-                              gap: 8
+                              alignItems: 'center',
+                              gap: 6,
                             }}
                           >
-                            <div className="field">
-                              <label style={{ fontSize: 9, fontWeight: 700 }}>Ders</label>
-                              <select
-                                value={editSubjectId}
-                                onChange={e => { setEditSubjectId(e.target.value); setEditTopicId('') }}
-                                style={{ padding: 4, fontSize: 11, height: 'auto' }}
-                              >
-                                <option value="custom">Özel Görev (Metin)</option>
-                                {subjectsList.map(s => (
-                                  <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            {editSubjectId === 'custom' ? (
-                              <div className="field">
-                                <label style={{ fontSize: 9, fontWeight: 700 }}>Görev Açıklaması</label>
-                                <input
-                                  type="text"
-                                  value={editCustomLabel}
-                                  onChange={e => setEditCustomLabel(e.target.value)}
-                                  style={{ padding: 4, fontSize: 11 }}
-                                />
-                              </div>
-                            ) : (
-                              <div className="field">
-                                <label style={{ fontSize: 9, fontWeight: 700 }}>Konu</label>
-                                <select
-                                  value={editTopicId}
-                                  onChange={e => setEditTopicId(e.target.value)}
-                                  style={{ padding: 4, fontSize: 11, height: 'auto' }}
-                                >
-                                  <option value="" disabled>Konu seçin</option>
-                                  {editTopicsForSubject.map(t => (
-                                    <option key={t.id} value={t.id}>{t.name}</option>
-                                  ))}
-                                </select>
-                              </div>
-                            )}
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
-                              <div className="field">
-                                <label style={{ fontSize: 9, fontWeight: 700 }}>Soru Sayısı</label>
-                                <input
-                                  type="number"
-                                  value={editQuestionCount}
-                                  onChange={e => setEditQuestionCount(parseInt(e.target.value) || 0)}
-                                  style={{ padding: 4, fontSize: 11 }}
-                                />
-                              </div>
-                              <div className="field">
-                                <label style={{ fontSize: 9, fontWeight: 700 }}>Süre (dk)</label>
-                                <input
-                                  type="number"
-                                  min="1"
-                                  placeholder="dk"
-                                  value={editDurationMin}
-                                  onChange={e => setEditDurationMin(e.target.value === '' ? '' : parseInt(e.target.value, 10) || '')}
-                                  style={{ padding: 4, fontSize: 11 }}
-                                />
-                              </div>
-                            </div>
-
-                            {/* Görev Türü Seçici */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                              <label style={{ fontSize: 9, fontWeight: 700 }}>Görev Türü</label>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 2, background: 'var(--surface)', padding: 2, borderRadius: 6, border: '1px solid var(--border)' }}>
-                                {ALL_TASK_TYPES.map(tt => {
-                                  const cfg = TASK_TYPE_CONFIG[tt]
-                                  const isSel = editTaskType === tt
-                                  return (
-                                    <button
-                                      key={tt}
-                                      type="button"
-                                      onClick={() => {
-                                        setEditTaskType(tt)
-                                      }}
-                                      style={{
-                                        padding: '3px 1px',
-                                        fontSize: 9.5,
-                                        fontWeight: isSel ? 700 : 500,
-                                        border: isSel ? `1px solid ${cfg.border}` : '1px solid transparent',
-                                        borderRadius: 4,
-                                        background: isSel ? cfg.bg : 'transparent',
-                                        color: isSel ? cfg.color : 'var(--ink-soft)',
-                                        cursor: 'pointer',
-                                        textAlign: 'center',
-                                        whiteSpace: 'nowrap',
-                                      }}
-                                    >
-                                      {cfg.label}
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                            </div>
-
-                            {/* Kaynak Alanı */}
-                            <div className="field">
-                              <label style={{ fontSize: 9, fontWeight: 700 }}>
-                                Kaynak <span style={{ fontWeight: 400, color: 'var(--ink-faint)' }}>(opsiyonel)</span>
-                              </label>
-                              <input
-                                type="text"
-                                list="task-sources"
-                                placeholder="Örn: 3D AYT, Apotemi"
-                                value={editTaskSource}
-                                onChange={e => setEditTaskSource(e.target.value)}
-                                style={{ padding: 4, fontSize: 11 }}
-                              />
-                            </div>
-
-                            <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-sm"
-                                style={{ flex: 1, padding: '3px 6px', fontSize: 10, justifyContent: 'center' }}
-                                onClick={() => setEditingTaskId(null)}
-                              >
-                                İptal
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-primary btn-sm"
-                                style={{ flex: 1.5, padding: '3px 6px', fontSize: 10, justifyContent: 'center' }}
-                                onClick={() => handleSaveEdit(task.id)}
-                                disabled={savingTask}
-                              >
-                                Kaydet
-                              </button>
-                            </div>
+                            <span>Saatsiz</span>
+                            <div style={{ flex: 1, height: 1, background: 'var(--border-soft)' }} />
                           </div>
-                        )
-                      }
-
-                      const typeCfg = TASK_TYPE_CONFIG[task.task_type || (task.is_exam ? 'deneme' : 'konu')] || TASK_TYPE_CONFIG.konu
-                      const hasResult = task.correct_count !== null && task.correct_count !== undefined && task.wrong_count !== null && task.wrong_count !== undefined
-                      const correct = task.correct_count ?? 0
-                      const wrong = task.wrong_count ?? 0
-                      const blank = task.blank_count ?? 0
-                      const totalAnswered = correct + wrong + blank
-                      const accuracyPct = totalAnswered > 0 ? Math.round((correct / totalAnswered) * 100) : 0
-
-                      return (
-                        <div
-                          key={task.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, task.id)}
-                          onDoubleClick={() => handleStartEdit(task)}
-                          title="Konuya tıklayın: gelişim paneli · Karta çift tıklayın: düzenle"
-                          style={{
-                            padding: '10px 12px',
-                            background: task.completed ? 'var(--success-bg)' : 'var(--surface-alt)',
-                            border: '1px solid var(--border-soft)',
-                            borderRadius: 10,
-                            cursor: 'grab',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 6,
-                            opacity: task.completed ? 0.85 : 1,
-                            position: 'relative'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                            <button
-                              type="button"
-                              onClick={() => handleToggleComplete(task.id, task.completed)}
-                              style={{ border: 'none', background: 'none', padding: 0, marginTop: 2, cursor: 'pointer', display: 'flex' }}
-                            >
-                              <CheckSquare size={15} color={task.completed ? 'var(--success)' : 'var(--ink-faint)'} />
-                            </button>
-                            
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              {topic ? (
-                                <div
-                                  role="button"
-                                  tabIndex={0}
-                                  title="Bu konunun gelişim panelini aç"
-                                  onClick={(ev) => { ev.stopPropagation(); setProgressTopic({ id: topic.id, name: topic.name, subjectName: topic.subjects?.name }) }}
-                                  onDoubleClick={(ev) => ev.stopPropagation()}
-                                  onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); setProgressTopic({ id: topic.id, name: topic.name, subjectName: topic.subjects?.name }) } }}
-                                  style={{ fontSize: 12.5, fontWeight: 600, textDecoration: task.completed ? 'line-through' : 'none', color: 'var(--indigo-600)', wordBreak: 'break-word', cursor: 'pointer' }}
-                                >
-                                  {topic.name}
-                                </div>
-                              ) : (
-                                <div style={{ fontSize: 12.5, fontWeight: 600, textDecoration: task.completed ? 'line-through' : 'none', color: 'var(--ink)', wordBreak: 'break-word' }}>
-                                  {task.custom_label || 'Özel Görev'}
-                                </div>
-                              )}
-                              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                                {topic?.subjects && (
-                                  <div style={{ fontSize: 9.5, color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: topic.subjects.color }}></span>
-                                    {topic.subjects.name}
-                                  </div>
-                                )}
-                                {task.source && (
-                                  <div style={{ fontSize: 9.5, color: 'var(--ink-soft)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                                    <BookOpen size={10} style={{ opacity: 0.7 }} />
-                                    <span>{task.source}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteTask(task.id)}
-                              style={{ border: 'none', background: 'none', padding: 2, color: 'var(--ink-faint)', cursor: 'pointer', opacity: 0.5 }}
-                              className="delete-btn no-print"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-
-                          {/* Tamamlanan görev için Sonuç alanı (D/Y/B ve % Doğruluk) */}
-                          {task.completed && (
-                            <div style={{ marginTop: 2, paddingTop: 4, borderTop: '1px dashed var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                              {hasResult ? (
-                                <>
-                                  <span style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--success-text)', background: 'var(--surface)', border: '1px solid var(--border-soft)', padding: '1px 5px', borderRadius: 4 }}>
-                                    {correct}D · {wrong}Y · {blank}B · %{accuracyPct}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className="no-print"
-                                    onClick={(e) => { e.stopPropagation(); openResultModal(task) }}
-                                    style={{ background: 'none', border: 'none', color: 'var(--indigo-600)', fontSize: 9.5, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
-                                  >
-                                    Düzenle
-                                  </button>
-                                </>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="no-print"
-                                  onClick={(e) => { e.stopPropagation(); openResultModal(task) }}
-                                  style={{ background: 'none', border: 'none', color: 'var(--indigo-600)', fontSize: 10, fontWeight: 600, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 3 }}
-                                >
-                                  <Edit2 size={10} /> Sonuç gir
-                                </button>
-                              )}
-                            </div>
-                          )}
-
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-soft)', paddingTop: 5, marginTop: 2 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                              <span style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--indigo-600)' }}>
-                                {task.question_count} soru
-                              </span>
-                              {task.duration_min ? (
-                                <span style={{ fontSize: 9.5, color: 'var(--ink-soft)', background: 'var(--surface)', border: '1px solid var(--border-soft)', padding: '0 4px', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                                  <Clock size={9} /> {task.duration_min} dk
-                                </span>
-                              ) : null}
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <span
-                                style={{
-                                  fontSize: 9,
-                                  fontWeight: 700,
-                                  padding: '1px 5px',
-                                  borderRadius: 4,
-                                  background: typeCfg.bg,
-                                  color: typeCfg.color,
-                                  border: `1px solid ${typeCfg.border}`,
-                                }}
-                              >
-                                {typeCfg.label}
-                              </span>
-                              {task.is_exam && task.task_type !== 'deneme' && (
-                                <span style={{ fontSize: 9, background: 'var(--critical-bg)', color: 'var(--critical-text)', fontWeight: 800, padding: '1px 5px', borderRadius: 4 }}>
-                                  DENEME
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
+                        )}
+                        {untimedTasks.map(renderTaskCard)}
+                      </>
+                    )}
                   </div>
 
-                  {/* Add Task Form Button / Section */}
-                  {isAddingHere ? (
-                    <div className="no-print" style={{ background: 'var(--surface-alt)', border: '1px dashed var(--border)', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div className="field">
-                        <label style={{ fontSize: 10 }}>Ders</label>
-                        <select
-                          value={selectedSubjectId}
-                          onChange={e => { setSelectedSubjectId(e.target.value); setSelectedTopicId('') }}
-                          style={{ padding: 6, fontSize: 11.5 }}
-                        >
-                          <option value="custom">Özel Görev (Metin)</option>
-                          {subjectsList.map(s => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {selectedSubjectId === 'custom' ? (
-                        <div className="field">
-                          <label style={{ fontSize: 10 }}>Görev Açıklaması</label>
-                          <input type="text" placeholder="Örn: Paragraf Çözümü" value={customLabel} onChange={e => setCustomLabel(e.target.value)} style={{ padding: 6, fontSize: 11.5 }} />
-                        </div>
-                      ) : (
-                        <div className="field">
-                          <label style={{ fontSize: 10 }}>Konu</label>
-                          <select value={selectedTopicId} onChange={e => setSelectedTopicId(e.target.value)} style={{ padding: 6, fontSize: 11.5 }}>
-                            <option value="" disabled>Konu seçin</option>
-                            {topicsForSubject.map(t => (
-                              <option key={t.id} value={t.id}>{t.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                        <div className="field">
-                          <label style={{ fontSize: 10 }}>Soru Sayısı</label>
-                          <input type="number" value={questionCount} onChange={e => setQuestionCount(parseInt(e.target.value) || 0)} style={{ padding: 6, fontSize: 11.5 }} />
-                        </div>
-                        <div className="field">
-                          <label style={{ fontSize: 10 }}>Süre (dk) <span style={{ color: 'var(--ink-faint)' }}>(ops)</span></label>
-                          <input
-                            type="number"
-                            min="1"
-                            placeholder="dk"
-                            value={durationMin}
-                            onChange={e => setDurationMin(e.target.value === '' ? '' : parseInt(e.target.value, 10) || '')}
-                            style={{ padding: 6, fontSize: 11.5 }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Görev Türü Seçici */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        <label style={{ fontSize: 10, fontWeight: 700 }}>Görev Türü</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 2, background: 'var(--surface)', padding: 2, borderRadius: 6, border: '1px solid var(--border)' }}>
-                          {ALL_TASK_TYPES.map(tt => {
-                            const cfg = TASK_TYPE_CONFIG[tt]
-                            const isSel = taskType === tt
-                            return (
-                              <button
-                                key={tt}
-                                type="button"
-                                onClick={() => {
-                                  setTaskType(tt)
-                                }}
-                                style={{
-                                  padding: '4px 2px',
-                                  fontSize: 10,
-                                  fontWeight: isSel ? 700 : 500,
-                                  border: isSel ? `1px solid ${cfg.border}` : '1px solid transparent',
-                                  borderRadius: 5,
-                                  background: isSel ? cfg.bg : 'transparent',
-                                  color: isSel ? cfg.color : 'var(--ink-soft)',
-                                  cursor: 'pointer',
-                                  textAlign: 'center',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {cfg.label}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Kaynak Alanı */}
-                      <div className="field">
-                        <label style={{ fontSize: 10, fontWeight: 700 }}>
-                          Kaynak <span style={{ fontWeight: 400, color: 'var(--ink-faint)' }}>(opsiyonel)</span>
-                        </label>
-                        <input
-                          type="text"
-                          list="task-sources"
-                          placeholder="Örn: 3D AYT, Apotemi"
-                          value={taskSource}
-                          onChange={e => setTaskSource(e.target.value)}
-                          style={{ padding: 6, fontSize: 11.5 }}
-                        />
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                        <button type="button" className="btn btn-ghost btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setAddingDayIndex(null)}><X size={12} /></button>
-                        <button type="button" className="btn btn-primary btn-sm" style={{ flex: 2, justifyContent: 'center' }} onClick={() => handleAddTask(dayIndex)} disabled={addingTask}>
-                          Ekle
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="no-print"
-                      onClick={() => setAddingDayIndex(dayIndex)}
-                      style={{
-                        width: '100%',
-                        padding: '8px 10px',
-                        border: '1px dashed var(--border)',
-                        borderRadius: 10,
-                        background: 'none',
-                        color: 'var(--indigo-600)',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <Plus size={14} /> Görev Ekle
-                    </button>
-                  )}
-
+                  {/* Günün altına "+ Görev Ekle" düğmesi */}
+                  <button
+                    type="button"
+                    className="no-print"
+                    onClick={() => handleOpenAddTaskModal(dayIndex)}
+                    style={{
+                      marginTop: 'auto',
+                      width: '100%',
+                      padding: '8px 10px',
+                      border: '1px dashed var(--border)',
+                      borderRadius: 10,
+                      background: 'none',
+                      color: 'var(--indigo-600)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Plus size={14} /> Görev Ekle
+                  </button>
                 </div>
               )
             })}
@@ -1501,7 +1373,7 @@ export default function ProgramPage() {
                 <input
                   type="number"
                   min="0"
-                  max={resultModalTask.question_count}
+                  max={resultModalTask.question_count > 0 ? resultModalTask.question_count : undefined}
                   value={resultCorrect}
                   placeholder="0"
                   onChange={(e) => setResultCorrect(e.target.value)}
@@ -1514,7 +1386,7 @@ export default function ProgramPage() {
                 <input
                   type="number"
                   min="0"
-                  max={resultModalTask.question_count}
+                  max={resultModalTask.question_count > 0 ? resultModalTask.question_count : undefined}
                   value={resultWrong}
                   placeholder="0"
                   onChange={(e) => setResultWrong(e.target.value)}
@@ -1526,7 +1398,7 @@ export default function ProgramPage() {
                 <input
                   type="number"
                   min="0"
-                  max={resultModalTask.question_count}
+                  max={resultModalTask.question_count > 0 ? resultModalTask.question_count : undefined}
                   value={resultBlank}
                   placeholder="0"
                   onChange={(e) => setResultBlank(e.target.value)}
@@ -1535,8 +1407,8 @@ export default function ProgramPage() {
               </div>
             </div>
 
-            {/* Kalan / Doldur yardımcısı */}
-            {(() => {
+            {/* Kalan / Doldur yardımcısı (yalnız question_count > 0 ise) */}
+            {resultModalTask.question_count > 0 && (() => {
               const dNum = parseInt(resultCorrect.trim(), 10) || 0
               const yNum = parseInt(resultWrong.trim(), 10) || 0
               const bNum = parseInt(resultBlank.trim(), 10) || 0
@@ -1610,6 +1482,27 @@ export default function ProgramPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* P3: TaskBlockModal (Çoklu gün × çoklu saat blok ekleme/düzenleme) */}
+      {selectedStudent && (
+        <TaskBlockModal
+          isOpen={taskModalOpen}
+          onClose={() => {
+            setTaskModalOpen(false)
+            setTaskModalEditingTask(null)
+          }}
+          student={selectedStudent}
+          currentMonday={currentMonday}
+          initialDayIndex={taskModalDayIndex}
+          initialStartTime={taskModalStartTime}
+          existingTasks={tasks}
+          subjects={subjectsList}
+          topics={topics}
+          editingTask={taskModalEditingTask}
+          onSuccess={handleTaskModalSuccess}
+          recentSources={recentSources}
+        />
       )}
     </section>
   )
