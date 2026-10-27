@@ -1090,7 +1090,7 @@ export default function OgrencilerPage() {
                       <Fragment key={exam.id}>
                         <tr
                           onClick={() => setExpandedExamId(prev => prev === exam.id ? null : exam.id)}
-                          title={exam.exam_type === 'LGS' ? 'LGS katsayılı net (LGS puanı değildir)' : isOpen ? 'Bölüm tablosunu kapat' : 'Bölüm tablosunu aç'}
+                          title={isOpen ? 'Bölüm tablosunu kapat' : 'Bölüm tablosunu aç'}
                           style={{ borderBottom: isOpen ? 'none' : '1px solid var(--border-soft)', cursor: 'pointer' }}
                         >
                           <td style={{ padding: '12px 4px', color: 'var(--ink-faint)' }}>
@@ -1106,7 +1106,7 @@ export default function OgrencilerPage() {
                           <td style={{ padding: '12px', color: 'var(--ink-faint)' }}>
                             {examSecs.map(s => `${s.section_name}: ${formatNetTr(Number(s.net))}`).join(' · ')}
                           </td>
-                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: 'var(--indigo-600)', fontSize: 14 }}>
+                          <td title={exam.exam_type === 'LGS' ? 'LGS katsayılı net (LGS puanı değildir)' : undefined} style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: 'var(--indigo-600)', fontSize: 14 }}>
                             {formatNetTr(totalNet)}
                             {exam.exam_type === 'LGS' && <div style={{ fontSize: 10, color: 'var(--ink-faint)', fontWeight: 400 }}>katsayılı</div>}
                           </td>
