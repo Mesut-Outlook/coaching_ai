@@ -681,7 +681,7 @@ function RecentExams({ exams }: { exams: HomeSummary['exams']['recent'] }) {
             </thead>
             <tbody>
               {exams.map((e, k) => (
-                <tr key={k}>
+                <tr key={k} title={e.examType === 'LGS' ? 'LGS katsayılı net (LGS puanı değildir)' : undefined}>
                   <td>
                     <b>{e.studentName}</b>
                   </td>
@@ -689,7 +689,10 @@ function RecentExams({ exams }: { exams: HomeSummary['exams']['recent'] }) {
                     {e.name} <span className="h-muted-sm">{e.examType}</span>
                   </td>
                   <td>{shortDate(e.date)}</td>
-                  <td className="num">{nf2.format(e.totalNet)}</td>
+                  <td className="num">
+                    {nf2.format(e.totalNet)}
+                    {e.examType === 'LGS' && <div style={{ fontSize: 10, color: 'var(--ink-faint)', fontWeight: 400 }}>katsayılı</div>}
+                  </td>
                   <td className={`num ${e.delta == null ? '' : e.delta >= 0 ? 'h-up' : 'h-down'}`}>{e.delta == null ? '—' : signed(e.delta)}</td>
                   <td>
                     {e.topicResultsCount > 0 ? (

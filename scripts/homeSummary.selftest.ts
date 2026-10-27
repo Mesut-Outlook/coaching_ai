@@ -422,7 +422,7 @@ assert.equal(netDetail.examType, 'TYT')
     exam_type: 'LGS',
     exam_date: date,
     created_at: `${date}T12:00:00Z`,
-    totalNet: net,
+    totalNet: net * 4, // totalNet artık LGS'te katsayılı net (Türkçe katsayısı 4)
     sectionsList: [{ id: `sec-${id}`, mock_exam_id: id, section_name: 'Türkçe', max_questions: 20, correct_count: 0, wrong_count: 0, blank_count: 0, wrong_penalty: 3, net }],
   })
   const lgsSummary = buildHomeSummary({

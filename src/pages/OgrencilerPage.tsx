@@ -368,7 +368,7 @@ export default function OgrencilerPage() {
     // Group exams with their nets
     const examNets = exams.map(exam => {
       const examSecs = sections.filter(s => s.mock_exam_id === exam.id)
-      const totalNet = Math.round(examSecs.reduce((sum, s) => sum + Number(s.net), 0) * 10) / 10
+      const totalNet = Math.round((exam.exam_type === 'LGS' ? weightedNet(examSecs) : examSecs.reduce((sum, s) => sum + Number(s.net), 0)) * 10) / 10
       return { exam, totalNet }
     })
 
@@ -384,15 +384,6 @@ export default function OgrencilerPage() {
       : 0
     const averageLgsNet = lgsExams.length
       ? Math.round((lgsExams.reduce((sum, e) => sum + e.totalNet, 0) / lgsExams.length) * 10) / 10
-      : 0
-    // LGS'te gerçek puan (500'lük) hesaplanamaz — ders katsayılarıyla tartılmış NET
-    // gösterilir, asla "puan" denmez (bkz. lib/examSections.ts weightedNet).
-    const averageLgsWeightedNet = lgsExams.length
-      ? Math.round(
-          (lgsExams.reduce((sum, e) => sum + weightedNet(sections.filter(s => s.mock_exam_id === e.exam.id)), 0) /
-            lgsExams.length) *
-            10
-        ) / 10
       : 0
 
     const dersTasks = tasks.filter(t => !t.block_kind || t.block_kind === 'ders')
@@ -410,7 +401,6 @@ export default function OgrencilerPage() {
       averageTytNet,
       averageAytNet,
       averageLgsNet,
-      averageLgsWeightedNet,
       taskCompletion,
       criticalCount: criticalTopics.length,
       criticalTopics
@@ -940,9 +930,7 @@ export default function OgrencilerPage() {
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 2 }}>
                   Son 5 deneme ortalaması
-                  {studentCurriculum === 'LGS' && stats.lgsExams.length > 0 && (
-                    <> · Ağırlıklı net: <strong>{formatNetTr(stats.averageLgsWeightedNet)}</strong> (LGS puanı değildir)</>
-                  )}
+                  {studentCurriculum === 'LGS' && ' · katsayılı net (LGS puanı değildir)'}
                 </div>
               </div>
             </div>
@@ -965,7 +953,7 @@ export default function OgrencilerPage() {
             {studentCurriculum === 'LGS' ? (
               /* LGS Net Progress */
               <div className="card" style={{ padding: 20 }}>
-                <h3 style={{ fontSize: 14, marginBottom: 16 }}>LGS Net Gelişimi</h3>
+                <h3 style={{ fontSize: 14, marginBottom: 16 }}>LGS Net Gelişimi <span style={{ fontSize: 10.5, fontWeight: 400, color: "var(--ink-faint)" }}>(katsayılı, LGS puanı değildir)</span></h3>
                 {stats.lgsExams.length === 0 ? (
                   <div style={{ padding: 30, textAlign: 'center', color: 'var(--ink-faint)' }}>Veri bulunamadı</div>
                 ) : (
@@ -974,7 +962,7 @@ export default function OgrencilerPage() {
                       {stats.lgsExams.map((e) => (
                         <div key={e.exam.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
                           <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--plum-text)' }}>{formatNetTr(e.totalNet)}</span>
-                          <div style={{ width: 14, height: `${(e.totalNet / 90) * 80}px`, background: 'linear-gradient(to top, var(--plum), #dda8e8)', borderRadius: '4px 4px 0 0' }}></div>
+                          <div style={{ width: 14, height: `${Math.min(e.totalNet / 270, 1) * 80}px`, background: 'linear-gradient(to top, var(--plum), #dda8e8)', borderRadius: '4px 4px 0 0' }}></div>
                           <span style={{ fontSize: 9.5, color: 'var(--ink-faint)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: 60 }} title={e.exam.name}>
                             {e.exam.publisher || 'Deneme'}
                           </span>
@@ -1096,7 +1084,7 @@ export default function OgrencilerPage() {
                 <tbody>
                   {exams.map(exam => {
                     const examSecs = sections.filter(s => s.mock_exam_id === exam.id)
-                    const totalNet = Math.round(examSecs.reduce((sum, s) => sum + Number(s.net), 0) * 10) / 10
+                    const totalNet = Math.round((exam.exam_type === 'LGS' ? weightedNet(examSecs) : examSecs.reduce((sum, s) => sum + Number(s.net), 0)) * 10) / 10
                     const isOpen = expandedExamId === exam.id
                     return (
                       <Fragment key={exam.id}>
@@ -1118,8 +1106,9 @@ export default function OgrencilerPage() {
                           <td style={{ padding: '12px', color: 'var(--ink-faint)' }}>
                             {examSecs.map(s => `${s.section_name}: ${formatNetTr(Number(s.net))}`).join(' · ')}
                           </td>
-                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: 'var(--indigo-600)', fontSize: 14 }}>
+                          <td title={exam.exam_type === 'LGS' ? 'LGS katsayılı net (LGS puanı değildir)' : undefined} style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: 'var(--indigo-600)', fontSize: 14 }}>
                             {formatNetTr(totalNet)}
+                            {exam.exam_type === 'LGS' && <div style={{ fontSize: 10, color: 'var(--ink-faint)', fontWeight: 400 }}>katsayılı</div>}
                           </td>
                         </tr>
                         {isOpen && (
