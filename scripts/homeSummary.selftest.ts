@@ -439,7 +439,7 @@ assert.equal(netDetail.examType, 'TYT')
   const lgsR = lgsSummary.attention.flatMap((a) => a.reasons).find((r) => r.kind === 'net_dususu')
   assert.ok(lgsR, 'LGS katsayılı düşüş (-8) eşiği geçmeli')
   assert.equal((lgsR.detail as { delta: number }).delta, -8)
-  assert.ok(lgsR.label.includes('8,00 net'))
+  assert.ok(lgsR.label.includes('8 net'))
 }
 
 // Ayşe Devamsızlık detail: { last14Count: 2, notOpened: true }
@@ -539,12 +539,12 @@ assert.ok(
   'Koç kararı akışta bulunmalı (G2b c)'
 )
 // Deneme olayı Türkçe formatlı (virgüllü, 2 ondalık basamak) olmalı
-assert.equal(formatNetTr(92.5), '92,50', 'formatNetTr(92.5) Türkçe biçimde 92,50 dönmeli')
+assert.equal(formatNetTr(92.5), '92,5', 'formatNetTr(92.5) Türkçe biçimde 92,5 dönmeli')
 const examAct = summary.recent.find((r) => r.kind === 'exam')
 assert.ok(examAct, 'Deneme aktivitesi akışta bulunmalı')
 assert.ok(
-  examAct.text.includes('73,00 net'),
-  `Deneme aktivitesi Türkçe net formatı ("73,00 net") içermeli, gelen: "${examAct.text}"`
+  examAct.text.includes('73 net'),
+  `Deneme aktivitesi Türkçe net formatı ("73 net") içermeli, gelen: "${examAct.text}"`
 )
 console.log('✓ 7. Son hareketler akışı (görev hariç, karar dahil, Türkçe net formatlı) başarıyla doğrulandı.')
 

@@ -210,7 +210,7 @@ export function round2(val: number): number {
 }
 
 const trNetFormatter = new Intl.NumberFormat('tr-TR', {
-  minimumFractionDigits: 2,
+  minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 })
 
