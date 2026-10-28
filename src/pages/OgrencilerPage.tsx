@@ -368,7 +368,7 @@ export default function OgrencilerPage() {
     // Group exams with their nets
     const examNets = exams.map(exam => {
       const examSecs = sections.filter(s => s.mock_exam_id === exam.id)
-      const totalNet = Math.round((exam.exam_type === 'LGS' ? weightedNet(examSecs) : examSecs.reduce((sum, s) => sum + Number(s.net), 0)) * 10) / 10
+      const totalNet = Math.round((exam.exam_type === 'LGS' ? weightedNet(examSecs) : examSecs.reduce((sum, s) => sum + Number(s.net), 0)) * 100) / 100
       return { exam, totalNet }
     })
 
@@ -1084,7 +1084,7 @@ export default function OgrencilerPage() {
                 <tbody>
                   {exams.map(exam => {
                     const examSecs = sections.filter(s => s.mock_exam_id === exam.id)
-                    const totalNet = Math.round((exam.exam_type === 'LGS' ? weightedNet(examSecs) : examSecs.reduce((sum, s) => sum + Number(s.net), 0)) * 10) / 10
+                    const totalNet = Math.round((exam.exam_type === 'LGS' ? weightedNet(examSecs) : examSecs.reduce((sum, s) => sum + Number(s.net), 0)) * 100) / 100
                     const isOpen = expandedExamId === exam.id
                     return (
                       <Fragment key={exam.id}>

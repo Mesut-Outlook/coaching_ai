@@ -18,6 +18,17 @@ const HISTORY: DateGroup[] = [
     date: '27 Ekim 2026',
     entries: [
       {
+        version: 'v0.31',
+        title: 'Net gösterimi düzenlendi, LGS toplamları katsayılı net, küçük rapor düzeltmeleri',
+        items: [
+          'Netler her ekranda Türkçe biçimde ve en fazla iki haneyle yazılır: "8.666666666666666" yerine "8,67", "16,00" yerine "16". Deneme listeleri, bölüm tablosu, WhatsApp mesajı, 360 raporu ve öğrenci/veli portalı aynı biçimi kullanır.',
+          'LGS denemelerinin toplam neti her listede ders katsayılı nettir (Ana Sayfa son denemeler, Denemeler, öğrenci deneme geçmişi, ortalama kartı ve grafik). LGS satırlarında toplamın altında "katsayılı" yazar; bu sayı LGS puanı değildir. Ders netleri ham kalır.',
+          'Ana Sayfa "ilgi bekleyenler"de LGS net düşüşü katsayılı netle hesaplanır.',
+          'Veli özeti ve WhatsApp mesajında net virgüllü yazılır ("63,75 net").',
+          '360 raporunda hedef yolu grafiğindeki "Hedef" etiketi artık kesilmez; hedefe ulaşan öğrencide "Hedefin X net üstünde" yazar.',
+        ],
+      },
+      {
         version: 'v0.30',
         title: 'Saatli program blokları: Ders / Mola / Serbest, çoklu gün & saat ekleme penceresi, zamanlı pano ve mobil portal',
         items: [
