@@ -1521,7 +1521,7 @@ begin
           where wt.student_id = v_student_id and wt.week_start = v_week and wt.block_kind = 'ders'
         ), '[]'::json),
         'improved_topics', coalesce((
-          select json_agg(distinct json_build_object('topic_name', tp.name, 'subject_name', sb.name))
+          select json_agg(distinct jsonb_build_object('topic_name', tp.name, 'subject_name', sb.name))
           from weekly_tasks wt
           join topics tp on tp.id = wt.topic_id
           left join subjects sb on sb.id = tp.subject_id
