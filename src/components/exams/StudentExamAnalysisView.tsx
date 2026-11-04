@@ -1,19 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import {
-  TrendingUp,
-  Layers,
-  BookOpen,
-  HelpCircle,
-  BarChart2,
-  Table as TableIcon,
-  ChevronDown,
-  ChevronUp,
-  AlertCircle,
-  CheckCircle,
-  Lightbulb,
-  Plus,
-  Tag,
-} from 'lucide-react'
+import { ChevronDown, ChevronUp, AlertCircle, Plus, Tag } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type {
   ExamType,
@@ -42,12 +28,16 @@ import {
   formatRoleInsights,
   type RoleInsightItem,
 } from '../../lib/examInsights'
-import ExamLineChart from '../charts/ExamLineChart'
 import LossBarChart from '../charts/LossBarChart'
 import StackedBarChart from '../charts/StackedBarChart'
 import Sparkline from '../charts/Sparkline'
 import { type ChartPalette, DEFAULT_CHART_PALETTE } from '../charts/chartPalette'
 import AddToProgramPopover from '../program/AddToProgramPopover'
+import DrillNav from './drilldown/DrillNav'
+import LevelHeader from './drilldown/LevelHeader'
+import LevelGeneral from './drilldown/LevelGeneral'
+import LevelExam from './drilldown/LevelExam'
+import { INITIAL_DRILL, type DrillProps, type DrillState } from './drilldown/types'
 
 export interface StudentExamAnalysisViewProps {
   studentId: string
@@ -112,10 +102,13 @@ export default function StudentExamAnalysisView({
 
   // Filtreler & Seviyeler
   const [selectedExamType, setSelectedExamType] = useState<ExamType | undefined>(initialExamType)
-  const [activeLevel, setActiveLevel] = useState<'general' | 'subject' | 'topic'>('general')
-  const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart')
+  const [drill, setDrill] = useState<DrillState>(INITIAL_DRILL)
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | 'ALL'>('ALL')
-  const [showFormulaModal, setShowFormulaModal] = useState(false)
+  const go = (patch: Partial<DrillState>) => {
+    setDrill((d) => ({ ...d, ...patch }))
+    // Task 6 eski Konu görünümünü değiştirene dek: ders süzmesi iniş durumunu izler
+    if ('examSubjectId' in patch) setSelectedSubjectId(patch.examSubjectId ?? 'ALL')
+  }
   const [expandedTopicId, setExpandedTopicId] = useState<number | null>(null)
   const [programPopoverTarget, setProgramPopoverTarget] = useState<{
     examTopicId: number
@@ -136,7 +129,6 @@ export default function StudentExamAnalysisView({
     AYT: targetsProp?.AYT ?? coachTargets.AYT,
     LGS: targetsProp?.LGS ?? coachTargets.LGS,
   }
-  void targets // Task 5/6 hedef çizgisi için kullanır
   // Birincil eşleme: karne konusu -> müfredat konusu (yalnız katalog.links; ad eşlemesi yok).
   const primaryTopicByExamTopic = useMemo(() => {
     const m = new Map<number, number>()
@@ -418,397 +410,71 @@ export default function StudentExamAnalysisView({
   }
 
   const { general, subjects } = report
+  const topicHeadline =
+    (selectedSubjectId !== 'ALL' ? report.topicsBySubject[selectedSubjectId]?.headline : undefined) ||
+    Object.values(report.topicsBySubject)[0]?.headline ||
+    'Konu Bazlı Başarı'
+  const drillProps: DrillProps = {
+    report,
+    catalog,
+    exams: rawExams.filter((e) => e.exam_type === report.exam_type),
+    role,
+    palette: pal,
+    targets,
+    state: drill,
+    go,
+    onAddToProgram: (examTopicId, name) =>
+      setProgramPopoverTarget({ examTopicId, examTopicName: name, suggestedType: 'sureli_test' }),
+    onErrorReason: (row) =>
+      setErrorModalTarget({ topicRow: row, curriculumTopicId: primaryTopicByExamTopic.get(row.exam_topic_id) ?? null }),
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* KONTROL ÇUBUĞU: Sınav Türü & Seviye Seçici & Nasıl Hesaplandı */}
-      <div
-        className="card"
-        style={{
-          padding: '12px 18px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
-        {/* Sol: Sınav Türü ve Seviye Seçicileri */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          {/* Sınav Türü (TYT / AYT / LGS) */}
-          {availableExamTypes.length > 1 && (
-            <div style={{ display: 'flex', gap: 6, background: 'var(--surface-alt)', padding: 3, borderRadius: 8 }}>
-              {availableExamTypes.map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setSelectedExamType(type)}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: 6,
-                    border: 'none',
-                    fontSize: 12.5,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    background: report.exam_type === type ? 'var(--surface)' : 'transparent',
-                    color: report.exam_type === type ? pal.primary : pal.textMuted,
-                    boxShadow: report.exam_type === type ? 'var(--shadow-card)' : 'none',
-                  }}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Seviye Seçici: Genel / Ders / Konu */}
-          <div style={{ display: 'flex', gap: 6, borderLeft: '1px solid var(--border)', paddingLeft: 14 }}>
-            <button
-              type="button"
-              onClick={() => setActiveLevel('general')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: 'none',
-                fontSize: 13,
-                fontWeight: activeLevel === 'general' ? 700 : 500,
-                cursor: 'pointer',
-                background: activeLevel === 'general' ? pal.primaryArea : 'transparent',
-                color: activeLevel === 'general' ? pal.primary : pal.textMuted,
-              }}
-            >
-              <TrendingUp size={14} /> Genel
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveLevel('subject')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: 'none',
-                fontSize: 13,
-                fontWeight: activeLevel === 'subject' ? 700 : 500,
-                cursor: 'pointer',
-                background: activeLevel === 'subject' ? pal.primaryArea : 'transparent',
-                color: activeLevel === 'subject' ? pal.primary : pal.textMuted,
-              }}
-            >
-              <Layers size={14} /> Ders
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveLevel('topic')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: 'none',
-                fontSize: 13,
-                fontWeight: activeLevel === 'topic' ? 700 : 500,
-                cursor: 'pointer',
-                background: activeLevel === 'topic' ? pal.primaryArea : 'transparent',
-                color: activeLevel === 'topic' ? pal.primary : pal.textMuted,
-              }}
-            >
-              <BookOpen size={14} /> Konu
-            </button>
-          </div>
-        </div>
-
-        {/* Sağ: Görünüm Geçişi (Grafik / Tablo) & Nasıl Hesaplandı Bilgisi */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {activeLevel === 'general' && (
-            <div style={{ display: 'flex', gap: 4, background: 'var(--surface-alt)', padding: 2, borderRadius: 6 }}>
+      {/* KONTROL ÇUBUĞU: Sınav Türü */}
+      {availableExamTypes.length > 1 && (
+        <div className="card" style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 6, background: 'var(--surface-alt)', padding: 3, borderRadius: 8 }}>
+            {availableExamTypes.map((type) => (
               <button
+                key={type}
                 type="button"
-                onClick={() => setViewMode('chart')}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: 5,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: viewMode === 'chart' ? 'var(--surface)' : 'transparent',
-                  color: viewMode === 'chart' ? pal.primary : pal.textMuted,
+                aria-pressed={report.exam_type === type}
+                onClick={() => {
+                  setSelectedExamType(type)
+                  setDrill(INITIAL_DRILL)
+                  setSelectedSubjectId('ALL')
                 }}
-                title="Grafik Görünümü"
-              >
-                <BarChart2 size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
                 style={{
-                  padding: '4px 8px',
-                  borderRadius: 5,
+                  padding: '5px 12px',
+                  borderRadius: 6,
                   border: 'none',
+                  fontSize: 12.5,
+                  fontWeight: 700,
                   cursor: 'pointer',
-                  background: viewMode === 'table' ? 'var(--surface)' : 'transparent',
-                  color: viewMode === 'table' ? pal.primary : pal.textMuted,
+                  background: report.exam_type === type ? 'var(--surface)' : 'transparent',
+                  color: report.exam_type === type ? pal.primary : pal.textMuted,
+                  boxShadow: report.exam_type === type ? 'var(--shadow-card)' : 'none',
                 }}
-                title="Tablo Görünümü"
               >
-                <TableIcon size={14} />
+                {type}
               </button>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setShowFormulaModal((prev) => !prev)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              background: 'none',
-              border: 'none',
-              fontSize: 11.5,
-              color: 'var(--ink-faint)',
-              cursor: 'pointer',
-              padding: '4px 6px',
-            }}
-          >
-            <HelpCircle size={13} /> Nasıl hesaplandı?
-          </button>
-        </div>
-      </div>
-
-      {/* FORMÜL AÇIKLAMA BİLGİ KUTUSU */}
-      {showFormulaModal && (
-        <div
-          className="card"
-          style={{
-            padding: 16,
-            background: 'var(--surface-alt)',
-            border: '1px solid var(--border)',
-            fontSize: 12,
-            lineHeight: 1.6,
-          }}
-        >
-          <div style={{ fontWeight: 700, marginBottom: 6, color: 'var(--ink)' }}>
-            Ölçüm ve Hesaplama Metodolojisi
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-            <div>
-              <strong>Net Formülü:</strong> Doğru − (Yanlış / Ceza) (YKS: 4, LGS: 3).
-            </div>
-            <div>
-              <strong>Ders Başarı %:</strong> (Net / Soru Sayısı) × 100.
-            </div>
-            <div>
-              <strong>Konu Başarı %:</strong> (Doğru / Soru Sayısı) × 100.
-            </div>
-            <div>
-              <strong>Kayıp Net:</strong> Soru Sayısı − Net ("Bu alanda kaç net kaybedildi?").
-            </div>
-            <div>
-              <strong>Değişim (Δ):</strong> Son deneme ile önceki aynı sınav türündeki denemenin farkı.
-            </div>
-            <div>
-              <strong>Asgari Veri Kuralı:</strong> Çizgi grafik için en az 3 deneme gerekir.
-            </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* SEVİYE 1: GENEL BAKIŞ */}
-      {/* ========================================================================= */}
-      {activeLevel === 'general' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Başlık Kartı: Tek Cümlelik Özet + Büyük Metrikler */}
-          <div className="card" style={{ padding: 22 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: pal.primary, marginBottom: 14 }}>
-              {general.headline}
-            </div>
+      <DrillNav report={report} catalog={catalog} state={drill} go={go} pal={pal} />
 
-            {general.latest_exam ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: pal.textMuted, fontWeight: 600 }}>SON DENEME NETİ</div>
-                    <div style={{ fontSize: 32, fontWeight: 800, color: pal.primary, letterSpacing: '-0.02em' }}>
-                      {general.latest_exam.net.toFixed(2).replace('.', ',')}
-                    </div>
-                  </div>
-
-                  {general.latest_exam.delta_net != null && (
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 3,
-                        padding: '4px 10px',
-                        borderRadius: 20,
-                        fontSize: 13,
-                        fontWeight: 700,
-                        background: general.latest_exam.delta_net >= 0 ? 'var(--success-bg)' : 'var(--critical-bg)',
-                        color: general.latest_exam.delta_net >= 0 ? 'var(--success-text)' : 'var(--critical-text)',
-                      }}
-                    >
-                      {general.latest_exam.delta_net >= 0 ? '▲ +' : '▼ '}
-                      {general.latest_exam.delta_net.toFixed(2).replace('.', ',')}
-                    </div>
-                  )}
-                </div>
-
-                {/* Balonlar */}
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <div className="badge badge-neutral" style={{ padding: '6px 12px', fontSize: 12 }}>
-                    Toplam: <strong>{general.latest_exam.question_count}</strong> soru
-                  </div>
-                  <div className="badge badge-success" style={{ padding: '6px 12px', fontSize: 12 }}>
-                    Doğru: <strong>{general.latest_exam.correct_count}</strong>
-                  </div>
-                  <div className="badge badge-critical" style={{ padding: '6px 12px', fontSize: 12 }}>
-                    Yanlış: <strong>{general.latest_exam.wrong_count}</strong>
-                  </div>
-                  <div className="badge badge-neutral" style={{ padding: '6px 12px', fontSize: 12 }}>
-                    Boş: <strong>{general.latest_exam.blank_count}</strong>
-                  </div>
-                  <div className="badge badge-primary" style={{ padding: '6px 12px', fontSize: 12 }}>
-                    Başarı: <strong>%{general.latest_exam.accuracy_pct.toFixed(0)}</strong>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ color: pal.textMuted, fontSize: 13 }}>Veri bulunmuyor.</div>
-            )}
-
-            {/* Varsa Puan, Sıra ve Koç Notu */}
-            {general.latest_exam && (general.latest_exam.score != null || general.latest_exam.coach_note) && (
-              <div
-                style={{
-                  marginTop: 18,
-                  paddingTop: 14,
-                  borderTop: '1px solid var(--border-soft)',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 16,
-                  alignItems: 'center',
-                  fontSize: 12,
-                }}
-              >
-                {general.latest_exam.score != null && (
-                  <div>
-                    Puan: <strong>{general.latest_exam.score}</strong>
-                    {general.latest_exam.percentile != null && ` (Yüzdelik: %${general.latest_exam.percentile})`}
-                  </div>
-                )}
-                {general.latest_exam.coach_note && (
-                  <div style={{ color: 'var(--ink-soft)', fontStyle: 'italic', flex: 1 }}>
-                    Koç Notu: "{general.latest_exam.coach_note}"
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Grafik veya Tablo Görünümü */}
-          <div className="card" style={{ padding: 22 }}>
-            <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: pal.text }}>
-              Net Gelişim Çizgisi ({report.exam_type})
-            </h4>
-
-            {viewMode === 'chart' ? (
-              <ExamLineChart
-                data={general.time_series.map((p) => ({
-                  label: p.exam_name,
-                  date: p.exam_date,
-                  value: p.net,
-                  subValue: p.accuracy_pct,
-                }))}
-                average={general.average_net}
-                palette={palette}
-                minThresholdNotice={general.min_data_notice}
-              />
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border)', color: pal.textMuted }}>
-                      <th style={{ textAlign: 'left', padding: '8px 10px' }}>Deneme</th>
-                      <th style={{ textAlign: 'left', padding: '8px 10px' }}>Tarih</th>
-                      <th style={{ textAlign: 'right', padding: '8px 10px' }}>Net</th>
-                      <th style={{ textAlign: 'right', padding: '8px 10px' }}>Başarı %</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {general.time_series.map((p) => (
-                      <tr key={p.exam_id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
-                        <td style={{ padding: '10px', fontWeight: 600 }}>{p.exam_name}</td>
-                        <td style={{ padding: '10px', color: pal.textMuted }}>{p.exam_date}</td>
-                        <td style={{ padding: '10px', textAlign: 'right', fontWeight: 700, color: pal.primary }}>
-                          {p.net.toFixed(2).replace('.', ',')}
-                        </td>
-                        <td style={{ padding: '10px', textAlign: 'right', color: pal.textMuted }}>
-                          %{p.accuracy_pct.toFixed(0)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Görüşmede Konuşulacaklar & Uyarılar (Rol bazlı) */}
-          {insights.length > 0 && (
-            <div className="card" style={{ padding: 22 }}>
-              <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Lightbulb size={16} color="var(--warning)" />
-                {role === 'coach' ? 'Görüşmede Konuşulacaklar (Koç İçgörüleri)' : 'Öne Çıkan Değerlendirmeler'}
-              </h4>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {insights.map((ins, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 10,
-                      padding: '10px 14px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: ins.is_positive ? 'var(--success-bg)' : ins.severity === 'critical' ? 'var(--critical-bg)' : 'var(--surface-alt)',
-                      border: `1px solid ${ins.is_positive ? 'var(--success)' : ins.severity === 'critical' ? 'var(--critical)' : 'var(--border-soft)'}`,
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                      color: ins.is_positive ? 'var(--success-text)' : ins.severity === 'critical' ? 'var(--critical-text)' : 'var(--ink)',
-                    }}
-                  >
-                    {ins.is_positive ? (
-                      <CheckCircle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
-                    ) : (
-                      <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
-                    )}
-                    <div>{ins.text}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      {drill.level === 'general' && <LevelGeneral {...drillProps} insights={insights} />}
+      {drill.level === 'exam' && <LevelExam {...drillProps} />}
 
       {/* ========================================================================= */}
       {/* SEVİYE 2: DERS GELİŞİMİ */}
       {/* ========================================================================= */}
-      {activeLevel === 'subject' && (
+      {(drill.level === 'subject') && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Başlık Kartı: Tek Cümlelik Özet */}
-          <div className="card" style={{ padding: 18 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: pal.primary }}>
-              {subjects.top_loss_headline || subjects.high_low_headline || 'Ders Bazlı Deneme Dağılımı'}
-            </div>
-          </div>
+          <LevelHeader headline={subjects.top_loss_headline || subjects.high_low_headline || 'Ders Bazlı Deneme Dağılımı'} pal={pal} />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 20 }}>
             {/* Kayıp Netler Çubuğu */}
@@ -928,8 +594,9 @@ export default function StudentExamAnalysisView({
       {/* ========================================================================= */}
       {/* SEVİYE 3: KONU DETAYLARI */}
       {/* ========================================================================= */}
-      {activeLevel === 'topic' && (
+      {(drill.level === 'topic' || drill.level === 'curriculum') && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <LevelHeader headline={topicHeadline} pal={pal} />
           {/* En Çok Net Kaybettiren Konular (İlk 10) */}
           <div className="card" style={{ padding: 20 }}>
             <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>
