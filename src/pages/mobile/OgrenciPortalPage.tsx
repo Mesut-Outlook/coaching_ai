@@ -838,6 +838,11 @@ export default function OgrenciPortalPage() {
                     palette={PORTAL_STUDENT_PALETTE}
                     initialCatalog={examReportData.catalog}
                     initialExams={examReportData.exams}
+                    targets={{
+                      TYT: examReportData.student.target_net_tyt ?? null,
+                      AYT: examReportData.student.target_net_ayt ?? null,
+                      LGS: examReportData.student.target_net_lgs ?? null,
+                    }}
                   />
                   <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11.5, color: '#8A86A3', padding: '12px 16px' }}>
                     Sayılar girilen deneme sonuçlarından hesaplanır; konusu girilmemiş denemeler konu analizinde yer almaz.

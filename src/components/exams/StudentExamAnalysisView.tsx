@@ -31,6 +31,8 @@ import {
   generateExamReport,
   type RawExamRecord,
   type ExamReportCatalog,
+  type ExamTopicLinkInfo,
+  type HomeworkItem,
   type ExamReportResult,
   type MasteryBand,
   type TopicRowData,
@@ -55,6 +57,7 @@ export interface StudentExamAnalysisViewProps {
   initialExamType?: ExamType
   initialCatalog?: ExamReportCatalog
   initialExams?: RawExamRecord[]
+  targets?: { TYT?: number | null; AYT?: number | null; LGS?: number | null }
 }
 
 async function fetchByExamIds<T>(
@@ -97,6 +100,7 @@ export default function StudentExamAnalysisView({
   initialExamType,
   initialCatalog,
   initialExams,
+  targets: targetsProp,
 }: StudentExamAnalysisViewProps) {
   const pal = { ...DEFAULT_CHART_PALETTE, ...palette }
 
@@ -121,8 +125,24 @@ export default function StudentExamAnalysisView({
 
   // R4-4: Yanlış Nedenleri State
   const [errorBasketItems, setErrorBasketItems] = useState<ErrorBasketItem[]>([])
-  const [topicLinks, setTopicLinks] = useState<Map<number, number>>(new Map())
-  const [topicNames, setTopicNames] = useState<Map<string, number>>(new Map())
+  const [coachTargets, setCoachTargets] = useState<{ TYT: number | null; AYT: number | null; LGS: number | null }>({
+    TYT: null,
+    AYT: null,
+    LGS: null,
+  })
+  // Portalda hedefler prop ile gelir (== null: SQL uygulanmadan undefined olabilir).
+  const targets = {
+    TYT: targetsProp?.TYT ?? coachTargets.TYT,
+    AYT: targetsProp?.AYT ?? coachTargets.AYT,
+    LGS: targetsProp?.LGS ?? coachTargets.LGS,
+  }
+  void targets // Task 5/6 hedef çizgisi için kullanır
+  // Birincil eşleme: karne konusu -> müfredat konusu (yalnız katalog.links; ad eşlemesi yok).
+  const primaryTopicByExamTopic = useMemo(() => {
+    const m = new Map<number, number>()
+    for (const l of catalog.links ?? []) if (l.is_primary) m.set(l.exam_topic_id, l.topic_id)
+    return m
+  }, [catalog.links])
   const [errorModalTarget, setErrorModalTarget] = useState<{
     topicRow: TopicRowData & { subject_label: string }
     curriculumTopicId: number | null
@@ -137,27 +157,6 @@ export default function StudentExamAnalysisView({
       setRawExams(initialExams)
       setLoading(false)
 
-      const examIds = initialExams.map((e) => e.id)
-      if (examIds.length > 0) {
-        Promise.all([
-          supabase.from('error_basket_items').select('*').in('mock_exam_id', examIds),
-          supabase.from('exam_topic_links').select('exam_topic_id, topic_id').eq('is_primary', true),
-          supabase.from('topics').select('id, name'),
-        ]).then(([ebRes, lRes, ctRes]) => {
-          if (!isMounted) return
-          if (ebRes.data) setErrorBasketItems(ebRes.data as ErrorBasketItem[])
-          if (lRes.data) {
-            const lMap = new Map<number, number>()
-            lRes.data.forEach((l) => lMap.set(l.exam_topic_id, l.topic_id))
-            setTopicLinks(lMap)
-          }
-          if (ctRes.data) {
-            const nMap = new Map<string, number>()
-            ctRes.data.forEach((t) => nMap.set(t.name.trim().toLowerCase(), t.id))
-            setTopicNames(nMap)
-          }
-        })
-      }
       return () => {
         isMounted = false
       }
@@ -182,6 +181,100 @@ export default function StudentExamAnalysisView({
           topics: (topicRes.data as ExamTopic[]) || [],
         }
 
+        // Bağlantılar, müfredat konuları, hedefler, ödev + konu testi (portal_exam_report ile aynı kurallar)
+        const cutoff = new Date()
+        cutoff.setDate(cutoff.getDate() - 365)
+        const cutoffStr = cutoff.toISOString().slice(0, 10)
+        const weekCutoff = new Date(cutoff)
+        weekCutoff.setDate(weekCutoff.getDate() - 7)
+        const [linksRes, wtRes, tmRes, stRes] = await Promise.all([
+          supabase.from('exam_topic_links').select('exam_topic_id, topic_id, is_primary').range(0, 1999),
+          supabase
+            .from('weekly_tasks')
+            .select('topic_id, week_start, day_index, custom_label, question_count, correct_count, wrong_count, blank_count')
+            .eq('student_id', studentId)
+            .eq('block_kind', 'ders')
+            .not('topic_id', 'is', null)
+            .not('correct_count', 'is', null)
+            .gt('question_count', 0)
+            .gte('week_start', weekCutoff.toISOString().slice(0, 10))
+            .range(0, 1999),
+          supabase
+            .from('topic_measurements')
+            .select('topic_id, measured_at, source_label, correct_count, wrong_count, blank_count, accuracy_pct')
+            .eq('student_id', studentId)
+            .eq('source', 'konu_testi')
+            .gte('measured_at', cutoffStr)
+            .range(0, 1999),
+          supabase.from('students').select('target_net_tyt, target_net_ayt, target_net_lgs').eq('id', studentId).maybeSingle(),
+        ])
+        if (linksRes.error) throw linksRes.error
+
+        const links = (linksRes.data || []) as ExamTopicLinkInfo[]
+        const wt = wtRes.data || []
+        const tm = tmRes.data || []
+        const linkTopicIds = [...new Set(links.map((l) => l.topic_id))]
+        const allTopicIds = [...new Set([...linkTopicIds, ...wt.map((w) => w.topic_id as number), ...tm.map((t) => t.topic_id)])]
+        const topicsRes = allTopicIds.length
+          ? await supabase.from('topics').select('id, name, subject_id').in('id', allTopicIds)
+          : { data: [] as { id: number; name: string; subject_id: number }[] }
+        const topicRows = topicsRes.data || []
+        const subjIds = [...new Set(topicRows.map((t) => t.subject_id))]
+        const subjNamesRes = subjIds.length
+          ? await supabase.from('subjects').select('id, name').in('id', subjIds)
+          : { data: [] as { id: number; name: string }[] }
+        const subjName = new Map((subjNamesRes.data || []).map((x) => [x.id, x.name]))
+        const topicName = new Map(topicRows.map((t) => [t.id, t.name]))
+
+        const addDays = (iso: string, n: number) => {
+          const d = new Date(iso + 'T00:00:00Z')
+          d.setUTCDate(d.getUTCDate() + n)
+          return d.toISOString().slice(0, 10)
+        }
+        const homework: HomeworkItem[] = [
+          ...wt.map((w): HomeworkItem => ({
+            topic_id: w.topic_id as number,
+            date: addDays(w.week_start, w.day_index),
+            label: w.custom_label?.trim() ? w.custom_label : `${topicName.get(w.topic_id as number) ?? ''} · ${w.question_count} soru`,
+            question_count: w.question_count as number,
+            correct_count: w.correct_count ?? null,
+            wrong_count: w.wrong_count ?? null,
+            blank_count: w.blank_count ?? null,
+            accuracy_pct: Math.round(((w.correct_count as number) * 1000) / (w.question_count as number)) / 10,
+            kind: 'odev',
+          })),
+          ...tm.map((t): HomeworkItem => ({
+            topic_id: t.topic_id,
+            date: t.measured_at,
+            label: t.source_label,
+            question_count: (t.correct_count ?? 0) + (t.wrong_count ?? 0) + (t.blank_count ?? 0),
+            correct_count: t.correct_count ?? null,
+            wrong_count: t.wrong_count ?? null,
+            blank_count: t.blank_count ?? null,
+            accuracy_pct: t.accuracy_pct,
+            kind: 'konu_testi',
+          })),
+        ]
+          .filter((h) => h.date >= cutoffStr)
+          .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+          .slice(0, 300)
+
+        catalogData.links = links
+        catalogData.curriculumTopics = linkTopicIds
+          .filter((id) => topicName.has(id))
+          .map((id) => {
+            const t = topicRows.find((x) => x.id === id)!
+            return { id, name: t.name, subject_name: subjName.get(t.subject_id) ?? '' }
+          })
+        catalogData.homework = homework
+        if (isMounted && stRes.data) {
+          setCoachTargets({
+            TYT: stRes.data.target_net_tyt ?? null,
+            AYT: stRes.data.target_net_ayt ?? null,
+            LGS: stRes.data.target_net_lgs ?? null,
+          })
+        }
+
         if (isMounted) setCatalog(catalogData)
 
         // 2. Denemeler
@@ -204,14 +297,12 @@ export default function StudentExamAnalysisView({
         const examIds = examsData.map((e) => e.id)
 
         // 3. Bölümler, Alt Ders Sonuçları, Konu Sonuçları ve Hata Sepeti (1000 satır cap + 200 chunk korumalı)
-        const [sections, subjectResults, topicResults, errorBasketRes, linksRes, curriculumTopicsRes] =
+        const [sections, subjectResults, topicResults, errorBasketRes] =
           await Promise.all([
             fetchByExamIds<MockExamSection>('mock_exam_sections', examIds),
             fetchByExamIds<MockExamSubjectResult>('mock_exam_subject_results', examIds),
             fetchByExamIds<MockExamTopicResult>('mock_exam_topic_results', examIds),
             supabase.from('error_basket_items').select('*').in('mock_exam_id', examIds),
-            supabase.from('exam_topic_links').select('exam_topic_id, topic_id').eq('is_primary', true),
-            supabase.from('topics').select('id, name'),
           ])
 
         // RawExamRecord formatında birleştir
@@ -234,16 +325,6 @@ export default function StudentExamAnalysisView({
         if (isMounted) {
           setRawExams(fullRecords)
           if (errorBasketRes.data) setErrorBasketItems(errorBasketRes.data as ErrorBasketItem[])
-          if (linksRes.data) {
-            const lMap = new Map<number, number>()
-            linksRes.data.forEach((l) => lMap.set(l.exam_topic_id, l.topic_id))
-            setTopicLinks(lMap)
-          }
-          if (curriculumTopicsRes.data) {
-            const nMap = new Map<string, number>()
-            curriculumTopicsRes.data.forEach((t) => nMap.set(t.name.trim().toLowerCase(), t.id))
-            setTopicNames(nMap)
-          }
         }
       } catch (err) {
         if (!isMounted) return
@@ -938,10 +1019,7 @@ export default function StudentExamAnalysisView({
                   .map((row) => {
                     const badge = getBandBadgeStyle(row.status_badge)
                     const isExpanded = expandedTopicId === row.exam_topic_id
-                    const curriculumTopicId =
-                      topicLinks.get(row.exam_topic_id) ??
-                      topicNames.get(row.name.trim().toLowerCase()) ??
-                      null
+                    const curriculumTopicId = primaryTopicByExamTopic.get(row.exam_topic_id) ?? null
                     const rowErrors = errorBasketItems.filter(
                       (it) => curriculumTopicId !== null && it.topic_id === curriculumTopicId
                     )

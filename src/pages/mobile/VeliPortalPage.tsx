@@ -265,6 +265,11 @@ export default function VeliPortalPage() {
                     palette={PORTAL_PARENT_PALETTE}
                     initialCatalog={examReportData.catalog}
                     initialExams={examReportData.exams}
+                    targets={{
+                      TYT: examReportData.student.target_net_tyt ?? null,
+                      AYT: examReportData.student.target_net_ayt ?? null,
+                      LGS: examReportData.student.target_net_lgs ?? null,
+                    }}
                   />
                   <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11.5, color: 'var(--ink-faint)', padding: '12px 16px' }}>
                     Sayılar girilen deneme sonuçlarından hesaplanır; konusu girilmemiş denemeler konu analizinde yer almaz.
