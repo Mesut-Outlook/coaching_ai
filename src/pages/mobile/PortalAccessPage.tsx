@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { portalLogin, savePortalSession } from '../../lib/portal'
-import { Smartphone, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
+import { BRAND_LONG, BRAND_SHORT } from '../../lib/brand'
 
 export default function PortalAccessPage() {
   const [searchParams] = useSearchParams()
@@ -64,20 +65,20 @@ export default function PortalAccessPage() {
           style={{
             width: 64,
             height: 64,
-            borderRadius: 20,
-            backgroundColor: 'var(--indigo-050)',
-            color: 'var(--indigo-600)',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            backgroundColor: '#F6EFDD',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 20px auto',
           }}
         >
-          <Smartphone size={32} />
+          <img src="/logo.png" alt="" style={{ width: '118%', height: '118%', objectFit: 'cover' }} />
         </div>
 
         <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--ink)', marginBottom: 8 }}>
-          Netlik Mobil Portalı
+          {BRAND_LONG}
         </h1>
         <p style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginBottom: 24, lineHeight: 1.5 }}>
           Koçunuzun size veya velinize ilettiği erişim kodunu girerek giriş yapabilirsiniz.
@@ -147,7 +148,7 @@ export default function PortalAccessPage() {
         </form>
 
         <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)', fontSize: 12, color: 'var(--ink-soft)' }}>
-          Netlik Coaching · Mobil Öğrenci & Veli Portalı
+          {`${BRAND_SHORT} · Mobil Öğrenci & Veli Portalı`}
         </div>
       </div>
     </div>

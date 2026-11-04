@@ -2,6 +2,7 @@
 // yardımcıları ve WhatsApp mesaj şablonları. Tablo, modal ve bildirim akışının
 // üçü de buradan besleniyor — sayfa dosyasına dağıtılmadı (tek kaynak).
 import type { AbsenceStatus, AttendanceRecord, ExcuseType, NotifyTarget, SessionType, Student } from '../types/database'
+import { BRAND_SHORT } from './brand'
 
 export const SESSION_LABELS: Record<SessionType, string> = {
   birebir: 'Birebir',
@@ -112,17 +113,17 @@ export function buildStudentMessage(studentName: string, record: AttendanceRecor
   const dateLabel = formatDateTr(record.absence_date)
   const sessionLabel = SESSION_LABELS[record.session_type]
   if (record.excuse_type === 'yok') {
-    return `Merhaba ${studentName}, ${dateLabel} tarihli ${sessionLabel} çalışmasına katılmadın ve bir mazeret bildirilmedi. Lütfen en kısa sürede iletişime geç. — Netlik Koçluk`
+    return `Merhaba ${studentName}, ${dateLabel} tarihli ${sessionLabel} çalışmasına katılmadın ve bir mazeret bildirilmedi. Lütfen en kısa sürede iletişime geç. — ${BRAND_SHORT}`
   }
   const excuseLabel = EXCUSE_LABELS[record.excuse_type]
-  return `Merhaba ${studentName}, ${dateLabel} tarihli ${sessionLabel} çalışmana katılamadığını kaydettik. Mazeret: ${excuseLabel}. Kaçırdığın konuları telafi etmek için en kısa sürede planlama yapalım. — Netlik Koçluk`
+  return `Merhaba ${studentName}, ${dateLabel} tarihli ${sessionLabel} çalışmana katılamadığını kaydettik. Mazeret: ${excuseLabel}. Kaçırdığın konuları telafi etmek için en kısa sürede planlama yapalım. — ${BRAND_SHORT}`
 }
 
 export function buildParentMessage(studentName: string, record: AttendanceRecord): string {
   const dateLabel = formatDateTr(record.absence_date)
   const sessionLabel = SESSION_LABELS[record.session_type]
   const excuseLabel = record.excuse_type === 'yok' ? 'bildirilmedi' : EXCUSE_LABELS[record.excuse_type]
-  return `Merhaba, ${studentName} ${dateLabel} tarihli ${sessionLabel} çalışmasına katılmadı. Mazeret: ${excuseLabel}. Bilginize. — Netlik Koçluk`
+  return `Merhaba, ${studentName} ${dateLabel} tarihli ${sessionLabel} çalışmasına katılmadı. Mazeret: ${excuseLabel}. Bilginize. — ${BRAND_SHORT}`
 }
 
 export function buildParentSummaryMessage(
@@ -133,7 +134,7 @@ export function buildParentSummaryMessage(
   unexcused: number,
   lastDateLabel: string
 ): string {
-  return `Merhaba, ${studentName} için devamsızlık özeti (${startLabel}–${endLabel}): toplam ${total} devamsızlık, ${unexcused} tanesi mazeretsiz. Son devamsızlık: ${lastDateLabel}. Görüşmek üzere. — Netlik Koçluk`
+  return `Merhaba, ${studentName} için devamsızlık özeti (${startLabel}–${endLabel}): toplam ${total} devamsızlık, ${unexcused} tanesi mazeretsiz. Son devamsızlık: ${lastDateLabel}. Görüşmek üzere. — ${BRAND_SHORT}`
 }
 
 /**

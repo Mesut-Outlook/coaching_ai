@@ -2,6 +2,7 @@ import { fmtWeekRange } from './weeks'
 import type { AttendanceRecord, MockExam, Student, WeeklyTask } from '../types/database'
 import type { PortalAttendance, PortalExam, PortalStudent, PortalTask } from './portal'
 import { formatNetTr } from './homeSummaryCore'
+import { BRAND_SHORT } from './brand'
 
 export type ParentSupportTipInput = {
   completionPct: number
@@ -185,7 +186,7 @@ export function buildParentSummaryWhatsAppMessage(params: {
   const cleanNote = coachNote?.trim()
   const coachNoteSection = cleanNote ? `\n\n📝 *Koçun Notu:*\n"${cleanNote}"` : ''
 
-  const footer = `\n\nİyi haftalar dileriz. — Netlik Koçluk`
+  const footer = `\n\nİyi haftalar dileriz. — ${BRAND_SHORT}`
 
   return `${greeting}\n\n${intro}\n\n${taskLine}${examLine}${attendanceLine}${tipsSection}${coachNoteSection}${footer}`
 }

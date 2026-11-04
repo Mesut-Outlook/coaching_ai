@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAccess } from '../../contexts/AccessContext'
+import { BRAND_SHORT, BRAND_TAGLINE } from '../../lib/brand'
 import type { PermissionKey } from '../../lib/permissions'
 import { useSidebar } from '../../contexts/useSidebar'
 import { useHomeSummary } from '../../contexts/homeSummaryContext'
@@ -161,6 +162,8 @@ export default function Sidebar() {
     ? activeMembership.role_name
     : profile?.role ?? 'Koç'
 
+  const showInstitutionSelector = isSystemAdmin || memberships.length > 1
+
   // Kurum secim kontrolu
   const instNameLower = activeMembership?.institution_name.toLowerCase() ?? ''
 
@@ -174,8 +177,8 @@ export default function Sidebar() {
     activeMembership.is_coaching_practice ||
     instNameLower.includes('netlik')
 
-  let brandTitle = 'Netlik'
-  let brandSub = 'Eda Cangert · YKS Koçluk'
+  let brandTitle = BRAND_SHORT
+  let brandSub = BRAND_TAGLINE
   let brandLogo = '/logo.png'
 
   if (isKonseptSelected) {
@@ -183,8 +186,8 @@ export default function Sidebar() {
     brandSub = activeMembership?.role_name ?? 'Eğitim Kurumu'
     brandLogo = '/logo-konsept.png'
   } else if (isNetlikSelected) {
-    brandTitle = 'Netlik'
-    brandSub = 'Eda Cangert · YKS Koçluk'
+    brandTitle = !activeInstitutionId && showInstitutionSelector ? 'Tüm Kurumlar' : BRAND_SHORT
+    brandSub = BRAND_TAGLINE
     brandLogo = '/logo.png'
   } else if (activeMembership) {
     brandTitle = activeMembership.institution_name
@@ -206,8 +209,6 @@ export default function Sidebar() {
     : isNetlikSelected
     ? 'netlik'
     : `diger-${institutionColorIndex(activeInstitutionId)}`
-
-  const showInstitutionSelector = isSystemAdmin || memberships.length > 1
 
   return (
     <aside

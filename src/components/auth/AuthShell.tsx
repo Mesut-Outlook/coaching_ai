@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { BRAND_LONG, BRAND_TAGLINE } from '../../lib/brand'
 
 /**
  * Giriş/kayıt/şifre ekranlarının ortak çerçevesi. Bu ekranlar AppShell'in dışında
@@ -22,8 +23,8 @@ export default function AuthShell({
           <img src="/logo.png" alt="" width={52} height={52} />
         </div>
         <div>
-          <div className="auth-brand-title">Netlik</div>
-          <div className="auth-brand-sub">Eda Cangert · YKS Koçluk</div>
+          <div className="auth-brand-title">{BRAND_LONG}</div>
+          <div className="auth-brand-sub">{BRAND_TAGLINE}</div>
         </div>
       </div>
 

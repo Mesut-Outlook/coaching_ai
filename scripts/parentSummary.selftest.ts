@@ -139,7 +139,7 @@ console.log('▶ R3-6 Veli Haftalık Özeti Öz-Testi Başlatılıyor...\n')
   assert.ok(msg.includes('Hedef: 90'))
   assert.ok(msg.includes('Bu hafta matematik soru çözümünde iyi bir gayret gösterdi.'))
   assert.ok(msg.includes('Evde Nasıl Destek Olabilirsiniz?'))
-  assert.ok(msg.includes('Netlik Koçluk'))
+  assert.ok(msg.includes('Eda Danışmanlık'))
 }
 
 console.log('✓ Tüm R3-6 testleri başarıyla geçti!\n')

@@ -15,6 +15,20 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '2 Kasım 2026',
+    entries: [
+      {
+        version: 'v0.32',
+        title: 'Öğrenci ve veli portalı düzeltildi, kurum adı güncellendi',
+        items: [
+          'Öğrenci ve veli portalının girişten sonra "Bağlantı kurulamadı" hatası vermesi giderildi.',
+          'Uygulamadaki marka adı Eda Cangert Eğitim Danışmanlığı (kısa adı Eda Danışmanlık) olarak güncellendi; WhatsApp mesajlarındaki imza da buna dahil.',
+          'Portal giriş ekranına logo eklendi.',
+        ],
+      },
+    ],
+  },
+  {
     date: '27 Ekim 2026',
     entries: [
       {

@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import AuthShell from '../components/auth/AuthShell'
+import { BRAND_LONG } from '../lib/brand'
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams()
@@ -175,7 +176,7 @@ export default function RegisterPage() {
             <img src="/logo.png" alt="" width={48} height={48} style={{ width: '118%', height: '118%', objectFit: 'cover' }} />
           </div>
           <div>
-            <div style={{ fontFamily: 'var(--font-disp)', fontWeight: 700, fontSize: 17 }}>Netlik</div>
+            <div style={{ fontFamily: 'var(--font-disp)', fontWeight: 700, fontSize: 17 }}>{BRAND_LONG}</div>
             <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>Davet ile Kayıt Ol</div>
           </div>
         </div>

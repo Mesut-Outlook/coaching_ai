@@ -1,6 +1,7 @@
 import type { MockExamSection, MockExam } from '../types/database'
 import { weightedNet } from './examSections'
 import { formatNetTr } from './homeSummaryCore'
+import { BRAND_SHORT } from './brand'
 
 // Deneme sonucunun WhatsApp mesajı. WhatsApp kalın metni *yıldız* ile gösterir.
 // Devamsızlık bildirimleriyle aynı ton: öğrenciye doğrudan, veliye bilgilendirme.
@@ -51,8 +52,8 @@ export function buildExamResultMessage(
 
   const footer =
     target === 'ogrenci'
-      ? '\n\nEksik kaldığın bölümleri bu haftaki programa ekleyelim. — Netlik Koçluk'
-      : '\n\nBilginize. — Netlik Koçluk'
+      ? `\n\nEksik kaldığın bölümleri bu haftaki programa ekleyelim. — ${BRAND_SHORT}`
+      : `\n\nBilginize. — ${BRAND_SHORT}`
 
   return `${header}\n${meta}\n${body}${footer}`
 }

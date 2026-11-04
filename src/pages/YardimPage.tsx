@@ -157,8 +157,8 @@ export default function YardimPage() {
         title="Yardım"
         subtitle={
           tab === 'rehber'
-            ? "Netlik'i ilk kez mi kullanıyorsun? Her ekranın ne işe yaradığı ve ne zaman kullanılacağı aşağıda."
-            : "Netlik'e en başından beri ne zaman ne eklendiğinin tam listesi."
+            ? "Paneli ilk kez mi kullanıyorsun? Her ekranın ne işe yaradığı ve ne zaman kullanılacağı aşağıda."
+            : "Panele en başından beri ne zaman ne eklendiğinin tam listesi."
         }
       />
 

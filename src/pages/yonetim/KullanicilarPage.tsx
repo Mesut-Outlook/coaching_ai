@@ -6,6 +6,7 @@ import { useAccess } from '../../contexts/useAccess'
 import PageHeader from '../../components/layout/PageHeader'
 import type { Membership, Invitation, Role, Profile } from '../../types/database'
 import { openWhatsAppChat } from '../../lib/whatsapp'
+import { BRAND_LONG } from '../../lib/brand'
 
 type MemberWithDetails = Membership & {
   profiles: Profile | null
@@ -276,7 +277,7 @@ export default function KullanicilarPage() {
                             onClick={() =>
                               openWhatsAppChat(
                                 '',
-                                `Merhaba, Netlik Koçluk sistemine davet edildiniz. Kayıt olmak için bağlantı: ${inviteUrl}`
+                                `Merhaba, ${BRAND_LONG} sistemine davet edildiniz. Kayıt olmak için bağlantı: ${inviteUrl}`
                               )
                             }
                           >
@@ -434,7 +435,7 @@ export default function KullanicilarPage() {
                     onClick={() =>
                       openWhatsAppChat(
                         '',
-                        `Merhaba, Netlik Koçluk sistemine davet edildiniz. Kayıt linkiniz: ${inviteResultLink}`
+                        `Merhaba, ${BRAND_LONG} sistemine davet edildiniz. Kayıt linkiniz: ${inviteResultLink}`
                       )
                     }
                   >
