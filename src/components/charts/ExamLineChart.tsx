@@ -31,6 +31,9 @@ export interface ExamLineChartProps {
   /** Altında düz özet gösterilir; varsayılan 3 */
   minPoints?: number
   tooltip?: (index: number) => ReactNode
+  /** Ana serinin adı (ikinci seri varken açıklamada); varsayılan 'Deneme' */
+  seriesLabel?: string
+  ariaLabel?: string
 }
 
 const FALLBACK_W = 640
@@ -54,6 +57,8 @@ export default function ExamLineChart({
   connectNulls,
   minPoints = 3,
   tooltip,
+  seriesLabel,
+  ariaLabel = 'Gelişim grafiği',
 }: ExamLineChartProps) {
   const [hovered, setHovered] = useState<number | null>(null)
   const [wrapRef, measured] = useElementWidth<HTMLDivElement>()
@@ -95,11 +100,12 @@ export default function ExamLineChart({
   const rich = !!(bands || ticks || refs || secondSeries || onPointClick || yMin != null || yMax != null)
   const second = secondSeries?.values ?? []
   const all = [...data.map((d) => d.value), ...second].filter((v): v is number => v != null)
+  const hasVals = all.length > 0
   const minVal = Math.min(...all, average ?? Infinity)
   const maxVal = Math.max(...all, average ?? -Infinity)
   const marginY = Math.max(2, (maxVal - minVal) * 0.15)
-  const lo = yMin ?? Math.max(0, Math.floor(minVal - marginY))
-  const hi = yMax ?? Math.ceil(maxVal + marginY)
+  const lo = yMin ?? (hasVals ? Math.max(0, Math.floor(minVal - marginY)) : 0)
+  const hi = yMax ?? (hasVals ? Math.ceil(maxVal + marginY) : 100)
   const range = hi - lo || 1
 
   const width = measured || FALLBACK_W
@@ -140,12 +146,13 @@ export default function ExamLineChart({
       : null
   const avgY = average != null ? y(average) : null
   const secColor = secondSeries?.color ?? pal.textMuted
+  const slotW = n > 1 ? plotW / (n - 1) : plotW
   const hitHalf = n === 1 ? plotW / 2 : plotW / (n - 1) / 2
 
   const mark = (v: number, i: number, color: string, isLast: boolean, square: boolean) => {
     const big = i === highlightIndex || (!rich && hovered === i)
     const r = rich ? (big ? 5.5 : 4) : big ? 6 : isLast ? 4.5 : 3.5
-    const fill = isLast || big ? color : '#FFFFFF'
+    const fill = isLast || big ? color : pal.surface
     return square ? (
       <rect key={`s${i}`} x={x(i) - r} y={y(v) - r} width={2 * r} height={2 * r} rx={1.5} fill={fill} stroke={color} strokeWidth={2} />
     ) : (
@@ -160,7 +167,19 @@ export default function ExamLineChart({
 
   return (
     <div ref={wrapRef} style={{ position: 'relative', width: '100%', userSelect: 'none' }}>
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: 'block', overflow: 'visible' }}>
+      {secondSeries && (
+        <div style={{ display: 'flex', gap: 14, fontSize: 11.5, color: pal.text, marginBottom: 4, paddingLeft: padLeft }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <svg width={10} height={10} aria-hidden="true"><circle cx={5} cy={5} r={4} fill={pal.primary} /></svg>
+            {seriesLabel ?? 'Deneme'}
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <svg width={10} height={10} aria-hidden="true"><rect x={1} y={1} width={8} height={8} rx={1.5} fill={secColor} /></svg>
+            {secondSeries.label}
+          </span>
+        </div>
+      )}
+      <svg role="img" aria-label={ariaLabel} width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: 'block', overflow: 'visible' }}>
         {bands &&
           (
             [
@@ -237,7 +256,7 @@ export default function ExamLineChart({
         {/* Boş noktalar: "konu girilmedi" */}
         {rich &&
           mainVals.map((v, i) =>
-            v == null && (!secondSeries || second[i] == null) ? (
+            v == null && slotW >= 50 && (!secondSeries || second[i] == null) ? (
               <g key={`g${i}`}>
                 <text x={x(i)} y={padTop + plotH / 2} textAnchor="middle" fontSize={10.5} fill={pal.textMuted} fontFamily="inherit">
                   konu
@@ -282,9 +301,24 @@ export default function ExamLineChart({
             height={plotH + padBottom}
             fill="transparent"
             style={{ cursor: onPointClick ? 'pointer' : 'default' }}
-            onMouseEnter={() => setHovered(i)}
-            onMouseLeave={() => setHovered(null)}
+            onPointerEnter={() => setHovered(i)}
+            onPointerLeave={() => setHovered(null)}
             onClick={onPointClick ? () => onPointClick(i) : undefined}
+            {...(onPointClick
+              ? {
+                  tabIndex: 0,
+                  role: 'button',
+                  'aria-label': `${data[i].label}: ${data[i].value != null ? `${data[i].value!.toFixed(2).replace('.', ',')} ${unit}` : 'veri yok'}`,
+                  onFocus: () => setHovered(i),
+                  onBlur: () => setHovered(null),
+                  onKeyDown: (ev: React.KeyboardEvent) => {
+                    if (ev.key === 'Enter' || ev.key === ' ') {
+                      ev.preventDefault()
+                      onPointClick(i)
+                    }
+                  },
+                }
+              : {})}
           />
         ))}
       </svg>
@@ -313,7 +347,7 @@ export default function ExamLineChart({
             <>
               <div style={{ fontWeight: 700 }}>{tipPoint.label}</div>
               <div>
-                {tipPoint.value != null ? `${tipPoint.value.toFixed(2).replace('.', ',')} ${unit}` : 'yok'}
+                {tipPoint.value != null ? `${tipPoint.value.toFixed(2).replace('.', ',')} ${unit}` : 'Konu detayı girilmedi'}
                 {tipPoint.subValue != null && ` · %${tipPoint.subValue.toFixed(0)}`}
               </div>
             </>

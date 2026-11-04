@@ -106,9 +106,24 @@ export default function StackedColumnChart({
                 height={ih + 14 + m.b}
                 fill="transparent"
                 style={{ cursor: onColumnClick ? 'pointer' : 'default' }}
-                onMouseEnter={() => setHovered(i)}
-                onMouseLeave={() => setHovered(null)}
+                onPointerEnter={() => setHovered(i)}
+                onPointerLeave={() => setHovered(null)}
                 onClick={onColumnClick ? () => onColumnClick(i) : undefined}
+                {...(onColumnClick
+                  ? {
+                      tabIndex: 0,
+                      role: 'button',
+                      'aria-label': `${c.label}${c.subLabel ? ` ${c.subLabel}` : ''}: ${c.parts ? c.parts.map((p) => `${p.name} ${p.value}`).join(', ') : 'veri yok'}`,
+                      onFocus: () => setHovered(i),
+                      onBlur: () => setHovered(null),
+                      onKeyDown: (ev: React.KeyboardEvent) => {
+                        if (ev.key === 'Enter' || ev.key === ' ') {
+                          ev.preventDefault()
+                          onColumnClick(i)
+                        }
+                      },
+                    }
+                  : {})}
               />
             </g>
           )

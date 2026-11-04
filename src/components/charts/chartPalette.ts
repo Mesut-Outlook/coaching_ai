@@ -9,6 +9,7 @@ export type ChartPalette = {
   textMuted: string
   border: string
   blank: string
+  surface: string
   bandBg: { good: string; medium: string; weak: string }
   /** Sıra: Türkçe, Sosyal, Matematik, Fen (renk körlüğü kontrolünden geçti; Fen Sosyal'in yanına konmaz) */
   groups: string[]
@@ -43,6 +44,7 @@ export const DEFAULT_CHART_PALETTE: ChartPalette = {
   textMuted: 'var(--ink-soft)',
   border: 'var(--border)',
   blank: 'var(--measured)',
+  surface: 'var(--surface)',
   bandBg: { good: 'var(--success-bg)', medium: 'var(--warning-bg)', weak: 'var(--critical-bg)' },
   groups: ['var(--c-turkce)', 'var(--c-sosyal)', 'var(--c-math)', 'var(--c-fen)'],
 }
@@ -58,6 +60,7 @@ export const PORTAL_STUDENT_PALETTE: ChartPalette = {
   textMuted: '#56526E',
   border: '#E7E4F1',
   blank: '#A6A3BB',
+  surface: '#FFFFFF',
   bandBg: { good: '#E3F7EE', medium: '#FBF0DA', weak: '#FCE4E7' },
   groups: ['#D6495A', '#E2932E', '#3B6FE0', '#2E9F63'],
 }
@@ -73,6 +76,7 @@ export const PORTAL_PARENT_PALETTE: ChartPalette = {
   textMuted: '#56526E',
   border: '#E7E4F1',
   blank: '#A6A3BB',
+  surface: '#FFFFFF',
   bandBg: { good: '#E3F7EE', medium: '#FBF0DA', weak: '#FCE4E7' },
   groups: ['#D6495A', '#E2932E', '#3B6FE0', '#2E9F63'],
 }
