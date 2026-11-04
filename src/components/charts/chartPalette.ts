@@ -8,6 +8,28 @@ export type ChartPalette = {
   text: string
   textMuted: string
   border: string
+  blank: string
+  bandBg: { good: string; medium: string; weak: string }
+  /** Sıra: Türkçe, Sosyal, Matematik, Fen (renk körlüğü kontrolünden geçti; Fen Sosyal'in yanına konmaz) */
+  groups: string[]
+}
+
+const GROUP_ORDER = ['turkce', 'sosyal', 'matematik', 'fen']
+
+/** Bilinmeyen ders adı => groups[index % 4]. Büyük/küçük harf ve "Bilimleri" eki duyarsız. */
+export function groupColor(pal: ChartPalette, sectionName: string, index: number): string {
+  const n = sectionName
+    .toLocaleLowerCase('tr')
+    .replace(/ı/g, 'i')
+    .replace(/ü/g, 'u')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/ş/g, 's')
+    .replace(/ğ/g, 'g')
+    .replace(/\s*bilimleri?$/, '')
+    .trim()
+  const i = GROUP_ORDER.indexOf(n)
+  return pal.groups[(i >= 0 ? i : index) % pal.groups.length]
 }
 
 export const DEFAULT_CHART_PALETTE: ChartPalette = {
@@ -20,6 +42,9 @@ export const DEFAULT_CHART_PALETTE: ChartPalette = {
   text: 'var(--ink)',
   textMuted: 'var(--ink-soft)',
   border: 'var(--border)',
+  blank: 'var(--measured)',
+  bandBg: { good: 'var(--success-bg)', medium: 'var(--warning-bg)', weak: 'var(--critical-bg)' },
+  groups: ['var(--c-turkce)', 'var(--c-sosyal)', 'var(--c-math)', 'var(--c-fen)'],
 }
 
 export const PORTAL_STUDENT_PALETTE: ChartPalette = {
@@ -32,6 +57,9 @@ export const PORTAL_STUDENT_PALETTE: ChartPalette = {
   text: '#1D1B2E',
   textMuted: '#56526E',
   border: '#E7E4F1',
+  blank: '#A6A3BB',
+  bandBg: { good: '#E3F7EE', medium: '#FBF0DA', weak: '#FCE4E7' },
+  groups: ['#D6495A', '#E2932E', '#3B6FE0', '#2E9F63'],
 }
 
 export const PORTAL_PARENT_PALETTE: ChartPalette = {
@@ -44,4 +72,7 @@ export const PORTAL_PARENT_PALETTE: ChartPalette = {
   text: '#1D1B2E',
   textMuted: '#56526E',
   border: '#E7E4F1',
+  blank: '#A6A3BB',
+  bandBg: { good: '#E3F7EE', medium: '#FBF0DA', weak: '#FCE4E7' },
+  groups: ['#D6495A', '#E2932E', '#3B6FE0', '#2E9F63'],
 }

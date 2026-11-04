@@ -12,6 +12,7 @@ export interface LossBarChartProps {
   palette?: Partial<ChartPalette>
   maxItems?: number
   unit?: string
+  onItemClick?: (index: number) => void
 }
 
 export default function LossBarChart({
@@ -19,6 +20,7 @@ export default function LossBarChart({
   palette,
   maxItems = 10,
   unit = 'net',
+  onItemClick,
 }: LossBarChartProps) {
   const pal = { ...DEFAULT_CHART_PALETTE, ...palette }
   const displayItems = items.slice(0, maxItems)
@@ -39,7 +41,7 @@ export default function LossBarChart({
         const percent = Math.min(100, Math.max(4, (item.lossNet / maxLoss) * 100))
 
         return (
-          <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Row key={index} onClick={onItemClick ? () => onItemClick(index) : undefined}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 12 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, overflow: 'hidden' }}>
                 <span
@@ -86,9 +88,23 @@ export default function LossBarChart({
                 }}
               />
             </div>
-          </div>
+          </Row>
         )
       })}
     </div>
+  )
+}
+
+function Row({ onClick, children }: { onClick?: () => void; children: React.ReactNode }) {
+  const base: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4 }
+  if (!onClick) return <div style={base}>{children}</div>
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ ...base, background: 'none', border: 0, padding: '4px 0', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer', width: '100%' }}
+    >
+      {children}
+    </button>
   )
 }
