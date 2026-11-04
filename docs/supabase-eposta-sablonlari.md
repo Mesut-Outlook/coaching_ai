@@ -2,7 +2,7 @@
 
 Supabase Dashboard → **Authentication → Emails → Templates**. Uygulama yalnız iki e-posta tetikler:
 kayıt onayı (`RegisterPage` → `signUp`) ve şifre sıfırlama (`SifreSifirlaPage` → `resetPasswordForEmail`).
-Ortamda Management API erişimi yok; bu metinler panele elle yapıştırılır.
+⚠️ **Şablonlar yalnız özel SMTP kuruluyken düzenlenebilir** (2026-11-04: varsayılan SMTP'de kutu kilitli). Şu an Supabase'in İngilizce varsayılan metni gidiyor; içinde "Netlik" geçmiyor, ad değişikliği için bir şey gerekmiyor. Aşağıdaki metinler SMTP kurulursa kullanılmak üzere hazır.
 
 ## Confirm signup
 
