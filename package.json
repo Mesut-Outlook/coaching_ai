@@ -19,6 +19,7 @@
     "seed:exam-catalog": "tsx scripts/seedExamCatalog.ts",
     "seed:exam-links": "tsx scripts/seedExamTopicLinks.ts",
     "test:exam-report": "tsx scripts/examReport.selftest.ts",
+    "test:exam-drilldown": "tsx scripts/examDrilldown.selftest.ts",
     "test:home-summary": "tsx scripts/homeSummary.selftest.ts",
     "test:recommend": "tsx scripts/recommend.selftest.ts",
     "test:talking-points": "tsx scripts/talkingPoints.selftest.ts",

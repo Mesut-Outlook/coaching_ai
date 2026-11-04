@@ -94,9 +94,26 @@ export type ExamCatalogTopicInfo = {
   is_active?: boolean
 }
 
+export type ExamTopicLinkInfo = { exam_topic_id: number; topic_id: number; is_primary: boolean }
+export type CurriculumTopicInfo = { id: number; name: string; subject_name: string }
+export type HomeworkItem = {
+  topic_id: number
+  date: string
+  label: string
+  question_count: number
+  correct_count: number | null
+  wrong_count: number | null
+  blank_count: number | null
+  accuracy_pct: number
+  kind: 'odev' | 'konu_testi'
+}
+
 export type ExamReportCatalog = {
   subjects: ExamCatalogSubjectInfo[]
   topics: ExamCatalogTopicInfo[]
+  links?: ExamTopicLinkInfo[]
+  curriculumTopics?: CurriculumTopicInfo[]
+  homework?: HomeworkItem[]
 }
 
 // ---------------------------------------------------------------------------
