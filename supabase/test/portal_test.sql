@@ -13,6 +13,9 @@ declare
   v_exam uuid;
   v_subject int;
   v_topic int;
+  v_es int;
+  v_et1 int;
+  v_et2 int;
   v_week date := date_trunc('week', current_date)::date;
   v_code text;
   v_res json;
@@ -51,6 +54,19 @@ begin
   values (v_student, v_topic, 'gelisiyor', 'Portal notu', v_coach);
   insert into attendance_records (student_id, absence_date) values (v_student, current_date);
 
+  -- Derinlik: karne konusu bağlantıları, konu testi ve hedef net.
+  insert into exam_subjects (exam_type, section_name, subject_id, label, question_count)
+  values ('TYT', 'Türkçe', v_subject, 'Portal Alt Ders', 10) returning id into v_es;
+  insert into exam_topics (exam_subject_id, name) values (v_es, 'Karne A') returning id into v_et1;
+  insert into exam_topics (exam_subject_id, name) values (v_es, 'Karne B') returning id into v_et2;
+  insert into exam_topic_links (exam_topic_id, topic_id, is_primary)
+  values (v_et1, v_topic, true), (v_et2, v_topic, false);
+  insert into mock_exam_topic_results (mock_exam_id, exam_topic_id, question_count, correct_count, wrong_count)
+  values (v_exam, v_et1, 5, 4, 1);
+  update students set target_net_tyt = 90 where id = v_student;
+  insert into topic_measurements (student_id, topic_id, source, source_label, correct_count, wrong_count, blank_count, accuracy_pct, measured_at)
+  values (v_student, v_topic, 'konu_testi', 'Portal Testi', 7, 2, 1, 70, current_date);
+
   -- Portal anon olarak çağırır; yetkiyi de sınamak için rol değiştir.
   set local role anon;
 
@@ -77,6 +93,19 @@ begin
     v_res := portal_exam_report(v_code);
     if (v_res->>'ok')::boolean is not true then
       raise exception 'portal_exam_report BAŞARISIZ (%): %', v_code, v_res;
+    end if;
+    if json_array_length(v_res->'catalog'->'links') is distinct from 2 then
+      raise exception 'catalog.links yanlış: %', v_res->'catalog'->'links';
+    end if;
+    if json_array_length(v_res->'catalog'->'curriculum_topics') is distinct from 1
+       or v_res->'catalog'->'curriculum_topics'->0->>'name' is distinct from 'Portal Konusu' then
+      raise exception 'catalog.curriculum_topics yanlış: %', v_res->'catalog'->'curriculum_topics';
+    end if;
+    if json_array_length(v_res->'catalog'->'homework') is distinct from 3 then
+      raise exception 'catalog.homework yanlış: %', v_res->'catalog'->'homework';
+    end if;
+    if (v_res->'student'->>'target_net_tyt')::numeric is distinct from 90 then
+      raise exception 'target_net_tyt yanlış: %', v_res->'student';
     end if;
   end loop;
 

@@ -95,7 +95,11 @@ export type PortalDashboard = {
 
 export type PortalExamReportData = {
   role: PortalRole
-  student: PortalStudent
+  student: PortalStudent & {
+    target_net_tyt: number | null
+    target_net_ayt: number | null
+    target_net_lgs: number | null
+  }
   catalog: ExamReportCatalog
   exams: RawExamRecord[]
 }
@@ -174,8 +178,11 @@ export async function portalExamReport(
     ok: true,
     data: {
       role: res.role as PortalRole,
-      student: res.student as PortalStudent,
-      catalog: (res.catalog as ExamReportCatalog) ?? { subjects: [], topics: [] },
+      student: res.student as PortalExamReportData['student'],
+      catalog: (({ curriculum_topics, ...rest }) => ({ ...rest, curriculumTopics: curriculum_topics }))(
+        ((res.catalog as ExamReportCatalog & { curriculum_topics?: ExamReportCatalog['curriculumTopics'] }) ??
+          { subjects: [], topics: [] })
+      ),
       exams: (res.exams as RawExamRecord[]) ?? [],
     },
   }

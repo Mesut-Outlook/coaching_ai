@@ -1726,7 +1726,9 @@ begin
     'role', v_role,
     'student', (
       select json_build_object(
-        'id', s.id, 'full_name', s.full_name, 'grade', s.grade, 'track', s.track
+        'id', s.id, 'full_name', s.full_name, 'grade', s.grade, 'track', s.track,
+        'target_net_tyt', s.target_net_tyt, 'target_net_ayt', s.target_net_ayt,
+        'target_net_lgs', s.target_net_lgs
       ) from students s where s.id = v_student_id
     ),
     'catalog', json_build_object(
@@ -1754,6 +1756,55 @@ begin
         ) order by et.sort_order, et.id)
         from exam_topics et
         where et.is_active = true
+      ), '[]'::json),
+      'links', coalesce((
+        select json_agg(json_build_object(
+          'exam_topic_id', l.exam_topic_id, 'topic_id', l.topic_id, 'is_primary', l.is_primary
+        ) order by l.exam_topic_id, l.topic_id)
+        from exam_topic_links l
+        join exam_topics et on et.id = l.exam_topic_id and et.is_active = true
+      ), '[]'::json),
+      'curriculum_topics', coalesce((
+        select json_agg(json_build_object(
+          'id', t.id, 'name', t.name, 'subject_name', sj.name
+        ) order by t.id)
+        from topics t
+        join subjects sj on sj.id = t.subject_id
+        where t.id in (
+          select l.topic_id from exam_topic_links l
+          join exam_topics et on et.id = l.exam_topic_id and et.is_active = true
+        )
+      ), '[]'::json),
+      'homework', coalesce((
+        select json_agg(h order by h.date desc) from (
+          select * from (
+            select tp.id as topic_id,
+              (wt.week_start + wt.day_index) as date,
+              coalesce(nullif(wt.custom_label, ''), tp.name || ' · ' || wt.question_count || ' soru') as label,
+              wt.question_count,
+              wt.correct_count, wt.wrong_count, wt.blank_count,
+              round(wt.correct_count * 100.0 / wt.question_count, 1) as accuracy_pct,
+              'odev' as kind
+            from weekly_tasks wt
+            join topics tp on tp.id = wt.topic_id
+            where wt.student_id = v_student_id
+              and wt.block_kind = 'ders'
+              and wt.topic_id is not null
+              and wt.correct_count is not null
+              and wt.question_count > 0
+            union all
+            select tm.topic_id, tm.measured_at, tm.source_label,
+              coalesce(tm.correct_count, 0) + coalesce(tm.wrong_count, 0) + coalesce(tm.blank_count, 0),
+              tm.correct_count, tm.wrong_count, tm.blank_count,
+              tm.accuracy_pct,
+              'konu_testi'
+            from topic_measurements tm
+            where tm.student_id = v_student_id and tm.source = 'konu_testi'
+          ) u
+          where u.date >= current_date - 365
+          order by u.date desc
+          limit 300
+        ) h
       ), '[]'::json)
     ),
     'exams', coalesce((
