@@ -116,22 +116,27 @@ export default function LevelCurriculum({ report, catalog, role, palette: pal, s
             }}
           />
           {hw.length > 0 ? (
-            <div style={{ fontSize: 12.5, color: pal.textMuted, marginTop: 8 }}>
-              {role === 'coach'
-                ? 'Ödevde %80 üstü, denemede düşük: bilgi var ama sınav koşulunda (süre, karışık soru) aktarılamıyor.'
-                : role === 'student'
-                  ? 'Ödevde iyisin; denemede aynı başarıyı süre baskısında yakalamaya çalış.'
-                  : 'Evdeki ödevlerde başarı denemeden yüksek olabilir; bu sık görülür ve süreyle kapanır.'}
-            </div>
+            hwAcc != null && l3.acc != null && (
+              <div style={{ fontSize: 12.5, color: pal.textMuted, marginTop: 8 }}>
+                {hwAcc >= 80 && l3.acc < hwAcc - 10
+                  ? role === 'coach'
+                    ? 'Ödevde %80 üstü, denemede düşük: bilgi var ama sınav koşulunda (süre, karışık soru) aktarılamıyor.'
+                    : role === 'student'
+                      ? 'Ödevde iyisin; denemede aynı başarıyı süre baskısında yakalamaya çalış.'
+                      : 'Evdeki ödevlerde başarı denemeden yüksek olabilir; bu sık görülür ve süreyle kapanır.'
+                  : l3.acc >= hwAcc - 10
+                    ? role === 'coach'
+                      ? 'Ödev ve deneme başarısı birbirine yakın.'
+                      : role === 'student'
+                        ? 'Ödevde ve denemede benzer gidiyorsun.'
+                        : 'Evdeki ödevlerle denemeler birbirine yakın.'
+                    : null}
+              </div>
+            )
           ) : (
             <div style={{ fontSize: 12.5, color: pal.textMuted, marginTop: 8 }}>Bu konuda doğru/yanlış sayısı girilmiş ödev yok; yalnız deneme ölçümleri gösteriliyor.</div>
           )}
-          {hwAcc != null && hwAcc >= 80 && l3.acc != null && l3.acc < hwAcc - 10 && (
-            <Explain role={role} pal={pal}>Yuvarlaklar denemeler, kareler evde çözülen ödevler. İkisi birbirine yaklaştıkça konu sınavda da oturmuş demektir.</Explain>
-          )}
-          {hwAcc != null && l3.acc != null && l3.acc >= hwAcc - 10 && (
-            <Explain role={role} pal={pal}>Evdeki ödevlerle denemeler birbirine yakın.</Explain>
-          )}
+          <Explain role={role} pal={pal}>Yuvarlaklar denemeler, kareler evde çözülen ödevler. İkisi birbirine yaklaştıkça konu sınavda da oturmuş demektir.</Explain>
         </div>
 
         <div className="card" style={cardStyle}>
