@@ -17,10 +17,11 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SCHEMA="$REPO_ROOT/supabase/schema.sql"
 STUB="$REPO_ROOT/supabase/test/stub.sql"
 PORTAL_TEST="$REPO_ROOT/supabase/test/portal_test.sql"
+INVITE_TEST="$REPO_ROOT/supabase/test/invite_test.sql"
 CONTAINER="netlik-schema-verify-$$"
 IMAGE="postgres:16"
 
-for f in "$SCHEMA" "$STUB" "$PORTAL_TEST"; do
+for f in "$SCHEMA" "$STUB" "$PORTAL_TEST" "$INVITE_TEST"; do
   [ -f "$f" ] || { echo "HATA: bulunamadı: $f"; exit 1; }
 done
 
@@ -51,6 +52,7 @@ done
 docker cp "$STUB" "$CONTAINER:/tmp/stub.sql" >/dev/null
 docker cp "$SCHEMA" "$CONTAINER:/tmp/schema.sql" >/dev/null
 docker cp "$PORTAL_TEST" "$CONTAINER:/tmp/portal_test.sql" >/dev/null
+docker cp "$INVITE_TEST" "$CONTAINER:/tmp/invite_test.sql" >/dev/null
 
 echo "▶ Supabase taklidi (auth/storage/roller) yükleniyor…"
 docker exec "$CONTAINER" psql -U postgres -d netlik -v ON_ERROR_STOP=1 -q -f /tmp/stub.sql >/dev/null \
@@ -83,6 +85,13 @@ if [ "$FAILED" -eq 0 ]; then
   docker exec "$CONTAINER" psql -U postgres -d netlik -q -f /tmp/portal_test.sql 2>&1 \
     | grep -E "NOTICE|ERROR|CONTEXT" | head -8
   [ "${PIPESTATUS[0]}" -eq 0 ] || { FAILED=1; echo "  ❌ Portal RPC testi başarısız."; }
+fi
+
+if [ "$FAILED" -eq 0 ]; then
+  echo "▶ Davet testi:"
+  docker exec "$CONTAINER" psql -U postgres -d netlik -q -f /tmp/invite_test.sql 2>&1 \
+    | grep -E "NOTICE|ERROR|CONTEXT" | head -8
+  [ "${PIPESTATUS[0]}" -eq 0 ] || { FAILED=1; echo "  ❌ Davet testi başarısız."; }
 fi
 
 if [ "$FAILED" -eq 0 ]; then
