@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { ChevronDown, ChevronUp, AlertCircle, Plus, Tag } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type {
   ExamType,
@@ -8,10 +8,8 @@ import type {
   MockExamSection,
   MockExamSubjectResult,
   MockExamTopicResult,
-  ErrorType,
   ErrorBasketItem,
 } from '../../types/database'
-import { ERROR_REASON_CONFIG } from '../../lib/report360Core'
 import ErrorReasonModal from './ErrorReasonModal'
 import {
   generateExamReport,
@@ -20,7 +18,6 @@ import {
   type ExamTopicLinkInfo,
   type HomeworkItem,
   type ExamReportResult,
-  type MasteryBand,
   type TopicRowData,
 } from '../../lib/examReport'
 import {
@@ -28,15 +25,14 @@ import {
   formatRoleInsights,
   type RoleInsightItem,
 } from '../../lib/examInsights'
-import LossBarChart from '../charts/LossBarChart'
-import StackedBarChart from '../charts/StackedBarChart'
-import Sparkline from '../charts/Sparkline'
 import { type ChartPalette, DEFAULT_CHART_PALETTE } from '../charts/chartPalette'
 import AddToProgramPopover from '../program/AddToProgramPopover'
 import DrillNav from './drilldown/DrillNav'
-import LevelHeader from './drilldown/LevelHeader'
 import LevelGeneral from './drilldown/LevelGeneral'
 import LevelExam from './drilldown/LevelExam'
+import LevelSubject from './drilldown/LevelSubject'
+import LevelTopic from './drilldown/LevelTopic'
+import LevelCurriculum from './drilldown/LevelCurriculum'
 import { INITIAL_DRILL, type DrillProps, type DrillState } from './drilldown/types'
 
 export interface StudentExamAnalysisViewProps {
@@ -103,13 +99,7 @@ export default function StudentExamAnalysisView({
   // Filtreler & Seviyeler
   const [selectedExamType, setSelectedExamType] = useState<ExamType | undefined>(initialExamType)
   const [drill, setDrill] = useState<DrillState>(INITIAL_DRILL)
-  const [selectedSubjectId, setSelectedSubjectId] = useState<number | 'ALL'>('ALL')
-  const go = (patch: Partial<DrillState>) => {
-    setDrill((d) => ({ ...d, ...patch }))
-    // Task 6 eski Konu görünümünü değiştirene dek: ders süzmesi iniş durumunu izler
-    if ('examSubjectId' in patch) setSelectedSubjectId(patch.examSubjectId ?? 'ALL')
-  }
-  const [expandedTopicId, setExpandedTopicId] = useState<number | null>(null)
+  const go = (patch: Partial<DrillState>) => setDrill((d) => ({ ...d, ...patch }))
   const [programPopoverTarget, setProgramPopoverTarget] = useState<{
     examTopicId: number
     examTopicName: string
@@ -350,35 +340,6 @@ export default function StudentExamAnalysisView({
   // Mevcut sınav türleri
   const availableExamTypes = report?.available_exam_types || []
 
-  // Başarı bandına göre renk
-  const getBandBadgeStyle = (band: MasteryBand | 'az_veri' | 'none') => {
-    switch (band) {
-      case 'good':
-        return { bg: 'var(--success-bg)', text: 'var(--success-text)', border: 'var(--success)' }
-      case 'medium':
-        return { bg: 'var(--warning-bg)', text: 'var(--warning-text)', border: 'var(--warning)' }
-      case 'weak':
-        return { bg: 'var(--critical-bg)', text: 'var(--critical-text)', border: 'var(--critical)' }
-      default:
-        return { bg: 'var(--surface-alt)', text: 'var(--ink-faint)', border: 'var(--border)' }
-    }
-  }
-
-  // Tüm konuların listesi (Konu seviyesi için)
-  const allTopicRows = useMemo(() => {
-    if (!report) return []
-    const list: Array<TopicRowData & { subject_label: string }> = []
-    Object.values(report.topicsBySubject).forEach((subjLevel) => {
-      subjLevel.rows.forEach((row) => {
-        list.push({
-          ...row,
-          subject_label: subjLevel.subject_label,
-        })
-      })
-    })
-    return list
-  }, [report])
-
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-soft)' }}>
@@ -409,11 +370,6 @@ export default function StudentExamAnalysisView({
     )
   }
 
-  const { general, subjects } = report
-  const topicHeadline =
-    (selectedSubjectId !== 'ALL' ? report.topicsBySubject[selectedSubjectId]?.headline : undefined) ||
-    Object.values(report.topicsBySubject)[0]?.headline ||
-    'Konu Bazlı Başarı'
   const drillProps: DrillProps = {
     report,
     catalog,
@@ -425,6 +381,7 @@ export default function StudentExamAnalysisView({
     go,
     onAddToProgram: (examTopicId, name) =>
       setProgramPopoverTarget({ examTopicId, examTopicName: name, suggestedType: 'sureli_test' }),
+    errorItems: errorBasketItems,
     onErrorReason: (row) =>
       setErrorModalTarget({ topicRow: row, curriculumTopicId: primaryTopicByExamTopic.get(row.exam_topic_id) ?? null }),
   }
@@ -443,7 +400,6 @@ export default function StudentExamAnalysisView({
                 onClick={() => {
                   setSelectedExamType(type)
                   setDrill(INITIAL_DRILL)
-                  setSelectedSubjectId('ALL')
                 }}
                 style={{
                   padding: '5px 12px',
@@ -469,438 +425,9 @@ export default function StudentExamAnalysisView({
       {drill.level === 'general' && <LevelGeneral {...drillProps} insights={insights} />}
       {drill.level === 'exam' && <LevelExam {...drillProps} />}
 
-      {/* ========================================================================= */}
-      {/* SEVİYE 2: DERS GELİŞİMİ */}
-      {/* ========================================================================= */}
-      {(drill.level === 'subject') && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <LevelHeader headline={subjects.top_loss_headline || subjects.high_low_headline || 'Ders Bazlı Deneme Dağılımı'} pal={pal} />
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 20 }}>
-            {/* Kayıp Netler Çubuğu */}
-            <div className="card" style={{ padding: 20 }}>
-              <h4 style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 14 }}>
-                Son Denemede En Çok Net Kaybettiren Dersler
-              </h4>
-              <LossBarChart
-                items={subjects.loss_rankings.map((r) => ({
-                  label: r.label,
-                  subLabel: r.section_name,
-                  lossNet: r.loss_net,
-                  totalQuestions: r.question_count,
-                }))}
-                palette={palette}
-              />
-            </div>
-
-            {/* Son Deneme Bölüm Dağılımı (Stacked Bar) */}
-            <div className="card" style={{ padding: 20 }}>
-              <h4 style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 14 }}>
-                Son Deneme Soru Dağılımı (Doğru / Yanlış / Boş)
-              </h4>
-              <StackedBarChart
-                sections={subjects.rows
-                  .filter((r) => r.cells.some((c) => c.entered))
-                  .map((r) => {
-                    const lastEntered = [...r.cells].reverse().find((c) => c.entered)
-                    return {
-                      label: r.label,
-                      correct: lastEntered?.correct_count || 0,
-                      wrong: lastEntered?.wrong_count || 0,
-                      blank: lastEntered?.blank_count || 0,
-                      total: lastEntered?.question_count || r.question_count,
-                    }
-                  })}
-                palette={palette}
-              />
-            </div>
-          </div>
-
-          {/* Ders Isı Tablosu (Heatmap Table) */}
-          <div className="card" style={{ padding: 20, overflowX: 'auto' }}>
-            <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>
-              Ders Isı Tablosu (Tüm Denemeler)
-            </h4>
-
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)', color: pal.textMuted }}>
-                  <th style={{ textAlign: 'left', padding: '10px 8px' }}>Ders</th>
-                  {general.time_series.map((p) => (
-                    <th key={p.exam_id} style={{ textAlign: 'center', padding: '10px 6px', minWidth: 64 }}>
-                      <div style={{ fontWeight: 600 }}>{p.exam_name}</div>
-                      <div style={{ fontSize: 9.5, color: pal.textMuted }}>{p.exam_date.slice(5)}</div>
-                    </th>
-                  ))}
-                  <th style={{ textAlign: 'right', padding: '10px 8px' }}>Ortalama</th>
-                  <th style={{ textAlign: 'right', padding: '10px 8px' }}>Son Net</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subjects.rows.map((row) => (
-                  <tr key={row.exam_subject_id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
-                    <td style={{ padding: '10px 8px', fontWeight: 600 }}>{row.label}</td>
-
-                    {/* Deneme Hücreleri (Isı Haritası) */}
-                    {row.cells.map((cell) => {
-                      if (!cell.entered) {
-                        return (
-                          <td key={cell.exam_id} style={{ textAlign: 'center', padding: '8px', color: pal.textMuted }}>
-                            —
-                          </td>
-                        )
-                      }
-
-                      const badge = getBandBadgeStyle(
-                        cell.accuracy_pct >= 75 ? 'good' : cell.accuracy_pct >= 50 ? 'medium' : 'weak'
-                      )
-
-                      return (
-                        <td key={cell.exam_id} style={{ textAlign: 'center', padding: '6px' }}>
-                          <div
-                            style={{
-                              padding: '4px 6px',
-                              borderRadius: 6,
-                              background: badge.bg,
-                              color: badge.text,
-                              fontSize: 11.5,
-                              fontWeight: 700,
-                            }}
-                          >
-                            <div>{cell.net.toFixed(2).replace('.', ',')}</div>
-                            <div style={{ fontSize: 9.5, opacity: 0.85 }}>%{cell.accuracy_pct.toFixed(0)}</div>
-                          </div>
-                        </td>
-                      )
-                    })}
-
-                    {/* Ortalama */}
-                    <td style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 700 }}>
-                      {row.average_net.toFixed(2).replace('.', ',')}
-                    </td>
-
-                    {/* Son Net */}
-                    <td style={{ textAlign: 'right', padding: '10px 8px', fontWeight: 700, color: pal.primary }}>
-                      {row.latest_net != null ? row.latest_net.toFixed(2).replace('.', ',') : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* SEVİYE 3: KONU DETAYLARI */}
-      {/* ========================================================================= */}
-      {(drill.level === 'topic' || drill.level === 'curriculum') && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <LevelHeader headline={topicHeadline} pal={pal} />
-          {/* En Çok Net Kaybettiren Konular (İlk 10) */}
-          <div className="card" style={{ padding: 20 }}>
-            <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>
-              En Çok Net Kaybettiren Konular (Birikimli Kayıp Net)
-            </h4>
-            <LossBarChart
-              items={report.all_top_loss_topics.map((r) => ({
-                label: r.name,
-                subLabel: r.subject_label,
-                lossNet: r.total_loss_net,
-                totalQuestions: r.total_questions,
-              }))}
-              palette={palette}
-              maxItems={10}
-            />
-          </div>
-
-          {/* Alt Ders Çipleri (Filtreleme) */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: pal.textMuted, marginRight: 4 }}>Ders Filtresi:</span>
-            <button
-              type="button"
-              onClick={() => setSelectedSubjectId('ALL')}
-              style={{
-                padding: '4px 10px',
-                borderRadius: 20,
-                border: 'none',
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-                background: selectedSubjectId === 'ALL' ? pal.primary : 'var(--surface-alt)',
-                color: selectedSubjectId === 'ALL' ? '#FFFFFF' : pal.text,
-              }}
-            >
-              Tüm Dersler
-            </button>
-            {subjects.rows.map((s) => (
-              <button
-                key={s.exam_subject_id}
-                type="button"
-                onClick={() => setSelectedSubjectId(s.exam_subject_id)}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 20,
-                  border: 'none',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  background: selectedSubjectId === s.exam_subject_id ? pal.primary : 'var(--surface-alt)',
-                  color: selectedSubjectId === s.exam_subject_id ? '#FFFFFF' : pal.text,
-                }}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Konu Isı Tablosu */}
-          <div className="card" style={{ padding: 20, overflowX: 'auto' }}>
-            <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>
-              Konu Bazlı Başarı Tablosu
-            </h4>
-
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)', color: pal.textMuted }}>
-                  <th style={{ textAlign: 'left', padding: '10px 8px' }}>Konu</th>
-                  <th style={{ textAlign: 'left', padding: '10px 8px' }}>Ders</th>
-                  {general.time_series.map((p) => (
-                    <th key={p.exam_id} style={{ textAlign: 'center', padding: '8px 4px', minWidth: 54 }}>
-                      <div style={{ fontWeight: 600 }}>{p.exam_name}</div>
-                      <div style={{ fontSize: 9, color: pal.textMuted }}>{p.exam_date.slice(5)}</div>
-                    </th>
-                  ))}
-                  <th style={{ textAlign: 'center', padding: '8px' }}>Σ Soru</th>
-                  <th style={{ textAlign: 'center', padding: '8px' }}>Σ D</th>
-                  <th style={{ textAlign: 'center', padding: '8px' }}>Σ Y</th>
-                  <th style={{ textAlign: 'center', padding: '8px' }}>Σ %</th>
-                  <th style={{ textAlign: 'center', padding: '8px' }}>Eğilim</th>
-                  <th style={{ textAlign: 'center', padding: '8px' }}>Durum</th>
-                  <th style={{ textAlign: 'center', padding: '8px' }}>İşlem</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allTopicRows
-                  .filter((r) => selectedSubjectId === 'ALL' || r.exam_subject_id === selectedSubjectId)
-                  .map((row) => {
-                    const badge = getBandBadgeStyle(row.status_badge)
-                    const isExpanded = expandedTopicId === row.exam_topic_id
-                    const curriculumTopicId = primaryTopicByExamTopic.get(row.exam_topic_id) ?? null
-                    const rowErrors = errorBasketItems.filter(
-                      (it) => curriculumTopicId !== null && it.topic_id === curriculumTopicId
-                    )
-                    const errorCountsByType = rowErrors.reduce((acc, it) => {
-                      acc[it.error_type] = (acc[it.error_type] || 0) + 1
-                      return acc
-                    }, {} as Record<ErrorType, number>)
-
-                    return (
-                      <tr key={row.exam_topic_id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
-                        <td style={{ padding: '8px', fontWeight: 600 }}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setExpandedTopicId((prev) => (prev === row.exam_topic_id ? null : row.exam_topic_id))
-                            }
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: pal.primary,
-                              cursor: 'pointer',
-                              padding: 0,
-                              fontWeight: 600,
-                              fontSize: 12,
-                              textAlign: 'left',
-                            }}
-                          >
-                            {row.name}
-                            {isExpanded ? <ChevronUp size={12} style={{ marginLeft: 4 }} /> : <ChevronDown size={12} style={{ marginLeft: 4 }} />}
-                          </button>
-
-                          {/* R4-4: Mevcut girilmiş nedenleri satırda küçük rozet olarak göster */}
-                          {rowErrors.length > 0 && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
-                              {Object.entries(errorCountsByType).map(([type, cnt]) => {
-                                const conf = ERROR_REASON_CONFIG[type as ErrorType]
-                                return (
-                                  <span
-                                    key={type}
-                                    style={{
-                                      fontSize: 10,
-                                      fontWeight: 600,
-                                      padding: '1.5px 6px',
-                                      borderRadius: 4,
-                                      background: conf.bg,
-                                      color: conf.textColor,
-                                      border: `1px solid color-mix(in srgb, ${conf.color} 30%, transparent)`,
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 3,
-                                    }}
-                                    title={`${conf.label}: ${conf.description}`}
-                                  >
-                                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: conf.color }} />
-                                    {conf.label} {cnt > 1 ? `(${cnt})` : ''}
-                                  </span>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </td>
-                        <td style={{ padding: '8px', color: pal.textMuted }}>{row.subject_label}</td>
-
-                        {/* Deneme Hücreleri (D/S ve %) */}
-                        {row.cells.map((cell) => {
-                          if (!cell.entered) {
-                            return (
-                              <td key={cell.exam_id} style={{ textAlign: 'center', padding: '6px', color: pal.textMuted }}>
-                                —
-                              </td>
-                            )
-                          }
-
-                          const cellBadge = getBandBadgeStyle(
-                            cell.accuracy_pct != null
-                              ? cell.accuracy_pct >= 75
-                                ? 'good'
-                                : cell.accuracy_pct >= 50
-                                ? 'medium'
-                                : 'weak'
-                              : 'none'
-                          )
-
-                          return (
-                            <td key={cell.exam_id} style={{ textAlign: 'center', padding: '4px' }}>
-                              <div
-                                style={{
-                                  padding: '3px 4px',
-                                  borderRadius: 4,
-                                  background: cellBadge.bg,
-                                  color: cellBadge.text,
-                                  fontSize: 11,
-                                  fontWeight: 600,
-                                }}
-                              >
-                                <div>{cell.correct_count}/{cell.question_count}</div>
-                                {cell.accuracy_pct != null && (
-                                  <div style={{ fontSize: 9 }}>%{cell.accuracy_pct.toFixed(0)}</div>
-                                )}
-                              </div>
-                            </td>
-                          )
-                        })}
-
-                        {/* Birikimli Toplamlar */}
-                        <td style={{ textAlign: 'center', padding: '8px', fontWeight: 600 }}>{row.total_questions}</td>
-                        <td style={{ textAlign: 'center', padding: '8px', color: pal.success }}>{row.total_correct}</td>
-                        <td style={{ textAlign: 'center', padding: '8px', color: pal.critical }}>{row.total_wrong}</td>
-                        <td style={{ textAlign: 'center', padding: '8px', fontWeight: 700 }}>
-                          {row.total_accuracy_pct != null ? `%${row.total_accuracy_pct.toFixed(0)}` : '—'}
-                        </td>
-
-                        {/* Eğilim (Sparkline) */}
-                        <td style={{ textAlign: 'center', padding: '8px' }}>
-                          <Sparkline
-                            values={row.cells.filter((c) => c.entered && c.accuracy_pct != null).map((c) => c.accuracy_pct!)}
-                            width={54}
-                            height={20}
-                          />
-                        </td>
-
-                        {/* Durum Rozeti */}
-                        <td style={{ textAlign: 'center', padding: '8px' }}>
-                          <span
-                            className="badge"
-                            style={{
-                              background: badge.bg,
-                              color: badge.text,
-                              fontSize: 10.5,
-                              padding: '2px 8px',
-                            }}
-                          >
-                            {row.status_badge === 'good'
-                              ? 'Yeterli'
-                              : row.status_badge === 'medium'
-                              ? 'Gelişiyor'
-                              : row.status_badge === 'weak'
-                              ? 'Kritik'
-                              : 'Ölçülmedi'}
-                          </span>
-                        </td>
-
-                        {/* İşlem (Programa Ekle & Yanlış Nedeni Ekle/Düzenle) */}
-                        <td style={{ textAlign: 'center', padding: '6px' }}>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexWrap: 'nowrap', justifyContent: 'center' }}>
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm"
-                              onClick={() =>
-                                setProgramPopoverTarget({
-                                  examTopicId: row.exam_topic_id,
-                                  examTopicName: row.name,
-                                  suggestedType: 'sureli_test',
-                                })
-                              }
-                              style={{
-                                padding: '2px 8px',
-                                fontSize: 11,
-                                fontWeight: 600,
-                                color: row.status_badge === 'weak' ? 'var(--critical-text)' : 'var(--indigo-600)',
-                                background: row.status_badge === 'weak' ? 'var(--critical-bg)' : 'transparent',
-                                border: row.status_badge === 'weak' ? '1px solid color-mix(in srgb, var(--critical-text) 25%, transparent)' : 'none',
-                                whiteSpace: 'nowrap',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 3,
-                              }}
-                              title="Bu konuyu haftalık programa ekle"
-                            >
-                              <Plus size={12} /> Programa Ekle
-                            </button>
-
-                            {/* R4-4: Yanlış nedeni ekle / düzenle düğmesi */}
-                            {role === 'coach' && (row.total_wrong > 0 || rowErrors.length > 0) && (
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-sm"
-                                onClick={() =>
-                                  setErrorModalTarget({
-                                    topicRow: row,
-                                    curriculumTopicId,
-                                  })
-                                }
-                                style={{
-                                  padding: '2px 8px',
-                                  fontSize: 11,
-                                  fontWeight: 600,
-                                  color: rowErrors.length > 0 ? 'var(--indigo-600)' : 'var(--warning-text)',
-                                  background: rowErrors.length > 0 ? 'var(--indigo-025)' : 'var(--warning-bg)',
-                                  border: `1px solid ${
-                                    rowErrors.length > 0
-                                      ? 'var(--border)'
-                                      : 'color-mix(in srgb, var(--warning) 35%, transparent)'
-                                  }`,
-                                  whiteSpace: 'nowrap',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 3,
-                                }}
-                                title="Bu konudaki yanlışların nedenini ekle veya düzenle"
-                              >
-                                <Tag size={12} /> {rowErrors.length > 0 ? 'Neden Düzenle' : 'Neden Ekle'}
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {drill.level === 'subject' && <LevelSubject {...drillProps} />}
+      {drill.level === 'topic' && <LevelTopic {...drillProps} />}
+      {drill.level === 'curriculum' && <LevelCurriculum {...drillProps} />}
 
       {programPopoverTarget && (
         <AddToProgramPopover

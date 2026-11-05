@@ -1,4 +1,5 @@
 import type { ExamReportCatalog, ExamReportResult, RawExamRecord, TopicRowData } from '../../../lib/examReport'
+import type { ErrorBasketItem } from '../../../types/database'
 import type { ChartPalette } from '../../charts/chartPalette'
 
 export type DrillRole = 'coach' | 'student' | 'parent'
@@ -35,4 +36,6 @@ export type DrillProps = {
   go: (patch: Partial<DrillState>) => void
   onAddToProgram: (examTopicId: number, name: string) => void
   onErrorReason: (row: ErrorReasonRow) => void
+  /** Koçun girdiği yanlış nedenleri (portalda boş) */
+  errorItems: ErrorBasketItem[]
 }
