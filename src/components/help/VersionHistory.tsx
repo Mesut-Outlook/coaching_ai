@@ -18,6 +18,17 @@ const HISTORY: DateGroup[] = [
     date: '5 Kasım 2026',
     entries: [
       {
+        version: 'v0.34',
+        title: 'Kullanıcılar: kim hangi kurumda yetkili, tek ekrandan',
+        items: [
+          'Kullanıcılar ekranında her kişinin hangi kurumlarda yetkili olduğu görünür. "Kurum ve Rol" düğmesiyle kişiyi Eda Danışmanlık\'a, Konsept Akademi\'ye ya da ikisine birden, her kurumda ayrı rolle yetkilendirebilirsin. İşareti kaldırılan kurumda üyelik pasifleşir.',
+          'Davet ederken de kurum seçilir; tek davetle iki kuruma birden davet gidebilir. Kayıt sayfası kişiye hangi kurumlara hangi rolle girdiğini gösterir.',
+          'Hesabı zaten olan biri davet edilince artık kuruma doğrudan eklenir. Önceden bu davet "bekliyor"da takılı kalıyordu.',
+          'WhatsApp davet mesajında kurumun adı yazar.',
+          'Yalnız üye yönetme yetkin olan kurumlar listede çıkar; bu kural sunucuda da denetlenir.',
+        ],
+      },
+      {
         version: 'v0.33',
         title: 'Deneme analizi derinlemesine',
         items: [

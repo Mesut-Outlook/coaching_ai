@@ -20,7 +20,7 @@ export default function RegisterPage() {
   // Davet doğrulaması. Token yoksa/geçersizse form hiç gösterilmez: bu araç
   // davetle çalışır, açık kayıt ucu istemiyoruz.
   const [inviteState, setInviteState] = useState<'kontrol' | 'gecerli' | 'gecersiz'>('kontrol')
-  const [inviteInfo, setInviteInfo] = useState<{ institution_name: string; role_name: string } | null>(null)
+  const [inviteInfo, setInviteInfo] = useState<{ institution_name: string; role_name: string }[] | null>(null)
 
   useEffect(() => {
     const token = searchParams.get('token')
@@ -44,6 +44,7 @@ export default function RegisterPage() {
         email?: string
         institution_name?: string
         role_name?: string
+        targets?: { institution_name: string; role_name: string }[] | null
       } | null
 
       if (rpcError || !res?.ok || !res.email) {
@@ -52,10 +53,12 @@ export default function RegisterPage() {
       }
 
       setEmail(res.email)
-      setInviteInfo({
-        institution_name: res.institution_name ?? '',
-        role_name: res.role_name ?? '',
-      })
+      // targets: aynı e-postaya giden bütün bekleyen davetler (kayıt hepsini kabul eder)
+      setInviteInfo(
+        res.targets?.length
+          ? res.targets
+          : [{ institution_name: res.institution_name ?? '', role_name: res.role_name ?? '' }]
+      )
       setInviteState('gecerli')
     })()
 
@@ -154,8 +157,13 @@ export default function RegisterPage() {
       <div className="card" style={{ width: '100%', maxWidth: 420, padding: '36px 32px' }}>
         {inviteInfo && (
           <div className="alert alert-success" style={{ marginBottom: 18 }}>
-            <strong>{inviteInfo.institution_name}</strong> kurumuna{' '}
-            <strong>{inviteInfo.role_name}</strong> olarak davet edildin.
+            {inviteInfo.map((t, i) => (
+              <span key={t.institution_name}>
+                {i > 0 && ' ve '}
+                <strong>{t.institution_name}</strong> kurumuna <strong>{t.role_name}</strong> olarak
+              </span>
+            ))}{' '}
+            davet edildin.
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 28 }}>
