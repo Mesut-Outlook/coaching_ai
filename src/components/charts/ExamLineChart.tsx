@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { type ChartPalette, DEFAULT_CHART_PALETTE } from './chartPalette'
 import { useElementWidth } from './useElementWidth'
+import { shortDate } from '../exams/drilldown/format'
 
 export interface ExamLinePoint {
   label: string
@@ -34,6 +35,8 @@ export interface ExamLineChartProps {
   /** Ana serinin adı (ikinci seri varken açıklamada); varsayılan 'Deneme' */
   seriesLabel?: string
   ariaLabel?: string
+  /** Değeri olmayan noktada gösterilen yazı; varsayılan 'konu girilmedi' */
+  nullLabel?: string
 }
 
 const FALLBACK_W = 640
@@ -59,6 +62,7 @@ export default function ExamLineChart({
   tooltip,
   seriesLabel,
   ariaLabel = 'Gelişim grafiği',
+  nullLabel = 'konu girilmedi',
 }: ExamLineChartProps) {
   const [hovered, setHovered] = useState<number | null>(null)
   const [wrapRef, measured] = useElementWidth<HTMLDivElement>()
@@ -99,7 +103,8 @@ export default function ExamLineChart({
   // Yeni davranışlardan biri istendiyse "zengin" mod; aksi halde eski görünüm (alan dolgusu, min/maks etiket)
   const rich = !!(bands || ticks || refs || secondSeries || onPointClick || yMin != null || yMax != null)
   const second = secondSeries?.values ?? []
-  const all = [...data.map((d) => d.value), ...second].filter((v): v is number => v != null)
+  const refVals = (refs ?? []).map((r) => r.value)
+  const all = [...data.map((d) => d.value), ...second, ...(yMin == null || yMax == null ? refVals : [])].filter((v): v is number => v != null)
   const hasVals = all.length > 0
   const minVal = Math.min(...all, average ?? Infinity)
   const maxVal = Math.max(...all, average ?? -Infinity)
@@ -235,7 +240,7 @@ export default function ExamLineChart({
         {avgY !== null && (
           <g>
             <line x1={padLeft} y1={avgY} x2={padLeft + plotW} y2={avgY} stroke={pal.averageLine} strokeWidth={1.5} strokeDasharray="4 4" />
-            <text x={padLeft + plotW + 4} y={avgY + 3} fill={pal.textMuted} fontSize={9.5} fontWeight={600} fontFamily="inherit">
+            <text x={padLeft + plotW - 4} y={avgY - 5} textAnchor="end" fill={pal.textMuted} fontSize={9.5} fontWeight={600} fontFamily="inherit">
               Ort: {average?.toFixed(1).replace('.', ',')}
             </text>
           </g>
@@ -256,13 +261,10 @@ export default function ExamLineChart({
         {/* Boş noktalar: "konu girilmedi" */}
         {rich &&
           mainVals.map((v, i) =>
-            v == null && slotW >= 50 && (!secondSeries || second[i] == null) ? (
+            v == null && slotW >= 64 && (!secondSeries || second[i] == null) ? (
               <g key={`g${i}`}>
                 <text x={x(i)} y={padTop + plotH / 2} textAnchor="middle" fontSize={10.5} fill={pal.textMuted} fontFamily="inherit">
-                  konu
-                </text>
-                <text x={x(i)} y={padTop + plotH / 2 + 13} textAnchor="middle" fontSize={10.5} fill={pal.textMuted} fontFamily="inherit">
-                  girilmedi
+                  {nullLabel}
                 </text>
               </g>
             ) : null,
@@ -272,7 +274,7 @@ export default function ExamLineChart({
         {data.map((d, i) => {
           if (rich && !wide && n > 8 && i % 2 && i !== n - 1) return null
           const strong = i === highlightIndex || i === n - 1 || hovered === i
-          const first = d.date ? d.date.slice(5) : d.label
+          const first = d.date ? shortDate(d.date) : d.label
           return (
             <g key={`x${i}`}>
               <text x={x(i)} y={padTop + plotH + 16} fill={hovered === i ? pal.primary : pal.textMuted} fontSize={rich ? 11 : 9.5} fontWeight={strong ? 700 : 500} textAnchor="middle" fontFamily="inherit">

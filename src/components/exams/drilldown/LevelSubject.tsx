@@ -93,6 +93,8 @@ export default function LevelSubject(props: DrillProps) {
           <div style={{ fontSize: 12, color: pal.textMuted, margin: '4px 0 10px' }}>Bir denemeye tıkla → tabloda o sütun vurgulanır</div>
           <ExamLineChart
             palette={pal}
+            minPoints={1}
+            nullLabel="girilmedi"
             data={series.map((p, i) => ({ label: p.exam_name, date: p.exam_date, value: vals[i] }))}
             average={avg}
             yMin={0}
@@ -117,7 +119,7 @@ export default function LevelSubject(props: DrillProps) {
               )
             }}
           />
-          <Explain role={role} pal={pal}>Çizgi bu dersteki netin denemeden denemeye nasıl değiştiğini gösteriyor.</Explain>
+          <Explain role={role} pal={pal}>{isNet ? 'Çizgi bu dersteki netin denemeden denemeye nasıl değiştiğini gösteriyor.' : 'Çizgi bu dersteki başarı yüzdesinin denemeden denemeye nasıl değiştiğini gösteriyor.'}</Explain>
         </div>
 
         <div className="card" style={cardStyle}>

@@ -13,6 +13,7 @@ export interface LossBarChartProps {
   maxItems?: number
   unit?: string
   onItemClick?: (index: number) => void
+  emptyText?: string
 }
 
 export default function LossBarChart({
@@ -21,6 +22,7 @@ export default function LossBarChart({
   maxItems = 10,
   unit = 'net',
   onItemClick,
+  emptyText = 'Kayıp net verisi bulunmuyor.',
 }: LossBarChartProps) {
   const pal = { ...DEFAULT_CHART_PALETTE, ...palette }
   const displayItems = items.slice(0, maxItems)
@@ -28,7 +30,7 @@ export default function LossBarChart({
   if (displayItems.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '24px 12px', color: pal.textMuted, fontSize: 12.5 }}>
-        Kayıp net verisi bulunmuyor.
+        {emptyText}
       </div>
     )
   }

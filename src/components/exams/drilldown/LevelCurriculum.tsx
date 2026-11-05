@@ -1,12 +1,10 @@
 import { curriculumFeeders, curriculumSeries, homeworkPoints, recentStat } from '../../../lib/examDrilldown'
-import { getMasteryBand } from '../../../lib/examReport'
 import ExamLineChart from '../../charts/ExamLineChart'
 import LevelHeader from './LevelHeader'
 import type { DrillProps } from './types'
 import { cardStyle, shortDate } from './format'
 import { BandChip, Explain, Legend, Stat, StatGrid } from './ui'
 
-const SQUARE = 'var(--warning)'
 
 export default function LevelCurriculum({ report, catalog, role, palette: pal, state, go }: DrillProps) {
   const links = catalog.links
@@ -74,15 +72,16 @@ export default function LevelCurriculum({ report, catalog, role, palette: pal, s
         <div className="card" style={cardStyle}>
           <h4 style={{ fontSize: 14, fontWeight: 700 }}>Deneme ve ödev sonuçları</h4>
           <div style={{ fontSize: 12, color: pal.textMuted, margin: '4px 0 0' }}>Tarih sırasıyla; deneme sonuçları birincil karne konularının toplamı</div>
-          <Legend pal={pal} items={[{ name: 'Deneme (daire)', color: pal.primary }, ...(hw.length ? [{ name: 'Ödev / test (kare)', color: SQUARE }] : [])]} />
+          <Legend pal={pal} items={[{ name: 'Deneme (daire)', color: pal.primary }, ...(hw.length ? [{ name: 'Ödev / test (kare)', color: pal.warning }] : [])]} />
           <ExamLineChart
             palette={pal}
+            minPoints={1}
             data={ev.map((e) => ({
               label: e.kind === 'd' ? series[e.i].exam_name : e.h.kind === 'odev' ? 'Ödev' : 'Test',
               date: e.date,
               value: e.kind === 'd' ? (ser[e.i]?.accuracy_pct ?? null) : null,
             }))}
-            secondSeries={hw.length ? { label: 'Ödev / test', color: SQUARE, values: ev.map((e) => (e.kind === 'h' ? e.h.accuracy_pct : null)) } : undefined}
+            secondSeries={hw.length ? { label: 'Ödev / test', color: pal.warning, values: ev.map((e) => (e.kind === 'h' ? e.h.accuracy_pct : null)) } : undefined}
             connectNulls
             seriesLabel="Deneme"
             yMin={0}
@@ -127,7 +126,12 @@ export default function LevelCurriculum({ report, catalog, role, palette: pal, s
           ) : (
             <div style={{ fontSize: 12.5, color: pal.textMuted, marginTop: 8 }}>Bu konuda doğru/yanlış sayısı girilmiş ödev yok; yalnız deneme ölçümleri gösteriliyor.</div>
           )}
-          <Explain role={role} pal={pal}>Yuvarlaklar denemeler, kareler evde çözülen ödevler. İkisi birbirine yaklaştıkça konu sınavda da oturmuş demektir.</Explain>
+          {hwAcc != null && hwAcc >= 80 && l3.acc != null && l3.acc < hwAcc - 10 && (
+            <Explain role={role} pal={pal}>Yuvarlaklar denemeler, kareler evde çözülen ödevler. İkisi birbirine yaklaştıkça konu sınavda da oturmuş demektir.</Explain>
+          )}
+          {hwAcc != null && l3.acc != null && l3.acc >= hwAcc - 10 && (
+            <Explain role={role} pal={pal}>Evdeki ödevlerle denemeler birbirine yakın.</Explain>
+          )}
         </div>
 
         <div className="card" style={cardStyle}>
@@ -137,8 +141,7 @@ export default function LevelCurriculum({ report, catalog, role, palette: pal, s
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {primary.map((x) => {
               const s = recentStat(x.r.cells)
-              const band = s.acc != null ? getMasteryBand(s.acc) : 'none'
-              const color = band === 'good' ? pal.success : band === 'medium' ? pal.warning : pal.critical
+              const color = s.band === 'good' ? pal.success : s.band === 'medium' ? pal.warning : s.band === 'weak' ? pal.critical : pal.blank
               return (
                 <button
                   key={x.r.exam_topic_id}

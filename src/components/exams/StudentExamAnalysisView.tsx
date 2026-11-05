@@ -422,7 +422,7 @@ export default function StudentExamAnalysisView({
 
       <DrillNav report={report} catalog={catalog} state={drill} go={go} pal={pal} />
 
-      {drill.level === 'general' && <LevelGeneral {...drillProps} insights={insights} />}
+      {drill.level === 'general' && <LevelGeneral key={report.exam_type} {...drillProps} insights={insights} />}
       {drill.level === 'exam' && <LevelExam {...drillProps} />}
 
       {drill.level === 'subject' && <LevelSubject {...drillProps} />}

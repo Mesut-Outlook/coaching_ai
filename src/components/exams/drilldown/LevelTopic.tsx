@@ -33,7 +33,7 @@ export default function LevelTopic(props: DrillProps) {
   const headline =
     st.acc == null
       ? `${row.name}: konu detayı henüz girilmemiş.`
-      : `Son 3 denemede %${st.acc.toFixed(0)} başarı${tr != null ? `; önceki denemelere göre ${tr >= 0 ? '+' : '−'}${Math.abs(tr).toFixed(0)} puan` : ''}. Toplam ${row.total_questions} sorunun ${row.total_correct}'i doğru.`
+      : `Son 3 denemede %${st.acc.toFixed(0)} başarı${tr != null ? `; önceki denemelere göre ${tr >= 0 ? '+' : '−'}${Math.abs(tr).toFixed(0)} yüzde puanı` : ''}. Toplam ${row.total_questions} sorudan ${row.total_correct} doğru.`
 
   const q = Math.max(perExam, 1)
   const dybStep = niceStep(q)
@@ -95,7 +95,7 @@ export default function LevelTopic(props: DrillProps) {
 
       <StatGrid>
         <Stat pal={pal} k="Son 3 deneme başarı" v={st.acc != null ? `%${st.acc.toFixed(0)}` : '—'} />
-        <Stat pal={pal} k="Eğilim" v={tr != null ? signed(tr) : '—'} s="puan" />
+        <Stat pal={pal} k="Eğilim" v={tr != null ? signed(tr) : '—'} s="yüzde puanı" />
         <Stat pal={pal} k="Toplam D / Y / B" v={`${row.total_correct} / ${row.total_wrong} / ${row.total_blank}`} />
         <Stat pal={pal} k="Toplam soru" v={row.total_questions} s={`${entered.length} deneme`} />
       </StatGrid>
@@ -112,6 +112,8 @@ export default function LevelTopic(props: DrillProps) {
           <div style={{ fontSize: 12, color: pal.textMuted, margin: '4px 0 10px' }}>Bantlar: %75 üstü Yeterli · %50–75 Gelişiyor · altı Kritik</div>
           <ExamLineChart
             palette={pal}
+            minPoints={1}
+            nullLabel="girilmedi"
             data={series.map((p, i) => ({ label: p.exam_name, date: p.exam_date, value: row.cells[i]?.entered ? row.cells[i].accuracy_pct : null }))}
             yMin={0}
             yMax={100}

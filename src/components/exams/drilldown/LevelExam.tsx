@@ -54,6 +54,9 @@ export default function LevelExam({ report, exams, role, palette: pal, state, go
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <LevelHeader headline={headline} pal={pal} />
+      {detail.index === series.length - 1 && report.subjects.top_loss_headline && (
+        <div style={{ fontSize: 13, color: pal.textMuted, marginTop: -8 }}>{report.subjects.top_loss_headline}</div>
+      )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <div>
@@ -76,7 +79,7 @@ export default function LevelExam({ report, exams, role, palette: pal, state, go
       {hasCarne && raw && (
         <div className="card" style={cardStyle}>
           <h4 style={{ fontSize: 14, fontWeight: 700 }}>Karne bilgileri</h4>
-          <div style={{ fontSize: 12, color: pal.textMuted, margin: '4px 0 10px' }}>Yayın karnesindeki puan ve sıralamalar (girildiyse)</div>
+          <div style={{ fontSize: 12, color: pal.textMuted, margin: '4px 0 10px' }}>{isLgs ? 'Yayın karnesindeki toplam ve sıralamalar (girildiyse)' : 'Yayın karnesindeki puan ve sıralamalar (girildiyse)'}</div>
           <StatGrid>
             {raw.score != null && <Stat pal={pal} k={isLgs ? 'Karne toplamı' : 'Puan'} v={formatNetTr(raw.score)} />}
             {raw.percentile != null && <Stat pal={pal} k="Yüzdelik dilim" v={`%${formatNetTr(raw.percentile)}`} />}

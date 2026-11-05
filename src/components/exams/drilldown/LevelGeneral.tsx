@@ -8,7 +8,7 @@ import ExamLineChart from '../../charts/ExamLineChart'
 import LossBarChart from '../../charts/LossBarChart'
 import Sparkline from '../../charts/Sparkline'
 import StackedColumnChart from '../../charts/StackedColumnChart'
-import { groupColor } from '../../charts/chartPalette'
+import { groupColorMap } from '../../charts/chartPalette'
 import { EXPLAIN, roleText } from './copy'
 import LevelHeader from './LevelHeader'
 import type { DrillProps } from './types'
@@ -67,7 +67,8 @@ export default function LevelGeneral({
     for (const g of groupData) for (const p of g.groups) if (!names.includes(p.section_name)) names.push(p.section_name)
     return names
   }, [groupData])
-  const groupColors = groupNames.map((n, i) => groupColor(pal, n, i))
+  const colorMap = useMemo(() => groupColorMap(pal, groupNames), [pal, groupNames])
+  const groupColors = groupNames.map((n) => colorMap.get(n) ?? pal.blank)
   const maxTotal = Math.max(1, ...groupData.map((g) => g.groups.reduce((a, p) => a + Math.max(0, p.net), 0)))
   const step = niceStep(maxTotal)
   const groupMax = Math.ceil(maxTotal / step) * step
@@ -193,7 +194,7 @@ export default function LevelGeneral({
         </div>
         {subjView === 'kart' ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 10 }}>
-            {subjects.rows.map((row, i) => {
+            {subjects.rows.map((row) => {
               const entered = row.cells.filter((c) => c.entered)
               return (
                 <button
@@ -204,7 +205,7 @@ export default function LevelGeneral({
                 >
                   <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13, minWidth: 0 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: 2, flexShrink: 0, background: groupColor(pal, row.section_name, i) }} />
+                      <span style={{ width: 8, height: 8, borderRadius: 2, flexShrink: 0, background: colorMap.get(row.section_name) ?? pal.blank }} />
                       {row.label}
                     </span>
                     <BandChip band={recentStat(row.cells).band} pal={pal} />
@@ -303,6 +304,7 @@ export default function LevelGeneral({
         <LossBarChart
           palette={pal}
           maxItems={10}
+          emptyText={lossFilter === 'ALL' ? 'Konu detayı girilmiş deneme yok.' : undefined}
           items={lossItems.map((r) => ({ label: r.name, subLabel: r.subject_label, lossNet: r.total_loss_net, totalQuestions: r.total_questions }))}
           onItemClick={(i) => go({ level: 'topic', examTopicId: lossItems[i].exam_topic_id, examSubjectId: topicSubject.get(lossItems[i].exam_topic_id) ?? null })}
         />

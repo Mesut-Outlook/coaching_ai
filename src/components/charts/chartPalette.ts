@@ -17,9 +17,8 @@ export type ChartPalette = {
 
 const GROUP_ORDER = ['turkce', 'sosyal', 'matematik', 'fen']
 
-/** Bilinmeyen ders adı => groups[index % 4]. Büyük/küçük harf ve "Bilimleri" eki duyarsız. */
-export function groupColor(pal: ChartPalette, sectionName: string, index: number): string {
-  const n = sectionName
+function groupKey(sectionName: string): string {
+  return sectionName
     .toLocaleLowerCase('tr')
     .replace(/ı/g, 'i')
     .replace(/ü/g, 'u')
@@ -29,8 +28,31 @@ export function groupColor(pal: ChartPalette, sectionName: string, index: number
     .replace(/ğ/g, 'g')
     .replace(/\s*bilimleri?$/, '')
     .trim()
-  const i = GROUP_ORDER.indexOf(n)
-  return pal.groups[(i >= 0 ? i : index) % pal.groups.length]
+}
+
+/** Tek ad->renk haritası: bilinen adlar kendi yuvasını korur, bilinmeyenler ilk boş yuvayı alır; 6'dan sonra döner. */
+export function groupColorMap(pal: ChartPalette, sectionNames: string[]): Map<string, string> {
+  const len = pal.groups.length
+  const used = new Set<number>()
+  const slot = new Map<string, number>()
+  for (const n of sectionNames) {
+    const i = GROUP_ORDER.indexOf(groupKey(n))
+    if (i >= 0 && i < len) {
+      slot.set(n, i)
+      used.add(i)
+    }
+  }
+  let k = 0
+  for (const n of sectionNames) {
+    if (slot.has(n)) continue
+    let i = k
+    while (i < len && used.has(i)) i++
+    if (i >= len) i = k % len
+    else used.add(i)
+    slot.set(n, i)
+    k++
+  }
+  return new Map([...slot].map(([n, i]) => [n, pal.groups[i]]))
 }
 
 export const DEFAULT_CHART_PALETTE: ChartPalette = {
@@ -46,7 +68,7 @@ export const DEFAULT_CHART_PALETTE: ChartPalette = {
   blank: 'var(--measured)',
   surface: 'var(--surface)',
   bandBg: { good: 'var(--success-bg)', medium: 'var(--warning-bg)', weak: 'var(--critical-bg)' },
-  groups: ['var(--c-turkce)', 'var(--c-sosyal)', 'var(--c-math)', 'var(--c-fen)'],
+  groups: ['var(--c-turkce)', 'var(--c-sosyal)', 'var(--c-math)', 'var(--c-fen)', 'var(--c-ek1)', 'var(--c-ek2)'],
 }
 
 export const PORTAL_STUDENT_PALETTE: ChartPalette = {
@@ -62,7 +84,7 @@ export const PORTAL_STUDENT_PALETTE: ChartPalette = {
   blank: '#A6A3BB',
   surface: '#FFFFFF',
   bandBg: { good: '#E3F7EE', medium: '#FBF0DA', weak: '#FCE4E7' },
-  groups: ['#D6495A', '#E2932E', '#3B6FE0', '#2E9F63'],
+  groups: ['#D6495A', '#E2932E', '#3B6FE0', '#2E9F63', '#9350A6', '#8A6D1E'],
 }
 
 export const PORTAL_PARENT_PALETTE: ChartPalette = {
@@ -78,5 +100,5 @@ export const PORTAL_PARENT_PALETTE: ChartPalette = {
   blank: '#A6A3BB',
   surface: '#FFFFFF',
   bandBg: { good: '#E3F7EE', medium: '#FBF0DA', weak: '#FCE4E7' },
-  groups: ['#D6495A', '#E2932E', '#3B6FE0', '#2E9F63'],
+  groups: ['#D6495A', '#E2932E', '#3B6FE0', '#2E9F63', '#9350A6', '#8A6D1E'],
 }
