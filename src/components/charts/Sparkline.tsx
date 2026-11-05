@@ -2,9 +2,11 @@ interface SparklineProps {
   values: number[]
   width?: number
   height?: number
+  /** Verilirse ölçek 0..max olur (kartlar arası karşılaştırılabilir) */
+  max?: number
 }
 
-export default function Sparkline({ values, width = 96, height = 30 }: SparklineProps) {
+export default function Sparkline({ values, width = 96, height = 30, max: fixedMax }: SparklineProps) {
   if (values.length === 0) {
     return (
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
@@ -13,8 +15,8 @@ export default function Sparkline({ values, width = 96, height = 30 }: Sparkline
     )
   }
 
-  const min = Math.min(...values)
-  const max = Math.max(...values)
+  const min = fixedMax != null ? 0 : Math.min(...values)
+  const max = fixedMax != null ? fixedMax : Math.max(...values)
   const range = max - min || 1
   const pad = 4
   const points = values.map((v, i) => {

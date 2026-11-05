@@ -1,0 +1,637 @@
+<title>Deneme Analizi Derinlik</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&display=swap">
+<style>
+/* Düzen: Netlik paneli gibi — üstte rol + öğrenci, altında iniş izi (kırıntı), her seviye kart ızgarası. */
+:root {
+  --ink:#172A2E; --ink-soft:#4D6166; --ink-faint:#6B7F84;
+  --paper:#F2F6F7; --surface:#FFFFFF; --surface-alt:#F8FBFB; --border:#E1E9EB; --border-soft:#EDF2F3;
+  --acc-koc:#0E7486; --acc-koc-bg:#E2F2F4; --acc-ogr:#4C43A8; --acc-ogr-bg:#ECEAFA; --acc-veli:#0F6478; --acc-veli-bg:#E1F3F7;
+  --good:#1F9D6B; --good-bg:#E3F7EE; --good-text:#147A53;
+  --mid:#D9932E; --mid-bg:#FBF0DA; --mid-text:#8F5F0C;
+  --weak:#D6495A; --weak-bg:#FCE4E7; --weak-text:#A72836;
+  --none-bg:#EEF3F4; --none-text:#63777C; --blank:#A6A3BB;
+  --g-T:#D6495A; --g-S:#E2932E; --g-M:#3B6FE0; --g-F:#2E9F63;
+  --hw:#9350A6;
+  --shadow:0 1px 2px rgba(15,61,71,.04),0 8px 24px -12px rgba(15,61,71,.16);
+  --font-disp:'Archivo',ui-sans-serif,system-ui,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ink:#E6F0F1; --ink-soft:#AFC4C7; --ink-faint:#8AA3A7;
+  --paper:#0F1D21; --surface:#152A2F; --surface-alt:#1A3237; --border:#2A454B; --border-soft:#213A40;
+  --acc-koc:#4FC3D6; --acc-koc-bg:#173E45; --acc-ogr:#9C93F0; --acc-ogr-bg:#272452; --acc-veli:#7FD8E8; --acc-veli-bg:#123239;
+  --good:#37C88F; --good-bg:#163A2C; --good-text:#6BE0AC;
+  --mid:#E8AC4C; --mid-bg:#3D2E10; --mid-text:#F3C87C;
+  --weak:#E9697A; --weak-bg:#3E1A22; --weak-text:#F5A0AD;
+  --none-bg:#1E363B; --none-text:#A6BBBE; --blank:#8B87A6;
+  --g-T:#E05A6B; --g-S:#C08A1A; --g-M:#5B83E6; --g-F:#37A872; --hw:#C084D6;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  color-scheme:dark;
+} }
+:root[data-theme="dark"] {
+  --ink:#E6F0F1; --ink-soft:#AFC4C7; --ink-faint:#8AA3A7;
+  --paper:#0F1D21; --surface:#152A2F; --surface-alt:#1A3237; --border:#2A454B; --border-soft:#213A40;
+  --acc-koc:#4FC3D6; --acc-koc-bg:#173E45; --acc-ogr:#9C93F0; --acc-ogr-bg:#272452; --acc-veli:#7FD8E8; --acc-veli-bg:#123239;
+  --good:#37C88F; --good-bg:#163A2C; --good-text:#6BE0AC;
+  --mid:#E8AC4C; --mid-bg:#3D2E10; --mid-text:#F3C87C;
+  --weak:#E9697A; --weak-bg:#3E1A22; --weak-text:#F5A0AD;
+  --none-bg:#1E363B; --none-text:#A6BBBE; --blank:#8B87A6;
+  --g-T:#E05A6B; --g-S:#C08A1A; --g-M:#5B83E6; --g-F:#37A872; --hw:#C084D6;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+body { background:var(--paper); color:var(--ink); font-family:var(--font-body); font-size:14px; line-height:1.45;
+  --acc:var(--acc-koc); --acc-bg:var(--acc-koc-bg); }
+body[data-role="ogrenci"] { --acc:var(--acc-ogr); --acc-bg:var(--acc-ogr-bg); }
+body[data-role="veli"] { --acc:var(--acc-veli); --acc-bg:var(--acc-veli-bg); }
+.wrap { max-width:1120px; margin:0 auto; padding-block:20px 48px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));
+  display:flex; flex-direction:column; gap:16px; }
+h1,h2,h3 { font-family:var(--font-disp); font-weight:700; margin:0; letter-spacing:-.01em; text-wrap:balance; }
+h1 { font-size:22px; } h2 { font-size:18px; } h3 { font-size:14.5px; }
+.top { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; }
+.brand { display:flex; gap:10px; align-items:center; }
+.brand .logo { width:34px; height:34px; border-radius:10px; background:var(--acc); color:var(--surface); display:grid; place-items:center; font-family:var(--font-disp); font-weight:700; }
+.brand small { display:block; color:var(--ink-faint); font-size:12px; }
+.seg { display:inline-flex; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:3px; gap:2px; }
+.seg button { border:0; background:transparent; color:var(--ink-soft); font:inherit; font-weight:600; font-size:13px; padding:6px 14px; border-radius:999px; cursor:pointer; }
+.seg button[aria-pressed="true"] { background:var(--acc); color:var(--surface); }
+.seg button:focus-visible, .click:focus-visible, button:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
+.note { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; font-size:12.5px; color:var(--ink-soft);
+  background:var(--surface); border:1px dashed var(--border); border-radius:var(--r); padding:10px 14px; }
+.note b { color:var(--ink); }
+.crumbs { display:flex; flex-wrap:wrap; align-items:center; gap:4px; font-size:13px; }
+.crumbs button { border:0; background:transparent; font:inherit; color:var(--acc); font-weight:600; cursor:pointer; padding:4px 6px; border-radius:6px; }
+.crumbs button:hover { background:var(--acc-bg); }
+.crumbs .cur { color:var(--ink); font-weight:700; padding:4px 6px; }
+.crumbs .sep { color:var(--ink-faint); }
+.depth { display:flex; gap:4px; flex-wrap:wrap; }
+.depth span { font-size:11px; letter-spacing:.04em; text-transform:uppercase; padding:3px 8px; border-radius:999px; color:var(--ink-faint); background:var(--surface); border:1px solid var(--border-soft); }
+.depth span.on { color:var(--surface); background:var(--acc); border-color:var(--acc); }
+.depth span.done { color:var(--acc); border-color:var(--acc); }
+.grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.card { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--r); box-shadow:var(--shadow); padding:18px; min-width:0; display:flex; flex-direction:column; gap:12px; }
+.card .sub { color:var(--ink-faint); font-size:12.5px; margin-top:-6px; }
+.explain { font-size:12.5px; color:var(--ink-soft); background:var(--acc-bg); border-radius:8px; padding:8px 10px; }
+.headline { font-size:14px; font-weight:700; color:var(--acc); flex:1; min-width:min(100%, 260px); }
+.head { display:flex; flex-wrap:wrap; gap:12px 20px; align-items:flex-end; justify-content:space-between; }
+.head .kicker { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); font-weight:600; }
+.stats { display:grid; gap:10px; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); }
+.stat { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--r); padding:12px 14px; }
+.stat .k { font-size:12px; color:var(--ink-faint); }
+.stat .v { font-family:var(--font-disp); font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+.stat .v small { font-size:13px; color:var(--ink-faint); font-weight:600; }
+.chip { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:999px; white-space:nowrap; }
+.chip.good { background:var(--good-bg); color:var(--good-text); } .chip.mid { background:var(--mid-bg); color:var(--mid-text); }
+.chip.weak { background:var(--weak-bg); color:var(--weak-text); } .chip.none { background:var(--none-bg); color:var(--none-text); }
+.up { color:var(--good-text); font-weight:700; } .down { color:var(--weak-text); font-weight:700; } .flat { color:var(--ink-faint); font-weight:700; }
+.chart { width:100%; min-height:60px; }
+.chart svg { display:block; overflow:visible; }
+.chart text { font-family:var(--font-body); }
+.legend { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--ink-soft); }
+.legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+.toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
+.mini { display:inline-flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.mini button { border:0; background:var(--surface); color:var(--ink-soft); font:inherit; font-size:12px; font-weight:600; padding:5px 10px; cursor:pointer; }
+.mini button[aria-pressed="true"] { background:var(--acc-bg); color:var(--acc); }
+.cards { display:grid; gap:10px; grid-template-columns:repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+.scard { text-align:left; font:inherit; color:inherit; background:var(--surface-alt); border:1px solid var(--border-soft); border-radius:10px; padding:10px 12px; cursor:pointer; display:flex; flex-direction:column; gap:4px; }
+.scard:hover { border-color:var(--acc); }
+.scard .row { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+.scard .nm { font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; }
+.scard .nm i { width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0; }
+.scard .big { font-family:var(--font-disp); font-weight:700; font-size:18px; font-variant-numeric:tabular-nums; }
+.scard .q { font-size:11.5px; color:var(--ink-faint); }
+.bars { display:flex; flex-direction:column; gap:6px; }
+.bar { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.4fr) 56px; gap:10px; align-items:center; font-size:12.5px; border:0; background:transparent; color:inherit; font:inherit; text-align:left; padding:3px 4px; border-radius:6px; }
+button.bar { cursor:pointer; } button.bar:hover { background:var(--acc-bg); }
+.bar .lb { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12.5px; }
+.bar .lb small { color:var(--ink-faint); margin-left:4px; }
+.bar .track { height:12px; background:var(--border-soft); border-radius:4px; display:flex; gap:2px; overflow:hidden; }
+.bar .track > span { height:100%; display:block; }
+.bar .track > span:first-child { border-radius:4px 0 0 4px; } .bar .track > span:last-child { border-radius:0 4px 4px 0; }
+.bar .track > span:only-child { border-radius:4px; }
+.bar .val { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; font-size:12.5px; }
+.div { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 52px; gap:8px; align-items:center; }
+.div .neg, .div .pos { height:12px; display:flex; }
+.div .neg { justify-content:flex-end; border-right:1px solid var(--ink-faint); }
+.div .neg span { background:var(--weak); border-radius:4px 0 0 4px; } .div .pos span { background:var(--good); border-radius:0 4px 4px 0; }
+.tbl { overflow-x:auto; border-radius:8px; }
+table { border-collapse:collapse; width:100%; font-size:12.5px; font-variant-numeric:tabular-nums; }
+th { text-align:center; color:var(--ink-faint); font-weight:600; font-size:11.5px; padding:6px 4px; border-bottom:1px solid var(--border); white-space:nowrap; }
+th:first-child, td:first-child { text-align:left; position:sticky; left:0; background:var(--surface); z-index:1; }
+td { padding:4px; border-bottom:1px solid var(--border-soft); text-align:center; }
+tr.click { cursor:pointer; } tr.click:hover td { background:var(--surface-alt); }
+td.tn { font-weight:600; min-width:170px; max-width:240px; white-space:normal; padding-right:10px; }
+.cell { display:block; border-radius:6px; padding:5px 2px; font-weight:700; font-size:11.5px; min-width:40px; cursor:pointer; border:0; font-family:inherit; width:100%; }
+.cell.good { background:var(--good-bg); color:var(--good-text); } .cell.mid { background:var(--mid-bg); color:var(--mid-text); }
+.cell.weak { background:var(--weak-bg); color:var(--weak-text); } .cell.none { background:transparent; color:var(--ink-faint); cursor:default; font-weight:400; }
+th.hl, td.hl { background:var(--acc-bg) !important; }
+.ins { display:flex; flex-direction:column; gap:8px; }
+.ins div { display:flex; gap:10px; align-items:flex-start; font-size:13px; padding:9px 12px; border-radius:8px; background:var(--surface-alt); border:1px solid var(--border-soft); }
+.ins div b.tag { flex-shrink:0; font-size:11px; padding:1px 7px; border-radius:999px; }
+.ins .good b.tag { background:var(--good-bg); color:var(--good-text); } .ins .weak b.tag { background:var(--weak-bg); color:var(--weak-text); } .ins .mid b.tag { background:var(--mid-bg); color:var(--mid-text); }
+.link { border:0; background:transparent; color:var(--acc); font:inherit; font-weight:700; cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:2px; }
+.actions { display:flex; flex-wrap:wrap; gap:8px; }
+.btn { border:1px solid var(--acc); background:var(--acc); color:var(--surface); font:inherit; font-weight:700; font-size:13px; padding:7px 14px; border-radius:8px; cursor:pointer; }
+.btn.ghost { background:transparent; color:var(--acc); }
+.curr { display:flex; flex-direction:column; gap:8px; }
+.curr button { text-align:left; font:inherit; color:inherit; background:var(--surface-alt); border:1px solid var(--border-soft); border-radius:10px; padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; gap:10px; align-items:center; }
+.curr button:hover { border-color:var(--acc); }
+.curr .pr { font-size:11px; color:var(--acc); font-weight:700; }
+.warn { font-size:12.5px; background:var(--mid-bg); color:var(--mid-text); border-radius:8px; padding:8px 10px; }
+.empty { font-size:13px; color:var(--ink-faint); background:var(--surface-alt); border:1px dashed var(--border); border-radius:8px; padding:16px; text-align:center; }
+#tip { position:fixed; z-index:50; pointer-events:none; background:var(--surface); color:var(--ink); border:1px solid var(--border); border-radius:8px; box-shadow:var(--shadow); padding:8px 10px; font-size:12px; max-width:240px; line-height:1.4; }
+#tip b { font-weight:700; } #tip .m { color:var(--ink-faint); }
+#toast { position:fixed; z-index:60; left:50%; transform:translateX(-50%); bottom:calc(20px + env(safe-area-inset-bottom, 0px)); background:var(--ink); color:var(--paper); padding:10px 16px; border-radius:10px; font-size:13px; max-width:min(90vw, 460px); }
+.notes ul { margin:0; padding-left:18px; display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--ink-soft); }
+@media (prefers-reduced-motion: no-preference) { #view > * { animation:fadein .18s ease-out; } }
+@keyframes fadein { from { opacity:.4; transform:translateY(3px); } to { opacity:1; transform:none; } }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><div class="logo">N</div><div><h1>Deneme Analizi</h1><small>Örnek Öğrenci · 12. Sınıf · SAY · TYT denemeleri</small></div></div>
+    <div class="seg" role="group" aria-label="Kim bakıyor">
+      <button id="r-koc" data-r="koc" aria-pressed="true">Koç</button>
+      <button id="r-ogrenci" data-r="ogrenci" aria-pressed="false">Öğrenci</button>
+      <button id="r-veli" data-r="veli" aria-pressed="false">Veli</button>
+    </div>
+  </div>
+  <div class="note"><b>Taslak · örnek veri.</b> Bu öğrenci ve sonuçları uydurmadır; dersler ve konular gerçek TYT karne kataloğundan, müfredat bağlantıları Eda'nın onayladığı eşleşmeden alındı. <span>Bir noktaya, sütuna, karta ya da satıra tıklayınca bir alt seviyeye inersin.</span></div>
+  <div class="depth" id="depth"></div>
+  <nav class="crumbs" id="crumbs" aria-label="Konum"></nav>
+  <main id="view" style="display:flex;flex-direction:column;gap:16px"></main>
+  <section class="card notes">
+    <h3>Bu taslakta neye bakmalı</h3>
+    <ul>
+      <li>İniş zinciri: <b>Tüm denemeler → Deneme → Ders → Karne konusu → Müfredat konusu</b>. Kırıntıdan istediğin seviyeye geri dönersin.</li>
+      <li>Ders ve konu seviyesinde değişim artık büyük çizgi grafikte; konu grafiğinde Yeterli / Gelişiyor / Kritik bantları var.</li>
+      <li>D3 denemesinde yalnız ders sonuçları girildi, konu detayı yok: grafikler o noktayı boş bırakıyor, uydurmuyor.</li>
+      <li>Müfredat seviyesi birden çok karne konusunu birleştiriyor (Paragraf ← 3 karne konusu) ve ödev sonuçlarını denemeyle yan yana koyuyor.</li>
+      <li>Rol değiştir: öğrenci "sen" diliyle, veli her grafiğin altında kısa açıklamayla görüyor; işlem düğmeleri yalnız koçta.</li>
+    </ul>
+  </section>
+</div>
+<div id="tip" hidden></div>
+<div id="toast" hidden></div>
+
+<script>
+/* ---------- Örnek veri ---------- */
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rand = rng(20261104);
+const EXAMS = [['2026-08-30'],['2026-09-13'],['2026-09-20'],['2026-09-27'],['2026-10-04'],['2026-10-18'],['2026-10-25'],['2026-11-01']]
+  .map(([d],i)=>({i, name:'TYT Deneme '+(i+1), short:'D'+(i+1), date:d}));
+const NO_TOPIC = 2; // D3: yalnız ders sonucu girildi
+const AY = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+const dfmt = d => { const [,m,g] = d.split('-'); return (+g)+' '+AY[+m-1]; };
+const GROUPS = { T:'Türkçe', S:'Sosyal', M:'Matematik', F:'Fen' };
+const UCG = 'Üçgenler (Açı, Benzerlik, Alan, Dik Üçgen)';
+// [karne konusu, deneme başı soru, başlangıç başarı, deneme başı değişim, müfredat konuları (ilk = birincil)]
+const RAW = [
+ ['TR','Türkçe','T',0.7,'TYT Türkçe',[
+  ['Sözcükte ve Söz Öbeklerinde Anlam',3,.70,.01,['Sözcük Anlamı']],
+  ['Cümlenin Anlamı ve Yorumu',4,.62,.015,['Cümle Anlamı']],
+  ['Ses Bilgisi',1,.6,0,['Ses Bilgisi']],
+  ['Ekler ve Sözcük Yapısı',2,.5,.02,['Sözcükte Yapı']],
+  ['Cümlenin Ögeleri',2,.55,.01,['Cümle Ögeleri']],
+  ['Noktalama İşaretleri',2,.45,0,['Noktalama İşaretleri']],
+  ['Yazım Kuralları',2,.35,-.005,['Yazım Kuralları']],
+  ['Paragrafın Yapısı',4,.58,.03,['Paragraf']],
+  ['Anlatım Teknikleri ve Düşünceyi Geliştirme Yolları',4,.52,.03,['Paragraf']],
+  ['Paragraf Yorumu',16,.55,.045,['Paragraf']]]],
+ ['MA','Matematik-1','M',0.5,'TYT Matematik',[
+  ['Rasyonel Sayılar',2,.8,0,['Rasyonel Sayılar']],
+  ['Üslü ve Köklü İfadeler',3,.6,.02,['Üslü Sayılar','Köklü Sayılar']],
+  ['Sayılar',4,.62,.025,['Temel Kavramlar','Sayı Basamakları','Bölme ve Bölünebilme','EBOB-EKOK']],
+  ['Birinci Dereceden Denklemler ve Eşitsizlikler',3,.7,.01,['Denklem Çözme','Basit Eşitsizlikler']],
+  ['Mutlak Değer',1,.6,0,['Mutlak Değer']],
+  ['Kümeler',2,.7,.01,['Kümeler ve Kartezyen Çarpım']],
+  ['Mantık',1,.7,0,['Mantık']],
+  ['Fonksiyonlar',2,.45,.02,['Fonksiyonlar']],
+  ['Problemler',8,.68,-.04,['Problemler','Oran-Orantı']],
+  ['Veri',1,.7,0,['Veri ve İstatistik']],
+  ['Permütasyon, Kombinasyon, Binom Açılımı',2,.35,.01,['Permütasyon - Kombinasyon','Binom Açılımı']],
+  ['Olasılık',1,.4,.02,['Olasılık']]]],
+ ['GE','Geometri','M',0.35,'TYT Geometri',[
+  ['Doğruda ve Üçgende Açılar',2,.55,.02,['Geometrik Kavramlar ve Doğruda Açılar',UCG]],
+  ['Özel Üçgenler',1,.4,.02,[UCG]],
+  ['Üçgende Alan ve Kenar-Açı İlişkileri',2,.35,.02,[UCG]],
+  ['Üçgenlerde Eşlik, Benzerlik ve Yardımcı Elemanlar',2,.3,.03,[UCG]],
+  ['Çokgenler ve Dörtgenler',2,.4,.01,['Çokgenler','Dörtgenler (Paralelkenar, Dikdörtgen, Kare vb.)']],
+  ['Uzay Geometri (Katı Cisimler)',1,.3,0,['Katı Cisimler']]]],
+ ['TA','Tarih-1','S',0.6,'TYT Tarih',[
+  ['İlk ve Orta Çağlarda Türk Dünyası',1,.6,.01],['İslam Medeniyetinin Doğuşu',1,.55,.01],['20. Yüzyıl Başlarında Osmanlı Devleti ve Dünya',1,.5,.02],['Atatürkçülük ve Türk İnkılabı',1,.7,.01],['Milli Mücadele',1,.65,.01]]],
+ ['CO','Coğrafya-1','S',0.6,'TYT Coğrafya',[
+  ['Doğal Sistemler (9. Sınıf)',1,.55,.01],['Doğal Sistemler (10. Sınıf)',1,.5,.01],['Beşeri Sistemler (10. Sınıf)',1,.6,.01],['Küresel Ortam: Bölgeler ve Ülkeler (9. Sınıf)',1,.45,.02],['Çevre ve Toplum (10. Sınıf)',1,.6,0]]],
+ ['FE','Felsefe','S',0.6,'TYT Felsefe',[
+  ['MÖ 6. Yüzyıl-MS 2. Yüzyıl Felsefesi',3,.55,.02],['Felsefenin Temel Konuları ve Problemleri',2,.6,.02]]],
+ ['DI','Din Kültürü','S',0.6,'TYT Din Kültürü',[
+  ["Kur'an'a Göre Hz. Muhammed",2,.75,.01],['Allah İnsan İlişkisi',1,.75,0],['Din ve İslam',1,.8,0],['İslam Düşüncesinde İtikadi, Siyasi ve Fıkhi Yorumlar',1,.55,.02]]],
+ ['FI','Fizik','F',0.6,'TYT Fizik',[
+  ['Madde ve Özellikleri',1,.55,.02],['Basınç ve Kaldırma Kuvveti',1,.4,.02],['Isı ve Sıcaklık',1,.5,.02],['Enerji',1,.45,.02],['Elektrik Akımı ve Manyetizma',1,.35,.02],['Dalgalar',1,.4,.01],['Optik',1,.35,.02]]],
+ ['KI','Kimya','F',0.6,'TYT Kimya',[
+  ['Atom ve Periyodik Sistem',1,.6,.01],['Kimyasal Türler Arası Etkileşimler',1,.45,.02],['Maddenin Hâlleri',1,.55,.01],['Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar',1,.35,.02],['Karışımlar',1,.55,.01],['Asitler, Bazlar ve Tuzlar',1,.45,.02],['Kimya Her Yerde',1,.65,0]]],
+ ['BI','Biyoloji','F',0.6,'TYT Biyoloji',[
+  ['Yaşam Bilimi Biyoloji',1,.7,0],['Hücre',1,.6,.01],['Canlılar Dünyası',1,.6,.01],['Hücre Bölünmeleri',1,.45,.02],['Kalıtımın Genel İlkeleri',1,.4,.02],['Ekosistem Ekolojisi ve Güncel Çevre Sorunları',1,.65,.01]]],
+];
+const N = EXAMS.length;
+const SUBJ = {}, TOPIC = {}, CURR = {};
+const net = (c,w) => c - w/4;
+for (const [key,label,group,wr,currSubject,topics] of RAW) {
+  const s = SUBJ[key] = { key, label, group, currSubject, topics:[], q:0, res:[] };
+  topics.forEach(([name,q,p0,slope,curr],ti) => {
+    const tk = key+String(ti+1).padStart(2,'0');
+    const res = EXAMS.map((e,i) => {
+      const p = Math.min(.98, Math.max(.02, p0 + slope*i + (rand()-.5)*.22));
+      const c = Math.round(q*p), rem = q-c, w = Math.round(rem*wr), b = rem-w;
+      return { q, c, w, b };
+    });
+    const t = TOPIC[tk] = { key:tk, name, subj:key, q, res, curr: curr || [name] };
+    s.topics.push(t); s.q += q;
+    t.curr.forEach((cn,ci) => {
+      const cid = currSubject+'|'+cn;
+      const cu = CURR[cid] || (CURR[cid] = { id:cid, name:cn, subj:key, subjName:currSubject, primary:[], linked:[] });
+      (ci===0 ? cu.primary : cu.linked).push(tk);
+    });
+  });
+  s.res = EXAMS.map((e,i) => sum(s.topics.map(t => t.res[i])));
+}
+function sum(rs){ const o={q:0,c:0,w:0,b:0}; for (const r of rs) if (r) { o.q+=r.q; o.c+=r.c; o.w+=r.w; o.b+=r.b; } return o; }
+const topicRes = (t,i) => i===NO_TOPIC ? null : t.res[i];
+const examRes = i => sum(Object.values(SUBJ).map(s => s.res[i]));
+const groupRes = (i,g) => sum(Object.values(SUBJ).filter(s => s.group===g).map(s => s.res[i]));
+const acc = r => r && r.q ? r.c/r.q*100 : null;
+const nt = r => r ? net(r.c, r.w) : null;
+const band = a => a==null ? 'none' : a>=75 ? 'good' : a>=50 ? 'mid' : 'weak';
+const BANDNAME = { good:'Yeterli', mid:'Gelişiyor', weak:'Kritik', none:'Ölçülmedi' };
+const f = (n,d=1) => n==null ? '—' : n.toFixed(d).replace('.',',');
+const measured = t => EXAMS.map(e => topicRes(t,e.i)).map((r,i)=>({r,i})).filter(x=>x.r);
+function last3(rs){ return sum(rs.slice(-3).map(x=>x.r)); }
+function trendOf(rs){ // son 3 ölçüm ile öncekiler arasındaki başarı farkı (puan)
+  if (rs.length < 4) return null;
+  return acc(sum(rs.slice(-3).map(x=>x.r))) - acc(sum(rs.slice(0,-3).map(x=>x.r)));
+}
+const topicStats = t => { const m = measured(t); return { m, tot:sum(m.map(x=>x.r)), l3:acc(last3(m)), tr:trendOf(m) }; };
+function currSeries(cu){ return EXAMS.map(e => e.i===NO_TOPIC ? null : sum(cu.primary.map(k => TOPIC[k].res[e.i]))); }
+const TARGET = 95;
+// Karne üst bilgisi (mock_exams.score / percentile / ranks / coach_note)
+const NOTES = { 4:'Paragrafta süre yönetimi iyileşti; problemlerde acele var.', 7:'Matematikte 6 soru boş, süre yetmedi. Haftaya süreli test.' };
+EXAMS.forEach(e => { const n = nt(examRes(e.i));
+  e.score = 190 + n*1.9; e.percentile = Math.max(1, 60 - n*.6);
+  e.ranks = { 'Kurum':{ sira:Math.max(1, Math.round(150 - n*1.5)), katilan:140 }, 'İl':{ sira:Math.round(42000 - n*420), katilan:61500 } };
+  e.note = NOTES[e.i] || null; });
+const FORMULA = `<div class="explain" style="background:var(--surface);border:1px solid var(--border-soft)"><b>Nasıl hesaplandı?</b><br>
+  Net = Doğru − Yanlış ÷ 4 (LGS'te ÷ 3) · Başarı % = Doğru ÷ Soru · Kayıp net = Soru − Net<br>
+  Bantlar: %75 ve üstü Yeterli, %50–75 Gelişiyor, altı Kritik · "Son 3" = konu detayı girilmiş son 3 denemenin toplamı · Eğilim = son 3 − öncekiler (puan)<br>
+  Konu detayı girilmemiş denemeler konu grafiklerinde boş kalır; ders sonuçları her zaman elle girilen değerdir.</div>`;
+const nf = n => Math.round(n).toLocaleString('tr-TR');
+// Ödev (program görevi) sonuçları — R1'de D/Y girilebiliyor; yalnız birkaç konuda örnek
+const HW = {
+  'TYT Türkçe|Paragraf':[['2026-09-08','Paragraf soru bankası · Test 3',30,22,5],['2026-10-01','Paragraf soru bankası · Test 9',30,25,3],['2026-10-22','Paragraf denemesi · 40 soru',40,35,4]],
+  'TYT Matematik|Problemler':[['2026-09-10','Problemler fasikülü · Test 2',20,16,3],['2026-10-08','Problemler fasikülü · Test 6',20,17,2],['2026-10-28','Yaş-işçi problemleri · 25 soru',25,21,3]],
+};
+
+/* ---------- Durum ve rol ---------- */
+let state = { lvl:'all', exam:null, subj:null, topic:null, curr:null, metric:'net', sort:'karne', role:'koc', subjView:'kart', netView:'grafik', lossFilter:'ALL', formula:false };
+try { const r = localStorage.getItem('dat-role'); if (r) state.role = r; } catch(e) {}
+const R = (koc, ogr, veli) => state.role==='koc' ? koc : state.role==='ogrenci' ? ogr : veli;
+const explain = txt => state.role==='veli' && txt ? `<div class="explain">${txt}</div>` : '';
+function go(p){ Object.assign(state,p); render(); document.getElementById('crumbs').scrollIntoView({block:'nearest'}); }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const arrow = d => d==null ? '<span class="flat">—</span>' : d>3 ? `<span class="up">▲ ${f(d,0)}</span>` : d<-3 ? `<span class="down">▼ ${f(-d,0)}</span>` : `<span class="flat">● ${f(Math.abs(d),0)}</span>`;
+const chip = b => `<span class="chip ${b}">${BANDNAME[b]}</span>`;
+const headline = txt => `<div class="toolbar"><div class="headline">${txt}</div><button class="btn ghost" data-formula="1">${state.formula ? 'Formülü kapat' : 'Nasıl hesaplandı?'}</button></div>${state.formula ? FORMULA : ''}`;
+const toggle = (key, opts) => `<div class="mini" role="group">${opts.map(([v,l]) => `<button id="t-${key}-${v}" data-set="${key}" data-val="${v}" aria-pressed="${state[key]===v}">${l}</button>`).join('')}</div>`;
+const sv = (k, v, s='') => `<div class="stat"><div class="k">${k}</div><div class="v">${v}${s?` <small>${s}</small>`:''}</div></div>`;
+
+/* ---------- Grafik araçları ---------- */
+const tip = document.getElementById('tip');
+function showTip(ev, html){ tip.innerHTML = html; tip.hidden = false;
+  const r = tip.getBoundingClientRect(); let x = ev.clientX + 14, y = ev.clientY + 14;
+  if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - 14;
+  tip.style.left = Math.max(8,x)+'px'; tip.style.top = Math.max(8,y)+'px'; }
+const hideTip = () => { tip.hidden = true; };
+function lineChart(el, o){
+  const W = Math.max(260, el.clientWidth), H = o.h || 230, wide = W > 520;
+  const m = { l:38, r:14, t:14, b: wide ? 40 : 28 }, n = o.labels.length, iw = W-m.l-m.r, ih = H-m.t-m.b;
+  const x = i => m.l + (n===1 ? iw/2 : i*iw/(n-1)), y = v => m.t + ih - (v-o.yMin)/(o.yMax-o.yMin)*ih;
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.aria)}">`;
+  if (o.bands) [[75,100,'--good-bg','Yeterli'],[50,75,'--mid-bg','Gelişiyor'],[0,50,'--weak-bg','Kritik']].forEach(([a,b,c,l]) => {
+    s += `<rect x="${m.l}" y="${y(b)}" width="${iw}" height="${y(a)-y(b)}" fill="var(${c})" opacity=".7"/>`;
+    s += `<text x="${m.l+iw-4}" y="${y(b)+12}" text-anchor="end" font-size="10.5" fill="var(--ink-faint)">${l}</text>`; });
+  if (o.hl!=null) s += `<rect x="${x(o.hl)-14}" y="${m.t}" width="28" height="${ih}" rx="6" fill="var(--acc-bg)"/>`;
+  o.ticks.forEach(v => { s += `<line x1="${m.l}" x2="${m.l+iw}" y1="${y(v)}" y2="${y(v)}" stroke="var(--border-soft)"/>`;
+    s += `<text x="${m.l-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--ink-faint)">${o.tickFmt ? o.tickFmt(v) : v}</text>`; });
+  (o.refs||[]).forEach(r => { s += `<line x1="${m.l}" x2="${m.l+iw}" y1="${y(r.y)}" y2="${y(r.y)}" stroke="var(--ink-faint)" stroke-dasharray="4 4"/>`;
+    s += `<text x="${m.l+4}" y="${y(r.y)-5}" font-size="10.5" fill="var(--ink-soft)">${r.label}</text>`; });
+  o.series.forEach(se => {
+    let d = '', pen = false;
+    se.vals.forEach((v,i) => { if (v==null) { if (!se.connect) pen = false; return; } d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); pen = true; });
+    s += `<path d="${d}" fill="none" stroke="${se.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const lastI = se.vals.reduce((a,v,i) => v==null ? a : i, -1);
+    se.vals.forEach((v,i) => { if (v==null) return; const big = i===o.hl, r = big ? 5.5 : 4, fill = (i===lastI || big) ? se.color : 'var(--surface)';
+      s += se.shape==='sq' ? `<rect x="${x(i)-r}" y="${y(v)-r}" width="${2*r}" height="${2*r}" rx="1.5" fill="${fill}" stroke="${se.color}" stroke-width="2"/>`
+                           : `<circle cx="${x(i)}" cy="${y(v)}" r="${r}" fill="${fill}" stroke="${se.color}" stroke-width="2"/>`; });
+  });
+  (o.gaps||[]).forEach(i => { s += `<text x="${x(i)}" y="${m.t+ih/2}" text-anchor="middle" font-size="10.5" fill="var(--ink-faint)">konu</text><text x="${x(i)}" y="${m.t+ih/2+13}" text-anchor="middle" font-size="10.5" fill="var(--ink-faint)">girilmedi</text>`; });
+  o.labels.forEach((l,i) => { if (!wide && n > 8 && i%2) return;
+    s += `<text x="${x(i)}" y="${m.t+ih+16}" text-anchor="middle" font-size="11" font-weight="${i===o.hl?700:400}" fill="var(--ink-soft)">${l[0]}</text>`;
+    if (wide && l[1]) s += `<text x="${x(i)}" y="${m.t+ih+30}" text-anchor="middle" font-size="10" fill="var(--ink-faint)">${l[1]}</text>`; });
+  s += `<line class="xh" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}" stroke="var(--ink-faint)" stroke-width="1" visibility="hidden"/>`;
+  for (let i=0;i<n;i++){ const half = n===1 ? iw/2 : iw/(n-1)/2;
+    s += `<rect data-i="${i}" x="${x(i)-half}" y="${m.t}" width="${2*half}" height="${ih+m.b}" fill="transparent" style="cursor:${o.onClick?'pointer':'default'}"/>`; }
+  el.innerHTML = s + '</svg>';
+  const xh = el.querySelector('.xh');
+  el.querySelectorAll('rect[data-i]').forEach(r => { const i = +r.dataset.i;
+    r.addEventListener('mousemove', ev => { xh.setAttribute('x1',x(i)); xh.setAttribute('x2',x(i)); xh.setAttribute('visibility','visible'); showTip(ev, o.tip(i)); });
+    r.addEventListener('mouseleave', () => { xh.setAttribute('visibility','hidden'); hideTip(); });
+    if (o.onClick) r.addEventListener('click', () => { hideTip(); o.onClick(i); }); });
+}
+function stackCols(el, o){
+  const W = Math.max(260, el.clientWidth), H = o.h || 200, wide = W > 520;
+  const m = { l:38, r:14, t:18, b: wide ? 40 : 28 }, n = o.cols.length, iw = W-m.l-m.r, ih = H-m.t-m.b;
+  const slot = iw/n, bw = Math.min(40, slot*.56), y = v => m.t + ih - v/o.yMax*ih;
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.aria)}">`;
+  o.ticks.forEach(v => { s += `<line x1="${m.l}" x2="${m.l+iw}" y1="${y(v)}" y2="${y(v)}" stroke="var(--border-soft)"/><text x="${m.l-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--ink-faint)">${v}</text>`; });
+  o.cols.forEach((c,i) => { const cx = m.l + slot*i + slot/2;
+    if (i===o.hl) s += `<rect x="${cx-slot/2+2}" y="${m.t-14}" width="${slot-4}" height="${ih+14}" rx="6" fill="var(--acc-bg)"/>`;
+    if (!c.parts) { s += `<text x="${cx}" y="${m.t+ih/2}" text-anchor="middle" font-size="10.5" fill="var(--ink-faint)">yok</text>`; }
+    else { let base = y(0); c.parts.forEach((p,pi) => { const h = p.v/o.yMax*ih, g = pi>0 ? 2 : 0; if (h-g <= 0) { base -= h; return; }
+      s += `<rect x="${cx-bw/2}" y="${base-h}" width="${bw}" height="${h-g}" rx="2" fill="${p.color}"/>`; base -= h; });
+      if (c.top!=null && (i===n-1 || i===o.hl)) s += `<text x="${cx}" y="${base-5}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">${c.top}</text>`; }
+    s += `<text x="${cx}" y="${m.t+ih+16}" text-anchor="middle" font-size="11" font-weight="${i===o.hl?700:400}" fill="var(--ink-soft)">${c.label[0]}</text>`;
+    if (wide && c.label[1]) s += `<text x="${cx}" y="${m.t+ih+30}" text-anchor="middle" font-size="10" fill="var(--ink-faint)">${c.label[1]}</text>`;
+    s += `<rect data-i="${i}" x="${cx-slot/2}" y="${m.t-14}" width="${slot}" height="${ih+14+m.b}" fill="transparent" style="cursor:${o.onClick?'pointer':'default'}"/>`; });
+  el.innerHTML = s + '</svg>';
+  el.querySelectorAll('rect[data-i]').forEach(r => { const i = +r.dataset.i;
+    r.addEventListener('mousemove', ev => showTip(ev, o.tip(i))); r.addEventListener('mouseleave', hideTip);
+    if (o.onClick) r.addEventListener('click', () => { hideTip(); o.onClick(i); }); });
+}
+function spark(vals, w=110, h=28, color='var(--acc)', yMax=null){
+  const pts = vals.map((v,i)=>({v,i})).filter(p=>p.v!=null); if (pts.length < 2) return '';
+  const mx = yMax ?? Math.max(...pts.map(p=>p.v)), mn = yMax!=null ? 0 : Math.min(...pts.map(p=>p.v));
+  const x = i => 3 + i*(w-6)/(vals.length-1), y = v => h-3 - (mx===mn ? .5 : (v-mn)/(mx-mn))*(h-6);
+  const d = pts.map((p,k)=>(k?'L':'M')+x(p.i).toFixed(1)+' '+y(p.v).toFixed(1)).join(''), L = pts[pts.length-1];
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="${d}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round"/><circle cx="${x(L.i)}" cy="${y(L.v)}" r="2.6" fill="${color}"/></svg>`;
+}
+const DYB = r => [{v:r.c, color:'var(--good)', n:'Doğru'},{v:r.w, color:'var(--weak)', n:'Yanlış'},{v:r.b, color:'var(--blank)', n:'Boş'}];
+const LEG_DYB = `<div class="legend"><span><i style="background:var(--good)"></i>Doğru</span><span><i style="background:var(--weak)"></i>Yanlış</span><span><i style="background:var(--blank)"></i>Boş</span></div>`;
+const xl = e => [e.short, dfmt(e.date)];
+const ticks = (mx, step) => { const a=[]; for (let v=0; v<=mx+1e-9; v+=step) a.push(+v.toFixed(2)); return a; };
+const niceStep = mx => mx<=6 ? 1 : mx<=12 ? 2 : mx<=25 ? 5 : mx<=60 ? 10 : 20;
+
+/* ---------- Seviyeler ---------- */
+let draws = [];
+const C = (id, fn) => { draws.push(() => fn(document.getElementById(id))); return `<div class="chart" id="${id}"></div>`; };
+
+function insightsAll(){
+  const all = Object.values(TOPIC).map(t => ({ t, ...topicStats(t) })).filter(x => x.tr!=null && x.t.q >= 4);
+  const up = all.slice().sort((a,b)=>b.tr-a.tr)[0], down = all.slice().sort((a,b)=>a.tr-b.tr)[0];
+  const lastNet = nt(examRes(N-1)), out = [];
+  const L = (x) => `<button class="link" data-topic="${x.t.key}">${esc(x.t.name)}</button>`;
+  if (down && down.tr < -3) out.push(['weak', R('Konuş', 'Dikkat', 'Destek'), R(
+    `${L(down)} (${SUBJ[down.t.subj].label}) son 3 denemede düşüşte: önceki ortalama %${f(down.l3 - down.tr,0)}, şimdi %${f(down.l3,0)}. Bu hafta programa ekle.`,
+    `${L(down)} konusunda son denemelerde geriledin (%${f(down.l3 - down.tr,0)} → %${f(down.l3,0)}). Koçunla bu hafta bu konuya bakın.`,
+    `${SUBJ[down.t.subj].label} dersinde ${L(down)} konusu son denemelerde geriledi. Koç bu hafta bu konuya ağırlık verecek.`)]);
+  if (up && up.tr > 3) out.push(['good', R('Gelişme', 'Harika', 'Gelişme'), R(
+    `${L(up)} yükselişte: %${f(up.l3 - up.tr,0)} → %${f(up.l3,0)}. Öğrenciye geri bildirim ver.`,
+    `${L(up)} konusunda çok iyi gidiyorsun: %${f(up.l3 - up.tr,0)} → %${f(up.l3,0)}.`,
+    `${L(up)} konusunda belirgin ilerleme var (%${f(up.l3 - up.tr,0)} → %${f(up.l3,0)}).`)]);
+  out.push(['mid', R('Hedef', 'Hedef', 'Hedef'), R(
+    `Son net ${f(lastNet)}; hedef ${TARGET}. Arada ${f(TARGET-lastNet)} net var.`,
+    `Hedefin ${TARGET} net, son denemen ${f(lastNet)}. ${f(TARGET-lastNet)} net kaldı.`,
+    `Hedef ${TARGET} net; son deneme ${f(lastNet)} net.`)]);
+  return `<div class="ins">${out.map(([b,tag,txt]) => `<div class="${b}"><b class="tag">${tag}</b><span>${txt}</span></div>`).join('')}</div>`;
+}
+
+function viewAll(){
+  const nets = EXAMS.map(e => nt(examRes(e.i))), lastNet = nets[N-1], avg = nets.reduce((a,b)=>a+b,0)/N;
+  const gOrder = ['T','S','M','F'];
+  const subjCards = Object.values(SUBJ).map(s => {
+    const ns = s.res.map(nt), first = (ns[0]+ns[1])/2, last = (ns[N-1]+ns[N-2])/2, a3 = acc(sum(s.res.slice(-3)));
+    return `<button class="scard" data-subj="${s.key}"><div class="row"><span class="nm"><i style="background:var(--g-${s.group})"></i>${s.label}</span>${chip(band(a3))}</div>
+      <div class="row"><span class="big">${f(ns[N-1])} <span class="q">/ ${s.q}</span></span>${arrow((last-first)/s.q*100)}</div>
+      ${spark(ns, 176, 30, 'var(--acc)', s.q)}<span class="q">ilk 2 → son 2 deneme, başarı puanı farkı</span></button>`; }).join('');
+  const lastLoss = Object.values(SUBJ).map(s => ({ s, l: s.q - nt(s.res[N-1]) })).sort((a,b)=>b.l-a.l)[0];
+  const le = EXAMS[N-1];
+  // Bütün derslerde birikimli konu kaybı (mevcut ekrandaki "Tümü" listesi)
+  const allLoss = Object.values(TOPIC).filter(t => state.lossFilter==='ALL' || t.subj===state.lossFilter)
+    .map(t => ({ t, loss: measured(t).reduce((a,x)=>a + x.r.q - nt(x.r), 0), a: acc(sum(measured(t).map(x=>x.r))) })).sort((a,b)=>b.loss-a.loss).slice(0,10);
+  const maxAL = Math.max(1, ...allLoss.map(x=>x.loss));
+  const heat = `<div class="tbl"><table><thead><tr><th>Ders</th>${EXAMS.map(e=>`<th>${e.short}</th>`).join('')}<th>Ortalama</th><th>Son net</th></tr></thead><tbody>
+    ${Object.values(SUBJ).map(s => { const ns = s.res.map(nt); return `<tr class="click" data-subj="${s.key}"><td class="tn">${s.label} <span class="q" style="font-weight:400;color:var(--ink-faint)">${s.q}</span></td>
+      ${EXAMS.map(e => { const a = acc(s.res[e.i]); return `<td><button class="cell ${band(a)}" data-subj="${s.key}" data-hl="${e.i}">${f(ns[e.i])}<br><span style="font-weight:400;font-size:10px">%${f(a,0)}</span></button></td>`; }).join('')}
+      <td><b>${f(ns.reduce((a,b)=>a+b,0)/N)}</b></td><td><b style="color:var(--acc)">${f(ns[N-1])}</b></td></tr>`; }).join('')}</tbody></table></div>`;
+  const netTable = `<div class="tbl"><table><thead><tr><th>Deneme</th><th>Tarih</th><th>Net</th><th>Başarı</th><th>Puan</th></tr></thead><tbody>
+    ${EXAMS.map(e => `<tr class="click" data-exam="${e.i}"><td class="tn">${e.name}</td><td>${dfmt(e.date)}</td><td><b>${f(nets[e.i])}</b></td><td>%${f(acc(examRes(e.i)),0)}</td><td>${f(e.score)}</td></tr>`).join('')}</tbody></table></div>`;
+  return headline(R(`Son denemede ${f(lastNet)} net (${(lastNet-nets[N-2]>=0?'+':'')+f(lastNet-nets[N-2])}); en çok kayıp ${lastLoss.s.label} dersinde (${f(lastLoss.l)} net).`,
+      `Son denemende ${f(lastNet)} net yaptın (${(lastNet-nets[N-2]>=0?'+':'')+f(lastNet-nets[N-2])}). En çok net ${lastLoss.s.label} dersinde kaçtı.`,
+      `Son denemede ${f(lastNet)} net; bir önceki denemeye göre ${(lastNet-nets[N-2]>=0?'+':'')+f(lastNet-nets[N-2])}.`)) + `
+  <div class="stats">${sv('Son deneme', f(lastNet), '/ 120 net')}${sv('Ortalama', f(avg), 'net')}${sv('İlk → son', (lastNet-nets[0]>0?'+':'')+f(lastNet-nets[0]), 'net')}${sv('Hedef', TARGET, 'net')}</div>
+  <div class="sub" style="margin:0">${le.name}: puan <b>${f(le.score)}</b> · yüzdelik %${f(le.percentile)} · kurum sırası ${le.ranks['Kurum'].sira}/${le.ranks['Kurum'].katilan}${le.note ? ` · <i>Koç notu: "${esc(le.note)}"</i>` : ''}</div>
+  <div class="grid">
+    <section class="card"><div class="toolbar"><h3>${R('Toplam net gelişimi','Netin nasıl değişti','Toplam net gelişimi')}</h3>${toggle('netView', [['grafik','Grafik'],['tablo','Tablo']])}</div><div class="sub">Bir denemeye tıkla → o denemenin ders ve konu dökümü</div>
+      ${state.netView==='tablo' ? netTable : C('c-net', el => lineChart(el, { aria:'Toplam net', labels:EXAMS.map(xl), yMin:40, yMax:100, ticks:[40,60,80,100],
+        series:[{vals:nets, color:'var(--acc)'}], refs:[{y:TARGET,label:'Hedef '+TARGET},{y:avg,label:'Ortalama '+f(avg)}],
+        tip:i=>`<b>${EXAMS[i].name}</b> <span class="m">${dfmt(EXAMS[i].date)}</span><br>Net <b>${f(nets[i])}</b> · başarı %${f(acc(examRes(i)),0)}${i===NO_TOPIC?'<br><span class="m">Konu detayı girilmedi</span>':''}`,
+        onClick:i=>go({lvl:'exam', exam:i}) }))}
+      ${explain('Her nokta bir deneme. Çizgi yukarı gidiyorsa toplam net artıyor. Kesikli çizgiler hedef ve ortalama.')}</section>
+    <section class="card"><h3>Net hangi dersten geliyor</h3><div class="sub">Her sütun bir deneme; renkler ders grupları</div>
+      <div class="legend">${gOrder.map(g=>`<span><i style="background:var(--g-${g})"></i>${GROUPS[g]}</span>`).join('')}</div>
+      ${C('c-grp', el => stackCols(el, { aria:'Ders gruplarına göre net', yMax:100, ticks:[0,25,50,75,100],
+        cols:EXAMS.map(e => ({ label:xl(e), top:f(nets[e.i],0), parts:gOrder.map(g => ({ v:Math.max(0, nt(groupRes(e.i,g))), color:`var(--g-${g})` })) })),
+        tip:i=>`<b>${EXAMS[i].name}</b><br>`+gOrder.map(g=>`${GROUPS[g]}: <b>${f(nt(groupRes(i,g)))}</b>`).join('<br>'),
+        onClick:i=>go({lvl:'exam', exam:i}) }))}
+      ${explain('Sütunun boyu toplam net. Renkli parçalar netin hangi ders grubundan geldiğini gösteriyor.')}</section>
+  </div>
+  <section class="card"><div class="toolbar"><h3>Derslerin gelişimi</h3>${toggle('subjView', [['kart','Kartlar'],['tablo','Isı tablosu']])}</div>
+    <div class="sub">Bir derse tıkla → konu konu dökümü ve büyük grafik${state.subjView==='tablo' ? ' · hücreye tıkla → o deneme vurgulu' : ''}</div>
+    ${state.subjView==='tablo' ? heat : `<div class="cards">${subjCards}</div>`}
+    ${explain(state.subjView==='tablo' ? 'Her satır bir ders, her sütun bir deneme. Hücrede net ve başarı yüzdesi; yeşil iyi, sarı orta, kırmızı zayıf.' : 'Her kart bir ders. Büyük sayı son denemedeki net; ok, ilk denemelere göre başarının arttığını ya da azaldığını gösteriyor.')}</section>
+  <section class="card"><h3>Tüm denemelerde en çok net kaybettiren konular</h3><div class="sub">Konu detayı girilen denemelerin toplamı · bir konuya tıkla</div>
+    <div class="actions">${[['ALL','Tümü'], ...Object.values(SUBJ).map(s=>[s.key, s.label])].map(([k,l]) => `<button class="chip ${state.lossFilter===k?'good':'none'}" style="border:0;cursor:pointer;font-family:inherit" data-set="lossFilter" data-val="${k}">${l}</button>`).join('')}</div>
+    <div class="bars">${allLoss.map(x => `<button class="bar" data-topic="${x.t.key}"><span class="lb">${esc(x.t.name)}<small>${SUBJ[x.t.subj].label} · %${f(x.a,0)}</small></span>
+      <span class="track"><span style="width:${x.loss/maxAL*100}%;background:var(--weak)"></span></span><span class="val">${f(x.loss)}</span></button>`).join('')}</div>
+    ${explain('Listenin başındaki konular toplamda en çok puan kaybettiren konular.')}</section>
+  <section class="card"><h3>${R('Görüşmede konuşulacaklar','Öne çıkanlar','Öne çıkanlar')}</h3>${insightsAll()}</section>`;
+}
+
+function viewExam(){
+  const i = state.exam, e = EXAMS[i], r = examRes(i), prev = i>0 ? examRes(i-1) : null;
+  const subs = Object.values(SUBJ);
+  const deltas = prev ? subs.map(s => ({ s, d: nt(s.res[i]) - nt(s.res[i-1]) })) : [];
+  const maxD = Math.max(1, ...deltas.map(x=>Math.abs(x.d)));
+  const losses = i===NO_TOPIC ? [] : Object.values(TOPIC).map(t => ({ t, loss: t.q - nt(t.res[i]), r:t.res[i] })).sort((a,b)=>b.loss-a.loss).slice(0,8);
+  const maxL = Math.max(1, ...losses.map(x=>x.loss));
+  const best = deltas.slice().sort((a,b)=>b.d-a.d)[0], worst = deltas.slice().sort((a,b)=>a.d-b.d)[0];
+  const hlTxt = prev ? `Önceki denemeye göre ${(nt(r)-nt(prev)>=0?'+':'')+f(nt(r)-nt(prev))} net; en çok artış ${best.s.label} (${best.d>0?'+':''}${f(best.d)}), en çok düşüş ${worst.s.label} (${f(worst.d)}).` : `İlk deneme: ${f(nt(r))} net.`;
+  return headline(hlTxt) + `
+  <div class="head"><div><div class="kicker">${dfmt(e.date)} · TYT</div><h2>${e.name}</h2></div>
+    <div class="actions">${i>0?`<button class="btn ghost" data-exam="${i-1}">← ${EXAMS[i-1].short}</button>`:''}${i<N-1?`<button class="btn ghost" data-exam="${i+1}">${EXAMS[i+1].short} →</button>`:''}</div></div>
+  <div class="stats">${sv('Net', f(nt(r)), '/ 120')}${sv('Önceki denemeye göre', prev ? ((nt(r)-nt(prev)>0?'+':'')+f(nt(r)-nt(prev))) : '—', prev?'net':'ilk deneme')}${sv('Başarı', '%'+f(acc(r),0))}${sv('D / Y / B', `${r.c} / ${r.w} / ${r.b}`)}</div>
+  <section class="card"><h3>Karne bilgileri</h3><div class="sub">Yayın karnesindeki puan ve sıralamalar (girildiyse)</div>
+    <div class="stats">${sv('Puan', f(e.score))}${sv('Yüzdelik dilim', '%'+f(e.percentile))}${Object.entries(e.ranks).map(([k,v]) => sv(k+' sırası', nf(v.sira), '/ '+nf(v.katilan))).join('')}</div>
+    ${e.note ? `<div class="explain" style="background:var(--surface-alt)"><b>Koç notu:</b> <i>"${esc(e.note)}"</i></div>` : ''}</section>
+  <div class="grid">
+    <section class="card"><h3>Önceki denemeye göre ders değişimi</h3><div class="sub">${prev ? EXAMS[i-1].short+' → '+e.short+' · bir derse tıkla' : 'İlk deneme, karşılaştırma yok'}</div>
+      ${prev ? `<div class="bars">${deltas.map(x => `<button class="bar div" data-subj="${x.s.key}" style="grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr) 52px">
+        <span class="lb">${x.s.label}</span><span class="neg">${x.d<0?`<span style="width:${-x.d/maxD*100}%"></span>`:''}</span><span class="pos">${x.d>0?`<span style="width:${x.d/maxD*100}%"></span>`:''}</span>
+        <span class="val ${x.d>0?'up':x.d<0?'down':'flat'}">${x.d>0?'+':''}${f(x.d)}</span></button>`).join('')}</div>` : '<div class="empty">Bu ilk deneme; bir sonraki denemeden itibaren ders ders artış/azalış burada görünür.</div>'}
+      ${explain('Sağa uzanan yeşil çubuk o derste netin arttığını, sola uzanan kırmızı çubuk azaldığını gösterir.')}</section>
+    <section class="card"><h3>Ders bazında doğru / yanlış / boş</h3><div class="sub">Çubuk = dersin soru sayısı</div>${LEG_DYB}
+      <div class="bars">${subs.map(s => { const x = s.res[i]; return `<button class="bar" data-subj="${s.key}"><span class="lb">${s.label}<small>${x.q} soru</small></span>
+        <span class="track">${DYB(x).filter(p=>p.v).map(p=>`<span style="width:${p.v/x.q*100}%;background:${p.color}" title="${p.n} ${p.v}"></span>`).join('')}</span><span class="val">${f(nt(x))}</span></button>`; }).join('')}</div></section>
+  </div>
+  <section class="card"><h3>Bu denemede en çok net kaybettiren konular</h3><div class="sub">Kayıp = soru sayısı − konu neti · bir konuya tıkla</div>
+    ${i===NO_TOPIC ? `<div class="empty">Bu denemede yalnız ders sonuçları girildi, konu detayı yok. Konu grafikleri bu denemeyi boş gösterir.</div>` :
+    `<div class="bars">${losses.map(x => `<button class="bar" data-topic="${x.t.key}"><span class="lb">${esc(x.t.name)}<small>${SUBJ[x.t.subj].label}</small></span>
+      <span class="track"><span style="width:${x.loss/maxL*100}%;background:var(--weak)"></span></span><span class="val">${f(x.loss)}</span></button>`).join('')}</div>`}
+    ${explain('En üstteki konular bu denemede en çok puan kaybettiren konular. Çalışmaya buradan başlamak en hızlı kazancı getirir.')}</section>`;
+}
+
+function viewSubject(){
+  const s = SUBJ[state.subj], ns = s.res.map(nt), as = s.res.map(acc), hl = state.exam;
+  const isNet = state.metric==='net', vals = isNet ? ns : as, yMax = isNet ? s.q : 100, st = isNet ? niceStep(s.q) : 25;
+  const avg = vals.reduce((a,b)=>a+b,0)/N;
+  let rows = s.topics.map(t => ({ t, ...topicStats(t) }));
+  if (state.sort==='zayif') rows.sort((a,b)=>a.l3-b.l3); if (state.sort==='dusen') rows.sort((a,b)=>(a.tr??0)-(b.tr??0));
+  const losses = s.topics.map(t => { const m = measured(t); return { t, loss: m.reduce((a,x)=>a + x.r.q - nt(x.r), 0) }; }).sort((a,b)=>b.loss-a.loss);
+  const maxL = Math.max(1, ...losses.map(x=>x.loss));
+  const ranked = s.topics.map(t => ({ t, ...topicStats(t) })), weakest = ranked.slice().sort((a,b)=>a.l3-b.l3)[0], riser = ranked.filter(x=>x.tr!=null).sort((a,b)=>b.tr-a.tr)[0];
+  return headline(`${s.label}: son net ${f(ns[N-1])} / ${s.q}. En zayıf konu ${esc(weakest.t.name)} (%${f(weakest.l3,0)})${riser && riser.tr>3 ? `, en çok yükselen ${esc(riser.t.name)} (+${f(riser.tr,0)} puan)` : ''}.`) + `
+  <div class="head"><div><div class="kicker">${GROUPS[s.group]} · ${s.q} soru</div><h2>${s.label}</h2></div>
+    <div class="actions">${hl!=null?`<span class="chip none">Seçili: ${EXAMS[hl].name}</span>`:''}</div></div>
+  <div class="stats">${sv('Son net', f(ns[N-1]), '/ '+s.q)}${sv('Ortalama', f(ns.reduce((a,b)=>a+b,0)/N), 'net')}${sv('İlk → son', (ns[N-1]-ns[0]>0?'+':'')+f(ns[N-1]-ns[0]), 'net')}${sv('Son 3 başarı', '%'+f(acc(sum(s.res.slice(-3))),0))}</div>
+  <div class="grid">
+    <section class="card"><div class="toolbar"><h3>${s.label} gelişimi</h3><div class="mini" role="group" aria-label="Ölçü">
+      <button id="m-net" data-metric="net" aria-pressed="${isNet}">Net</button><button id="m-acc" data-metric="acc" aria-pressed="${!isNet}">Başarı %</button></div></div>
+      <div class="sub">Bir denemeye tıkla → konu tablosunda o sütun vurgulanır</div>
+      ${C('c-subj', el => lineChart(el, { aria:s.label+' gelişimi', labels:EXAMS.map(xl), yMin:0, yMax, ticks:ticks(yMax, st), hl, bands:!isNet,
+        tickFmt: isNet ? null : v=>'%'+v, series:[{vals, color:'var(--acc)'}], refs:[{y:avg, label:'Ortalama '+(isNet?f(avg):'%'+f(avg,0))}],
+        tip:i=>`<b>${EXAMS[i].name}</b><br>Net <b>${f(ns[i])}</b> / ${s.q} · %${f(as[i],0)}<br><span class="m">D ${s.res[i].c} · Y ${s.res[i].w} · B ${s.res[i].b}</span>`,
+        onClick:i=>go({exam: state.exam===i ? null : i}) }))}
+      ${explain('Çizgi bu dersteki netin denemeden denemeye nasıl değiştiğini gösteriyor.')}</section>
+    <section class="card"><h3>Doğru / yanlış / boş dağılımı</h3><div class="sub">Boşlar azalıp doğrular artıyorsa öğrenci konuya güveniyor</div>${LEG_DYB}
+      ${C('c-subj-dyb', el => stackCols(el, { aria:'Doğru yanlış boş', yMax:s.q, ticks:ticks(s.q, niceStep(s.q)), hl,
+        cols:EXAMS.map(e => ({ label:xl(e), top:s.res[e.i].c+'D', parts:DYB(s.res[e.i]) })),
+        tip:i=>`<b>${EXAMS[i].name}</b><br>Doğru ${s.res[i].c} · Yanlış ${s.res[i].w} · Boş ${s.res[i].b}`, onClick:i=>go({exam: state.exam===i ? null : i}) }))}</section>
+  </div>
+  <section class="card"><div class="toolbar"><h3>Konu konu başarı</h3><div class="mini" role="group" aria-label="Sıralama">
+      <button id="s-k" data-sort="karne" aria-pressed="${state.sort==='karne'}">Karne sırası</button><button id="s-z" data-sort="zayif" aria-pressed="${state.sort==='zayif'}">En zayıf</button><button id="s-d" data-sort="dusen" aria-pressed="${state.sort==='dusen'}">En çok düşen</button></div></div>
+    <div class="sub">Hücre = o denemedeki başarı yüzdesi · satıra ya da hücreye tıkla → konu grafiği</div>
+    <div class="tbl"><table><thead><tr><th>Konu</th>${EXAMS.map(e=>`<th class="${e.i===hl?'hl':''}">${e.short}</th>`).join('')}<th>Soru</th><th>Son 3</th><th>Eğilim</th><th>Durum</th></tr></thead><tbody>
+      ${rows.map(x => `<tr class="click" data-topic="${x.t.key}"><td class="tn">${esc(x.t.name)}</td>${EXAMS.map(e => { const r = topicRes(x.t,e.i), a = acc(r);
+        return `<td class="${e.i===hl?'hl':''}">${r ? `<button class="cell ${band(a)}" data-topic="${x.t.key}" data-exam="${e.i}" title="${r.c}D ${r.w}Y ${r.b}B">${f(a,0)}</button>` : '<span class="cell none">—</span>'}</td>`; }).join('')}
+        <td>${x.tot.q}</td><td>%${f(x.l3,0)}</td><td>${spark(x.m.map(m=>acc(m.r)), 70, 22, 'var(--acc)', 100)}</td><td>${chip(band(x.l3))}</td></tr>`).join('')}
+    </tbody></table></div>
+    ${explain('Yeşil hücre iyi (%75 ve üstü), sarı gelişiyor, kırmızı zayıf. "—" o denemede konu detayının girilmediğini gösterir.')}</section>
+  <section class="card"><h3>Toplamda en çok net kaybettiren konular</h3><div class="sub">Konu detayı girilen ${N-1} denemenin toplamı</div>
+    <div class="bars">${losses.map(x => `<button class="bar" data-topic="${x.t.key}"><span class="lb">${esc(x.t.name)}</span><span class="track"><span style="width:${x.loss/maxL*100}%;background:var(--weak)"></span></span><span class="val">${f(x.loss)}</span></button>`).join('')}</div></section>`;
+}
+
+function currCard(t){
+  return `<div class="curr">${t.curr.map((cn,ci) => { const cu = CURR[SUBJ[t.subj].currSubject+'|'+cn], a = acc(last3(currSeries(cu).map((r,i)=>({r,i})).filter(x=>x.r)));
+    return `<button data-curr="${esc(cu.id)}"><span><b>${esc(cn)}</b><br><span class="${ci===0?'pr':'q'}">${ci===0 ? 'Birincil · deneme sonucu buraya yansır' : 'Bağlı · sonuç yansımaz'}</span></span>${ci===0 ? chip(band(a)) : '<span class="chip none">Yansımaz</span>'}</button>`; }).join('')}</div>`;
+}
+
+function viewTopic(){
+  const t = TOPIC[state.topic], s = SUBJ[t.subj], st = topicStats(t), hl = state.exam;
+  const as = EXAMS.map(e => acc(topicRes(t,e.i)));
+  return headline(`Son 3 denemede %${f(st.l3,0)} başarı${st.tr!=null ? `; önceki denemelere göre ${st.tr>=0?'+':''}${f(st.tr,0)} puan` : ''}. Toplam ${st.tot.q} sorunun ${st.tot.c}'i doğru.`) + `
+  <div class="head"><div><div class="kicker">${s.label} · karne konusu · denemede ${t.q} soru</div><h2>${esc(t.name)}</h2></div>${chip(band(st.l3))}</div>
+  <div class="stats">${sv('Son 3 deneme başarı', '%'+f(st.l3,0))}${sv('Eğilim', arrow(st.tr), 'puan')}${sv('Toplam D / Y / B', `${st.tot.c} / ${st.tot.w} / ${st.tot.b}`)}${sv('Toplam soru', st.tot.q, st.m.length+' deneme')}</div>
+  ${t.q <= 1 ? `<div class="warn">Bu konu denemede 1 soru çıkıyor; tek denemede %0 ya da %100 görmek normal. Tek noktaya değil, birkaç denemelik eğilime bak.</div>` : ''}
+  <div class="grid">
+    <section class="card"><h3>${R('Konu başarısı','Bu konuda nasıl gidiyorsun','Konu başarısı')}</h3><div class="sub">Bantlar: %75 üstü Yeterli · %50–75 Gelişiyor · altı Kritik</div>
+      ${C('c-topic', el => lineChart(el, { aria:t.name+' başarı', labels:EXAMS.map(xl), yMin:0, yMax:100, ticks:[0,25,50,75,100], tickFmt:v=>'%'+v, bands:true, hl, gaps:[NO_TOPIC],
+        series:[{vals:as, color:'var(--acc)'}],
+        tip:i=>{ const r = topicRes(t,i); return `<b>${EXAMS[i].name}</b><br>`+(r ? `%${f(acc(r),0)} · D ${r.c} · Y ${r.w} · B ${r.b}<br><span class="m">Konu neti ${f(nt(r),2)} / ${r.q}</span>` : '<span class="m">Konu detayı girilmedi</span>'); },
+        onClick:i=>go({exam: state.exam===i ? null : i}) }))}
+      ${explain('Nokta yeşil banda ne kadar yakınsa konu o kadar iyi oturmuş demektir.')}</section>
+    <section class="card"><h3>Soru soru dağılım</h3><div class="sub">Her denemede bu konudan çıkan sorular</div>${LEG_DYB}
+      ${C('c-topic-dyb', el => stackCols(el, { aria:'Konu doğru yanlış boş', yMax:t.q, ticks:ticks(t.q, niceStep(t.q)), hl,
+        cols:EXAMS.map(e => { const r = topicRes(t,e.i); return { label:xl(e), top: r ? r.c+'/'+r.q : null, parts: r ? DYB(r) : null }; }),
+        tip:i=>{ const r = topicRes(t,i); return `<b>${EXAMS[i].name}</b><br>`+(r ? `Doğru ${r.c} · Yanlış ${r.w} · Boş ${r.b}` : 'Konu detayı girilmedi'); },
+        onClick:i=>go({exam: state.exam===i ? null : i}) }))}
+      ${explain('Kırmızı (yanlış) çoksa konu yanlış öğrenilmiş olabilir; gri (boş) çoksa öğrenci konuya henüz güvenmiyor.')}</section>
+  </div>
+  <div class="grid">
+    <section class="card"><h3>Müfredatta karşılığı</h3><div class="sub">Karne konusu → Konu Yeterlilik Haritası'ndaki konu · tıkla → müfredat konusunun bütün ölçümleri</div>${currCard(t)}</section>
+    ${state.role==='koc' ? `<section class="card"><h3>Koç işlemleri</h3><div class="sub">Taslakta düğmeler yalnız örnek bildirim gösterir</div>
+      <div class="actions"><button class="btn" data-toast="“${esc(t.name)}” haftalık programa öneri olarak eklenirdi.">Programa ekle</button><button class="btn ghost" data-toast="“${esc(t.name)}” görüşme maddelerine eklenirdi.">Görüşme notuna ekle</button></div>
+      <div class="sub" style="margin-top:0">Yanlış oranı yüksekse konu tekrarı, boş oranı yüksekse temel anlatım + kolay test önerilir.</div></section>`
+    : `<section class="card"><h3>${R('','Sıradaki adım','Bu ne anlama geliyor')}</h3><div class="explain" style="background:var(--surface-alt)">${R('',
+        band(st.l3)==='good' ? 'Bu konu yerine oturmuş. Haftada bir kısa tekrar yeterli.' : 'Koçun bu konuyu programına ekleyebilir. Yanlışlarını not et, görüşmede birlikte bakın.',
+        band(st.l3)==='good' ? 'Çocuğunuz bu konuda iyi durumda.' : 'Bu konu henüz yerine oturmamış. Koç programda bu konuya zaman ayıracak; evde ek bir şey yapmanız gerekmiyor.')}</div></section>`}
+  </div>`;
+}
+
+function viewCurr(){
+  const cu = CURR[state.curr], s = SUBJ[cu.subj], ser = currSeries(cu), hw = HW[cu.id] || [];
+  // Deneme + ödev olaylarını tarih sırasıyla tek eksene diz
+  const ev = [...EXAMS.map(e => ({ d:e.date, kind:'d', e, r:ser[e.i] })), ...hw.map(([d,name,q,c,w]) => ({ d, kind:'h', name, r:{q,c,w,b:q-c-w} }))].sort((a,b)=>a.d<b.d?-1:1);
+  const m = ser.map((r,i)=>({r,i})).filter(x=>x.r), l3 = acc(last3(m));
+  const feeders = cu.primary.map(k => ({ t:TOPIC[k], ...topicStats(TOPIC[k]) }));
+  const linked = cu.linked.map(k => TOPIC[k]);
+  const hwAcc = hw.length ? acc(sum(hw.map(([,,q,c,w]) => ({q,c,w,b:q-c-w})))) : null;
+  return headline(`${cu.primary.length} karne konusundan besleniyor. Son 3 denemede %${f(l3,0)}${hwAcc!=null ? `, ödevlerde %${f(hwAcc,0)}` : ''}.`) + `
+  <div class="head"><div><div class="kicker">${cu.subjName} · müfredat konusu</div><h2>${esc(cu.name)}</h2></div>${chip(band(l3))}</div>
+  <div class="stats">${sv('Son 3 deneme başarı', '%'+f(l3,0))}${sv('Besleyen karne konusu', cu.primary.length)}${sv('Ödev ölçümü', hw.length || '—')}${sv('Deneme başı soru', feeders.reduce((a,x)=>a+x.t.q,0))}</div>
+  <div class="grid">
+    <section class="card"><h3>Deneme ve ödev sonuçları</h3><div class="sub">Tarih sırasıyla; deneme sonuçları birincil karne konularının toplamı</div>
+      <div class="legend"><span><i style="background:var(--acc);border-radius:50%"></i>Deneme</span>${hw.length?`<span><i style="background:var(--hw)"></i>Ödev (program görevi)</span>`:''}</div>
+      ${C('c-curr', el => lineChart(el, { aria:cu.name+' ölçümleri', labels:ev.map(x => [x.kind==='d' ? x.e.short : 'Ö', dfmt(x.d)]), yMin:0, yMax:100, ticks:[0,25,50,75,100], tickFmt:v=>'%'+v, bands:true,
+        series:[{vals:ev.map(x=>x.kind==='d'?acc(x.r):null), color:'var(--acc)', connect:true}, ...(hw.length?[{vals:ev.map(x=>x.kind==='h'?acc(x.r):null), color:'var(--hw)', shape:'sq', connect:true}]:[])],
+        tip:i=>{ const x = ev[i]; return x.kind==='d' ? `<b>${x.e.name}</b><br>`+(x.r ? `%${f(acc(x.r),0)} · ${x.r.c}/${x.r.q} doğru` : '<span class="m">Konu detayı girilmedi</span>') : `<b>Ödev</b> <span class="m">${dfmt(x.d)}</span><br>${esc(x.name)}<br>%${f(acc(x.r),0)} · ${x.r.c}/${x.r.q} doğru`; } }))}
+      ${hw.length ? `<div class="sub" style="margin-top:0">${R('Ödevde %80 üstü, denemede düşük: bilgi var ama sınav koşulunda (süre, karışık soru) aktarılamıyor.','Ödevde iyisin; denemede aynı başarıyı süre baskısında yakalamaya çalış.','Evdeki ödevlerde başarı denemeden yüksek; bu sık görülür ve süreyle kapanır.')}</div>` : '<div class="sub" style="margin-top:0">Bu konuda doğru/yanlış sayısı girilmiş ödev yok; yalnız deneme ölçümleri gösteriliyor.</div>'}
+      ${explain('Yuvarlaklar denemeler, kareler evde çözülen ödevler. İkisi birbirine yaklaştıkça konu sınavda da oturmuş demektir.')}</section>
+    <section class="card"><h3>Bu konuyu besleyen karne konuları</h3><div class="sub">1→N eşlemede deneme sonucu yalnız birincil konuya yansır</div>
+      <div class="bars">${feeders.map(x => `<button class="bar" data-topic="${x.t.key}"><span class="lb">${esc(x.t.name)}<small>${x.t.q} soru</small></span>
+        <span class="track"><span style="width:${x.l3}%;background:var(--${band(x.l3)==='good'?'good':band(x.l3)==='mid'?'mid':'weak'})"></span></span><span class="val">%${f(x.l3,0)}</span></button>`).join('')}</div>
+      ${linked.length ? `<div class="sub" style="margin-top:4px">Ayrıca bağlı (sonuç yansımaz): ${linked.map(t=>`<button class="link" data-topic="${t.key}">${esc(t.name)}</button>`).join(', ')}</div>` : ''}
+      ${explain('Kurumdaki deneme karnesi bu konuyu birkaç parçaya bölüyor; burada parçaların her biri ayrı görünüyor.')}</section>
+  </div>`;
+}
+
+/* ---------- Çizim döngüsü ---------- */
+function render(){
+  document.body.dataset.role = state.role;
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.r===state.role));
+  const lv = ['all','exam','subject','topic','curr'], names = ['Genel','Deneme','Ders','Karne konusu','Müfredat'], at = lv.indexOf(state.lvl);
+  document.getElementById('depth').innerHTML = names.map((n,k) => `<span class="${k===at?'on':k<at?'done':''}">${k+1} · ${n}</span>`).join('');
+  const cr = [['Tüm denemeler', {lvl:'all', exam:null, subj:null, topic:null, curr:null}]];
+  if (state.exam!=null && (state.lvl==='exam' || state.subj)) cr.push([EXAMS[state.exam].name, {lvl:'exam', subj:null, topic:null, curr:null}]);
+  if (state.subj && state.lvl!=='exam') cr.push([SUBJ[state.subj].label, {lvl:'subject', topic:null, curr:null}]);
+  if (state.topic && ['topic','curr'].includes(state.lvl)) cr.push([TOPIC[state.topic].name, {lvl:'topic', curr:null}]);
+  if (state.curr && state.lvl==='curr') cr.push([CURR[state.curr].name, {}]);
+  const nav = document.getElementById('crumbs');
+  nav.innerHTML = cr.map((c,k) => k===cr.length-1 ? `<span class="cur">${esc(c[0])}</span>` : `<button data-crumb="${k}">${esc(c[0])}</button><span class="sep">›</span>`).join('');
+  nav.querySelectorAll('[data-crumb]').forEach(b => b.onclick = () => go(cr[+b.dataset.crumb][1]));
+  draws = [];
+  const v = document.getElementById('view');
+  v.innerHTML = { all:viewAll, exam:viewExam, subject:viewSubject, topic:viewTopic, curr:viewCurr }[state.lvl]();
+  draws.forEach(d => d());
+}
+document.getElementById('view').addEventListener('click', ev => {
+  const el = ev.target.closest('[data-subj],[data-topic],[data-exam],[data-curr],[data-metric],[data-sort],[data-toast],[data-set],[data-formula]'); if (!el) return;
+  ev.stopPropagation();
+  const d = el.dataset;
+  if (d.toast) return toast(d.toast);
+  if (d.formula) { state.formula = !state.formula; return render(); }
+  if (d.set) { state[d.set] = d.val; return render(); }
+  if (d.metric) return go({metric:d.metric});
+  if (d.sort) return go({sort:d.sort});
+  if (d.curr) return go({lvl:'curr', curr:d.curr});
+  if (d.topic) { const t = TOPIC[d.topic]; return go({lvl:'topic', topic:d.topic, subj:t.subj, exam: d.exam!=null ? +d.exam : state.exam}); }
+  if (d.subj) return go({lvl:'subject', subj:d.subj, ...(d.hl!=null ? {exam:+d.hl} : {})});
+  if (d.exam!=null) return go({lvl:'exam', exam:+d.exam});
+});
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { state.role = b.dataset.r; try { localStorage.setItem('dat-role', state.role); } catch(e) {} render(); });
+let tt; function toast(msg){ const el = document.getElementById('toast'); el.textContent = msg; el.hidden = false; clearTimeout(tt); tt = setTimeout(() => el.hidden = true, 2600); }
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => draws.forEach(d => d()), 120); });
+render();
+</script>

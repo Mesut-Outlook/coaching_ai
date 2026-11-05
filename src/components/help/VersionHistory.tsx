@@ -15,6 +15,20 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '5 Kasım 2026',
+    entries: [
+      {
+        version: 'v0.33',
+        title: 'Deneme analizi derinlemesine',
+        items: [
+          'Deneme analizinde tıklayarak adım adım inebilirsin: genel görünüm, deneme, ders, karne konusu ve müfredat konusu. Her adımda geri dönmek için yol çubuğu vardır.',
+          'Müfredat konusunda ödev ve test sonuçları, deneme sonuçlarıyla yan yana görünür.',
+          'Aynı iniş öğrenci ve veli portalında da var.',
+        ],
+      },
+    ],
+  },
+  {
     date: '2 Kasım 2026',
     entries: [
       {

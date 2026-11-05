@@ -44,10 +44,10 @@ const GUIDE: GuideItem[] = [
   },
   {
     to: '/ogrenciler',
-    label: 'Deneme Analizi (3 Seviye)',
+    label: 'Deneme Analizi',
     icon: TrendingUp,
     step: 'Analiz & Görüşme',
-    body: 'Öğrenci profilindeki "Deneme Analizi" sekmesi deneme verilerini üç seviyede inceler: (1) Genel: net çizgisi, ortalama, net değişimi (Δ) ve görüşmede konuşulacak koç içgörüleri; (2) Ders: en çok net kaybettiren dersler ve tüm denemelerin ders ısı tablosu; (3) Konu: en çok net kaybettiren ilk 10 konu, ders filtreli konu ısı tablosu, birikimli soru/doğru/yanlış toplamları ve gelişim eğilimleri. Grafik ve tablo arasında tek tıkla geçiş yapılabilir.',
+    body: 'Öğrenci profilindeki "Deneme Analizi" sekmesi denemeleri beş basamakta incelenir; her basamakta bir şeye tıklayarak bir alt basamağa inersin, üstteki yol çubuğundan geri dönersin. (1) Genel: toplam net çizgisi ve hedef, netin derslere dağılımı, ders kartları veya ders ısı tablosu, tüm denemelerde en çok net kaybettiren konular ve görüşmede konuşulacak içgörüler. (2) Deneme: önceki denemeye göre ders değişimi, doğru / yanlış / boş sayıları, karne bilgileri (puan, sıra, koç notu) ve o denemede net kaybettiren konular. (3) Ders: gelişim çizgisi (net ya da başarı %) ve konu × deneme tablosu. (4) Karne konusu: bantlı başarı grafiği, müfredattaki karşılığı; koç için "Programa ekle" ve "Neden ekle" düğmeleri. (5) Müfredat konusu: deneme ve ödev / test sonuçları yan yana. Her sayının yanındaki "Nasıl hesaplandı?" bağlantısı formülü açar. Öğrenci ve veli portalında da aynı iniş vardır; veliye kısa açıklamalar eşlik eder.',
     usage: 'Öğrenciyle haftalık görüşmede veya veli bilgilendirmesinde deneme gelişimini ve eksik konuları netleştirmek istediğinde.',
   },
   {

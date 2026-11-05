@@ -6,14 +6,17 @@ export interface StackedBarSection {
   wrong: number
   blank: number
   total: number
+  /** Verilirse sağ metne 'Net x' eklenir */
+  net?: number
 }
 
 export interface StackedBarChartProps {
   sections: StackedBarSection[]
   palette?: Partial<ChartPalette>
+  onItemClick?: (index: number) => void
 }
 
-export default function StackedBarChart({ sections, palette }: StackedBarChartProps) {
+export default function StackedBarChart({ sections, palette, onItemClick }: StackedBarChartProps) {
   const pal = { ...DEFAULT_CHART_PALETTE, ...palette }
 
   if (sections.length === 0) {
@@ -50,11 +53,11 @@ export default function StackedBarChart({ sections, palette }: StackedBarChartPr
         const blankPct = (sec.blank / total) * 100
 
         return (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Row key={i} onClick={onItemClick ? () => onItemClick(i) : undefined}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
               <span style={{ fontWeight: 600, color: pal.text }}>{sec.label}</span>
               <span style={{ color: pal.textMuted }}>
-                {sec.correct}D · {sec.wrong}Y · {sec.blank}B / {sec.total} soru
+                {sec.correct}D · {sec.wrong}Y · {sec.blank}B / {sec.total} soru{sec.net != null && ` · Net ${sec.net.toFixed(2).replace('.', ',')}`}
               </span>
             </div>
 
@@ -98,9 +101,23 @@ export default function StackedBarChart({ sections, palette }: StackedBarChartPr
                 />
               )}
             </div>
-          </div>
+          </Row>
         )
       })}
     </div>
+  )
+}
+
+function Row({ onClick, children }: { onClick?: () => void; children: React.ReactNode }) {
+  const base: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4 }
+  if (!onClick) return <div style={base}>{children}</div>
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ ...base, background: 'none', border: 0, padding: '4px 0', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer', width: '100%' }}
+    >
+      {children}
+    </button>
   )
 }
