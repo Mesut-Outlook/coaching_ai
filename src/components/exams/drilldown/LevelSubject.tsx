@@ -8,9 +8,9 @@ import Sparkline from '../../charts/Sparkline'
 import StackedColumnChart from '../../charts/StackedColumnChart'
 import LevelHeader from './LevelHeader'
 import type { DrillProps } from './types'
-import { cardStyle, niceStep, shortDate, signed } from './format'
+import { cardStyle, niceStep, reasonItems, shortDate, signed } from './format'
 import { BandChip, Explain, Legend, SegToggle, Stat, StatGrid } from './ui'
-import { ReasonChips, TopicActions, reasonItems } from './TopicActions'
+import { ReasonChips, TopicActions } from './TopicActions'
 
 type SortKey = 'karne' | 'zayif' | 'dusen'
 

@@ -3,12 +3,7 @@ import type { ErrorBasketItem } from '../../../types/database'
 import type { TopicRowData } from '../../../lib/examReport'
 import { ERROR_REASON_CONFIG } from '../../../lib/report360Core'
 import type { DrillProps } from './types'
-
-/** Karne konusunun birincil müfredat konusuna girilmiş yanlış nedenleri. */
-export function reasonItems(p: Pick<DrillProps, 'catalog' | 'errorItems'>, examTopicId: number): ErrorBasketItem[] {
-  const cid = p.catalog.links?.find((l) => l.exam_topic_id === examTopicId && l.is_primary)?.topic_id
-  return cid == null ? [] : p.errorItems.filter((i) => i.topic_id === cid)
-}
+import { reasonItems } from './format'
 
 /** Koç işlemleri: Programa ekle + Neden ekle/düzenle (yalnız yanlış ya da kayıtlı neden varsa). */
 export function TopicActions({

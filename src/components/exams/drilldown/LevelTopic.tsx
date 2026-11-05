@@ -3,9 +3,9 @@ import ExamLineChart from '../../charts/ExamLineChart'
 import StackedColumnChart from '../../charts/StackedColumnChart'
 import LevelHeader from './LevelHeader'
 import type { DrillProps } from './types'
-import { cardStyle, niceStep, shortDate, signed } from './format'
+import { cardStyle, niceStep, reasonItems, shortDate, signed } from './format'
 import { BandChip, Explain, Legend, Stat, StatGrid } from './ui'
-import { ReasonChips, TopicActions, reasonItems } from './TopicActions'
+import { ReasonChips, TopicActions } from './TopicActions'
 
 export default function LevelTopic(props: DrillProps) {
   const { report, catalog, role, palette: pal, state, go } = props
