@@ -23,6 +23,9 @@ create table if not exists auth.users (
   raw_user_meta_data jsonb default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
+-- Gerçek auth.users'ta da var; member_auth_info okuyor.
+alter table auth.users add column if not exists email_confirmed_at timestamptz;
+alter table auth.users add column if not exists last_sign_in_at timestamptz;
 
 -- Supabase'de bunlar JWT claim'lerinden okur; testte oturum değişkeninden okuyorlar.
 -- ⚠️ Oturum değişkeni set edilmezse auth.uid() NULL döner — Supabase SQL Editor'deki

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Plus, UserCheck, Mail, Shield, Trash2, Edit2, Share2, Check, Copy, X } from 'lucide-react'
+import { Plus, UserCheck, Mail, Shield, Trash2, Edit2, Share2, Check, Copy, X, KeyRound, UserMinus } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAccess } from '../../contexts/useAccess'
@@ -22,6 +22,16 @@ type InvitationWithRole = Invitation & {
 }
 
 type MembershipWithRole = Membership & { roles: Pick<Role, 'name'> | null }
+
+type AuthInfo = { email: string; email_confirmed_at: string | null; last_sign_in_at: string | null }
+
+const formatDate = (iso: string) => new Date(iso).toLocaleDateString('tr-TR')
+
+/** Supabase auth hatalarını kullanıcıya anlaşılır söyle; en sık olanı mail sınırı. */
+const authErrorText = (msg: string) =>
+  /rate limit|security purposes|too many/i.test(msg)
+    ? 'Kısa sürede çok fazla e-posta istendi. Birkaç dakika sonra tekrar deneyin.'
+    : msg
 
 /** kurum id → rol id; kurum anahtarı yoksa o kurumda yetkisi yok */
 type AccessDraft = Record<string, string>
@@ -104,6 +114,10 @@ export default function KullanicilarPage() {
   const [roles, setRoles] = useState<Role[]>([])
   // Listedeki kişilerin tüm kurumlardaki üyelikleri (görebildiğimiz kurumlar)
   const [accessByUser, setAccessByUser] = useState<Record<string, MembershipWithRole[]>>({})
+  // user_id → e-posta, onay ve son giriş (member_auth_info; SQL çalıştırılmadıysa boş kalır)
+  const [authInfo, setAuthInfo] = useState<Record<string, AuthInfo>>({})
+  const [showInactive, setShowInactive] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -170,6 +184,12 @@ export default function KullanicilarPage() {
         ;(byUser[row.user_id] ??= []).push(row)
       }
 
+      // Yeni RPC henüz canlıda yoksa liste e-postasız çalışmaya devam etsin.
+      const infoRes = await supabase.rpc('member_auth_info', { p_institution: activeInstitutionId! })
+      const info: Record<string, AuthInfo> = {}
+      for (const r of infoRes.data ?? []) info[r.user_id] = r
+
+      setAuthInfo(info)
       setMembers(memberRows)
       setInvitations((invitesRes.data as any) || [])
       setRoles(rolesRes.data || [])
@@ -286,6 +306,48 @@ export default function KullanicilarPage() {
     }
   }
 
+  const memberName = (m: MemberWithDetails) => m.profiles?.full_name || authInfo[m.user_id]?.email || 'Bu kişi'
+
+  const handleSendPasswordReset = async (m: MemberWithDetails) => {
+    const email = authInfo[m.user_id]?.email
+    if (!email || !confirm(`${email} adresine şifre sıfırlama bağlantısı gönderilsin mi?`)) return
+    setError(null)
+    setNotice(null)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/sifre-sifirla`,
+    })
+    if (err) setError(authErrorText(err.message))
+    else setNotice(`${email} adresine şifre sıfırlama bağlantısı gönderildi. Gelmezse spam klasörüne baksın.`)
+  }
+
+  const handleResendConfirmation = async (m: MemberWithDetails) => {
+    const email = authInfo[m.user_id]?.email
+    if (!email) return
+    setError(null)
+    setNotice(null)
+    const { error: err } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/login` },
+    })
+    if (err) setError(authErrorText(err.message))
+    else setNotice(`${email} adresine doğrulama e-postası yeniden gönderildi.`)
+  }
+
+  const handleRemoveMember = async (m: MemberWithDetails) => {
+    if (!confirm(`${memberName(m)} ${activeInstitutionName} kurumundan çıkarılsın mı?\n\nHesabı ve öğrencileri silinmez; gerekirse yeniden davet edilebilir.`)) return
+    setError(null)
+    setNotice(null)
+    const { data, error: err } = await supabase.rpc('remove_member', { p_membership: m.id })
+    const res = data as { ok?: boolean; error?: string } | null
+    if (err || !res?.ok) {
+      setError(err?.message.includes('remove_member') ? 'Bu özellik için veritabanı güncellemesi henüz yapılmamış.' : (res?.error ?? err?.message ?? 'Kişi çıkarılamadı.'))
+      return
+    }
+    setNotice(`${memberName(m)} kurumdan çıkarıldı.`)
+    loadData()
+  }
+
   const openAccessEditor = (m: MemberWithDetails) => {
     const draft: AccessDraft = {}
     for (const row of accessByUser[m.user_id] ?? []) {
@@ -350,11 +412,15 @@ export default function KullanicilarPage() {
     )
   }
 
+  const activeMembers = members.filter((m) => m.is_active)
+  const inactiveCount = members.length - activeMembers.length
+  const visibleMembers = showInactive ? members : activeMembers
+
   return (
     <section className="screen">
       <PageHeader
         title="Kullanıcı Yönetimi"
-        subtitle={`${members.length} aktif/pasif üye, ${invitations.length} bekleyen davet`}
+        subtitle={`${activeMembers.length} aktif üye${inactiveCount ? `, ${inactiveCount} pasif` : ''}, ${invitations.length} bekleyen davet`}
         actions={
           <button
             type="button"
@@ -373,6 +439,7 @@ export default function KullanicilarPage() {
       />
 
       {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+      {notice && <div className="alert alert-success" style={{ marginBottom: 16 }}>{notice}</div>}
 
       {/* Bekleyen Davetler */}
       {invitations.length > 0 && (
@@ -451,11 +518,17 @@ export default function KullanicilarPage() {
       <div className="card" style={{ padding: 20 }}>
         <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <UserCheck size={18} style={{ color: 'var(--indigo-600)' }} /> Kurum Üyeleri
+          {inactiveCount > 0 && (
+            <label style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 500, color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
+              Pasifleri göster ({inactiveCount})
+            </label>
+          )}
         </h3>
 
         {loading ? (
           <div style={{ padding: 32, textAlign: 'center', color: 'var(--ink-soft)' }}>Yükleniyor…</div>
-        ) : members.length === 0 ? (
+        ) : visibleMembers.length === 0 ? (
           <div style={{ padding: 32, textAlign: 'center', color: 'var(--ink-soft)' }}>
             Bu kurumda henüz kayıtlı üye bulunmuyor.
           </div>
@@ -472,7 +545,9 @@ export default function KullanicilarPage() {
                 </tr>
               </thead>
               <tbody>
-                {members.map((m) => (
+                {visibleMembers.map((m) => {
+                  const info = authInfo[m.user_id]
+                  return (
                   <tr key={m.id}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -491,7 +566,20 @@ export default function KullanicilarPage() {
                         >
                           {m.profiles?.full_name ? m.profiles.full_name.charAt(0).toUpperCase() : '?'}
                         </div>
-                        <span style={{ fontWeight: 500 }}>{m.profiles?.full_name || 'İsimsiz Üye'}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                          <span style={{ fontWeight: 500 }}>{m.profiles?.full_name || 'İsimsiz Üye'}</span>
+                          {info && (
+                            <>
+                              <span style={{ fontSize: 12, color: 'var(--ink-faint)' }}>{info.email}</span>
+                              <span style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                                {!info.email_confirmed_at && <span className="badge badge-warning">E-posta onaylanmadı</span>}
+                                <span className="badge badge-subtle">
+                                  {info.last_sign_in_at ? `Son giriş: ${formatDate(info.last_sign_in_at)}` : 'Hiç giriş yapmadı'}
+                                </span>
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td>
@@ -517,7 +605,7 @@ export default function KullanicilarPage() {
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
                         <button
                           type="button"
                           className="btn btn-ghost btn-sm"
@@ -525,6 +613,16 @@ export default function KullanicilarPage() {
                         >
                           <Edit2 size={14} /> Kurum ve Rol
                         </button>
+                        {info && !info.email_confirmed_at && (
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleResendConfirmation(m)}>
+                            <Mail size={14} /> Onay maili
+                          </button>
+                        )}
+                        {info && m.user_id !== user?.id && (
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleSendPasswordReset(m)}>
+                            <KeyRound size={14} /> Şifre linki
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn btn-ghost btn-sm"
@@ -533,10 +631,21 @@ export default function KullanicilarPage() {
                         >
                           {m.is_active ? 'Pasifleştir' : 'Aktifleştir'}
                         </button>
+                        {m.user_id !== user?.id && (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: 'var(--critical-text)' }}
+                            onClick={() => handleRemoveMember(m)}
+                          >
+                            <UserMinus size={14} /> Kurumdan çıkar
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -15,6 +15,22 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '6 Kasım 2026',
+    entries: [
+      {
+        version: 'v0.35',
+        title: 'Kullanıcılar: kurumdan çıkarma, şifre ve onay yardımı',
+        items: [
+          'Üye listesinde her kişinin e-postası, e-postasını onaylayıp onaylamadığı ve son giriş tarihi görünür. Aynı isimli iki hesap artık ayırt edilir.',
+          '"Kurumdan çıkar" düğmesi kişiyi kurumdan tamamen çıkarır. Hesabı ve öğrencileri silinmez, gerekirse yeniden davet edilebilir. Kişi kendini, kurumun son yöneticisini ya da özel koçluğunu yaptığı öğrencisi olan birini çıkaramaz.',
+          'Pasif üyeler varsayılan olarak gizlenir; "Pasifleri göster" ile görülür.',
+          '"Şifre linki" düğmesi kişinin e-postasına şifre sıfırlama bağlantısı gönderir. E-postasını onaylamamış kişiye "Onay maili" ile doğrulama e-postası yeniden gider.',
+          'Davet formu "ad.@gmail.com" gibi hatalı e-postaları göndermeden önce yakalar. Kullanılmış bir davet bağlantısı açılınca kişi yeni davet istemek yerine girişe yönlendirilir.',
+        ],
+      },
+    ],
+  },
+  {
     date: '5 Kasım 2026',
     entries: [
       {
