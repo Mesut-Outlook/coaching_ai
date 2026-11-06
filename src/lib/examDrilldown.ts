@@ -5,8 +5,8 @@
  * calcLossNet / calcTopicAccuracy / round2 / getMasteryBand yeniden kullanılır.
  */
 import {
-  calcTopicAccuracy, getMasteryBand, round2,
-  type ExamReportResult, type ExamTopicLinkInfo, type HomeworkItem, type MasteryBand, type TopicCell,
+  calcNet, calcTopicAccuracy, getMasteryBand, round2,
+  type ExamReportResult, type RawExamRecord, type ExamTopicLinkInfo, type HomeworkItem, type MasteryBand, type TopicCell,
 } from './examReport'
 
 type Cell = Pick<TopicCell, 'entered' | 'question_count' | 'correct_count'>
@@ -92,11 +92,29 @@ export function examDetail(report: ExamReportResult, examId: string): ExamDetail
 }
 
 /** Deneme başına section_name grupları ve grup net toplamı (yalnız girilmiş ders sonuçları). */
-export function groupNetsByExam(report: ExamReportResult): Array<{ exam_id: string; groups: Array<{ section_name: string; net: number }> }> {
+export function groupNetsByExam(
+  report: ExamReportResult,
+  exams: RawExamRecord[] = [],
+): Array<{ exam_id: string; groups: Array<{ section_name: string; net: number }> }> {
+  const byId = new Map(exams.map((e) => [e.id, e]))
   return report.general.time_series.map((p, i) => {
     const map = new Map<string, number>()
+    const entered = new Set<string>()
     for (const r of report.subjects.rows) {
-      map.set(r.section_name, (map.get(r.section_name) ?? 0) + (r.cells[i]?.entered ? r.cells[i].net : 0))
+      if (!map.has(r.section_name)) map.set(r.section_name, 0)
+      if (r.cells[i]?.entered) {
+        map.set(r.section_name, (map.get(r.section_name) ?? 0) + r.cells[i].net)
+        entered.add(r.section_name)
+      }
+    }
+    // Alt dersi girilmemiş derste denemenin ders netini kullan: eski girişler yalnız
+    // ders neti taşır, yoksa sütun boş çizilir (2026-11-05 canlıda yakalandı).
+    const exam = byId.get(p.exam_id)
+    for (const s of exam?.sections ?? []) {
+      if (entered.has(s.section_name)) continue
+      const penalty = s.wrong_penalty ?? (exam?.exam_type === 'LGS' ? 3 : 4)
+      const net = s.net != null ? Number(s.net) : calcNet(s.correct_count, s.wrong_count, penalty)
+      map.set(s.section_name, (map.get(s.section_name) ?? 0) + net)
     }
     return { exam_id: p.exam_id, groups: [...map].map(([section_name, net]) => ({ section_name, net: round2(net) })) }
   })

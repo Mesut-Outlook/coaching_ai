@@ -240,7 +240,7 @@ export default function ExamLineChart({
         {avgY !== null && (
           <g>
             <line x1={padLeft} y1={avgY} x2={padLeft + plotW} y2={avgY} stroke={pal.averageLine} strokeWidth={1.5} strokeDasharray="4 4" />
-            <text x={padLeft + plotW - 4} y={avgY - 5} textAnchor="end" fill={pal.textMuted} fontSize={9.5} fontWeight={600} fontFamily="inherit">
+            <text x={padLeft + plotW - 14} y={avgY - 5} textAnchor="end" fill={pal.textMuted} fontSize={9.5} fontWeight={600} fontFamily="inherit" stroke={pal.surface} strokeWidth={3} paintOrder="stroke">
               Ort: {average?.toFixed(1).replace('.', ',')}
             </text>
           </g>
@@ -263,7 +263,14 @@ export default function ExamLineChart({
           mainVals.map((v, i) =>
             v == null && slotW >= 64 && (!secondSeries || second[i] == null) ? (
               <g key={`g${i}`}>
-                <text x={x(i)} y={padTop + plotH / 2} textAnchor="middle" fontSize={10.5} fill={pal.textMuted} fontFamily="inherit">
+                <text
+                  x={x(i)}
+                  y={padTop + plotH / 2}
+                  textAnchor={i === 0 && n > 1 ? 'start' : i === n - 1 && n > 1 ? 'end' : 'middle'}
+                  fontSize={10.5}
+                  fill={pal.textMuted}
+                  fontFamily="inherit"
+                >
                   {nullLabel}
                 </text>
               </g>

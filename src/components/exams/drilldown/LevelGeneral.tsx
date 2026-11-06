@@ -61,7 +61,7 @@ export default function LevelGeneral({
   ].filter(Boolean)
 
   // Net hangi dersten geliyor
-  const groupData = useMemo(() => groupNetsByExam(report), [report])
+  const groupData = useMemo(() => groupNetsByExam(report, exams), [report, exams])
   const groupNames = useMemo(() => {
     const names: string[] = []
     for (const g of groupData) for (const p of g.groups) if (!names.includes(p.section_name)) names.push(p.section_name)

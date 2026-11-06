@@ -78,6 +78,14 @@ const lgs = generateExamReport([{
   subject_results: [{ exam_subject_id: 9, question_count: 20, correct_count: 12, wrong_count: 6, blank_count: 2 }],
 }], { subjects: [{ id: 9, exam_type: 'LGS', section_name: 'Türkçe', subject_id: 1, label: 'Türkçe', question_count: 20 }], topics: [] }, 'LGS')
 assert.equal(groupNetsByExam(lgs)[0].groups[0].net, 10) // 12 - 6/3
+// Alt dersi girilmemiş eski deneme: ders neti sections'tan gelir, sütun boş kalmaz.
+const old = [{
+  id: 'o1', student_id: 's', name: 'Eski', exam_type: 'TYT' as const, exam_date: '2026-09-20',
+  sections: [{ section_name: 'Türkçe', max_questions: 40, correct_count: 20, wrong_count: 4 }],
+}]
+const oldRep = generateExamReport(old, { subjects: [{ id: 1, exam_type: 'TYT', section_name: 'Türkçe', subject_id: 1, label: 'Türkçe', question_count: 40 }], topics: [] }, 'TYT')
+assert.equal(groupNetsByExam(oldRep)[0].groups.find((g) => g.section_name === 'Türkçe')?.net ?? 0, 0)
+assert.equal(groupNetsByExam(oldRep, old)[0].groups.find((g) => g.section_name === 'Türkçe')!.net, 19) // 20 - 4/4
 console.log('✓ groupNetsByExam')
 
 // Müfredat bağları
