@@ -519,6 +519,11 @@ export type Database = {
     Functions: {
       my_access: { Args: Record<string, never>; Returns: Json }
       invitation_by_token: { Args: { p_token: string }; Returns: Json }
+      member_auth_info: {
+        Args: { p_institution: string }
+        Returns: { user_id: string; email: string; email_confirmed_at: string | null; last_sign_in_at: string | null }[]
+      }
+      remove_member: { Args: { p_membership: string }; Returns: Json }
       audit_purge: { Args: { p_before: string }; Returns: Json }
       audit_stats: { Args: Record<string, never>; Returns: Json }
       tercih_listesi_kaydet: {
