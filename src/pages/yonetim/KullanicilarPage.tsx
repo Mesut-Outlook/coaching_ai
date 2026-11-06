@@ -8,6 +8,10 @@ import type { Membership, Invitation, Role, Profile } from '../../types/database
 import { openWhatsAppChat } from '../../lib/whatsapp'
 import { BRAND_LONG } from '../../lib/brand'
 
+// Tarayıcının type="email" denetimi "ad.@gmail.com" gibi adresleri geçiriyor (2026-11-06 canlıda bir davet böyle takıldı).
+// Yerel kısım ve alan adı noktayla başlayamaz/bitemez, iki nokta yan yana olamaz.
+const EMAIL_RE = /^[^\s@.]+(\.[^\s@.]+)*@[^\s@.]+(\.[^\s@.]+)+$/
+
 type MemberWithDetails = Membership & {
   profiles: Profile | null
   roles: Role | null
@@ -192,6 +196,10 @@ export default function KullanicilarPage() {
     }
     if (!inviteEmail.trim()) {
       setError('E-posta adresi zorunlu.')
+      return
+    }
+    if (!EMAIL_RE.test(inviteEmail.trim())) {
+      setError('E-posta adresi geçersiz görünüyor. "@" işaretinin iki yanını, nokta ve boşlukları kontrol edin (ör. "ad.@gmail.com" olmaz).')
       return
     }
     const targets = Object.entries(inviteDraft)
