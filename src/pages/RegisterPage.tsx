@@ -126,16 +126,18 @@ export default function RegisterPage() {
         subtitle={
           inviteState === 'kontrol'
             ? undefined
-            : 'Bu bağlantı geçersiz, süresi dolmuş ya da davet zaten kullanılmış olabilir.'
+            : 'Bu davet bağlantısı artık açık değil: daha önce kullanılmış ya da iptal edilmiş.'
         }
       >
         {inviteState === 'gecersiz' && (
           <>
-            <div className="alert alert-error" style={{ marginBottom: 16 }}>
-              Kayıt olabilmek için kurum yöneticinden yeni bir davet bağlantısı iste.
+            {/* Davet kullanılınca link kapanır; hesabı olan kişi yeni davet isteyip döngüye girmesin (2026-11-06). */}
+            <div className="alert alert-warning" style={{ marginBottom: 16 }}>
+              Bu davetle daha önce kayıt olduysan hesabın hazır: e-posta adresin ve şifrenle giriş yap.
+              Hiç kayıt olmadıysan kurum yöneticinden yeni bir davet bağlantısı iste.
             </div>
-            <Link to="/login" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center' }}>
-              Girişe dön
+            <Link to="/login" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+              Giriş yap
             </Link>
           </>
         )}
