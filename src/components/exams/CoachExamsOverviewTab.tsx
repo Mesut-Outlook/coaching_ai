@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   TrendingUp,
   AlertTriangle,
@@ -25,6 +25,7 @@ export interface CoachExamsOverviewTabProps {
 
 export default function CoachExamsOverviewTab({ students, allExams }: CoachExamsOverviewTabProps) {
   const [selectedStudentFilter, setSelectedStudentFilter] = useState<string>('ALL')
+  const navigate = useNavigate()
 
   // 1. Son 7 Günde Girilen Deneme Sayısı
   const last7DaysCount = useMemo(() => {
@@ -81,10 +82,12 @@ export default function CoachExamsOverviewTab({ students, allExams }: CoachExams
     return Math.round((sum / validDeltas.length) * 100) / 100
   }, [studentLatestSummaries])
 
-  // 4. "Nerede Puan Kaybediyorlar?" En Çok Kaybettiren Konular
-  // Bölüm bazında ortalama kayıp netler
+  // 4. "Nerede Net Kaybediyorlar?" — bölüm başına kayıp = soru sayısı − net.
+  // Ham toplam soru sayısını cezalandırır (40 soruluk Matematik hep başta çıkar);
+  // bu yüzden ORAN'a göre sıralanır, deneme başına ortalama gösterilir.
+  // TYT/AYT/LGS'nin aynı adlı bölümleri ayrı tutulur.
   const aggregatedLossItems = useMemo(() => {
-    const sectionLossMap: Record<string, { lossNet: number; count: number; totalQuestions: number }> = {}
+    const map = new Map<string, { examType: string; section: string; loss: number; count: number; questions: number }>()
 
     const filtered =
       selectedStudentFilter === 'ALL'
@@ -93,24 +96,30 @@ export default function CoachExamsOverviewTab({ students, allExams }: CoachExams
 
     filtered.forEach((e) => {
       e.sectionsList.forEach((sec) => {
-        const loss = sec.max_questions - Number(sec.net)
-        if (!sectionLossMap[sec.section_name]) {
-          sectionLossMap[sec.section_name] = { lossNet: 0, count: 0, totalQuestions: 0 }
-        }
-        sectionLossMap[sec.section_name].lossNet += Math.max(0, loss)
-        sectionLossMap[sec.section_name].count += 1
-        sectionLossMap[sec.section_name].totalQuestions += sec.max_questions
+        if (!sec.max_questions) return
+        const key = `${e.exam_type}|${sec.section_name}`
+        const row = map.get(key) ?? { examType: e.exam_type, section: sec.section_name, loss: 0, count: 0, questions: 0 }
+        row.loss += Math.max(0, sec.max_questions - Number(sec.net))
+        row.count += 1
+        row.questions += sec.max_questions
+        map.set(key, row)
       })
     })
 
-    return Object.entries(sectionLossMap)
-      .map(([name, data]) => ({
-        label: name,
-        subLabel: `${data.count} deneme · ${data.totalQuestions} soru`,
-        lossNet: Math.round(data.lossNet * 100) / 100,
-        totalQuestions: data.totalQuestions,
-      }))
-      .sort((a, b) => b.lossNet - a.lossNet)
+    const multiType = new Set([...map.values()].map((r) => r.examType)).size > 1
+    return [...map.values()]
+      .map((r) => {
+        const pct = (r.loss / r.questions) * 100
+        return {
+          examType: r.examType,
+          section: r.section,
+          label: multiType ? `${r.examType} ${r.section}` : r.section,
+          subLabel: `%${Math.round(pct)} kayıp · ${r.count} deneme`,
+          lossNet: Math.round((r.loss / r.count) * 100) / 100,
+          barPercent: pct,
+        }
+      })
+      .sort((a, b) => b.barPercent - a.barPercent)
   }, [allExams, selectedStudentFilter])
 
   return (
@@ -300,7 +309,7 @@ export default function CoachExamsOverviewTab({ students, allExams }: CoachExams
           </div>
         </div>
 
-        {/* SAĞ: Nerede Puan Kaybediyorlar? */}
+        {/* SAĞ: Nerede Net Kaybediyorlar? */}
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <h3 style={{ fontSize: 15, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -326,10 +335,28 @@ export default function CoachExamsOverviewTab({ students, allExams }: CoachExams
           </div>
 
           <p style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginBottom: 14, lineHeight: 1.5 }}>
-            Öğrencilerin denemelerinde en çok net kaybı yaşadığı alanlar:
+            Kayıp = soru sayısı − net. Sağdaki değer <b>deneme başına ortalama</b> kayıp; çubuk ve sıralama
+            sorulara oranla kaybı (%) gösterir.
+            {selectedStudentFilter === 'ALL'
+              ? ' Ayrıntı için bir öğrenci seçin.'
+              : ' Bir derse tıklayınca öğrencinin deneme analizinde o derse inilir.'}
           </p>
 
-          <LossBarChart items={aggregatedLossItems} maxItems={8} />
+          <LossBarChart
+            items={aggregatedLossItems}
+            maxItems={8}
+            unit="net / deneme"
+            onItemClick={
+              selectedStudentFilter === 'ALL'
+                ? undefined
+                : (i) => {
+                    const it = aggregatedLossItems[i]
+                    navigate(
+                      `/ogrenciler/${selectedStudentFilter}?tab=analysis&tur=${it.examType}&bolum=${encodeURIComponent(it.section)}`,
+                    )
+                  }
+            }
+          />
         </div>
       </div>
     </div>

@@ -5,6 +5,8 @@ export interface LossBarItem {
   subLabel?: string
   lossNet: number
   totalQuestions?: number
+  /** Verilirse çubuk genişliği (0–100) budur; yoksa en büyük kayba oranlanır. */
+  barPercent?: number
 }
 
 export interface LossBarChartProps {
@@ -40,7 +42,7 @@ export default function LossBarChart({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
       {displayItems.map((item, index) => {
-        const percent = Math.min(100, Math.max(4, (item.lossNet / maxLoss) * 100))
+        const percent = Math.min(100, Math.max(4, item.barPercent ?? (item.lossNet / maxLoss) * 100))
 
         return (
           <Row key={index} onClick={onItemClick ? () => onItemClick(index) : undefined}>
