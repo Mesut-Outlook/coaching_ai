@@ -21,7 +21,7 @@ import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
-import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject, AttendanceRecord } from '../types/database'
+import type { Student, MockExam, MockExamSection, WeeklyTask, CoachDecision, Topic, Subject, AttendanceRecord, ExamType } from '../types/database'
 import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../lib/attendance'
 import { topicAppliesTo, gradeCurriculum } from '../lib/curriculum'
 import { weightedNet } from '../lib/examSections'
@@ -1140,7 +1140,12 @@ export default function OgrencilerPage() {
 
       {/* TAB CONTENT: Deneme Analizi (K4) */}
       {activeTab === 'analysis' && (
-        <StudentExamAnalysisView studentId={student.id} role="coach" />
+        <StudentExamAnalysisView
+          studentId={student.id}
+          role="coach"
+          initialExamType={(searchParams.get('tur') as ExamType | null) ?? undefined}
+          initialSection={searchParams.get('bolum') ?? undefined}
+        />
       )}
 
       {/* TAB CONTENT: Subject Proficiency Map */}

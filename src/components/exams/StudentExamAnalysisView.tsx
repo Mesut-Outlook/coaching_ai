@@ -41,6 +41,8 @@ export interface StudentExamAnalysisViewProps {
   palette?: Partial<ChartPalette>
   role?: 'coach' | 'student' | 'parent'
   initialExamType?: ExamType
+  /** Açılışta bu bölümün (örn. 'Matematik') en çok kaybettiren alt dersine inilir. */
+  initialSection?: string
   initialCatalog?: ExamReportCatalog
   initialExams?: RawExamRecord[]
   targets?: { TYT?: number | null; AYT?: number | null; LGS?: number | null }
@@ -84,6 +86,7 @@ export default function StudentExamAnalysisView({
   palette,
   role = 'coach',
   initialExamType,
+  initialSection,
   initialCatalog,
   initialExams,
   targets: targetsProp,
@@ -328,6 +331,17 @@ export default function StudentExamAnalysisView({
     if (rawExams.length === 0 || catalog.subjects.length === 0) return null
     return generateExamReport(rawExams, catalog, selectedExamType)
   }, [rawExams, catalog, selectedExamType])
+
+  // Koç özetindeki "Nerede Net Kaybediyorlar?" satırından gelindiyse bir kez o bölüme in.
+  const [pendingSection, setPendingSection] = useState(initialSection)
+  useEffect(() => {
+    if (!report || !pendingSection) return
+    const worst = report.subjects.rows
+      .filter((r) => r.section_name === pendingSection)
+      .sort((a, b) => b.total_loss - a.total_loss)[0]
+    if (worst) setDrill({ ...INITIAL_DRILL, level: 'subject', examSubjectId: worst.exam_subject_id })
+    setPendingSection(undefined)
+  }, [report, pendingSection])
 
   // Uyarılar / İçgörüler
   const insights: RoleInsightItem[] = useMemo(() => {
