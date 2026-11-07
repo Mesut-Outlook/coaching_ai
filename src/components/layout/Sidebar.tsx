@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAccess } from '../../contexts/AccessContext'
-import { BRAND_SHORT, BRAND_TAGLINE } from '../../lib/brand'
+import { BRAND_SHORT, BRAND_TAGLINE, isKonseptInstitution } from '../../lib/brand'
 import type { PermissionKey } from '../../lib/permissions'
 import { useSidebar } from '../../contexts/useSidebar'
 import { useHomeSummary } from '../../contexts/homeSummaryContext'
@@ -168,8 +168,7 @@ export default function Sidebar() {
   const instNameLower = activeMembership?.institution_name.toLowerCase() ?? ''
 
   const isKonseptSelected =
-    Boolean(activeInstitutionId) &&
-    (instNameLower.includes('konsept') || instNameLower.includes('concept'))
+    Boolean(activeInstitutionId) && isKonseptInstitution(instNameLower)
 
   const isNetlikSelected =
     !activeInstitutionId ||

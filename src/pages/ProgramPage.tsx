@@ -20,6 +20,7 @@ import PageHeader from '../components/layout/PageHeader'
 import TopicProgressPanel from '../components/topics/TopicProgressPanel'
 import { fetchStudents } from '../lib/students'
 import { useAccess } from '../contexts/AccessContext'
+import { isKonseptInstitution } from '../lib/brand'
 import { useAuth } from '../contexts/AuthContext'
 import CoachingLockedState from '../components/common/CoachingLockedState'
 import type { Student, Topic, WeeklyTask, Subject, TaskType, ExamType } from '../types/database'
@@ -109,7 +110,7 @@ export default function ProgramPage() {
   const [students, setStudents] = useState<Student[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState(initialStudentId)
   const { user } = useAuth()
-  const { isSystemAdmin, studentScope, can } = useAccess()
+  const { isSystemAdmin, studentScope, can, memberships, activeInstitutionId } = useAccess()
   
   const selectedStudent = useMemo(() => {
     return students.find(s => s.id === selectedStudentId)
@@ -253,6 +254,11 @@ export default function ProgramPage() {
   const currentStudent = useMemo(() => {
     return students.find(s => s.id === selectedStudentId)
   }, [students, selectedStudentId])
+
+  // Yazdırma başlığındaki logo öğrencinin kendi kurumuna göre (yoksa aktif kurum).
+  const printKonsept = isKonseptInstitution(
+    memberships.find((m) => m.institution_id === (currentStudent?.institution_id ?? activeInstitutionId))?.institution_name,
+  )
 
   // Unique subjects, derived from the joined topics list — seçili öğrencinin sınıfına
   // uymayan dersler (subjectAppliesTo) görev atama formundan hiç görünmez.
@@ -708,8 +714,12 @@ export default function ProgramPage() {
       />
 
       <div className="print-only" style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#F6EFDD' }}>
-          <img src="/logo.png" alt="" width={34} height={34} style={{ width: '122%', height: '122%', objectFit: 'cover', margin: '-11%' }} />
+        <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: printKonsept ? '#FFFFFF' : '#F6EFDD' }}>
+          {printKonsept ? (
+            <img src="/logo-konsept.png" alt="" width={34} height={34} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          ) : (
+            <img src="/logo.png" alt="" width={34} height={34} style={{ width: '122%', height: '122%', objectFit: 'cover', margin: '-11%' }} />
+          )}
         </div>
         <div>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{currentStudent?.full_name}</div>
