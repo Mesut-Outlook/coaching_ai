@@ -1602,7 +1602,8 @@ begin
       select json_build_object(
         'id', s.id, 'full_name', s.full_name, 'grade', s.grade, 'track', s.track,
         'target_program', s.target_program, 'target_ranking', s.target_ranking,
-        'photo_url', s.photo_url
+        'photo_url', s.photo_url,
+        'institution_name', (select i.name from institutions i where i.id = s.institution_id)
       ) from students s where s.id = v_student_id
     ),
     'my_week', (

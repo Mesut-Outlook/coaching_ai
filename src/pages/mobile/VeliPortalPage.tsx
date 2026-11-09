@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react'
 import MobileBottomNav, { type PortalNavTab } from '../../components/mobile/MobileBottomNav'
 import ExamSectionsTable from '../../components/exams/ExamSectionsTable'
 import { EXCUSE_LABELS, SESSION_LABELS, STATUS_LABELS, formatDateTr } from '../../lib/attendance'
+import { portalBrand } from '../../lib/brand'
 import { PORTAL_THEME, roleBadgeStyle, roleTopBarStyle } from '../../lib/portalTheme'
 import type { AbsenceStatus, ExcuseType, SessionType } from '../../types/database'
 import StudentExamAnalysisView from '../../components/exams/StudentExamAnalysisView'
@@ -38,6 +39,16 @@ export default function VeliPortalPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<PortalNavTab>('tasks')
+  // Sekme başlığında öğrencinin kurumu (ör. "Konsept Akademi — Veli Portalı").
+  const portalBrandName = portalBrand(data?.student.institution_name)
+  useEffect(() => {
+    if (!portalBrandName) return
+    const prev = document.title
+    document.title = `${portalBrandName} — Veli Portalı`
+    return () => {
+      document.title = prev
+    }
+  }, [portalBrandName])
   const [openExamId, setOpenExamId] = useState<string | null>(null)
   const [examSubTab, setExamSubTab] = useState<'analysis' | 'list'>('analysis')
   const [examReportData, setExamReportData] = useState<PortalExamReportData | null>(null)
@@ -149,6 +160,7 @@ export default function VeliPortalPage() {
 
   const theme = PORTAL_THEME.veli
   const { student, exams, attendance, week_start, is_current_week } = data
+  const brand = portalBrandName
 
   return (
     <div className="portal-page" style={{ minHeight: '100vh', backgroundColor: 'var(--paper)', paddingBottom: 90 }}>
@@ -169,7 +181,7 @@ export default function VeliPortalPage() {
             <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {student.full_name}
             </h2>
-            <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>Veli Bilgilendirme Portalı</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>Veli Bilgilendirme Portalı{brand ? ` · ${brand}` : ''}</div>
           </div>
           <div style={roleBadgeStyle(theme)}>{theme.label}</div>
         </header>
@@ -185,6 +197,7 @@ export default function VeliPortalPage() {
               stats={summaryStats}
               tips={tips}
               coachNote={coachNote}
+              brandName={brand}
             />
 
             {week_start && !is_current_week && (

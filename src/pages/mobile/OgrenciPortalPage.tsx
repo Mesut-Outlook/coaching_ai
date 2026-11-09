@@ -15,6 +15,7 @@ import MobileBottomNav, { type PortalNavTab } from '../../components/mobile/Mobi
 import ExamSectionsTable from '../../components/exams/ExamSectionsTable'
 import { getExamSections, sectionNet, weightedNet } from '../../lib/examSections'
 import { gradeCurriculum } from '../../lib/curriculum'
+import { portalBrand } from '../../lib/brand'
 import { PORTAL_THEME, roleBadgeStyle, roleTopBarStyle } from '../../lib/portalTheme'
 import type { ExamType } from '../../types/database'
 import StudentExamAnalysisView from '../../components/exams/StudentExamAnalysisView'
@@ -77,6 +78,16 @@ export default function OgrenciPortalPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<PortalNavTab>('my_week')
+  // Sekme başlığında öğrencinin kurumu (ör. "Konsept Akademi — Öğrenci Portalı").
+  const portalBrandName = portalBrand(data?.student.institution_name)
+  useEffect(() => {
+    if (!portalBrandName) return
+    const prev = document.title
+    document.title = `${portalBrandName} — Öğrenci Portalı`
+    return () => {
+      document.title = prev
+    }
+  }, [portalBrandName])
   const [showExamModal, setShowExamModal] = useState(false)
   const [openExamId, setOpenExamId] = useState<string | null>(null)
   const [examSubTab, setExamSubTab] = useState<'analysis' | 'list'>('analysis')
@@ -201,6 +212,7 @@ export default function OgrenciPortalPage() {
 
   const theme = PORTAL_THEME.ogrenci
   const { student, tasks, exams, week_start, is_current_week, my_week } = data
+  const brand = portalBrandName
   const dersTasks = tasks.filter((t) => !t.block_kind || t.block_kind === 'ders')
   const completedCount = my_week?.completed_tasks ?? dersTasks.filter((t) => t.completed).length
   const totalCount = my_week?.total_tasks ?? dersTasks.length
@@ -244,7 +256,7 @@ export default function OgrenciPortalPage() {
               👋 {student.full_name}
             </h2>
             <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
-              {student.grade}{student.track ? ` · ${student.track}` : ''}
+              {student.grade}{student.track ? ` · ${student.track}` : ''}{brand ? ` · ${brand}` : ''}
             </div>
           </div>
           <div style={roleBadgeStyle(theme)}>{theme.label}</div>

@@ -23,6 +23,8 @@ export type PortalStudent = {
   target_program: string | null
   target_ranking: string | null
   photo_url: string | null
+  /** 2026-11-09 SQL'i çalıştırılmadıysa gelmez. */
+  institution_name?: string | null
 }
 
 export type PortalTask = {

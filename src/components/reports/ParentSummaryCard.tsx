@@ -9,6 +9,7 @@ type Props = {
   tips: string[]
   coachNote?: string | null
   compact?: boolean
+  brandName?: string | null
 }
 
 export default function ParentSummaryCard({
@@ -18,6 +19,7 @@ export default function ParentSummaryCard({
   tips,
   coachNote,
   compact = false,
+  brandName,
 }: Props) {
   const roundedExamNet = stats.latestExamNet != null ? Math.round(stats.latestExamNet * 100) / 100 : null
 
@@ -38,7 +40,7 @@ export default function ParentSummaryCard({
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: 'var(--indigo-600)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            <Calendar size={13} /> Haftalık Veli Özeti
+            <Calendar size={13} /> Haftalık Veli Özeti{brandName ? ` · ${brandName}` : ''}
           </div>
           <h3 style={{ fontSize: compact ? 16 : 18, fontWeight: 800, color: 'var(--ink)', margin: '4px 0 0 0' }}>
             {studentName}

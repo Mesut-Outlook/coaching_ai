@@ -80,6 +80,9 @@ begin
     if (v_res->>'ok')::boolean is not true then
       raise exception 'portal_dashboard BAŞARISIZ (%): %', v_code, v_res;
     end if;
+    if v_res->'student'->>'institution_name' is distinct from 'Portal Test' then
+      raise exception 'portal_dashboard kurum adı yanlış: %', v_res->'student';
+    end if;
     if json_array_length(v_res->'tasks') <> 2 then
       raise exception 'portal_dashboard görev sayısı yanlış: %', v_res->'tasks';
     end if;
