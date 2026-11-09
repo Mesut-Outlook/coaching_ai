@@ -11,6 +11,7 @@ import {
   computeSummaryStats,
   formatOpenedAtStamp,
   buildParentSummaryWhatsAppMessage,
+  buildExamTrendLines,
 } from '../src/lib/parentSummaryCore'
 
 console.log('▶ R3-6 Veli Haftalık Özeti Öz-Testi Başlatılıyor...\n')
@@ -140,6 +141,32 @@ console.log('▶ R3-6 Veli Haftalık Özeti Öz-Testi Başlatılıyor...\n')
   assert.ok(msg.includes('Bu hafta matematik soru çözümünde iyi bir gayret gösterdi.'))
   assert.ok(msg.includes('Evde Nasıl Destek Olabilirsiniz?'))
   assert.ok(msg.includes('Eda Danışmanlık'))
+}
+
+// Son 5 deneme çubukları + veli linki + kurum imzası
+{
+  const lines = buildExamTrendLines([
+    { label: '04 Eki', net: 46 },
+    { label: '11 Eki', net: 52 },
+    { label: '01 Kas', net: -1.25 },
+  ])
+  assert.equal(lines[1], '11 Eki ▇▇▇▇▇▇▇▇▇▇ 52')
+  assert.ok(lines[0].startsWith('04 Eki ▇▇▇▇▇▇▇▇▇░ '))
+  assert.ok(lines[2].startsWith('01 Kas ░░░░░░░░░░ ') && lines[2].includes('-1,25'))
+  assert.deepEqual(buildExamTrendLines([{ label: 'x', net: 0 }]), ['x ░░░░░░░░░░ 0'])
+
+  const base = { studentName: 'A', weekRangeText: 'w', stats: computeSummaryStats({ tasks: [], latestExam: null, previousExam: null, attendanceRecords: [], targetNet: null }), tips: [] }
+  const msg = buildParentSummaryWhatsAppMessage({
+    ...base,
+    examTrend: { examType: 'TYT', points: [{ label: '04 Eki', net: 46 }, { label: '11 Eki', net: 52 }] },
+    portalLink: 'https://x/portal?code=PAR-1',
+    brandName: 'Konsept Akademi',
+  })
+  assert.ok(msg.includes('Son 2 Deneme (TYT net)'))
+  assert.ok(msg.includes('https://x/portal?code=PAR-1'))
+  assert.ok(msg.endsWith('— Konsept Akademi'))
+  // Tek denemede grafik basılmaz
+  assert.ok(!buildParentSummaryWhatsAppMessage({ ...base, examTrend: { examType: 'TYT', points: [{ label: 'a', net: 1 }] } }).includes('Son 1 Deneme'))
 }
 
 console.log('✓ Tüm R3-6 testleri başarıyla geçti!\n')

@@ -4,6 +4,21 @@ import type { PortalAttendance, PortalExam, PortalStudent, PortalTask } from './
 import { formatNetTr } from './homeSummaryCore'
 import { BRAND_SHORT } from './brand'
 
+export type ExamTrendPoint = { label: string; net: number }
+
+/**
+ * Son denemeleri WhatsApp'ta görünen metin çubuklarına çevirir (eskiden yeniye).
+ * Çubuk boyu en yüksek nete oranlıdır (en fazla 10 blok); negatif net boş çubuktur.
+ */
+export function buildExamTrendLines(points: ExamTrendPoint[]): string[] {
+  const max = Math.max(0, ...points.map((p) => p.net))
+  return points.map((p) => {
+    const blocks = max > 0 ? Math.round((Math.max(0, p.net) / max) * 10) : 0
+    return `${p.label} ${'▇'.repeat(blocks)}${'░'.repeat(10 - blocks)} ${formatNetTr(p.net)}`
+  })
+}
+
+
 export type ParentSupportTipInput = {
   completionPct: number
   hasSignificantExamDrop: boolean
@@ -154,8 +169,14 @@ export function buildParentSummaryWhatsAppMessage(params: {
   stats: SummaryStats
   tips: string[]
   coachNote?: string | null
+  /** Eskiden yeniye, aynı sınav türünden son denemeler (2+ ise grafik basılır). */
+  examTrend?: { examType: string; points: ExamTrendPoint[] }
+  /** Veli portal bağlantısı (grafikli ayrıntı). */
+  portalLink?: string | null
+  /** İmza; verilmezse varsayılan marka. */
+  brandName?: string
 }): string {
-  const { studentName, weekRangeText, stats, tips, coachNote } = params
+  const { studentName, weekRangeText, stats, tips, coachNote, examTrend, portalLink, brandName } = params
 
   const greeting = `Sayın Velimiz,`
   const intro = `*${studentName}* için haftalık çalışma özeti (${weekRangeText}):`
@@ -186,9 +207,17 @@ export function buildParentSummaryWhatsAppMessage(params: {
   const cleanNote = coachNote?.trim()
   const coachNoteSection = cleanNote ? `\n\n📝 *Koçun Notu:*\n"${cleanNote}"` : ''
 
-  const footer = `\n\nİyi haftalar dileriz. — ${BRAND_SHORT}`
+  // Monospace blok: çubuklar WhatsApp'ta hizalı görünsün.
+  const trendSection =
+    examTrend && examTrend.points.length >= 2
+      ? `\n\n📈 *Son ${examTrend.points.length} Deneme (${examTrend.examType} net):*\n\`\`\`\n${buildExamTrendLines(examTrend.points).join('\n')}\n\`\`\``
+      : ''
 
-  return `${greeting}\n\n${intro}\n\n${taskLine}${examLine}${attendanceLine}${tipsSection}${coachNoteSection}${footer}`
+  const linkSection = portalLink ? `\n\n🔗 *Grafikli ayrıntı (veli portalı):*\n${portalLink}` : ''
+
+  const footer = `\n\nİyi haftalar dileriz. — ${brandName ?? BRAND_SHORT}`
+
+  return `${greeting}\n\n${intro}\n\n${taskLine}${examLine}${attendanceLine}${trendSection}${tipsSection}${coachNoteSection}${linkSection}${footer}`
 }
 
 export type { Student, WeeklyTask, MockExam, AttendanceRecord, PortalStudent, PortalTask, PortalExam, PortalAttendance }

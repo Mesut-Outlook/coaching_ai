@@ -13,7 +13,9 @@ import {
   getDefaultWeekStart,
   type SummaryStudentInfo,
   type SummaryStats,
+  type ExamTrendPoint,
 } from '../../lib/parentSummary'
+import { brandShortFor } from '../../lib/brand'
 import type { AttendanceRecord, MockExam, Student, WeeklyTask } from '../../types/database'
 import type { PortalAttendance, PortalExam, PortalStudent, PortalTask } from '../../lib/portal'
 import { weightedNet } from '../../lib/examSections'
@@ -66,6 +68,55 @@ export default function ParentSummaryModal({
   const [lastOpenedAt, setLastOpenedAt] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  // Mesaj eklentileri: son 5 deneme çubukları, veli portal linki, kurum imzası.
+  const [examTrend, setExamTrend] = useState<{ examType: string; points: ExamTrendPoint[] } | undefined>()
+  const [portalLink, setPortalLink] = useState<string | null>(null)
+  const [brandName, setBrandName] = useState<string | undefined>()
+
+  useEffect(() => {
+    if (!isOpen || !student.id || !isSupabaseConfigured) return
+    let cancelled = false
+    ;(async () => {
+      const [{ data: exams }, { data: st }] = await Promise.all([
+        supabase
+          .from('mock_exams')
+          .select('exam_type, exam_date, mock_exam_sections(section_name, net)')
+          .eq('student_id', student.id)
+          .order('exam_date', { ascending: false })
+          .limit(15),
+        supabase
+          .from('students')
+          .select('parent_access_code, institutions(name)')
+          .eq('id', student.id)
+          .maybeSingle(),
+      ])
+      if (cancelled) return
+      if (exams && exams.length > 0) {
+        // TYT ile AYT netleri kıyaslanmaz: yalnız son denemenin türü.
+        const type = exams[0].exam_type
+        const points = exams
+          .filter((e) => e.exam_type === type)
+          .slice(0, 5)
+          .reverse()
+          .map((e) => {
+            // Tip dosyasında ilişki tanımı yok; diğer sorgular gibi elle daraltılıyor.
+            const rows = (e as unknown as { mock_exam_sections: { section_name: string; net: number | null }[] | null }).mock_exam_sections
+            const secs = (rows || []).map((x) => ({ section_name: x.section_name, net: Number(x.net) || 0 }))
+            const net = type === 'LGS' ? weightedNet(secs) : secs.reduce((sum, x) => sum + x.net, 0)
+            const label = new Date(e.exam_date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
+            return { label, net: Math.round(net * 100) / 100 }
+          })
+        setExamTrend({ examType: type === 'LGS' ? 'LGS ağırlıklı' : type, points })
+      }
+      const instName = (st?.institutions as { name?: string } | null)?.name
+      setBrandName(brandShortFor(instName))
+      setPortalLink(st?.parent_access_code ? `${window.location.origin}/portal?code=${st.parent_access_code}` : null)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, student.id])
 
   // Load missing data from Supabase if needed
   useEffect(() => {
@@ -209,8 +260,11 @@ export default function ParentSummaryModal({
       stats,
       tips,
       coachNote,
+      examTrend,
+      portalLink,
+      brandName,
     })
-  }, [student.full_name, weekRangeText, stats, tips, coachNote])
+  }, [student.full_name, weekRangeText, stats, tips, coachNote, examTrend, portalLink, brandName])
 
   // Handle WhatsApp Open
   const handleOpenWhatsApp = async () => {

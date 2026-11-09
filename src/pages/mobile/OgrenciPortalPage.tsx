@@ -497,7 +497,7 @@ export default function OgrenciPortalPage() {
 
               {focusTopics.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {focusTopics.map((topicName, idx) => (
+                  {focusTopics.slice(0, 5).map((topicName, idx) => (
                     <div
                       key={`${topicName}-${idx}`}
                       style={{
@@ -524,6 +524,15 @@ export default function OgrenciPortalPage() {
                       </span>
                     </div>
                   ))}
+                  {focusTopics.length > 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('tasks')}
+                      style={{ background: 'none', border: 'none', padding: '4px 2px', textAlign: 'left', fontSize: 12.5, fontWeight: 700, color: theme.accentStrong, cursor: 'pointer' }}
+                    >
+                      +{focusTopics.length - 5} konu daha · Programda gör →
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div style={{ fontSize: 13, color: 'var(--ink-soft)', textAlign: 'center', padding: '16px 8px', lineHeight: 1.5 }}>

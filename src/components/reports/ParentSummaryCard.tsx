@@ -1,5 +1,6 @@
 import { CheckCircle2, HeartHandshake, MessageSquareQuote, Calendar, AlertCircle } from 'lucide-react'
 import type { SummaryStats } from '../../lib/parentSummaryCore'
+import { formatNetTr } from '../../lib/homeSummaryCore'
 
 type Props = {
   studentName: string
@@ -107,7 +108,7 @@ export default function ParentSummaryCard({
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ink)', marginTop: 3 }}>
             {roundedExamNet != null ? (
               <>
-                {roundedExamNet} <span style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 500 }}>net</span>
+                {formatNetTr(roundedExamNet)} <span style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 500 }}>net</span>
               </>
             ) : (
               <span style={{ fontSize: 14, color: 'var(--ink-soft)' }}>—</span>

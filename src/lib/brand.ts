@@ -6,3 +6,7 @@ export const BRAND_TAGLINE = 'YKS · LGS Koçluk'
 // Kurum adı Konsept/Concept ise o kurumun logosu kullanılır (menü + yazdırma başlığı).
 export const isKonseptInstitution = (name: string | null | undefined) =>
   /konsept|concept/i.test(name ?? '')
+
+// Veli mesajının imzası: öğrencinin kurumu Konsept ise kurum adı, değilse varsayılan marka.
+export const brandShortFor = (institutionName: string | null | undefined) =>
+  isKonseptInstitution(institutionName) ? 'Konsept Akademi' : BRAND_SHORT
