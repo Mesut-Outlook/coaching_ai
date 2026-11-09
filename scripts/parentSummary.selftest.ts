@@ -140,7 +140,7 @@ console.log('▶ R3-6 Veli Haftalık Özeti Öz-Testi Başlatılıyor...\n')
   assert.ok(msg.includes('Hedef: 90'))
   assert.ok(msg.includes('Bu hafta matematik soru çözümünde iyi bir gayret gösterdi.'))
   assert.ok(msg.includes('Evde Nasıl Destek Olabilirsiniz?'))
-  assert.ok(msg.includes('Eda Danışmanlık'))
+  assert.ok(msg.endsWith('— Konsept Akademi'))
 }
 
 // Son 5 deneme çubukları + veli linki + kurum imzası
@@ -160,7 +160,6 @@ console.log('▶ R3-6 Veli Haftalık Özeti Öz-Testi Başlatılıyor...\n')
     ...base,
     examTrend: { examType: 'TYT', points: [{ label: '04 Eki', net: 46 }, { label: '11 Eki', net: 52 }] },
     portalLink: 'https://x/portal?code=PAR-1',
-    brandName: 'Konsept Akademi',
   })
   assert.ok(msg.includes('Son 2 Deneme (TYT net)'))
   assert.ok(msg.includes('https://x/portal?code=PAR-1'))

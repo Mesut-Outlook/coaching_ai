@@ -15,6 +15,23 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '9 Kasım 2026',
+    entries: [
+      {
+        version: 'v0.36',
+        title: 'Veli haftalık özeti: son 5 deneme grafiği ve kurum adı',
+        items: [
+          'Veliye WhatsApp\'tan giden haftalık özette son 5 denemenin netleri çubuk grafik olarak yer alır. Grafikte yalnız son denemeyle aynı türdeki denemeler (ör. yalnız TYT) karşılaştırılır; öğrencinin tek denemesi varsa grafik eklenmez.',
+          'Mesaja velinin portal linki eklenir; veli tıklayınca grafikli ayrıntılı deneme analizini görür. Veli kodu tanımlı değilse link satırı eklenmez.',
+          'Tüm WhatsApp mesajları (veli özeti, deneme paylaşımı, devamsızlık bildirimi, tercih listesi) "Konsept Akademi" imzasıyla gider.',
+          'Veli ve öğrenci portalının başlığında, veli özet kartında ve tarayıcı sekmesinde öğrencinin kurumunun adı yazar.',
+          'Veli özet kartında son deneme neti virgülle yazılır ("40,75").',
+          'Öğrenci portalındaki "Sıradaki Odak" listesi ilk 5 konuyu gösterir; kalan konular için programa geçiş bağlantısı vardır.',
+        ],
+      },
+    ],
+  },
+  {
     date: '6 Kasım 2026',
     entries: [
       {

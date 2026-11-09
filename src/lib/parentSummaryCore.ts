@@ -2,7 +2,7 @@ import { fmtWeekRange } from './weeks'
 import type { AttendanceRecord, MockExam, Student, WeeklyTask } from '../types/database'
 import type { PortalAttendance, PortalExam, PortalStudent, PortalTask } from './portal'
 import { formatNetTr } from './homeSummaryCore'
-import { BRAND_SHORT } from './brand'
+import { WHATSAPP_SIGNATURE } from './brand'
 
 export type ExamTrendPoint = { label: string; net: number }
 
@@ -174,9 +174,8 @@ export function buildParentSummaryWhatsAppMessage(params: {
   /** Veli portal bağlantısı (grafikli ayrıntı). */
   portalLink?: string | null
   /** İmza; verilmezse varsayılan marka. */
-  brandName?: string
 }): string {
-  const { studentName, weekRangeText, stats, tips, coachNote, examTrend, portalLink, brandName } = params
+  const { studentName, weekRangeText, stats, tips, coachNote, examTrend, portalLink } = params
 
   const greeting = `Sayın Velimiz,`
   const intro = `*${studentName}* için haftalık çalışma özeti (${weekRangeText}):`
@@ -215,7 +214,7 @@ export function buildParentSummaryWhatsAppMessage(params: {
 
   const linkSection = portalLink ? `\n\n🔗 *Grafikli ayrıntı (veli portalı):*\n${portalLink}` : ''
 
-  const footer = `\n\nİyi haftalar dileriz. — ${brandName ?? BRAND_SHORT}`
+  const footer = `\n\nİyi haftalar dileriz. — ${WHATSAPP_SIGNATURE}`
 
   return `${greeting}\n\n${intro}\n\n${taskLine}${examLine}${attendanceLine}${trendSection}${tipsSection}${coachNoteSection}${linkSection}${footer}`
 }

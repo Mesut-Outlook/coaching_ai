@@ -15,7 +15,6 @@ import {
   type SummaryStats,
   type ExamTrendPoint,
 } from '../../lib/parentSummary'
-import { brandShortFor } from '../../lib/brand'
 import type { AttendanceRecord, MockExam, Student, WeeklyTask } from '../../types/database'
 import type { PortalAttendance, PortalExam, PortalStudent, PortalTask } from '../../lib/portal'
 import { weightedNet } from '../../lib/examSections'
@@ -72,7 +71,6 @@ export default function ParentSummaryModal({
   // Mesaj eklentileri: son 5 deneme çubukları, veli portal linki, kurum imzası.
   const [examTrend, setExamTrend] = useState<{ examType: string; points: ExamTrendPoint[] } | undefined>()
   const [portalLink, setPortalLink] = useState<string | null>(null)
-  const [brandName, setBrandName] = useState<string | undefined>()
 
   useEffect(() => {
     if (!isOpen || !student.id || !isSupabaseConfigured) return
@@ -87,7 +85,7 @@ export default function ParentSummaryModal({
           .limit(15),
         supabase
           .from('students')
-          .select('parent_access_code, institutions(name)')
+          .select('parent_access_code')
           .eq('id', student.id)
           .maybeSingle(),
       ])
@@ -109,8 +107,6 @@ export default function ParentSummaryModal({
           })
         setExamTrend({ examType: type === 'LGS' ? 'LGS ağırlıklı' : type, points })
       }
-      const instName = (st?.institutions as { name?: string } | null)?.name
-      setBrandName(brandShortFor(instName))
       setPortalLink(st?.parent_access_code ? `${window.location.origin}/portal?code=${st.parent_access_code}` : null)
     })()
     return () => {
@@ -262,9 +258,8 @@ export default function ParentSummaryModal({
       coachNote,
       examTrend,
       portalLink,
-      brandName,
     })
-  }, [student.full_name, weekRangeText, stats, tips, coachNote, examTrend, portalLink, brandName])
+  }, [student.full_name, weekRangeText, stats, tips, coachNote, examTrend, portalLink])
 
   // Handle WhatsApp Open
   const handleOpenWhatsApp = async () => {

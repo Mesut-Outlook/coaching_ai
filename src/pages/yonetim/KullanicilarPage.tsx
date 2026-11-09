@@ -6,7 +6,7 @@ import { useAccess } from '../../contexts/useAccess'
 import PageHeader from '../../components/layout/PageHeader'
 import type { Membership, Invitation, Role, Profile } from '../../types/database'
 import { openWhatsAppChat } from '../../lib/whatsapp'
-import { BRAND_LONG } from '../../lib/brand'
+import { WHATSAPP_SIGNATURE } from '../../lib/brand'
 
 // Tarayıcının type="email" denetimi "ad.@gmail.com" gibi adresleri geçiriyor (2026-11-06 canlıda bir davet böyle takıldı).
 // Yerel kısım ve alan adı noktayla başlayamaz/bitemez, iki nokta yan yana olamaz.
@@ -489,7 +489,7 @@ export default function KullanicilarPage() {
                             onClick={() =>
                               openWhatsAppChat(
                                 '',
-                                `Merhaba, ${BRAND_LONG} sisteminde ${activeInstitutionName} kurumuna davet edildiniz. Kayıt olmak için bağlantı: ${inviteUrl}`
+                                `Merhaba, ${WHATSAPP_SIGNATURE} sisteminde ${activeInstitutionName} kurumuna davet edildiniz. Kayıt olmak için bağlantı: ${inviteUrl}`
                               )
                             }
                           >
@@ -708,7 +708,7 @@ export default function KullanicilarPage() {
                     onClick={() =>
                       openWhatsAppChat(
                         '',
-                        `Merhaba, ${BRAND_LONG} sisteminde ${invitePendingNames} kurumuna davet edildiniz. Kayıt linkiniz: ${inviteResultLink}`
+                        `Merhaba, ${WHATSAPP_SIGNATURE} sisteminde ${invitePendingNames} kurumuna davet edildiniz. Kayıt linkiniz: ${inviteResultLink}`
                       )
                     }
                   >

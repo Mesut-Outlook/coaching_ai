@@ -7,6 +7,7 @@ import PageHeader from '../components/layout/PageHeader'
 import { ChipMultiSelect } from '../components/common/ChipMultiSelect'
 import { uniqSorted, turkishRegex, foldTr } from '../lib/turkishSearch'
 import type { Student, UniversityRanking, ScoreType } from '../types/database'
+import { WHATSAPP_SIGNATURE } from '../lib/brand'
 
 // YÖK Atlas verisinde en son TAM yıl 2026.
 const REFERENCE_YEARS = [2026, 2025, 2024]
@@ -358,7 +359,7 @@ export default function TercihPage() {
       })
       .join('\n\n')
 
-    return `${header}${rankStr}${metaStr}\n\n${listStr}\n\n✨ *Eda Cangert Koçluk Merkezi tarafından hazırlandı.*`
+    return `${header}${rankStr}${metaStr}\n\n${listStr}\n\n✨ *${WHATSAPP_SIGNATURE} tarafından hazırlandı.*`
   }
 
   function handleSendWhatsApp(targetPhone?: string | null) {

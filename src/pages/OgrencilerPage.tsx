@@ -5,7 +5,7 @@ import {
   CheckSquare, MoreVertical, MessageCircle, Smartphone, UserX,
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
-import { BRAND_LONG } from '../lib/brand'
+import { WHATSAPP_SIGNATURE } from '../lib/brand'
 import PageHeader from '../components/layout/PageHeader'
 import ProgressRing from '../components/charts/ProgressRing'
 import AddStudentModal from '../components/students/AddStudentModal'
@@ -46,8 +46,8 @@ async function sendPortalLink(student: Student, target: 'ogrenci' | 'veli') {
 
   const msg =
     target === 'ogrenci'
-      ? `Merhaba ${student.full_name}, ${BRAND_LONG} mobil öğrenci portalına buradan girebilirsin:\n${link}\n\nErişim kodun: ${code}\nBu kodu kimseyle paylaşma.`
-      : `Merhaba, ${student.full_name} için ${BRAND_LONG} veli bilgilendirme portalı:\n${link}\n\nErişim kodunuz: ${code}\nBu kodu kimseyle paylaşmayın.`
+      ? `Merhaba ${student.full_name}, ${WHATSAPP_SIGNATURE} mobil öğrenci portalına buradan girebilirsin:\n${link}\n\nErişim kodun: ${code}\nBu kodu kimseyle paylaşma.`
+      : `Merhaba, ${student.full_name} için ${WHATSAPP_SIGNATURE} veli bilgilendirme portalı:\n${link}\n\nErişim kodunuz: ${code}\nBu kodu kimseyle paylaşmayın.`
 
   if (phone) {
     openWhatsAppChat(phone, msg)
