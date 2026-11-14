@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { Fragment, useEffect, useState, useMemo, useRef } from 'react'
 import {
   AlertCircle,
   AlertTriangle,
@@ -1009,6 +1009,7 @@ export default function ExamReportForm({
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 14,
+                minWidth: 0,
               }}
             >
               {/* Bölüm Başlığı ve Canlı Bölüm Neti */}
@@ -1041,16 +1042,16 @@ export default function ExamReportForm({
               {/* Alt Ders Tablosu */}
               {sec.hasAltDersKatalog ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, tableLayout: 'fixed' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--ink-soft)' }}>
-                        <th style={{ textAlign: 'left', padding: '6px 4px' }}>Ders</th>
-                        <th style={{ textAlign: 'center', width: 44 }}>Soru</th>
-                        <th style={{ textAlign: 'center', width: 48 }}>Doğru</th>
-                        <th style={{ textAlign: 'center', width: 48 }}>Yanlış</th>
-                        <th style={{ textAlign: 'center', width: 36 }}>Boş</th>
-                        <th style={{ textAlign: 'right', width: 48 }}>Net</th>
-                        <th style={{ textAlign: 'right', width: 48 }}>Başarı</th>
+                        <th style={{ textAlign: 'left', padding: '6px 4px 6px 0' }}>Ders</th>
+                        <th style={{ textAlign: 'center', width: 44, padding: '6px 2px' }}>Soru</th>
+                        <th style={{ textAlign: 'center', width: 46, padding: '6px 2px' }}>Doğru</th>
+                        <th style={{ textAlign: 'center', width: 46, padding: '6px 2px' }}>Yanlış</th>
+                        <th style={{ textAlign: 'center', width: 30, padding: '6px 2px' }}>Boş</th>
+                        <th style={{ textAlign: 'right', width: 44, padding: '6px 2px' }}>Net</th>
+                        <th style={{ textAlign: 'right', width: 44, padding: '6px 0 6px 2px' }}>Başarı</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1096,34 +1097,30 @@ export default function ExamReportForm({
                           (topicTotalQ !== qVal || topicTotalD !== entry.correct || topicTotalY !== entry.wrong)
 
                         return (
-                          <tr key={subj.id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
-                            <td colSpan={7} style={{ padding: '8px 0' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                                {/* minWidth: 0 — seçmeli ders kutusu (ör. "Din Kültürü") daralabilsin; yoksa
-                                    satırı genişletip Net/Başarı sütunlarını kartın dışına itiyordu. */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+                          <Fragment key={subj.id}>
+                            <tr style={{ borderBottom: isExpanded ? 'none' : '1px solid var(--border-soft)' }}>
+                              <td style={{ padding: '8px 4px 8px 0' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px 6px', minWidth: 0 }}>
                                   {/* Seçmeli grup geçiş anahtarı */}
                                   {subj.choice_group ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
-                                      <select
-                                        value={choiceSelections[subj.choice_group] ?? subj.id}
-                                        onChange={(e) =>
-                                          setChoiceSelections((prev) => ({
-                                            ...prev,
-                                            [subj.choice_group!]: Number(e.target.value),
-                                          }))
-                                        }
-                                        style={{ fontSize: 12, padding: '3px 6px', fontWeight: 600, width: 112, maxWidth: '100%', minWidth: 0 }}
-                                      >
-                                        {catalogSubjects
-                                          .filter((cs) => cs.choice_group === subj.choice_group)
-                                          .map((cs) => (
-                                            <option key={cs.id} value={cs.id}>
-                                              {cs.label}
-                                            </option>
-                                          ))}
-                                      </select>
-                                    </div>
+                                    <select
+                                      value={choiceSelections[subj.choice_group] ?? subj.id}
+                                      onChange={(e) =>
+                                        setChoiceSelections((prev) => ({
+                                          ...prev,
+                                          [subj.choice_group!]: Number(e.target.value),
+                                        }))
+                                      }
+                                      style={{ fontSize: 12, padding: '3px 6px', fontWeight: 600, width: 108, maxWidth: '100%', minWidth: 0 }}
+                                    >
+                                      {catalogSubjects
+                                        .filter((cs) => cs.choice_group === subj.choice_group)
+                                        .map((cs) => (
+                                          <option key={cs.id} value={cs.id}>
+                                            {cs.label}
+                                          </option>
+                                        ))}
+                                    </select>
                                   ) : (
                                     <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{subj.label}</span>
                                   )}
@@ -1144,113 +1141,122 @@ export default function ExamReportForm({
                                       fontWeight: 600,
                                       cursor: 'pointer',
                                       padding: '2px 4px',
+                                      whiteSpace: 'nowrap',
                                     }}
                                   >
                                     Konular ({subjectTopics.length})
                                     {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                                   </button>
                                 </div>
+                              </td>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                                  {/* Soru sayısı */}
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={qVal}
-                                    onChange={(e) =>
-                                      handleAltDersChange(
-                                        subj.id,
-                                        'questionCount',
-                                        parseInt(e.target.value, 10) || subj.question_count,
-                                        subj.question_count
-                                      )
-                                    }
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={handleKeyDown}
-                                    style={{ width: 44, padding: '4px', textAlign: 'center', fontSize: 12 }}
-                                    title="Soru sayısı (değiştirilebilir)"
-                                  />
+                              {/* Soru sayısı */}
+                              <td style={{ padding: '8px 2px', textAlign: 'center' }}>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={qVal}
+                                  onChange={(e) =>
+                                    handleAltDersChange(
+                                      subj.id,
+                                      'questionCount',
+                                      parseInt(e.target.value, 10) || subj.question_count,
+                                      subj.question_count
+                                    )
+                                  }
+                                  onFocus={(e) => e.target.select()}
+                                  onKeyDown={handleKeyDown}
+                                  style={{ width: '100%', maxWidth: 40, padding: '4px 2px', textAlign: 'center', fontSize: 12 }}
+                                  title="Soru sayısı (değiştirilebilir)"
+                                />
+                              </td>
 
-                                  {/* Doğru sayısı */}
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    max={qVal}
-                                    placeholder="D"
-                                    value={dVal}
-                                    onChange={(e) =>
-                                      handleAltDersChange(
-                                        subj.id,
-                                        'correct',
-                                        e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0,
-                                        qVal
-                                      )
-                                    }
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={handleKeyDown}
-                                    style={{
-                                      width: 48,
-                                      padding: '4px',
-                                      textAlign: 'center',
-                                      fontSize: 12,
-                                      borderColor: entry.entered && entry.correct + entry.wrong > qVal ? 'var(--critical)' : undefined,
-                                    }}
-                                  />
-
-                                  {/* Yanlış sayısı */}
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    max={qVal}
-                                    placeholder="Y"
-                                    value={yVal}
-                                    onChange={(e) =>
-                                      handleAltDersChange(
-                                        subj.id,
-                                        'wrong',
-                                        e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0,
-                                        qVal
-                                      )
-                                    }
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={handleKeyDown}
-                                    style={{
-                                      width: 48,
-                                      padding: '4px',
-                                      textAlign: 'center',
-                                      fontSize: 12,
-                                      borderColor: entry.entered && entry.correct + entry.wrong > qVal ? 'var(--critical)' : undefined,
-                                    }}
-                                  />
-
-                                  {/* Boş */}
-                                  <span style={{ width: 36, textAlign: 'center', fontSize: 11.5, color: 'var(--ink-faint)' }}>
-                                    {entry.entered ? blank : '—'}
-                                  </span>
-
-                                  {/* Net */}
-                                  <span style={{ width: 48, textAlign: 'right', fontWeight: 700, fontSize: 12, color: 'var(--indigo-600)' }}>
-                                    {entry.entered ? subNet.toFixed(2).replace('.', ',') : '—'}
-                                  </span>
-
-                                  {/* Başarı % */}
-                                  <span style={{ width: 48, textAlign: 'right', fontSize: 11.5, color: 'var(--ink-soft)' }}>
-                                    {entry.entered ? `%${subAcc.toFixed(0)}` : '—'}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* AÇILIR KONULAR TABLOSU */}
-                              {isExpanded && (
-                                <div
+                              {/* Doğru sayısı */}
+                              <td style={{ padding: '8px 2px', textAlign: 'center' }}>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max={qVal}
+                                  placeholder="D"
+                                  value={dVal}
+                                  onChange={(e) =>
+                                    handleAltDersChange(
+                                      subj.id,
+                                      'correct',
+                                      e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0,
+                                      qVal
+                                    )
+                                  }
+                                  onFocus={(e) => e.target.select()}
+                                  onKeyDown={handleKeyDown}
                                   style={{
-                                    marginTop: 8,
-                                    padding: '10px 12px',
-                                    background: 'var(--surface-alt)',
-                                    borderRadius: 'var(--radius-sm)',
-                                    border: '1px solid var(--border-soft)',
+                                    width: '100%',
+                                    maxWidth: 42,
+                                    padding: '4px 2px',
+                                    textAlign: 'center',
+                                    fontSize: 12,
+                                    borderColor: entry.entered && entry.correct + entry.wrong > qVal ? 'var(--critical)' : undefined,
                                   }}
-                                >
+                                />
+                              </td>
+
+                              {/* Yanlış sayısı */}
+                              <td style={{ padding: '8px 2px', textAlign: 'center' }}>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max={qVal}
+                                  placeholder="Y"
+                                  value={yVal}
+                                  onChange={(e) =>
+                                    handleAltDersChange(
+                                      subj.id,
+                                      'wrong',
+                                      e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0,
+                                      qVal
+                                    )
+                                  }
+                                  onFocus={(e) => e.target.select()}
+                                  onKeyDown={handleKeyDown}
+                                  style={{
+                                    width: '100%',
+                                    maxWidth: 42,
+                                    padding: '4px 2px',
+                                    textAlign: 'center',
+                                    fontSize: 12,
+                                    borderColor: entry.entered && entry.correct + entry.wrong > qVal ? 'var(--critical)' : undefined,
+                                  }}
+                                />
+                              </td>
+
+                              {/* Boş */}
+                              <td style={{ padding: '8px 2px', textAlign: 'center', fontSize: 11.5, color: 'var(--ink-faint)' }}>
+                                {entry.entered ? blank : '—'}
+                              </td>
+
+                              {/* Net */}
+                              <td style={{ padding: '8px 2px', textAlign: 'right', fontWeight: 700, fontSize: 12, color: 'var(--indigo-600)' }}>
+                                {entry.entered ? subNet.toFixed(2).replace('.', ',') : '—'}
+                              </td>
+
+                              {/* Başarı % */}
+                              <td style={{ padding: '8px 0 8px 2px', textAlign: 'right', fontSize: 11.5, color: 'var(--ink-soft)' }}>
+                                {entry.entered ? `%${subAcc.toFixed(0)}` : '—'}
+                              </td>
+                            </tr>
+
+                            {/* AÇILIR KONULAR TABLOSU */}
+                            {isExpanded && (
+                              <tr style={{ borderBottom: '1px solid var(--border-soft)' }}>
+                                <td colSpan={7} style={{ padding: '0 0 10px 0' }}>
+                                  <div
+                                    style={{
+                                      padding: '10px 12px',
+                                      background: 'var(--surface-alt)',
+                                      borderRadius: 'var(--radius-sm)',
+                                      border: '1px solid var(--border-soft)',
+                                    }}
+                                  >
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)' }}>
                                       {subj.label} Konuları
@@ -1425,10 +1431,11 @@ export default function ExamReportForm({
                                       <Plus size={12} /> {addingTopicFor === subj.id ? 'Ekleniyor…' : 'Konu Ekle'}
                                     </button>
                                   </div>
-                                </div>
-                              )}
-                            </td>
-                          </tr>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
                         )
                       })}
                     </tbody>
