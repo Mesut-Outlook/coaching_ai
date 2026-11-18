@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { AccessProvider } from './contexts/AccessContext'
 import ProtectedRoute from './components/routing/ProtectedRoute'
@@ -26,6 +27,21 @@ import SifreSifirlaPage from './pages/SifreSifirlaPage'
 import OgrenciPortalPage from './pages/mobile/OgrenciPortalPage'
 import VeliPortalPage from './pages/mobile/VeliPortalPage'
 
+// Portal sayfaları açık renk için çizildi (sabit hex'ler); telefon koyu moddayken
+// token'lar koyuya dönüp sabit koyu yazıyla çakışıyordu → portalda açık tema zorunlu.
+function LightTheme() {
+  useEffect(() => {
+    const el = document.documentElement
+    el.dataset.theme = 'light'
+    el.style.colorScheme = 'light'
+    return () => {
+      delete el.dataset.theme
+      el.style.colorScheme = ''
+    }
+  }, [])
+  return <Outlet />
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -35,9 +51,11 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/sifre-sifirla" element={<SifreSifirlaPage />} />
             <Route path="/kayit" element={<RegisterPage />} />
-            <Route path="/portal" element={<PortalAccessPage />} />
-            <Route path="/ogrenci" element={<OgrenciPortalPage />} />
-            <Route path="/veli" element={<VeliPortalPage />} />
+            <Route element={<LightTheme />}>
+              <Route path="/portal" element={<PortalAccessPage />} />
+              <Route path="/ogrenci" element={<OgrenciPortalPage />} />
+              <Route path="/veli" element={<VeliPortalPage />} />
+            </Route>
             <Route
               element={
                 <ProtectedRoute>
