@@ -154,6 +154,7 @@ function nextStep(item: StudentAttentionItem): { to: string; label: string; icon
     case 'devamsizlik_takip':
       return { to: `/devamsizlik?studentId=${id}`, label: 'Devamsızlığı aç', icon: MessageCircle }
     case 'program_dusuk':
+    case 'program_geciken':
       return { to: `/program?studentId=${id}`, label: 'Programı aç', icon: Calendar }
     case 'program_yok':
       return { to: `/program?studentId=${id}`, label: 'Program hazırla', icon: Calendar }
