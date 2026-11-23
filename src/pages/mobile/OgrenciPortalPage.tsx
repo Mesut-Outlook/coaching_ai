@@ -15,6 +15,7 @@ import MobileBottomNav, { type PortalNavTab } from '../../components/mobile/Mobi
 import ExamSectionsTable from '../../components/exams/ExamSectionsTable'
 import { getExamSections, sectionNet, weightedNet } from '../../lib/examSections'
 import { gradeCurriculum } from '../../lib/curriculum'
+import { overdueTasks } from '../../lib/overdueTasks'
 import { portalBrand } from '../../lib/brand'
 import { PORTAL_THEME, roleBadgeStyle, roleTopBarStyle } from '../../lib/portalTheme'
 import type { ExamType } from '../../types/database'
@@ -218,6 +219,8 @@ export default function OgrenciPortalPage() {
   const totalCount = my_week?.total_tasks ?? dersTasks.length
   const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
   const today = todayDayIndex()
+  const overdue = is_current_week ? overdueTasks(tasks, today) : []
+  const overdueDays = [...new Set(overdue.map((t) => t.day_index))].sort((a, b) => a - b)
   const curriculum = gradeCurriculum(student.grade)
   const examName = curriculum === 'LGS' ? 'LGS' : 'YKS'
 
@@ -281,6 +284,26 @@ export default function OgrenciPortalPage() {
         {/* ================================================================= */}
         {activeTab === 'my_week' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {overdue.length > 0 && (
+              <div style={{ ...card, backgroundColor: theme.tint, border: `1px solid ${theme.accentStrong}` }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: theme.accentStrong }}>
+                  Geçmiş günlerden {overdue.length} görevin kaldı
+                </div>
+                <div style={{ fontSize: 13, color: theme.accentStrong, marginTop: 2 }}>Yaptıysan işaretlemeyi unutma.</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+                  {overdueDays.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => document.getElementById(`gun-${d}`)?.scrollIntoView({ behavior: 'smooth' })}
+                      style={{ border: 'none', cursor: 'pointer', borderRadius: 999, padding: '6px 12px', fontSize: 13, fontWeight: 700, backgroundColor: theme.accentStrong, color: '#fff' }}
+                    >
+                      {DAY_NAMES[d]} · {overdue.filter((t) => t.day_index === d).length}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Üst Kart: Sınava Kalan Gün & Hedefe Yolculuk */}
             <div style={card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
@@ -632,7 +655,7 @@ export default function OgrenciPortalPage() {
                     })
 
                   return (
-                    <div key={dayIndex}>
+                    <div key={dayIndex} id={`gun-${dayIndex}`}>
                       <div
                         style={{
                           display: 'flex',

@@ -15,6 +15,20 @@ interface DateGroup {
 
 const HISTORY: DateGroup[] = [
   {
+    date: '23 Kasım 2026',
+    entries: [
+      {
+        version: 'v0.37',
+        title: 'Program hatırlatma',
+        items: [
+          'Koç panelinde "Geçmiş günlerden N görev işaretlenmedi" nedeni görünür ve "Öğrenciye hatırlat" düğmesi WhatsApp\'ı hazır mesajla açar; mesajı gönderen koçtur.',
+          'Öğrenci portalının "Haftam" sekmesinin başında geçmiş günlerden kalan görevleri gösteren bir kart çıkar; gün çiplerine tıklayınca o güne kayar. Görevler işaretlendikçe kart kaybolur.',
+          'Pazartesi önceki haftanın görevleri sayılmaz.',
+        ],
+      },
+    ],
+  },
+  {
     date: '9 Kasım 2026',
     entries: [
       {
