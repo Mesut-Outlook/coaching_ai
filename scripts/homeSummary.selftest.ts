@@ -557,9 +557,11 @@ console.log('✓ 7. Son hareketler akışı (görev hariç, karar dahil, Türkç
 // Ayşe: 3 neden (devamsizlik_takip [3], program_dusuk [2], deneme_yok [1]) -> 3 neden, maxWeight 3 -> 2. sıra
 // Ali: 2 neden (kritik_karar [5], net_dususu [4]) -> 2 neden -> 3. sıra
 assert.equal(summary.attention.length, 3, 'Tam 3 öğrenci ilgi bekliyor olmalı')
-assert.equal(summary.attention[0].studentId, 's-mehmet', 'İlk sırada 3 nedeni ve maxWeight 5 olan Mehmet olmalı')
-assert.equal(summary.attention[0].reasons.length, 3)
-assert.equal(summary.attention[1].studentId, 's-ayse', 'İkinci sırada 3 nedeni ve maxWeight 3 olan Ayşe olmalı')
+// Ayşe'nin geçmiş günlerde işaretsiz görevi de var -> program_geciken eklenir (4 neden) ve ilk sıraya çıkar
+assert.equal(summary.attention[0].studentId, 's-ayse', 'İlk sırada 4 nedeni olan Ayşe olmalı')
+assert.equal(summary.attention[0].reasons.length, 4)
+assert.ok(summary.attention[0].reasons.some((r) => r.kind === 'program_geciken'))
+assert.equal(summary.attention[1].studentId, 's-mehmet', 'İkinci sırada 3 nedeni ve maxWeight 5 olan Mehmet olmalı')
 assert.equal(summary.attention[1].reasons.length, 3)
 assert.equal(summary.attention[2].studentId, 's-ali', 'Üçüncü sırada 2 nedeni olan Ali olmalı')
 assert.equal(summary.attention[2].reasons.length, 2)
@@ -633,6 +635,26 @@ const oldDenemeYok = oldAtt.reasons.find((r) => r.kind === 'deneme_yok')
 assert.ok(oldDenemeYok, 'Eski denemeli öğrenci deneme_yok nedeni almalı')
 const oldDetail = oldDenemeYok.detail as { daysSinceLast: number | null }
 assert.equal(oldDetail.daysSinceLast, 30, '30 gün önceki deneme için daysSinceLast 30 olmalı')
+
+// B2. program_geciken: geçmiş günlerde işaretsiz görev
+{
+  const mk = (id: string, day: number, completed: boolean) => ({
+    id, student_id: 's-old-exam', subject_id: 1, topic_id: 101, task_type: 'soru' as const, title: 'Görev',
+    question_count: 50, completed, day_index: day, week_start: THIS_WEEK_MON, institution_id: 'inst-1',
+    created_at: '2026-10-19T08:00:00Z', is_exam: false,
+  })
+  const tasks = [mk('g1', 0, false), mk('g2', 0, false), mk('g3', 1, false), mk('g4', 2, true)]
+  const run = (ref: string, weeklyTasks: typeof tasks) =>
+    buildHomeSummary({ students: [oldExamStudent], coachDecisions: [], mockExams: [oldExam], weeklyTasks, attendanceRecords: [], referenceDate: ref })
+      .attention.find((a) => a.studentId === 's-old-exam')
+  const thu = run(REF_DATE, tasks)?.reasons.find((r) => r.kind === 'program_geciken')
+  assert.ok(thu, 'Perşembe: program_geciken olmalı')
+  assert.deepEqual(thu.detail, { count: 3 })
+  assert.equal(run('2026-10-19T12:00:00Z', tasks)?.reasons.some((r) => r.kind === 'program_geciken'), false, 'Pazartesi: geciken yok')
+  const none = run(REF_DATE, [])
+  assert.ok(none?.reasons.some((r) => r.kind === 'program_yok'))
+  assert.equal(none?.reasons.some((r) => r.kind === 'program_geciken'), false)
+}
 
 // C. Boş girdi koruması (sıfır kayıtlı durumlar için güvenli varsayılanlar)
 const emptySummary = buildHomeSummary({

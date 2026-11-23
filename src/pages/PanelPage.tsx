@@ -19,6 +19,10 @@ import { useAccess } from '../contexts/AccessContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useHomeSummary } from '../contexts/homeSummaryContext'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { ensureStudentAccessCodes } from '../lib/accessCode'
+import { buildTaskReminderMessage } from '../lib/overdueTasks'
+import { openWhatsAppChat } from '../lib/whatsapp'
+import type { Student } from '../types/database'
 import { DAYS, DAYS_SHORT as DAY_SHORT } from '../lib/weeks'
 import {
   getIsoDayIndex,
@@ -104,7 +108,7 @@ const FILTERS: { key: FilterKey; label: string; kinds: AttentionReasonKind[] }[]
   { key: 'kritik', label: 'Kritik konu', kinds: ['kritik_karar'] },
   { key: 'net', label: 'Net düşüşü', kinds: ['net_dususu'] },
   { key: 'devam', label: 'Devamsızlık', kinds: ['devamsizlik_takip'] },
-  { key: 'prog', label: 'Program', kinds: ['program_dusuk', 'program_yok'] },
+  { key: 'prog', label: 'Program', kinds: ['program_dusuk', 'program_yok', 'program_geciken'] },
   { key: 'deneme', label: 'Deneme yok', kinds: ['deneme_yok'] },
 ]
 
@@ -114,6 +118,7 @@ const SEVERITY: Record<AttentionReasonKind, 'bad' | 'warn' | 'gray'> = {
   devamsizlik_takip: 'bad',
   program_dusuk: 'warn',
   program_yok: 'warn',
+  program_geciken: 'warn',
   deneme_yok: 'gray',
 }
 
@@ -130,6 +135,8 @@ function reasonText(r: AttentionReason): { tag: string; text: string } {
       return { tag: 'DEVAMSIZLIK', text: `14 günde ${d.last14Count ?? '?'} ders${d.notOpened ? ' · bildirim açılmadı' : ''}` }
     case 'program_dusuk':
       return { tag: 'PROGRAM', text: `%${d.pct} tamamlandı` }
+    case 'program_geciken':
+      return { tag: 'GECİKEN', text: `${d.count} görev işaretlenmedi` }
     case 'program_yok':
       return { tag: 'PROGRAM YOK', text: 'bu hafta görev yok' }
     case 'deneme_yok':
@@ -157,7 +164,26 @@ function nextStep(item: StudentAttentionItem): { to: string; label: string; icon
 
 const ATT_LIMIT = 6
 
+async function remindStudent(studentId: string, count: number) {
+  const { data, error } = await supabase.from('students').select('*').eq('id', studentId).single()
+  if (error || !data) {
+    alert(error?.message ?? 'Öğrenci bulunamadı.')
+    return
+  }
+  const student = data as Student
+  const codes = await ensureStudentAccessCodes(student)
+  if (codes.error) {
+    alert(codes.error)
+    return
+  }
+  const link = `${window.location.origin}/portal?code=${codes.student_access_code}`
+  const msg = buildTaskReminderMessage(student.full_name, count, link)
+  if (student.phone_number) openWhatsAppChat(student.phone_number, msg)
+  else alert(`Öğrenci telefonu kayıtlı değil.\n\nMesajı elle iletebilirsin:\n${msg}`)
+}
+
 function AttentionCard({ items }: { items: StudentAttentionItem[] }) {
+  const [reminding, setReminding] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterKey>('all')
   const [showAll, setShowAll] = useState(false)
 
@@ -238,6 +264,24 @@ function AttentionCard({ items }: { items: StudentAttentionItem[] }) {
                   </div>
                 </div>
                 <div className="h-do">
+                  {item.reasons.some((r) => r.kind === 'program_geciken') && (
+                    <button
+                      type="button"
+                      className="h-act"
+                      disabled={reminding === item.studentId}
+                      onClick={async () => {
+                        const r = item.reasons.find((x) => x.kind === 'program_geciken')
+                        setReminding(item.studentId)
+                        try {
+                          await remindStudent(item.studentId, Number((r?.detail as { count?: number })?.count ?? 0))
+                        } finally {
+                          setReminding(null)
+                        }
+                      }}
+                    >
+                      <MessageCircle size={14} /> Öğrenciye hatırlat
+                    </button>
+                  )}
                   <Link to={step.to} className={`h-act${step.primary ? ' is-primary' : ''}`} viewTransition>
                     <StepIcon size={14} /> {step.label}
                   </Link>

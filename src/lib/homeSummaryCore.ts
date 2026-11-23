@@ -9,6 +9,7 @@ import { mondayOf, weekKey } from './weeks'
 import { gradeCurriculum } from './curriculum'
 import { checkAttendanceNeedsAttention, isoDaysAgoFrom, SESSION_LABELS, STATUS_LABELS } from './attendance'
 import { countExamsWithoutTopics } from './examReport'
+import { overdueTasks } from './overdueTasks'
 import type {
   AttendanceRecord,
   CoachDecision,
@@ -28,6 +29,7 @@ export type AttentionReasonKind =
   | 'devamsizlik_takip'
   | 'program_dusuk'
   | 'program_yok'
+  | 'program_geciken'
   | 'deneme_yok'
 
 export interface AttentionReasonKritikDetail {
@@ -51,6 +53,10 @@ export interface AttentionReasonProgramDetail {
   pct: number
 }
 
+export interface AttentionReasonGecikenDetail {
+  count: number
+}
+
 export interface AttentionReasonDenemeYokDetail {
   daysSinceLast: number | null
 }
@@ -60,6 +66,7 @@ export type AttentionReasonDetail =
   | AttentionReasonNetDususuDetail
   | AttentionReasonDevamsizlikDetail
   | AttentionReasonProgramDetail
+  | AttentionReasonGecikenDetail
   | AttentionReasonDenemeYokDetail
   | Record<string, unknown>
   | null
@@ -201,6 +208,7 @@ const REASON_WEIGHTS: Record<AttentionReasonKind, number> = {
   devamsizlik_takip: 100,
   program_dusuk: 10,
   program_yok: 10,
+  program_geciken: 10,
   deneme_yok: 1,
 }
 
@@ -455,7 +463,17 @@ export function buildHomeSummary(rawData: HomeSummaryRawData): HomeSummary {
         label: 'Bu hafta görev planlanmadı',
         detail: null,
       })
-    } else if (weekHalfway) {
+    } else {
+      const late = overdueTasks(sTasks, currentDayIndex).length
+      if (late > 0) {
+        reasons.push({
+          kind: 'program_geciken',
+          label: `Geçmiş günlerden ${late} görev işaretlenmedi`,
+          detail: { count: late },
+        })
+      }
+    }
+    if (sTasks.length > 0 && weekHalfway) {
       const compTasks = sTasks.filter((t) => t.completed).length
       const compPct = Math.round((compTasks / sTasks.length) * 100)
       if (compPct < 50) {
